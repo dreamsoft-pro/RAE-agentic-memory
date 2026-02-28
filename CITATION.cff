@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Leśniowski"
+    given-names: "Grzegorz"
+    orcid: "https://orcid.org/0009-0003-6672-671X"
+    affiliation: "Printworks sp. z o.o."
+title: "RAE: Reflective Agentic-Memory Engine"
+version: 3.6.1
+doi: 10.5281/zenodo.12345678  # Placeholder until first Zenodo minting
+date-released: 2026-01-31
+url: "https://github.com/dreamsoft-pro/RAE-agentic-memory"
+license: Apache-2.0
+keywords:
+  - "artificial intelligence"
+  - "memory-systems"
+  - "autonomous-agents"
+  - "graph-rag"
+  - "distributed-computing"
+abstract: >
+  RAE (Reflective Agentic-Memory Engine) is an open-source cognitive architecture designed to provide Long-Term Memory (LTM) for AI Agents. It implements a neurological-inspired tiered memory system (Episodic, Working, Semantic, Reflective) and supports decentralized synchronization via the RAE Mesh protocol.

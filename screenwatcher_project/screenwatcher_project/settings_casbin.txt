@@ -1,0 +1,3 @@
+
+# Casbin Configuration
+CASBIN_MODEL = os.path.join(BASE_DIR, 'apps/rbac/config/rbac_model.conf')

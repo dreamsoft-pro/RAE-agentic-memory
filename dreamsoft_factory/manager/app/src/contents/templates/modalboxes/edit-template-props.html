@@ -1,0 +1,28 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-male"></i> {{ 'edit_template' | translate }}
+        </div>
+    </div>
+    <div class="portlet-body">
+        <form class="form-horizontal" role="form" ng-submit="ok()">
+            <div class="form-body">
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'use_variables' | translate }}
+                        <input id="useVariables" ng-model="form.useVariables" type="checkbox">
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}
+                            </button>
+                            <button ng-click="$dismiss()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

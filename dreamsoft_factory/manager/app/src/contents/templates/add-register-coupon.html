@@ -1,0 +1,81 @@
+<div class="portlet light">
+    <div class="portlet-body">
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'value' | translate }}</label>
+            <div class="col-md-9">
+                <input name="couponForm.value" ng-model="couponForm.value.value" type="text" class="form-control"
+                       placeholder="{{ 'value' | translate }}" ng-required="showCouponForm">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'expires_days' | translate }}</label>
+            <div class="col-md-9">
+                <input name="couponForm.expiresDays" ng-model="couponForm.expiresDays.value" type="number"
+                       class="form-control"
+                       placeholder="{{ 'expires_days' | translate }}" ng-required="showCouponForm">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'coupon_percent_value' | translate }}</label>
+            <div class="col-md-9">
+                <div class="checker">
+                    <span ng-class="{checked: parseInt(couponForm.percent.value) == 1}">
+                        <input name="couponForm.percent" ng-model="couponForm.percent.value" ng-true-value="1"
+                               ng-false-value="0" type="checkbox">
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'coupon_for_multiple_use' | translate }}</label>
+            <div class="col-md-9">
+                <div class="checker">
+                    <span ng-class="{checked: parseInt(couponForm.multiUser.value) == 1}">
+                        <input name="couponForm.multiUser" ng-model="couponForm.multiUser.value" ng-true-value="1"
+                               ng-false-value="0" type="checkbox">
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">
+                {{ 'group_of_product' | translate}}
+            </label>
+            <div class="col-md-9">
+                <select name="couponForm.groupID" class="form-control" ng-model="couponForm.groupID.value"
+                        ng-change="getMainTypes(couponForm.groupID.value)"
+                        ng-options="each.ID as each.names[currentLang.code] for each in productGroups">
+                    <option value="">{{ 'all_products' | translate }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'type_of_product' | translate }}</label>
+            <div class="col-md-9">
+                <select name="couponForm.typeID" class="form-control"
+                        ng-model="couponForm.typeID.value"
+                        ng-change="getMainFormats(couponForm.groupID.value, couponForm.typeID.value)"
+                        ng-options="item.ID as item.names[currentLang.code] for item in mainProductTypes">
+                    <option value="">{{ 'all_types' | translate }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'format' | translate}}</label>
+            <div class="col-md-9">
+                <select name="couponForm.formatID" class="form-control" ng-model="couponForm.formatID.value"
+                        ng-options="item.ID as item.langs[currentLang.code].name for item in mainProductFormats">
+                    <option value="">{{ 'all_formats' | translate }}</option>
+                </select>
+            </div>
+        </div>
+
+    </div>
+</div>

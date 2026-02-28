@@ -1,0 +1,134 @@
+.tool-button.themes::before {
+    content: "\0065";
+}
+
+.themes-inner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+div#project-themes-list {
+    display: inline-block;
+    position: relative;
+    height: 95%;
+    padding: 0px 0px 0px 2rem;
+    /* width: 107%; */
+}
+
+ul.all-theme-list {
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    float: left;
+    height: 73%;
+    position: relative;
+}
+
+.allProjectThemes {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.themeContent {
+    height: 100%;
+    left: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    padding: 1rem 2rem;
+}
+
+div#buttonContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.main-tool-button.themes::before {
+    content: "e"
+}
+
+span#addNewThemeIcon::before {
+    content: "\201d";
+    font-family: 'EditorIcons3';
+    text-transform: lowercase;
+    position: absolute;
+    left: 0.6rem;
+    font-size: 2.7rem;
+    bottom: 0.6rem;
+}
+
+span#addNewThemeDesc {
+    margin-left: 3.0rem;
+}
+
+span#copyThemesFromDesc {
+    margin-left: 3.0rem;
+}
+
+.button-themes-second {
+    height: 2.15rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-transform: uppercase;
+    background-color: var(--gray-700);
+    border-radius: var(--border-sm-radius);
+    color: var(--white);
+    position: relative;
+    line-height: 0.8rem;
+    font-size: 0.6rem;
+    font-weight: 500;
+    padding: 0.6rem 0rem 0.6rem;
+}
+
+span#copyThemesFromIcon::before {
+    content: "\2022";
+    font-family: 'EditorIcons3';
+    text-transform: lowercase;
+    position: absolute;
+    left: 0.6rem;
+    font-size: 2.7rem;
+    bottom: 0.6rem;
+}
+
+span#addNewTheme:hover, span#copyThemesFrom:hover {
+    background-color: #464545;
+}
+
+.single-theme {
+    overflow: hidden;
+    border-radius: var(--border-sm-radius);
+    border: 3px solid var(--gray-700);
+    position: relative;
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+}
+
+.theme-photo {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.theme-caption {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    background-color: var(--gray-700);
+    color: var(--white);
+    font-weight: 500;
+    font-size: .85rem;
+    text-transform: uppercase;
+}
+
+.themes-scroll-list {
+    height: 100%;
+    flex-grow: 1;
+    overflow-y: scroll;
+}

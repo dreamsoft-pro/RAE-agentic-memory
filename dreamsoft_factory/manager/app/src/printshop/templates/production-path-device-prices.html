@@ -1,0 +1,97 @@
+<div ui-view="deviceMenu"></div>
+
+<div class="row">
+
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'prices' | translate }}:
+                    {{deviceName}}
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form class="form-horizontal" role="form" ng-submit="addPrice()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'number_interval' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.amount" type="number" min="0" class="form-control"
+                                >
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'unit_price' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.unitPrice" type="number" min="0" step="any" class="form-control"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'unit_cost' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.unitCost" type="number" min="0" step="any" class="form-control"
+                                >
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                    {{ 'add' | translate }}
+                                </button>
+                                <button ng-click="resetPriceForm(prices.editPrice)" type="button"
+                                        class="btn red-sunglo">{{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>#</th>
+                            <th>{{ 'number_interval' | translate }}</th>
+                            <th>{{ 'unit_price' | translate }}</th>
+                            <th>{{ 'unit_cost' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="price in prices">
+                            <td>{{price.ID}}</td>
+                            <td>{{price.amount}}</td>
+                            <td>{{price.unitPrice}}</td>
+                            <td>{{price.unitCost}}</td>
+                            <td>
+                                <button data-ng-confirm-click="deletePrice(price.ID)"
+                                        data-toggle="tooltip" data-container="body"
+                                        tooltip="{{langArr.delete}}"
+                                        class="btn red-sunglo btn-xs">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.productionPathDevicePrices"></div>
+    </div>
+
+</div>

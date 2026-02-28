@@ -1,0 +1,46 @@
+{
+    "machine_code": "M01",
+    "api_url": "http://localhost:9000/api/collector/ingest/",
+    "api_token": "",
+    "interval_sec": 14,
+    "monitor_index": 1,
+    "offline_mode": true,
+    "rois": [
+        {
+            "name": "job_name",
+            "type": "text",
+            "x": 149,
+            "y": 62,
+            "w": 280,
+            "h": 25,
+            "transformations": [],
+            "metric_key": "pole_1",
+            "unit": "",
+            "category": "General"
+        },
+        {
+            "name": "copy_number",
+            "type": "number",
+            "x": 112,
+            "y": 945,
+            "w": 82,
+            "h": 56,
+            "transformations": [],
+            "metric_key": "pole_2",
+            "unit": "",
+            "category": "General"
+        },
+        {
+            "name": "time_production",
+            "type": "table",
+            "x": 1649,
+            "y": 922,
+            "w": 232,
+            "h": 72,
+            "transformations": [],
+            "metric_key": "pole_3",
+            "unit": "",
+            "category": "General"
+        }
+    ]
+}

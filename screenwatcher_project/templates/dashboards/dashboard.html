@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">Machines</div>
+                <div class="list-group list-group-flush" style="max-height: 80vh; overflow-y: auto;">
+                    {% for machine in machines %}
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="selectMachine('{{ machine.id }}', '{{ machine.code }}')">
+                        <div>
+                            <h6 class="mb-0">{{ machine.name }}</h6>
+                            <small class="text-muted">{{ machine.code }}</small>
+                        </div>
+                        <span class="badge bg-secondary" id="badge-{{ machine.code }}">?</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 id="machine-title">Select Machine</h2>
+                <div id="connection-status" class="text-muted small">Disconnected</div>
+            </div>
+            
+            <div class="row mb-4">
+                <!-- Status Card -->
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Machine Status</h5>
+                            <p class="card-text display-4 fw-bold" id="status-val">-</p>
+                            <small id="last-seen-val">Last seen: -</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OEE Gauge -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body p-0">
+                            <div id="oee-gauge" style="width: 100%; height: 250px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Card (Placeholder or extra stats) -->
+                <div class="col-md-4">
+                     <div class="card h-100 shadow-sm">
+                        <div class="card-header">Production Stats</div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Availability</span>
+                                <span class="fw-bold" id="val-avail">0%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Performance</span>
+                                <span class="fw-bold" id="val-perf">0%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Quality</span>
+                                <span class="fw-bold" id="val-qual">0%</span>
+                            </li>
+                        </ul>
+                     </div>
+                </div>
+            </div>
+
+            <!-- ECharts Container for Components -->
+            <div class="card shadow-sm">
+                <div class="card-header">OEE Breakdown (Daily)</div>
+                <div class="card-body">
+                    <div id="oee-bar-chart" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    // Initialize Charts
+    let barChart = echarts.init(document.getElementById('oee-bar-chart'));
+    let gaugeChart = echarts.init(document.getElementById('oee-gauge'));
+    
+    // State
+    let currentSocket = null;
+    let currentMachineId = null;
+    let isFetching = false;
+
+    // Resize handling
+    window.addEventListener('resize', function() {
+        barChart.resize();
+        gaugeChart.resize();
+    });
+
+    function selectMachine(id, code) {
+        currentMachineId = id;
+        loadStats();
+        connectWebsocket(code);
+    }
+
+    function loadStats() {
+        if (!currentMachineId) return;
+        isFetching = true;
+        
+        fetch(`/dashboard/stats/${currentMachineId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // DOM Updates
+                document.getElementById('machine-title').innerText = data.machine.name;
+                document.getElementById('status-val').innerText = data.machine.status || 'OFFLINE';
+                
+                if (data.machine.last_seen) {
+                    const date = new Date(data.machine.last_seen);
+                    document.getElementById('last-seen-val').innerText = 'Last seen: ' + date.toLocaleTimeString();
+                }
+
+                // Stats List
+                document.getElementById('val-avail').innerText = data.oee.availability.toFixed(1) + '%';
+                document.getElementById('val-perf').innerText = data.oee.performance.toFixed(1) + '%';
+                document.getElementById('val-qual').innerText = data.oee.quality.toFixed(1) + '%';
+
+                // Charts
+                updateBarChart(data.oee);
+                updateGaugeChart(data.oee.oee);
+            })
+            .catch(err => console.error(err))
+            .finally(() => {
+                isFetching = false;
+            });
+    }
+
+    function updateBarChart(oee) {
+        let option = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { 
+                type: 'category', 
+                data: ["Availability", "Performance", "Quality"] 
+            },
+            yAxis: { type: 'value', max: 100 },
+            series: [{
+                name: 'Percentage',
+                type: 'bar',
+                barWidth: '40%',
+                data: [
+                    { value: oee.availability.toFixed(1), itemStyle: { color: '#fac858' } },
+                    { value: oee.performance.toFixed(1), itemStyle: { color: '#91cc75' } },
+                    { value: oee.quality.toFixed(1), itemStyle: { color: '#5470c6' } }
+                ],
+                label: { show: true, position: 'top', formatter: '{c}%' }
+            }]
+        };
+        barChart.setOption(option);
+    }
+
+    function updateGaugeChart(oeeValue) {
+        let option = {
+            series: [{
+                type: 'gauge',
+                startAngle: 180,
+                endAngle: 0,
+                min: 0,
+                max: 100,
+                splitNumber: 5,
+                itemStyle: { color: '#58D9F9', shadowColor: 'rgba(0,138,255,0.45)', shadowBlur: 10, shadowOffsetX: 2, shadowOffsetY: 2 },
+                progress: { show: true, roundCap: true, width: 10 },
+                pointer: { icon: 'path://M2090.36389,615.30999 L2090.36389,615.30999 C2091.48372,615.30999 2092.40383,616.194028 2092.44859,617.312956 L2096.90698,728.755929 C2097.05155,732.369577 2094.2393,735.416212 2090.62566,735.56078 C2090.53845,735.564269 2090.45117,735.566014 2090.36389,735.566014 L2090.36389,735.566014 C2086.74736,735.566014 2083.81557,732.63423 2083.81557,729.017692 C2083.81557,728.930412 2083.81732,728.84314 2083.82081,728.755929 L2088.2792,617.312956 C2088.32396,616.194028 2089.24407,615.30999 2090.36389,615.30999 Z', length: '75%', width: 12, offsetCenter: [0, '5%'] },
+                axisLine: { roundCap: true, lineStyle: { width: 10 } },
+                axisTick: { splitNumber: 2, lineStyle: { width: 2, color: '#999' } },
+                splitLine: { length: 12, lineStyle: { width: 3, color: '#999' } },
+                axisLabel: { distance: 30, color: '#999', fontSize: 14 },
+                title: { show: false },
+                detail: { backgroundColor: '#fff', borderColor: '#999', borderWidth: 2, width: '60%', lineHeight: 30, height: 30, borderRadius: 8, offsetCenter: [0, '35%'], valueAnimation: true, formatter: function (value) { return '{value|' + value.toFixed(1) + '}{unit|%}'; }, rich: { value: { fontSize: 30, fontWeight: 'bolder', color: '#777' }, unit: { fontSize: 20, color: '#999', padding: [0, 0, -5, 10] } } },
+                data: [{ value: oeeValue }]
+            }]
+        };
+        gaugeChart.setOption(option);
+    }
+
+    function connectWebsocket(machineCode) {
+        if (currentSocket) {
+            currentSocket.close();
+        }
+
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${wsScheme}://${window.location.host}/ws/telemetry/${machineCode}/`;
+        
+        document.getElementById('connection-status').innerText = 'Connecting...';
+        currentSocket = new WebSocket(wsUrl);
+
+        currentSocket.onopen = function() {
+            document.getElementById('connection-status').innerText = 'Live';
+            document.getElementById('connection-status').className = 'text-success fw-bold small';
+        };
+
+        currentSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            // Handle different message types
+            if (data.type === 'telemetry') {
+                // 1. Immediate UI updates (Status)
+                if (data.payload && data.payload.status) {
+                    document.getElementById('status-val').innerText = data.payload.status;
+                    const badge = document.getElementById(`badge-${data.machine_code}`);
+                    if (badge) badge.className = 'badge bg-success';
+                }
+            } else if (data.type === 'oee_update') {
+                // 2. Direct OEE Update from Signal
+                const oeeData = {
+                    availability: data.availability,
+                    performance: data.performance,
+                    quality: data.quality,
+                    oee: data.oee
+                };
+                
+                // Stats List
+                document.getElementById('val-avail').innerText = oeeData.availability.toFixed(1) + '%';
+                document.getElementById('val-perf').innerText = oeeData.performance.toFixed(1) + '%';
+                document.getElementById('val-qual').innerText = oeeData.quality.toFixed(1) + '%';
+
+                // Charts
+                updateBarChart(oeeData);
+                updateGaugeChart(oeeData.oee);
+            }
+        };
+
+        currentSocket.onclose = function(e) {
+            document.getElementById('connection-status').innerText = 'Disconnected. Retrying...';
+            document.getElementById('connection-status').className = 'text-warning small';
+            // Auto-reconnect after 3 seconds
+            setTimeout(function() {
+                if (currentMachineId && document.getElementById('connection-status').innerText.includes('Disconnected')) {
+                    const machineCode = document.querySelector(`a[onclick*="'${currentMachineId}'"] small`).innerText;
+                    connectWebsocket(machineCode);
+                }
+            }, 3000);
+        };
+        
+        currentSocket.onerror = function(err) {
+            console.error('WebSocket error:', err);
+            currentSocket.close();
+        }
+    }
+
+    // Auto-select first machine if available
+    document.addEventListener("DOMContentLoaded", function() {
+        const firstMachineLink = document.querySelector('.list-group-item');
+        if (firstMachineLink) {
+            firstMachineLink.click();
+        }
+    });
+</script>
+{% endblock %}

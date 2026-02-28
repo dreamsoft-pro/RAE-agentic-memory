@@ -1,0 +1,17 @@
+# RAE AGENTIC BOARD CONFIGURATION v2.0
+# Tiered Consensus Protocol
+
+tiers:
+  economy:
+    models: ['qwen2.5:14b', 'deepseek-coder-v2:16b', 'llama3.1:8b']
+    description: 'Local models only - no cost'
+  
+  standard:
+    models: ['gemini-1.5-pro', 'deepseek-coder-v2:16b', 'qwen2.5:14b']
+    description: 'Hybrid: Leader (Gemini) + Local experts'
+  
+  oracle:
+    models: ['gemini-1.5-pro', 'claude-opus-4-5', 'gpt-4o']
+    description: 'The Agentic Board: Best cloud models only'
+
+operational_mode: HARD_FRAMES

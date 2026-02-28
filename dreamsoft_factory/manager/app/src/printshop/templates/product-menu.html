@@ -1,0 +1,48 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="cols-xs-12">
+      <ul class="nav nav-tabs nav-justified">
+        <li ng-class="{active: $state.includes('printshop-formats')}">
+          <a ui-sref="printshop-formats">
+            {{"formats" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-pages')}">
+          <a ui-sref="printshop-pages">
+            {{"pages" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-volumes')}">
+          <a ui-sref="printshop-volumes">
+            {{"volumes" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-attributes')}">
+          <a ui-sref="printshop-attributes">
+            {{"attributes" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-increases')}">
+          <a ui-sref="printshop-increases">
+            {{"increases" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-type-realizationTimes')}">
+          <a ui-sref="printshop-type-realizationTimes">
+            {{"realization_times" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-type-margins')}">
+          <a ui-sref="printshop-type-margins">
+            {{"margins" | translate}}
+          </a>
+        </li>
+        <li ng-class="{active: $state.includes('printshop-type-labelImposition')}">
+          <a ui-sref="printshop-type-labelImposition">
+            {{"labelImposition" | translate}}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

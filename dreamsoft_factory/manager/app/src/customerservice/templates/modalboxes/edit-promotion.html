@@ -1,0 +1,199 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'edit' | translate }} - {{ form.promotionLanguages[currentLang.code].name }}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12">
+
+            <form class="form-horizontal" role="form">
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'percentage' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-repeat="lang in languages" ng-show="nameLang == lang.code"
+                               ng-model="form.promotionLanguages[lang.code].name" type="text" class="form-control"
+                               placeholder="{{lang.code}}"/>
+                        <select class="form-control" ng-init="nameLang = currentLang.code"
+                                ng-model="nameLang"
+                                ng-options="each.code as each.name for (key, each) in languages"></select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'group_of_product' | translate }}{{ details.domainID
+                        }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control" ng-model="form.productGroupID"
+                                ng-change="getTypes( form.productGroupID )"
+                                ng-options="each.ID as each.names[showLang] for each in productGroups">
+                            <option value="">{{ 'group_of_product' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'type_of_product' | translate }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control"
+                                ng-model="form.productTypeID"
+                                ng-change="getFormats(form.productGroupID, form.productTypeID)"
+                                ng-options="item.ID as item.name for item in productTypes">
+                            <option value="">{{ 'type_of_product' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'format' | translate }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control" ng-model="form.productFormatID"
+                                ng-options="item.ID as item.name for item in productFormats">
+                            <option value="">{{ 'format' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'quantity' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.qtyStart" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="{{ 'all' | translate }}">
+                        <input ng-model="form.qtyEnd" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="{{ 'all' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'number_of_meters' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.metersStart" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="m2">
+                        <input ng-model="form.metersEnd" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="m2">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'percentage' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.percentage" type="text" class="form-control"
+                               placeholder="{{ 'percentage' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <div class="checkbox-list">
+                            <label>
+                                <div class="checker"><span ng-class="{checked: form.active}">
+                                    <input ng-model="form.active" type="checkbox"></span>
+                                </div>
+                                {{ 'active' | translate }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <div class="checkbox-list">
+                            <label>
+                                <div class="checker">
+                                    <span ng-class="{checked: form.timePromotion}">
+                                        <input ng-model="form.timePromotion" type="checkbox"/>
+                                    </span>
+                                </div>
+                                {{ 'timelimit_promotion' | translate }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-if="form.timePromotion">
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label"></label>
+                        <span class="col-md-9 help-block">{{ form.startTime }}</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'start_date' | translate }}</label>
+                        <div class="col-md-9">
+                            <div ng-model="form.startTime" dp-datepicker></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'hour_of_start' | translate }}</label>
+                        <div class="col-md-9">
+                            <input required="required" ng-model="form.hourOfStart" min="0" max="24"
+                                   type="number" class="form-control"
+                                   placeholder="0 - 24"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'duration' | translate }}</label>
+                        <div class="col-md-4">
+                            <select class="form-control"
+                                    ng-options="key as value|translate for (key , value) in timeOptions"
+                                    ng-model="form.durationTimeType">
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <input ng-if="form.durationTimeType == 1" ng-model="form.durationDay" type="text"
+                                   class="form-control"
+                                   placeholder="{{ 'days' | translate }}"/>
+                            <input ng-if="form.durationTimeType == 2" ng-model="form.durationHour" type="text"
+                                   class="form-control"
+                                   placeholder="{{ 'hours' | translate }}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'repeat_interval' | translate }}</label>
+                        <div class="col-md-4">
+                            <select class="form-control"
+                                    ng-options="key as value|translate for (key , value) in timeOptions"
+                                    ng-model="form.timeType">
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <input ng-if="form.timeType == 1" ng-model="form.repeatDay" type="text" class="form-control"
+                                   placeholder="{{ 'days' | translate }}"/>
+                            <input ng-if="form.timeType == 2" ng-model="form.repeatHour" type="text"
+                                   class="form-control"
+                                   placeholder="{{ 'hours' | translate }}"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{'icon' | translate}}</label>
+                    <div class="col-md-9">
+                        <button type="button" ng-click="uploadIcon( form )" class="btn btn-primary">
+                            {{ 'upload' | translate }}
+                        </button>
+                        <div ng-show="form.icon">
+                            <img src="{{form.icon.url}}"
+                                 style="max-width:200px;border:1px solid #3e3e3e;"
+                                 class="img-rounded img-responsive"/>
+                            <button type="button" ng-confirm-click="deleteIcon( form )" class="btn red-sunglo btn-xs">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-warning" ng-click="$dismiss()">{{ 'cancel' | translate }}</button>
+    <button class="btn btn-primary" ng-click="save()">{{ 'save' | translate }}</button>
+</div>

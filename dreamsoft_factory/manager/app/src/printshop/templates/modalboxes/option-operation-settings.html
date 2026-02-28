@@ -1,0 +1,29 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{'devices'|translate}} {{'for_operation'|translate}}{{operation.name}}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+  <div class="modal-body">
+   
+    <h3 class="modal-title alert alert-info">{{ 'operation' | translate }} {{ operation.name }}</h3>
+    <div class="list-group clickable">
+      <a class="list-group-item" style="cursor: pointer;"
+       data-ng-repeat="device in devices"
+       data-ng-click="device.selected = (device.selected != 1 ? 1 : 0)"
+       data-ng-class="{active: device.selected}">
+        <h3 class="list-group-item-heading">
+          <span class="btn blue-stripe btn-xs">ID: {{device.ID}}</span>
+          {{device.name}}
+        </h3>
+      </a>
+    </div>
+
+    
+  </div>
+  <div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'cancel' | translate }}</button>
+    <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+  </div>
+
+</form>

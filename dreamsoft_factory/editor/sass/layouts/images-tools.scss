@@ -1,0 +1,157 @@
+@use './../shared' as *;
+
+.assets-buttons-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 7.25rem;
+  height: 2.25rem;
+}
+
+.columns-type-container {
+  display: flex;
+  background-color: var(--gray-300);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-md-radius) !important;
+  position: relative;
+  height: 2.25rem;
+  gap: .5rem;
+  width: 7.25rem;
+  max-width: 5rem;
+}
+
+#imageLoaderInfo {
+  display: flex;
+  gap: .5rem;
+  flex-direction: column;
+
+  .miniaturesInfo.hidden,
+  .uploadingInfo.hidden,
+  .miniaturesSuccessInfo.hidden,
+  .uploadingSuccessInfo.hidden,
+  .projectPhotosWrapper.hidden {
+    display: none !important;
+  }
+
+  .miniaturesInfo, .uploadingInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    color: $gray-700;
+    flex-direction: column;
+
+    .title {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .uploadInfoLoader {
+      position: relative;
+      float: left;
+      width: 100%;
+      height: 1.5rem;
+      background-color: var(--gray-500);
+      border-radius: var(--border-lg-radius);
+      overflow: hidden;
+    }
+  }
+
+  .miniaturesSuccessInfo, .uploadingSuccessInfo {
+    color: $gray-700;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 700;
+
+    & > span:first-child, .estimation {
+      text-transform: none;
+      font-weight: 500;
+      color: var(--gray-700);
+
+      &:not(:first-child) {
+        text-transform: uppercase;
+      }
+    }
+  }
+
+  .uploadInfoLoaderText {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    color: $white;
+  }
+
+  .uploadInfoLoaderProgress {
+    transition: width $transition-short ease-in-out;
+    width: 0;
+    height: 100%;
+    float: left;
+    background-color: $gray-700;
+  }
+}
+
+.projectPhotosWrapper {
+  height: 2.5rem;
+  display: flex;
+  gap: .5rem;
+  width: 100%;
+  align-items: center;
+  overflow: hidden;
+
+  .projectPhotosInfos {
+    width: 100%;
+    height: 1.5rem;
+    background: var(--gray-700);
+    border-radius: var(--border-lg-radius);
+    color: var(--white);
+    font-weight: 500;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1rem;
+  }
+}
+
+#imageDrop {
+  background-color: $gray-opacity;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  font-weight: 500;
+  font-size: 1.5rem;
+
+  .image-drop-inner {
+    border: dashed .25rem $gray-700;
+    margin: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    flex-direction: column;
+    height: calc(100% - 2rem);
+  }
+
+  .image-drop-icon {
+    position: relative;
+    font-family: EditorIcons3;
+    font-size: 6rem;
+
+    &::before {
+      content: "\02c6";
+    }
+  }
+}
+
+

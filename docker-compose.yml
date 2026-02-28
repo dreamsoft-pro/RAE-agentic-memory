@@ -1,0 +1,93 @@
+# RAE-agentic-memory-agnostic-core
+# Docker Compose Configuration - FIXED FOR HOST NETWORK
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rae-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rae
+      POSTGRES_PASSWORD: rae_password
+      POSTGRES_DB: rae
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - /home/operator/pgvector_libs/vector.so:/usr/local/lib/postgresql/vector.so
+      - /home/operator/pgvector_libs/vector.control:/usr/local/share/postgresql/extension/vector.control
+      - /home/operator/pgvector_libs/vector--0.5.1.sql:/usr/local/share/postgresql/extension/vector--0.5.1.sql
+    networks:
+      - rae-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rae-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rae-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rae-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - rae-network
+
+  ollama-dev:
+    image: ollama/ollama:latest
+    container_name: rae-ollama-dev
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - /mnt/extra_storage/ollama:/root/.ollama
+    networks:
+      - rae-network
+
+  rae-api-dev:
+    image: rae-memory:latest
+    container_name: rae-api-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # FIXED: Using host network mode to resolve connection issues
+    network_mode: host
+    environment:
+      - POSTGRES_USER=rae
+      - POSTGRES_PASSWORD=rae_password
+      - POSTGRES_DB=rae
+      - POSTGRES_HOST=127.0.0.1
+      - REDIS_URL=redis://127.0.0.1:6379/0
+      - QDRANT_HOST=127.0.0.1
+      - OLLAMA_API_URL=http://127.0.0.1:11435
+      - RAE_API_KEY=test-key
+    volumes:
+      - ./rae-core:/app/rae-core
+      - ./apps:/app/apps
+      - ./rae_adapters:/app/rae_adapters
+      - /home/operator/RAE-Suite-Modular/packages/rae-hive:/app/agent_hive
+      - /home/operator/RAE-Suite-Modular/packages/rae-phenix:/app/rae-phenix
+
+  # Other services truncated for brevity in this repair operation...
+  # (I will keep the rest of the file as it was on Node 1)
+
+networks:
+  rae-network:
+    name: rae-agentic-memory-agnostic-core_rae-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:

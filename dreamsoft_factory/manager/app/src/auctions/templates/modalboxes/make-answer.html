@@ -1,0 +1,82 @@
+<div class="btn-success modal-header">
+	<h3 class="modal-title">Odpowiedź</h3>
+</div>
+<form class="form-horizontal" role="form" ng-submit="saveWinner()">
+	<div class="modal-body">
+		
+		<div class="form-body">
+			
+			<div class="form-group">
+				<label class="col-md-3 control-label">{{ 'suggested_realization_term' | translate }}</label>
+				<div class="col-md-9">
+					<input type="text" ng-disabled="true" class="form-control" ng-model="auction.realizationDate">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-md-3 control-label">Data realizacji drukarni</label>
+				<div class="col-md-9">
+					<input type="text" ng-disabled="true" class="form-control" ng-model="response.realizationDate">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-md-3 control-label">{{ 'realization_date' | translate }}</label>
+				<div class="col-md-9">
+					<div ng-model="form.realizationDateFinal" ng-required="true" dp-datepicker></div>
+				</div>
+			</div>
+			<div class="form-group"  ng-repeat="item in auction.items" >
+				<label class="col-md-3 control-label">
+					<span><i class="fa fa-cube"></i> {{ item.productName }}</span>
+					<p>
+						{{ 'product_name'| translate}}: <b>{{ item.name }}</b>
+					</p>
+					<p>
+						{{ 'signature'| translate}}: <b>{{ item.signature }}</b>
+					</p>
+					<p ng-if="item.pages">
+						{{ 'pages'| translate}}: <b>{{ item.pages }}</b>
+					</p>
+					<p>
+						{{ 'format'| translate}}: <b>{{ item.formatName }} {{ item.formatWidth ? item.formatWidth + ' x ' + item.formatHeight + ' mm' : ''}} </b>
+					</p>
+					<p ng-repeat="opt in item.options">
+						{{ opt.attrName }}: <b>{{ opt.optName }}</b>
+					</p>
+					<p>
+						{{ 'volume'| translate}}: <b>{{ item.volume }}</b>
+					</p>
+					<p ng-if="item.singleDelivery">
+						Wysyłka w jedno miejsce: <b>{{ item.singleDelivery }}</b>
+					</p>
+					<p ng-if="item.multiDelivery">
+						Wysyłka wg rozdzielnika: <b>{{ item.multiDelivery }}</b>
+					</p>
+				</label>
+				<div class="col-md-9">
+					<input ng-model="response.items[item.ID].price" type="text" class="form-control" placeholder="Wprowadź ceną za produkt" ng-disabled="true">
+
+					<input ng-model="form.items[item.ID].finalPrice" type="text" class="form-control" placeholder="Wprowadź ceną z prowizją" >
+				</div>
+			</div>
+			<!-- <div class="form-group">
+					<label class="col-md-3 control-label">{{ 'companyID' | translate }}</label>
+					<div class="col-md-9">
+							<input ng-model="form.companyID" type="text" class="form-control" placeholder="">
+					</div>
+			</div> -->
+			<div class="form-group">
+				<label class="col-md-3 control-label">{{ 'description' | translate }}</label>
+				<div class="col-md-9">
+					<textarea ng-model="form.description" type="text" class="form-control" placeholder="{{ 'description' | translate }}">
+					</textarea>
+				</div>
+			</div>
+			
+		</div>
+
+	</div>
+	<div class="modal-footer">
+		<button class="btn red-sunglo" type="button" ng-click="$dismiss();">{{ 'cancel' | translate }}</button>
+		<button class="btn btn-success"><i class="fa fa-check"></i> {{ 'send' | translate }}</button>
+	</div>
+</form>

@@ -1,0 +1,123 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-tv"></i> {{ 'template-variables' | translate }}
+                </div>
+                <div class="tools">
+                    <button button-faq-accordion="contents.template-variables"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <div  class="row" ng-repeat="template in globalTemplateVariables" style="margin-bottom: 30px; border-bottom: solid 1px black;">
+                    <div class="col-md-2">
+                        {{template.templateName}}
+                    </div>
+                    <div class="col-md-10">
+                        <div ng-repeat="variable in template.variables" class="clickable-buttons" style="margin-bottom: 10px;">
+                            {{variable.name}}
+                            <button ng-repeat="value in variable.valuesArray"
+                            ng-click="saveVariable(variable,value)"
+                            ng-class="{'red-sunglo':value.selected}" class="btn">{{value.name|translate}}</button><br>
+                            <p style="font-size: 12px; margin-bottom: 0px;"><i><b>{{ 'description' | translate }}:</b></i> <div ng-bind-html="templateStatic[variable.name]"></div></p>
+                            <hr>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="caption">
+                            {{ 'defined-template-variables' | translate }}
+                        </div>
+                        <table class="table table-striped table-hover">
+                            <thead>
+                            <tr role="row" class="heading">
+                                <th>{{ 'template' | translate }}</th>
+                                <th>{{ 'variable_name' | translate }}</th>
+                                <th>{{ 'values' | translate }}</th>
+                                <th class="text-right">{{ 'actions' | translate }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="tv in templateVariables">
+                                <td>{{tv.templateName}}</td>
+                                <td>{{tv.name}}</td>
+                                <td>{{tv.values}}</td>
+                                <td class="text-right">
+                                    <a class="edit" href="javascript:;" ng-click="edit(tv)"
+                                       tooltip="{{ 'edit' | translate }}">{{ 'edit' | translate }}</a>
+                                    <a class="delete" href="javascript:;" ng-confirm-click="remove(tv)"
+                                       tooltip="{{ 'delete' | translate }}">{{ 'delete' | translate }}</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="portlet light">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    {{ 'add_variable_type' | translate }}
+                                </div>
+                            </div>
+                            <div class="portlet-body form">
+                                <form class="form-horizontal" role="form" ng-submit="add()">
+                                    <div class="form-body">
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'variable_name' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.name" type="text" class="form-control"
+                                                       placeholder="{{ 'variable_name' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'values' | translate }}
+                                                <i class="fa fa-info-circle" tooltip="Lista wartości separowanych '|'"></i>
+                                            </label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.values" type="text" class="form-control"
+                                                       placeholder="{{ 'values' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'template' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <select title="{{ 'select_template' | translate }}"
+                                                        class="form-control" required
+                                                        ng-model="form.templateName"
+                                                        ng-options="template.name as template.name for template in templates">
+                                                    <option value="">{{ 'select_template' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                                <button ng-click="resetForm()" type="button" class="btn red-sunglo">{{
+                                                    'cancel' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,2150 @@
+{
+  "benchmark": {
+    "name": "industrial_large",
+    "description": "Large-scale industrial benchmark with 1000 memories simulating real-world production data",
+    "version": "1.0",
+    "file": "benchmarking/sets/industrial_large.yaml"
+  },
+  "execution": {
+    "timestamp": "2026-01-02T11:14:24.289738",
+    "num_memories": 1000,
+    "num_queries": 96,
+    "total_time_seconds": 22.600428104400635
+  },
+  "metrics": {
+    "mrr": 0.11475694444444445,
+    "hit_rate": {
+      "@3": 0.11458333333333333,
+      "@5": 0.1875,
+      "@10": 0.3020833333333333
+    },
+    "precision": {
+      "@3": 0.03819444444444444,
+      "@5": 0.0375,
+      "@10": 0.0375
+    },
+    "recall": {
+      "@3": 0.06597222222222222,
+      "@5": 0.10416666666666667,
+      "@10": 0.19618055555555555
+    },
+    "performance": {
+      "avg_insert_time_ms": 20.82408308982849,
+      "avg_query_time_ms": 18.503593901793163,
+      "p95_query_time_ms": 24.607181549072266,
+      "p99_query_time_ms": 26.665687561035156
+    },
+    "overall_quality_score": 0.12340277777777779
+  },
+  "detailed_results": [
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0827",
+        "incident_0918",
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 15.11383056640625,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0470",
+        "doc_0369",
+        "doc_0009"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 21.139144897460938,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0124",
+        "log_0605"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 16.811132431030273,
+      "difficulty": "medium",
+      "category": "service_issues"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0026"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 18.05400848388672,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0182",
+        "ticket_0717",
+        "ticket_0655"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 20.50924301147461,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What api-gateway issues occurred?",
+      "expected": [
+        "log_0575",
+        "log_0078",
+        "log_0530"
+      ],
+      "retrieved": [
+        "log_0071",
+        "log_0298",
+        "log_0236",
+        "log_0530",
+        "log_0433",
+        "log_0038",
+        "log_0516",
+        "log_0053",
+        "log_0443",
+        "log_0692"
+      ],
+      "latency_ms": 20.602941513061523,
+      "difficulty": "hard",
+      "category": "service_issues"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0369",
+        "doc_0299",
+        "doc_0412"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 20.409822463989258,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0747",
+        "doc_0632",
+        "doc_0662"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 22.069692611694336,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0473"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 24.607181549072266,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0827",
+        "incident_0197"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 17.047882080078125,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0563"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 19.075632095336914,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0661"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.448020935058594,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0563"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 19.99831199645996,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0102"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 19.811391830444336,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0655",
+        "ticket_0024",
+        "ticket_0883"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 14.873981475830078,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0711",
+        "incident_0918",
+        "incident_0197"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 14.952659606933594,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0918",
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 16.1287784576416,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0883"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 17.563343048095703,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about database",
+      "expected": [
+        "doc_0509",
+        "doc_0893",
+        "doc_0105"
+      ],
+      "retrieved": [
+        "doc_0404",
+        "doc_0893",
+        "doc_0747",
+        "doc_0817",
+        "doc_0357",
+        "doc_0492",
+        "doc_0867",
+        "doc_0509",
+        "doc_0317",
+        "doc_0965"
+      ],
+      "latency_ms": 19.314050674438477,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0197",
+        "incident_0254"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 17.68803596496582,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0560",
+        "ticket_0883",
+        "ticket_0154"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.63970947265625,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0169",
+        "doc_0404",
+        "doc_0408"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 18.521785736083984,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0411",
+        "log_0567"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 18.580913543701172,
+      "difficulty": "medium",
+      "category": "service_issues"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0267",
+        "metric_0229"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 26.665687561035156,
+      "difficulty": "medium",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0540",
+        "ticket_0024"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 17.415523529052734,
+      "difficulty": "medium",
+      "category": "tickets"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0752",
+        "metric_0829"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 18.364667892456055,
+      "difficulty": "medium",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0699",
+        "ticket_0142",
+        "ticket_0182"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 15.80190658569336,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0156",
+        "log_0004",
+        "log_0517"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 16.24608039855957,
+      "difficulty": "hard",
+      "category": "service_issues"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0773",
+        "ticket_0693",
+        "ticket_0733"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 19.098997116088867,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0952",
+        "ticket_0182",
+        "ticket_0272"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.26133918762207,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0563",
+        "incident_0711",
+        "incident_0197"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 16.484498977661133,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0000"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 23.007869720458984,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0720"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 26.519775390625,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0730"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 18.49198341369629,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0265"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 17.90618896484375,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0141"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 20.232439041137695,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0588"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 22.69291877746582,
+      "difficulty": "easy",
+      "category": "service_issues"
+    },
+    {
+      "query": "What api-gateway issues occurred?",
+      "expected": [
+        "log_0723"
+      ],
+      "retrieved": [
+        "log_0071",
+        "log_0298",
+        "log_0236",
+        "log_0530",
+        "log_0433",
+        "log_0038",
+        "log_0516",
+        "log_0053",
+        "log_0443",
+        "log_0692"
+      ],
+      "latency_ms": 24.293899536132812,
+      "difficulty": "easy",
+      "category": "service_issues"
+    },
+    {
+      "query": "Find documentation about database",
+      "expected": [
+        "doc_0817",
+        "doc_0632",
+        "doc_0492"
+      ],
+      "retrieved": [
+        "doc_0404",
+        "doc_0893",
+        "doc_0747",
+        "doc_0817",
+        "doc_0357",
+        "doc_0492",
+        "doc_0867",
+        "doc_0509",
+        "doc_0317",
+        "doc_0965"
+      ],
+      "latency_ms": 15.462636947631836,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0089",
+        "ticket_0986",
+        "ticket_0750"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 15.728235244750977,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0745",
+        "metric_0173",
+        "metric_0521"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 22.629499435424805,
+      "difficulty": "hard",
+      "category": "metrics"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0439"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 24.765968322753906,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0343",
+        "ticket_0781",
+        "ticket_0930"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.337156295776367,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0532"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.007661819458008,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0506"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 16.31927490234375,
+      "difficulty": "easy",
+      "category": "service_issues"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0094",
+        "ticket_0424",
+        "ticket_0807"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.579389572143555,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0514"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 18.82195472717285,
+      "difficulty": "easy",
+      "category": "service_issues"
+    },
+    {
+      "query": "Find documentation about database",
+      "expected": [
+        "doc_0404",
+        "doc_0965"
+      ],
+      "retrieved": [
+        "doc_0404",
+        "doc_0893",
+        "doc_0747",
+        "doc_0817",
+        "doc_0357",
+        "doc_0492",
+        "doc_0867",
+        "doc_0509",
+        "doc_0317",
+        "doc_0965"
+      ],
+      "latency_ms": 17.853260040283203,
+      "difficulty": "medium",
+      "category": "documentation"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0369"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 15.866994857788086,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0749",
+        "incident_0563"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 15.445232391357422,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0975",
+        "doc_0116",
+        "doc_0789"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 18.09859275817871,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What servers have high disk_io?",
+      "expected": [
+        "metric_0572",
+        "metric_0879"
+      ],
+      "retrieved": [
+        "metric_0782",
+        "metric_0943",
+        "metric_0194",
+        "metric_0597",
+        "metric_0422",
+        "metric_0022",
+        "metric_0315",
+        "metric_0916",
+        "metric_0917",
+        "metric_0879"
+      ],
+      "latency_ms": 22.134780883789062,
+      "difficulty": "medium",
+      "category": "metrics"
+    },
+    {
+      "query": "What auth-service issues occurred?",
+      "expected": [
+        "log_0124",
+        "log_0831"
+      ],
+      "retrieved": [
+        "log_0588",
+        "log_0124",
+        "log_0171",
+        "log_0045",
+        "log_0384",
+        "log_0327",
+        "log_0472",
+        "log_0776",
+        "log_0187",
+        "log_0128"
+      ],
+      "latency_ms": 16.53122901916504,
+      "difficulty": "medium",
+      "category": "service_issues"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0089"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.31784439086914,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0918"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 18.21279525756836,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0563",
+        "incident_0711",
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 15.113353729248047,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0408",
+        "doc_0397",
+        "doc_0747"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 14.698028564453125,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0636"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 20.38860321044922,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0197",
+        "incident_0918",
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 13.916969299316406,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0507"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 17.044544219970703,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0397",
+        "doc_0984",
+        "doc_0660"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 21.438121795654297,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0752"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 15.224933624267578,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0918",
+        "incident_0711"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 19.38486099243164,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0197"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 23.97441864013672,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What servers have high memory?",
+      "expected": [
+        "metric_0200"
+      ],
+      "retrieved": [
+        "log_0426",
+        "log_0083",
+        "log_0511",
+        "log_0993",
+        "log_0364",
+        "log_0220",
+        "log_0891",
+        "log_0888",
+        "log_0400",
+        "log_0635"
+      ],
+      "latency_ms": 22.37677574157715,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "What servers have high disk_io?",
+      "expected": [
+        "metric_0943",
+        "metric_0277"
+      ],
+      "retrieved": [
+        "metric_0782",
+        "metric_0943",
+        "metric_0194",
+        "metric_0597",
+        "metric_0422",
+        "metric_0022",
+        "metric_0315",
+        "metric_0916",
+        "metric_0917",
+        "metric_0879"
+      ],
+      "latency_ms": 16.422033309936523,
+      "difficulty": "medium",
+      "category": "metrics"
+    },
+    {
+      "query": "What servers have high memory?",
+      "expected": [
+        "metric_0610",
+        "metric_0574"
+      ],
+      "retrieved": [
+        "log_0426",
+        "log_0083",
+        "log_0511",
+        "log_0993",
+        "log_0364",
+        "log_0220",
+        "log_0891",
+        "log_0888",
+        "log_0400",
+        "log_0635"
+      ],
+      "latency_ms": 19.858121871948242,
+      "difficulty": "medium",
+      "category": "metrics"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 14.804363250732422,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0471",
+        "metric_0714",
+        "metric_0862"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 15.246868133544922,
+      "difficulty": "hard",
+      "category": "metrics"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0589",
+        "doc_0461",
+        "doc_0169"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 20.577669143676758,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0669"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 24.075746536254883,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0945",
+        "ticket_0655",
+        "ticket_0089"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 18.263578414916992,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0827",
+        "incident_0197",
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 16.60943031311035,
+      "difficulty": "hard",
+      "category": "incidents"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0679",
+        "doc_0015"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 14.483451843261719,
+      "difficulty": "medium",
+      "category": "documentation"
+    },
+    {
+      "query": "What servers have high disk_io?",
+      "expected": [
+        "metric_0586",
+        "metric_0630",
+        "metric_0587"
+      ],
+      "retrieved": [
+        "metric_0782",
+        "metric_0943",
+        "metric_0194",
+        "metric_0597",
+        "metric_0422",
+        "metric_0022",
+        "metric_0315",
+        "metric_0916",
+        "metric_0917",
+        "metric_0879"
+      ],
+      "latency_ms": 15.729904174804688,
+      "difficulty": "hard",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0986",
+        "ticket_0652",
+        "ticket_0733"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 22.672176361083984,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0661"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 21.91162109375,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "What servers have high cpu_usage?",
+      "expected": [
+        "metric_0473"
+      ],
+      "retrieved": [
+        "metric_0714",
+        "metric_0173",
+        "metric_0046",
+        "metric_0543",
+        "metric_0704",
+        "metric_0752",
+        "metric_0694",
+        "metric_0521",
+        "metric_0130",
+        "metric_0323"
+      ],
+      "latency_ms": 16.99090003967285,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0141"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 16.390562057495117,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "Find documentation about authentication",
+      "expected": [
+        "doc_0470"
+      ],
+      "retrieved": [
+        "doc_0141",
+        "doc_0412",
+        "doc_0240",
+        "doc_0026",
+        "doc_0397",
+        "doc_0660",
+        "doc_0408",
+        "doc_0470",
+        "doc_0009",
+        "doc_0984"
+      ],
+      "latency_ms": 16.405105590820312,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0102",
+        "ticket_0652",
+        "ticket_0158"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 19.63973045349121,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about database",
+      "expected": [
+        "doc_0632",
+        "doc_0317"
+      ],
+      "retrieved": [
+        "doc_0404",
+        "doc_0893",
+        "doc_0747",
+        "doc_0817",
+        "doc_0357",
+        "doc_0492",
+        "doc_0867",
+        "doc_0509",
+        "doc_0317",
+        "doc_0965"
+      ],
+      "latency_ms": 25.110244750976562,
+      "difficulty": "medium",
+      "category": "documentation"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0802"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 17.43340492248535,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Find documentation about API",
+      "expected": [
+        "doc_0822"
+      ],
+      "retrieved": [
+        "doc_0040",
+        "doc_0374",
+        "doc_0893",
+        "doc_0404",
+        "doc_0240",
+        "doc_0978",
+        "doc_0170",
+        "doc_0579",
+        "doc_0412",
+        "doc_0141"
+      ],
+      "latency_ms": 16.026973724365234,
+      "difficulty": "easy",
+      "category": "documentation"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0827"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 16.53432846069336,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What servers have high disk_io?",
+      "expected": [
+        "metric_0916"
+      ],
+      "retrieved": [
+        "metric_0782",
+        "metric_0943",
+        "metric_0194",
+        "metric_0597",
+        "metric_0422",
+        "metric_0022",
+        "metric_0315",
+        "metric_0916",
+        "metric_0917",
+        "metric_0879"
+      ],
+      "latency_ms": 20.15089988708496,
+      "difficulty": "easy",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0074"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 19.56939697265625,
+      "difficulty": "easy",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0711",
+        "incident_0827"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 18.354415893554688,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "Find documentation about database",
+      "expected": [
+        "doc_0679",
+        "doc_0841",
+        "doc_0431"
+      ],
+      "retrieved": [
+        "doc_0404",
+        "doc_0893",
+        "doc_0747",
+        "doc_0817",
+        "doc_0357",
+        "doc_0492",
+        "doc_0867",
+        "doc_0509",
+        "doc_0317",
+        "doc_0965"
+      ],
+      "latency_ms": 15.490055084228516,
+      "difficulty": "hard",
+      "category": "documentation"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0918",
+        "incident_0711"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 17.543554306030273,
+      "difficulty": "medium",
+      "category": "incidents"
+    },
+    {
+      "query": "What servers have high memory?",
+      "expected": [
+        "metric_0103",
+        "metric_0135",
+        "metric_0855"
+      ],
+      "retrieved": [
+        "log_0426",
+        "log_0083",
+        "log_0511",
+        "log_0993",
+        "log_0364",
+        "log_0220",
+        "log_0891",
+        "log_0888",
+        "log_0400",
+        "log_0635"
+      ],
+      "latency_ms": 16.77870750427246,
+      "difficulty": "hard",
+      "category": "metrics"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0343",
+        "ticket_0250"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 18.1121826171875,
+      "difficulty": "medium",
+      "category": "tickets"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0424",
+        "ticket_0531",
+        "ticket_0773"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 18.40066909790039,
+      "difficulty": "hard",
+      "category": "tickets"
+    },
+    {
+      "query": "Show critical incidents",
+      "expected": [
+        "incident_0749"
+      ],
+      "retrieved": [
+        "ticket_0486",
+        "ticket_0034",
+        "ticket_0903",
+        "ticket_0048",
+        "log_0117",
+        "log_0098",
+        "log_0805",
+        "ticket_0023",
+        "incident_0466",
+        "incident_0190"
+      ],
+      "latency_ms": 18.028974533081055,
+      "difficulty": "easy",
+      "category": "incidents"
+    },
+    {
+      "query": "What are high priority tickets?",
+      "expected": [
+        "ticket_0601",
+        "ticket_0000"
+      ],
+      "retrieved": [
+        "ticket_0420",
+        "ticket_0731",
+        "ticket_0029",
+        "ticket_0781",
+        "ticket_0636",
+        "ticket_0245",
+        "ticket_0556",
+        "ticket_0945",
+        "ticket_0024",
+        "ticket_0750"
+      ],
+      "latency_ms": 16.63684844970703,
+      "difficulty": "medium",
+      "category": "tickets"
+    },
+    {
+      "query": "What api-gateway issues occurred?",
+      "expected": [
+        "log_0575"
+      ],
+      "retrieved": [
+        "log_0071",
+        "log_0298",
+        "log_0236",
+        "log_0530",
+        "log_0433",
+        "log_0038",
+        "log_0516",
+        "log_0053",
+        "log_0443",
+        "log_0692"
+      ],
+      "latency_ms": 19.974708557128906,
+      "difficulty": "easy",
+      "category": "service_issues"
+    }
+  ]
+}

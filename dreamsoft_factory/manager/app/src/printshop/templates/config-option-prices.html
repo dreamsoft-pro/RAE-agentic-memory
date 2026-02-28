@@ -1,0 +1,456 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-cog"></i> {{ "option" | translate }}: {{ currentOptionName }}
+            <a ng-if="prevOption" ui-sref="printshop-configOptionSettings-prices({optID: prevOption})" class="prevNext"
+               tooltip="{{ 'goto_previous_option' | translate }}"><i class="fa fa-arrow-circle-left"></i></a>
+            <a ng-if="nextOption" ui-sref="printshop-configOptionSettings-prices({optID: nextOption})" class="prevNext"
+               tooltip="{{ 'goto_next_option' | translate }}"><i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+<div ui-view="menu"></div>
+<div class="row" id="prices">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <!-- paperPRice -->
+            <div class="portlet light" ng-if="attribute.type == 3">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-dollar"></i> Cennik papieru w kilogramach
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" ng-click="refreshPaperPrice()" class="reload">
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+
+                    <div class="overflowContainer">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                            <tr role="row" class="heading">
+                                <th>{{ 'kilograms_quantity' | translate }}</th>
+                                <th>{{ 'unit_price' | translate }}</th>
+                                <th>{{ 'unit_cost' | translate }}</th>
+                                <th>{{ 'actions' | translate }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="price in paperPrices | orderBy: 'amount'">
+                                <td>{{price.amount}}</td>
+                                <td>{{price.price}}</td>
+                                <td>{{price.expense}}</td>
+                                <td>
+                                    <button data-ng-confirm-click="removePaperPrice(price)"
+                                            data-toggle="tooltip" data-container="body" tooltip="{{langArr.delete}}"
+                                            class="btn red-sunglo btn-xs">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="portlet light">
+                        <form class="form-horizontal" role="form" ng-submit="setPaperPrice()">
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'kilograms_quantity' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="paperPriceForm.amount" type="text" class="form-control"
+                                           placeholder="{{ 'amount' | translate }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'price' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="paperPriceForm.price" type="text" class="form-control"
+                                           placeholder="{{ 'price' | translate }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'expense' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="paperPriceForm.expense" type="text" class="form-control"
+                                           placeholder="{{ 'expense' | translate }}">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <div class="row">
+                                    <div class="col-md-offset-3 col-md-9">
+                                        <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{
+                                            'add' | translate }}
+                                        </button>
+                                        <button ng-click="resetPaperPriceForm()" type="button" class="btn red-sunglo">{{
+                                            'cancel' | translate }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista kontrolerów -->
+
+            <a ng-click="getPrices(each)" class="btn blue-hoki marginedBtn" ng-repeat="each in controllers">
+                {{each.name}}
+                <span class="badge">{{ getCountPrices(each) }}</span>
+            </a>
+
+            <div style="margin-top: 15px;" class="portlet light"
+                 ng-if="priceController">
+                <div id="price-controller-{{priceController.ID}}" class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-dollar"></i> {{ priceController.name }}
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" ng-click="refresh()" class="reload">
+                        </a>
+                    </div>
+                </div>
+
+                <div class="portlet-body">
+                    <form class="form-horizontal" role="form" ng-submit="saveDetailPrice()">
+                        <div class="form-body">
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label"></label>
+                                <div class="col-md-9">
+                                    <div class="checkbox-list">
+                                        <label>
+                                            <div class="checker"><span
+                                                    ng-class="{checked: formDetailPrice.manHours}"><input
+                                                    ng-model="formDetailPrice.manHours" type="checkbox"></span></div>
+                                            {{ 'use_man_hours' | translate }}</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label"></label>
+                                <div class="col-md-9">
+                                    <div class="checkbox-list">
+                                        <label>
+                                            <div class="checker"><span
+                                                    ng-class="{checked: formDetailPrice.excluded}"><input
+                                                    ng-model="formDetailPrice.excluded" type="checkbox"></span></div>
+                                            {{ 'exclude_counting_with_the_calculation' | translate }}</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" ng-if="attribute.type == 2">
+                                <label class="col-md-3 control-label"></label>
+                                <div class="col-md-9">
+                                    <div class="checkbox-list">
+                                        <label>
+                                            <div class="checker"><span
+                                                    ng-class="{checked: formDetailPrice.printRotated}"><input
+                                                    ng-model="formDetailPrice.printRotated" type="checkbox"></span>
+                                            </div>
+                                            {{ 'two_sided_print_rotated_halves' | translate }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" ng-if="!formDetailPrice.manHours">
+                                <label class="col-md-3 control-label">{{ 'price_per_start_instrument' | translate
+                                    }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="formDetailPrice.basePrice" type="text" class="form-control"
+                                           placeholder="{{ 'price' | translate }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'minimum_price_not_less_then' | translate
+                                    }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="formDetailPrice.minPrice" type="text" class="form-control"
+                                           placeholder="{{ 'minimum_price' | translate }}">
+                                </div>
+                            </div>
+
+                            <div class="form-group" ng-if="!formDetailPrice.manHours">
+                                <label class="col-md-3 control-label">{{ 'startup_cost' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-model="formDetailPrice.startUp" type="text" class="form-control"
+                                           placeholder="{{ 'startup_cost' | translate }}">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save'
+                                        | translate }}
+                                    </button>
+                                    <button ng-click="resetDetailPrice()" type="button" class="btn red-sunglo">{{
+                                        'cancel' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <br/>
+
+
+                    <div class="tools">
+                        <a href="javascript:;" ng-click="refresh()" class="reload">
+                        </a>
+                    </div>
+
+                    <div class="portlet-body">
+
+                        <div class="alert alert-block alert-info" ng-if="discountGroups.length > 0">
+
+                            <div class="row" >
+                                <div class="col-md-12">
+                                    <div class="col-md-6">
+                                        <span ng-if="discountGroupID > 0">{{ 'prices_for_discount_group' | translate}}</span><br>
+                                        <h4 ng-bind="showDiscountGroupName()"></h4>
+                                        <a ng-if="discountGroupID > 0" ui-sref="discounts({ discountGroupId: discountGroupID})"
+                                           data-toggle="tooltip"
+                                           class="btn blue-hoki btn-xs">
+                                            {{ 'go_to_list_of_discounted_process' | translate }}
+                                        </a>
+                                    </div>
+                                    <label class="col-md-3 control-label">{{ 'change_discount_group' | translate}}</label>
+                                    <div class="col-md-3">
+                                        <select class="form-control discountGroupSelect" ng-model="discountGroupID"
+                                                ng-change="changeDiscountGroup(discountGroup.ID)"
+                                        ng-options="discountGroup.ID as discountGroup.langs[currentLang.code].name for discountGroup in discountGroups"
+                                        >
+                                            <option value="">{{ 'select' | translate }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="portlet light" ng-repeat="prices in pricelist" ng-if="!formDetailPrice.manHours">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <i class="fa icon-puzzle"></i> {{ 'pricelist' | translate }}: {{
+                                    getPriceType(prices[0].priceType).name}}
+                                </div>
+                                <div class="pull-right">
+                                    <button class="btn red-sunglo btn-xs"
+                                            data-ng-confirm-click="removeAllPrices(prices[0].priceType)">{{ 'remove_all' | translate }}
+                                    </button>
+                                    <button class="btn btn-xs" ng-click="importDialog( prices[0].priceType )">{{'import' | translate}}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-block alert-info">
+                                <div class="row" >
+                                    <div class="col-md-12">
+                                        {{('price_type_description_'+_.findWhere(priceTypes,{ID:prices[0].priceType}).function) | translate}}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="portlet-body">
+
+                                <div class="overflowContainer">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                        <tr role="row" class="heading">
+                                            <th>{{ 'ID' | translate }}</th>
+                                            <th>{{ 'number_interval' | translate }}</th>
+                                            <th>{{ 'unit_price' | translate }}</th>
+                                            <th>{{ 'unit_cost' | translate }}</th>
+                                            <th>{{ 'actions' | translate }}</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr ng-repeat="price in prices |orderBy: 'amount'">
+                                            <td>{{price.ID}}</td>
+                                            <td>{{price.amount}}</td>
+                                            <td>{{price.value}}</td>
+                                            <td>{{price.expense}}</td>
+                                            <td>
+                                                <button data-ng-confirm-click="removePrice(price)"
+                                                        data-toggle="tooltip" data-container="body"
+                                                        tooltip="{{langArr.delete}}"
+                                                        class="btn red-sunglo btn-xs">
+                                                    <span class="glyphicon glyphicon-remove"></span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <form class="form-horizontal" role="form" ng-submit="savePrice(prices.editPrice)"
+                                      ng-init="prices.editPrice.priceType = prices[0].priceType">
+                                    <div class="form-body">
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'number_interval' | translate
+                                                }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="prices.editPrice.amount" type="text" class="form-control"
+                                                       placeholder="{{ 'number_interval' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'unit_price' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="prices.editPrice.value" type="text" class="form-control"
+                                                       placeholder="{{ 'unit_price' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'unit_cost' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="prices.editPrice.expense" type="text" class="form-control"
+                                                       placeholder="{{ 'unit_cost' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" ng-if="discountGroups.length > 0">
+                                            <label class="col-md-3 control-label">{{ 'select_discount_group' | translate}}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control"
+                                                        ng-init="prices.editPrice.discountGroupID = discountGroupID"
+                                                        disabled ng-model="prices.editPrice.discountGroupID"
+                                                        ng-options="discountGroup.ID as discountGroup.langs[currentLang.code].name for discountGroup in discountGroups">
+                                                    <option value="">{{ 'select' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                                <button ng-click="resetPriceForm(prices.editPrice)" type="button"
+                                                        class="btn red-sunglo">{{ 'cancel' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+
+                        <div class="portlet light" ng-if="!formDetailPrice.manHours">
+                            <div class="portlet-title">
+                                <div class="caption font-green-haze col-md-3 text-right">
+                                    {{ 'add_new' | translate }}
+                                </div>
+                                <div class="pull-right">
+                                    <button class="btn btn-xs" ng-click="importDialog()">{{'import' | translate}}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+
+                                <form class="form-horizontal" role="form" ng-submit="savePrice(addPrice)">
+                                    <div class="form-body">
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'type_of_pricelist' | translate
+                                                }}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" required="required"
+                                                        ng-model="addPrice.priceType"
+                                                        ng-options="each.ID as each.name for each in priceTypes"></select>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert alert-block alert-info">
+                                            <div class="row" >
+                                                <div class="col-md-12">
+                                                    {{('price_type_description_'+_.findWhere(priceTypes,{ID:addPrice.priceType}).function) | translate}}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'number_interval' | translate
+                                                }} [{{_.findWhere(priceTypes,{ID:addPrice.priceType}).unit}}]</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="addPrice.amount" type="text" class="form-control"
+                                                       placeholder="{{ 'number_interval' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'unit_price' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="addPrice.value" type="text" class="form-control"
+                                                       placeholder="{{ 'unit_price' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'unit_cost' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="addPrice.expense" type="text" class="form-control"
+                                                       placeholder="{{ 'unit_cost' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'select_discount_group' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" disabled ng-model="addPrice.discountGroupID" >
+                                                    <option value="">{{ 'select' | translate }}</option>
+                                                    <option ng-selected="addPrice.discountGroupID == discountGroup.ID"
+                                                            ng-repeat="discountGroup in discountGroups"
+                                                            value="{{discountGroup.ID}}">
+                                                        {{ discountGroup.langs[currentLang.code].name }}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                                <button ng-click="resetAddPriceForm()" type="button"
+                                                        class="btn red-sunglo">{{ 'cancel' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.configOptionsPrices"></div>
+    </div>
+</div>

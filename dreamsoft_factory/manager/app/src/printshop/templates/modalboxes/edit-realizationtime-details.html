@@ -1,0 +1,56 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'edit' | translate }}: {{oryg.name}}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+    <div class="modal-body">
+
+        <div class="form-body">
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'realization_time' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.days" type="text" class="form-control"
+                           placeholder="{{ 'days_number' | translate }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'price' | translate }} +</label>
+                <div class="col-md-9">
+                    <div class="input-inline">
+                        <div class="input-group">
+              <span class="input-group-addon">
+                %
+              </span>
+                            <input ng-model="form.pricePercentage" type="text" class="form-control"
+                                   placeholder="{{ 'price' | translate }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-9">
+                    <div class="checkbox-list">
+                        <label>
+                            <div class="checker"><span ng-class="{checked: form.active}"><input ng-model="form.active"
+                                                                                                type="checkbox"></span>
+                            </div>
+                            {{ 'active' | translate }}</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+        <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+    </div>
+
+</form>

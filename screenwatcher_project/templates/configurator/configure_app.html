@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+  /* Simple style for ROI drawing */
+  #roi-container {
+      position: relative;
+      display: inline-block;
+  }
+  #roi-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+  }
+  .roi-rect {
+      position: absolute;
+      border: 2px dashed red;
+      pointer-events: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Configure: {{ application.name }}</h1>
+<p>Draw rectangles on the screenshot to define regions of interest. After releasing the mouse, you will be prompted to enter a name and select a data type. The ROI will be saved via the API.</p>
+
+<div id="roi-container">
+    <img id="screenshot" src="{{ application.screenshot.url }}" alt="Screenshot" class="img-fluid">
+    <div id="roi-overlay"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/roi_selector.js' %}"></script>
+<script>
+  // Initialize ROI selector with endpoint configuration
+  window.addEventListener('load', function () {
+      const img = document.getElementById('screenshot');
+      const overlay = document.getElementById('roi-overlay');
+      if (img && overlay) {
+          window.initializeRoiSelector(img, overlay, {
+              apiUrl: '{% url "configurator-api:regionofinterest-list" %}',
+              applicationId: {{ application.id }}
+          });
+      }
+  });
+</script>
+{% endblock %}

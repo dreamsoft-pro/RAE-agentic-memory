@@ -1,0 +1,4 @@
+  File "/mnt/extra_storage/RAE-agentic-memory-agnostic-core/agent_hive/hive_engine_v56.py", line 82
+    if '')[1].replace('tsx', '').replace('typescript', '').strip()
+         ^
+SyntaxError: unmatched ')'

@@ -1,0 +1,205 @@
+{
+  "benchmark": {
+    "name": "academic_lite",
+    "description": "Lightweight academic benchmark for RAE quality testing",
+    "version": "1.0",
+    "file": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/benchmarking/sets/academic_lite.yaml"
+  },
+  "execution": {
+    "timestamp": "2025-12-07T13:06:00.545268",
+    "num_memories": 10,
+    "num_queries": 7,
+    "total_time_seconds": 2.0804734230041504
+  },
+  "metrics": {
+    "mrr": 1.0,
+    "hit_rate": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "precision": {
+      "@3": 0.3333333333333333,
+      "@5": 0.2,
+      "@10": 0.1
+    },
+    "recall": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "performance": {
+      "avg_insert_time_ms": 201.14431381225586,
+      "avg_query_time_ms": 9.861469268798828,
+      "p95_query_time_ms": 11.085033416748047,
+      "p99_query_time_ms": 11.085033416748047
+    },
+    "overall_quality_score": 0.88,
+    "math": {
+      "structure": {
+        "graph_connectivity_score": {
+          "value": 0.0,
+          "metadata": {
+            "num_nodes": 10,
+            "num_edges": 0,
+            "average_degree": 0.0
+          }
+        },
+        "graph_entropy": {
+          "value": 0.0,
+          "metadata": {
+            "num_nodes": 10,
+            "degree_distribution": []
+          }
+        }
+      },
+      "dynamics": {
+        "memory_drift_index": {
+          "value": 0.0,
+          "metadata": {
+            "memories_t0": 10,
+            "memories_t1": 10,
+            "time_delta_seconds": 0.112473
+          }
+        },
+        "structural_drift": {
+          "value": 0.0,
+          "metadata": {
+            "edges_t0": 0,
+            "edges_t1": 0,
+            "edges_added": 0,
+            "edges_removed": 0,
+            "edges_preserved": 0,
+            "jaccard_similarity": 1.0
+          }
+        }
+      },
+      "policy": {
+        "optimal_retrieval_ratio": {
+          "value": 1.0,
+          "metadata": {
+            "num_queries": 7,
+            "optimal_hits": 7,
+            "k": 5,
+            "avg_rank_of_first_hit": 1.0,
+            "avg_optimal_per_query": 1.0
+          }
+        }
+      }
+    }
+  },
+  "detailed_results": [
+    {
+      "query": "What is the capital of France?",
+      "expected": [
+        "2"
+      ],
+      "retrieved": [
+        "2",
+        "9",
+        "3",
+        "10",
+        "7"
+      ],
+      "latency_ms": 10.56361198425293,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "Who discovered DNA?",
+      "expected": [
+        "1"
+      ],
+      "retrieved": [
+        "1",
+        "4",
+        "10",
+        "3",
+        "6"
+      ],
+      "latency_ms": 8.434534072875977,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "What programming language was created by Guido van Rossum?",
+      "expected": [
+        "3"
+      ],
+      "retrieved": [
+        "3",
+        "4",
+        "1",
+        "7",
+        "6"
+      ],
+      "latency_ms": 9.333372116088867,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "How fast does light travel?",
+      "expected": [
+        "8"
+      ],
+      "retrieved": [
+        "8",
+        "4",
+        "6",
+        "7",
+        "9"
+      ],
+      "latency_ms": 9.093046188354492,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "How many neurons are in the human brain?",
+      "expected": [
+        "6"
+      ],
+      "retrieved": [
+        "6",
+        "8",
+        "1",
+        "7",
+        "3"
+      ],
+      "latency_ms": 9.869098663330078,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "Which scientist developed the theory of relativity?",
+      "expected": [
+        "4"
+      ],
+      "retrieved": [
+        "4",
+        "1",
+        "8",
+        "10",
+        "3"
+      ],
+      "latency_ms": 11.085033416748047,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "What awards did Marie Curie win?",
+      "expected": [
+        "10"
+      ],
+      "retrieved": [
+        "10",
+        "1",
+        "4",
+        "7",
+        "2"
+      ],
+      "latency_ms": 10.651588439941406,
+      "difficulty": "medium",
+      "category": "unknown"
+    }
+  ]
+}

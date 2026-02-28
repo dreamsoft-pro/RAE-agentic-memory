@@ -1,0 +1,51 @@
+<div class="modal-header">
+  <h3 class="modal-title">Add permission</h3>
+</div>
+<div class="modal-body" >
+  <div class="row">
+    <div class="col-md-12">
+
+
+      <form class="form-horizontal" role="form">
+        <div class="form-group">
+          <label for="form_package" class="col-sm-2 control-label">Package</label>
+          <div class="col-sm-10">
+            <input type="text" ng-model="form.package" class="form-control" id="form_package" placeholder="Package name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="form_controller" class="col-sm-2 control-label">Controller</label>
+          <div class="col-sm-10">
+            <input type="text" ng-model="form.controller" class="form-control" id="form_controller" placeholder="Controller name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="form_action" class="col-sm-2 control-label">Action</label>
+          <div class="col-sm-10">
+            <input type="text" ng-model="form.action" class="form-control" id="form_action" placeholder="Action name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="form_description" class="col-sm-2 control-label">Description</label>
+          <div class="col-sm-10">
+            <input  type="text" ng-model="form.desc" class="form-control" id="form_description" placeholder="Description">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox">
+              <label>
+                <input ng-model="form.default" type="checkbox" ng-true-value="1" ng-false-value="0"> Default
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-primary" ng-click="ok()">OK</button>
+  <button class="btn btn-warning" ng-click="$dismiss()">Cancel</button>
+</div>

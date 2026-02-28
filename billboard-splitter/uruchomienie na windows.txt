@@ -1,0 +1,120 @@
+niezbędne biblioteki
+
+
+(venv) PS C:\python-soft\pd_1\pd_1> pip freeze
+altgraph==0.17.4
+cffi==1.17.1
+chardet==5.2.0
+colorama==0.4.6
+cryptography==44.0.2
+cssselect2==0.8.0
+lxml==5.3.1
+mysql-connector-python==9.3.0
+packaging==24.2
+pdf2image==1.17.0
+pefile==2023.2.7
+pillow==11.1.0
+pycparser==2.22
+pyinstaller==6.12.0
+pyinstaller-hooks-contrib==2025.2
+pyModbusTCP==0.3.0
+PyMySQL==1.1.1
+pypdf==5.4.0
+python-barcode==0.15.1
+pywin32-ctypes==0.2.3
+qrcode==8.0
+reportlab==4.3.1
+setuptools==78.0.2
+svglib==1.5.1
+tinycss2==1.4.0
+ttkthemes==3.2.2
+types-cryptography==3.3.23.2
+webencodings==0.5.1
+(venv) PS C:\python-soft\pd_1\pd_1>
+
+pip install altgraph chardet colorama sqlparse cssselect2 cryptography lxml mysql-connector-python types-cryptography ttkthemes packaging pefile pillow pdf2image pyinstaller pyinstaller-hooks-contrib pypdf python-barcode pywin32-ctypes qrcode reportlab setuptools svglib tinycss2 webencodings pymysql pyModbusTCP mysql-connector-python aioftp
+
+pip install aioftp sqlparse
+
+pip install PyMuPDF
+
+aktywacja bibliotek gdy dezaktywuję środowisko
+w PowerShell:
+
+  .\venv\Scripts\Activate.ps1
+
+lub w CMD:
+
+  venv\Scripts\activate
+
+w Linux dla podglądu trzeba dodać:
+sudo apt install poppler-utils
+
+billoard splitter
+
+uruchomienie w pythonie:
+ cd C:\Users\lilia\billboard-splitter
+ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+ python -m venv venv
+ .\venv\Scripts\Activate.ps1
+
+
+
+
+# Wyczyść stare buildy (opcjonalnie)
+Remove-Item -Recurse -Force .\build,.\dist -ErrorAction SilentlyContinue
+
+# Budowa ze SPEC
+pyinstaller --clean --noconfirm ".\billboard-splitter.spec"
+
+
+
+
+
+ testy:
+ pytest -q --cov=./ --cov-config=.coveragerc --cov-report=term-missing --cov-report=html:htmlcov-selected
+
+
+ cd C:\Users\lilia\billboard-splitter
+ 
+ python main.pyw
+
+billboard marker
+C:\python-soft\pd_1\pd_1\!!_Billboard_marker> 
+ python -m gui.main_window
+
+
+
+wersja GROK
+C:\python-soft\pd_1\pd_1\!!_Billboard_marker\zzzz-GROK 
+
+
+cd C:\python-soft\pd_1\pd_1\!!_Billboard_marker\zzzz-GROK\12-06-2025--07-36
+
+python -m unittest discover tests
+
+
+
+budowa exe w wersji z podglądem
+
+pyinstaller --onefile --noconsole --name billboard-splitter --add-data "settings.json;." --add-data "profiles.json;." --add-data "billboard3.pdf;input" --icon "icons/billboard_icon.ico" --add-data "poppler\\bin;poppler\\bin" main.py
+
+pyinstaller --onefile --console --name billboard-splitter --add-data "settings.json;." --add-data "profiles.json;." --add-data "billboard3.pdf;input" --icon "icons/billboard_icon.ico" --add-data "poppler\\bin;poppler\\bin" main.py
+
+pyinstaller --onedir --noconsole --name billboard-splitter --add-data "settings.json;." --add-data "profiles.json;." --add-data "billboard3.pdf;input" --icon "icons/billboard_icon.ico" --add-data "poppler\\bin;poppler\\bin" main.py
+
+pyinstaller --onedir --console --name billboard-splitter --add-data "settings.json;." --add-data "profiles.json;." --add-data "billboard3.pdf;input" --icon "icons/billboard_icon.ico" --add-data "poppler\\bin;poppler\\bin" main.py
+
+
+
+podpisanie aplikacji
+https://www.youtube.com/watch?v=zqd80Yp9ZSc
+
+
+$cert = New-SelfSignedCertificate -CertStoreLocation "cert:\LocalMachine\My" -DnsName "nazwaTwojegoCertyfikatu" -Type CodeSigning
+
+
+
+Granty:
+https://digit.arp.pl/#texte77ce83e-6b34-40d7-b600-820ab39499b7
+https://digit.arp.pl/#textb7f8d69e-f656-4570-9f51-725384140dd0

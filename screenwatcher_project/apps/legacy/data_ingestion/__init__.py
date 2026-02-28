@@ -1,0 +1,1 @@
+"""App for ingesting data from ScreenWatcher clients into the database."""

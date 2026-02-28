@@ -1,0 +1,12 @@
+{
+  "optimal_retrieval_ratio": {
+    "value": 1.0,
+    "metadata": {
+      "num_queries": 20,
+      "optimal_hits": 20,
+      "k": 5,
+      "avg_rank_of_first_hit": 1.0,
+      "avg_optimal_per_query": 1.0
+    }
+  }
+}

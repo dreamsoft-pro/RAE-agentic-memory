@@ -1,0 +1,242 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i>
+                    <span class="caption-subject text-uppercase">{{ 'categories' | translate }}</span>
+                </div>
+                <div class="tools">
+                    <button button-faq-accordion="contents.categories"></button>
+                </div>
+                <div class="actions">
+
+                </div>
+            </div>
+
+            <div class="portlet-body">
+                <div ng-if="!!categories.length" class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th sort-trigger>#</th>
+                            <th sort-trigger>
+                                {{ 'name' | translate }}
+                                <select ng-model="showLang"
+                                        ng-options="lang.code as lang.name for (key, lang) in languages"
+                                        ng-init="showLang = currentLang.code"></select>
+
+                            </th>
+                            <th>
+                                {{ 'url' | translate }}
+                            </th>
+                            <th>{{ 'discounts_group' | translate }}</th>
+                            <th>{{ 'active' | translate }}</th>
+                            <th class="text-right">{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody ui-sortable="sortableOptions" ng-model="categories">
+                        <tr ng-repeat="category in categories">
+                            <td class="noWrap verticalMiddle">
+                                <button
+                                        class="btn btn-default btn-xs button-sort">
+                                    <span class="fa fa-sort"></span>
+                                </button>
+                                {{ category.ID }}
+                            </td>
+                            <td>
+                                {{ category.langs[showLang].name }}
+                            </td>
+                            <td>
+                                {{ category.langs[showLang].url }}
+                            </td>
+                            <td>
+                                <span>{{ category.discountGroupNames[showLang] }}</span>
+                            </td>
+                            <td>
+                                <span class="btn blue-stripe btn-xs"
+                                      ng-class="{'red-sunglo-stripe': category.active == 0}">
+                                {{ !!category.active ? 'yes' : 'no' | translate }}
+                              </span>
+                            </td>
+                            <td class="text-right">
+                                <button class="btn blue-hoki btn-xs" href="javascript:;" ng-click="editChilds(category)"
+                                        tooltip="{{ 'view' | translate }}">
+                                    <i class="fa fa-cubes"></i>
+                                    {{ "subcategories" | translate }} <span
+                                        class="badge">{{ category.childs.length }}</span>
+                                </button>
+                                <button class="btn blue-hoki btn-xs" href="javascript:;" ng-click="editStart(category)"
+                                        tooltip="{{ 'edit' | translate }}">
+                                    <i class="glyphicon glyphicon-edit"></i>
+                                </button>
+                                <button-template-variables category="{{category.ID}}"></button-template-variables>
+                                <button ng-click="editDescriptions(category)"
+                                        data-toggle="tooltip" data-container="body"
+                                        tooltip="{{ 'descriptions' | translate }}"
+                                        class="btn blue-hoki btn-xs">
+                                    <span class="glyphicon glyphicon-tasks"></span>
+                                </button>
+                                <button class="btn red-sunglo btn-xs" href="javascript:;"
+                                        ng-confirm-click="delete(category)" tooltip="{{ 'delete' | translate }}">
+                                    <i class="glyphicon glyphicon-remove"></i>
+                                </button>
+                                <a class="btn btn-default btn-xs"
+                                   ui-sref="contents-categories-sort({categoryid: category.ID})">
+                                    <i class="fa fa-sort"></i>
+                                    {{ "sort" | translate }}
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <button class="btn btn-success" ng-if="sortChange" ng-click="sortSave()">
+                        {{ 'save_the_change_order' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-if="sortChange" ng-click="sortCancel()">
+                        {{ 'cancel' | translate }}
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption font-green-haze col-md-3 text-right" ng-show="currentContent == null">
+                        {{ 'add_category' | translate }}
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <form class="form-horizontal" role="form" ng-submit="save()">
+                        <div class="form-body">
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'language' | translate }}</label>
+                                <div class="col-md-9">
+                                    <select class="form-control" ng-init="selectedLang = currentLang.code"
+                                            ng-model="selectedLang"
+                                            ng-options="each.code as each.name for (key, each) in languages"></select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'parent' | translate }}</label>
+                                <div class="col-md-9">
+                                    <select ng-model="categoryForm.parentID" class="form-control"
+                                            ng-options="category.ID as category.langs[selectedLang].name for category in categories">
+                                        <option value="">{{ 'root' | translate }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-repeat="lang in languages" ng-show="selectedLang == lang.code"
+                                           ng-model="categoryForm.langs[lang.code].name" type="text"
+                                           class="form-control" placeholder="{{lang.code}}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">{{ 'url' | translate }}</label>
+                                <div class="col-md-9">
+                                    <input ng-repeat="lang in languages" ng-show="selectedLang == lang.code"
+                                           ng-model="categoryForm.langs[lang.code].url" type="text" class="form-control"
+                                           placeholder="{{lang.code}}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label" >
+                                    {{ 'select_discount_group' | translate }}
+                                    <i  tooltip="{{ 'restrict_category_to_discount_group' | translate }}"
+                                        class="fa fa-question-circle" aria-hidden="true"></i>
+                                </label>
+                                <div class="col-md-9">
+                                    <select class="form-control" ng-model="categoryForm.discountGroupID"
+                                            ng-options="each.ID as each.langs[currentLang.code].name for each in discountGroups">
+                                        <option value="">{{ 'select' | translate }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-3 control-label"></label>
+                                <div class="col-md-9">
+                                    <div class="checkbox-list">
+                                        <label>
+                                            <div class="checker">
+                                            <span ng-class="{checked: categoryForm.onMainPage}">
+                                                <input ng-model="categoryForm.onMainPage" type="checkbox">
+                                            </span>
+                                            </div>
+                                            {{ 'visible_on_main_page' | translate }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Metatagi -->
+
+
+<!--                            <div class="form-group">-->
+<!--                                <span class="col-md-3 control-label"><strong>{{'meta_tags' | translate}}</strong></span>-->
+<!--                            </div>-->
+
+<!--                            <div class="form-group">-->
+<!--                                <label class="col-md-3 control-label">{{ 'Title' }}</label>-->
+<!--                                <div class="col-md-9">-->
+<!--                                    <input style="height:auto" type="text" class="form-control"-->
+<!--                                           ng-repeat="lang in languages" ng-show="metatagsLang == lang.code"-->
+<!--                                           ng-model="categoryForm.metatags[lang.code].title"/>-->
+<!--                                </div>-->
+<!--                            </div>-->
+
+<!--                            <div class="form-group">-->
+<!--                                <label class="col-md-3 control-label">{{ 'Keywords' }}</label>-->
+<!--                                <div class="col-md-9">-->
+<!--                                    <textarea style="height:auto" class="form-control" ng-repeat="lang in languages"-->
+<!--                                              ng-show="metatagsLang == lang.code"-->
+<!--                                              ng-model="categoryForm.metatags[lang.code].keywords"></textarea>-->
+<!--                                </div>-->
+<!--                            </div>-->
+
+<!--                            <div class="form-group">-->
+<!--                                <label class="col-md-3 control-label">{{ 'Description' }}</label>-->
+<!--                                <div class="col-md-9">-->
+<!--                                    <textarea style="height:auto" class="form-control" ng-repeat="lang in languages"-->
+<!--                                              ng-show="metatagsLang == lang.code"-->
+<!--                                              ng-model="categoryForm.metatags[lang.code].description"></textarea>-->
+<!--                                    <select class="form-control" ng-init="metatagsLang = currentLang.code"-->
+<!--                                            ng-model="metatagsLang"-->
+<!--                                            ng-options="each.code as each.name for (key, each) in languages"></select>-->
+<!--                                </div>-->
+<!--                            </div>-->
+
+
+
+                            <!-- Koniec Metatagi -->
+                        </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <div class="btn-group pull-right">
+
+                                        <button type="submit" class="btn btn-success"><i class="fa"
+                                                                                         ng-class="{ 'fa-plus': (currentContent == null), 'fa-check': (currentContent !== null) }"></i>
+                                            {{ currentContent !== null ? 'save': 'add' | translate }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

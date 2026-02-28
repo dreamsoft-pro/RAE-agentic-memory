@@ -1,0 +1,35 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            {{ "raports" | translate }}
+        </div>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="cols-xs-12">
+            <ul class="nav nav-tabs nav-justified">
+                <li ng-class="{active: $state.includes('production-raports-operators')}">
+                    <a ui-sref="production-raports-operators">
+            {{"operators" | translate}}
+          </a>
+                </li>
+                <li ng-class="{active: $state.includes('production-raports-devices')}">
+                    <a ui-sref="production-raports-devices">
+            {{"devices" | translate}}
+          </a>
+                </li>
+                <li ng-class="{active: $state.includes('production-raports-orders')}">
+                    <a ui-sref="production-raports-orders">
+            {{"orders" | translate}}
+          </a>
+                </li>
+                <li ng-class="{active: $state.includes('production-raport-operations')}">
+                    <a ui-sref="production-raport-operations">
+            {{"operations" | translate}}
+          </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

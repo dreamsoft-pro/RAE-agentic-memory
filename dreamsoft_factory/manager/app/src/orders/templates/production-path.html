@@ -1,0 +1,866 @@
+<script>
+    function show_full_path() {
+        var cols = document.getElementsByClassName('full_path');
+        for (i = 0; i < cols.length; i++) {
+            cols[i].style.display = 'block';
+        }
+        document.getElementById("button_simple_path").style.backgroundColor = "#fff";
+        document.getElementById("button_simple_path").style.borderColor = "#ccc";
+        document.getElementById("button_simple_path").style.color = "black";
+
+        document.getElementById("button_full_path").style.backgroundColor = "#dfba49";
+        document.getElementById("button_full_path").style.borderColor = "#dbb233";
+        document.getElementById("button_full_path").style.color = "white";
+    }
+
+    function hide_full_path() {
+        var cols = document.getElementsByClassName('full_path');
+        for (i = 0; i < cols.length; i++) {
+            cols[i].style.display = 'none';
+        }
+
+        document.getElementById("button_simple_path").style.backgroundColor = "#dfba49";
+        document.getElementById("button_simple_path").style.borderColor = "#dbb233";
+        document.getElementById("button_simple_path").style.color = "white";
+
+        document.getElementById("button_full_path").style.backgroundColor = "#fff";
+        document.getElementById("button_full_path").style.borderColor = "#ccc";
+        document.getElementById("button_full_path").style.color = "black";
+    }
+</script>
+<style ng-if="currentDevice.defaultPath == 1">
+    .full_path{
+        display: block;
+    }
+    #button_simple_path{
+        background-color: #fff;
+        border-color: #ccc;
+        color: black;
+    }
+    #button_full_path{
+        background-color: #dfba49;
+        border-color: #dbb233;
+        color: white;
+    }
+</style>
+<style ng-if="currentDevice.defaultPath == 0 || !currentDevice.defaultPath">
+    .full_path{
+        display: none;
+    }
+    #button_full_path{
+        background-color: #fff;
+        border-color: #ccc;
+        color: black;
+    }
+    #button_simple_path{
+        background-color: #dfba49;
+        border-color: #dbb233;
+        color: white;
+    }
+</style>
+<style>
+    .page-spinner-bar{
+        display: none !important;
+    }
+    
+    .headFoldButton {
+        display: none;
+    }
+
+    .in-progress {
+        background-color: #b3f4ef;
+    }
+
+    @media only screen and (max-width: 1200px) {
+        .colOrderID {
+            margin-right: 0px !important;
+            float: none !important;
+        }
+    }
+
+    @media only screen and (max-width: 600px) {
+        .table-production thead th:not(:first-child) {
+            display: none;
+        }
+
+        .table-production td,
+        .table-production th {
+            display: block;
+        }
+    }
+
+    @media only screen and (max-width: 992px) {
+        .mobileColumn {
+            height: auto !important;
+        }
+    }
+
+    .col-12-6-3 {
+        width: 25% !important;
+    }
+
+    .col-12-6-3Head {
+        width: 25% !important;
+    }
+
+    .actionButtonsMobile {
+        display: none;
+    }
+
+    .actionButtonsDesktop {
+        display: block;
+    }
+
+    .onlyMobile {
+        display: none;
+    }
+
+    .mobileInfoButtons {
+        width: 30px;
+        height: 30px;
+        margin-top: -4px;
+    }
+
+    @media only screen and (max-width: 1630px) {
+        .col-12-6-3 {
+            width: 50% !important;
+        }
+
+        .onlyMobile {
+            display: inline-block;
+        }
+
+        .actionButtonsMobile {
+            display: block;
+            text-align: right;
+        }
+
+        .actionButtonsDesktop {
+            display: none;
+        }
+
+        .actionButtonsMobile button {
+            font-size: 12px;
+            padding: 3px 5px;
+        }
+
+        .headFoldButton {
+            display: block;
+        }
+    }
+
+    @media only screen and (max-width: 1200px) {
+        .col-12-6-3Head {
+            width: 50% !important;
+        }
+
+        .col-12-6-3 {
+            width: 50% !important;
+        }
+    }
+
+    @media only screen and (max-width: 992px) {
+        .col-12-6-3Head {
+            width: 100% !important;
+        }
+
+        .col-12-6-3 {
+            width: 100% !important;
+            height: auto !important;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .mobileHistory {
+            margin: auto;
+            margin-top: 10px !important;
+            margin-bottom: 10px;
+            width: 221px !important;
+        }
+
+        .mutedMobile {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mobileInfoButtons2 {
+            margin-top: -4px;
+        }
+
+        .iconMobile {
+            font-size: 20px;
+        }
+
+        .iconMobileButton {
+            padding: 15px 25px;
+        }
+
+        .actionButtonsMobile button {
+            font-size: 14px;
+            padding: 5px 10px;
+        }
+
+        .actionButtonsMobile {
+            text-align: center;
+        }
+    }
+
+    @media only screen and (max-width: 700px) {}
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-graph"></i> {{ 'production_path' | translate }}
+                </div>
+
+                <div class="tools">
+                    <button button-faq-accordion="orders.productionPath"></button>
+                </div>
+            </div>
+
+            <div class="portlet-body">
+                <div ng-repeat="devices in devicesByDepartments" class="row">
+                    <p>{{departments[$index].name}}
+                        <span class="badge">
+                            {{sumOngoings(devices)}}
+                        </span>
+                    </p>
+                    <div class="col-sm-4 col-md-3 col-lg-2" style="padding: 5px 20px; box-sizing: border-box;"
+                        ng-repeat="device in devices" ng-style="{backgroundColor: departments[$parent.$index].color}">
+                        <div class="row">
+                            <button style="width: 100%;" class="btn btn-sm col-12" ng-click="go(device)"
+                                ng-class="{'blue-hoki': ongoingsCtrl.params.deviceID != device.ID, 'btn-success': ongoingsCtrl.params.deviceID == device.ID}">
+                                {{device.name}}
+                                <span class="badge">
+                                    {{ _.findWhere(countOngoings, {ID: device.ID}).countTasks || 0 }}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 25px;margin-bottom: 25px;">
+                    <div class="col-sm-4 col-md-3 col-lg-2" style="padding: 5px 20px; box-sizing: border-box;">
+                        <div class="row">
+                            <button style="width: 100%;" type="button" class="btn btn-default"
+                                ng-class="{'btn-warning': ongoingsCtrl.params.finished == 2}" ng-click="">
+                                {{ 'planned_tasks' | translate }}
+                                <span ng-if="ongoingsCtrl.params.finished == 0" class="badge"> {{
+                                    ongoingsCtrl.totalItems }} </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-3 col-lg-2" style="padding: 5px 20px; box-sizing: border-box;">
+                        <div class="row">
+                            <button style="width: 100%;" type="button" class="btn btn-default"
+                                ng-class="{'btn-warning': ongoingsCtrl.params.finished == 0}" ng-click="seeFinished(0)">
+                                {{ 'current_tasks' | translate }}
+                                <span ng-if="ongoingsCtrl.params.finished == 0" class="badge"> {{
+                                    ongoingsCtrl.totalItems }} </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-3 col-lg-2" style="padding: 5px 20px; box-sizing: border-box;">
+                        <div class="row">
+                            <button style="width: 100%;" type="button" class="btn btn-default"
+                                ng-class="{'btn-warning': ongoingsCtrl.params.finished == 1}" ng-click="seeFinished(1)">
+                                {{ 'archive_tasks' | translate }}
+                                <span ng-if="ongoingsCtrl.params.finished == 1" class="badge"> {{
+                                    ongoingsCtrl.totalItems }} </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom: 5px;">
+                    <div class="col-md-3" style="font-size: 26px;">
+                        {{deviceName}}
+                    </div>
+                    <div class="col-md-3 col-lg-2" style="padding-left: 5px; padding-right: 5px;">
+                        <button style="width: 100%;" id="button_simple_path" type="button" class="btn btn-default"
+                            ng-class="{'btn-warning': ongoingsCtrl.params.finished == 1}" ng-click="currentDevice.defaultPath = 0"
+                            onclick="hide_full_path();">
+                            {{ 'simple_path' | translate }}
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-lg-2" style="padding-left: 5px; padding-right: 5px;">
+                        <button style="width: 100%;" id="button_full_path" type="button" class="btn btn-default"
+                            ng-class="{'btn-warning': ongoingsCtrl.params.finished == 1}" ng-click="currentDevice.defaultPath = 1"
+                            onclick="show_full_path();">
+                            {{ 'full_path' | translate }}
+                        </button>
+                    </div>
+                    <div class="col-sm-12 col-md-3 col-lg-3 colOrderID"
+                        style="padding-left: 0px; padding-right: 0px; border: solid 3px #44b5b1; background: #f0f3fa; float: right; margin-right: 15px; margin-bottom: 15px;">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div
+                                    style="text-align: center; color: white; padding: 5px; width: 100%; background: #44b5b1;">
+                                    Order ID</div>
+                                <input style="text-align: center; background: #f0f3fa;" type="text"
+                                    class="form-control form-filter input-sm" ng-change="setParams()"
+                                    placeholder="Type order ID or use barcode" ng-model="ongoingsCtrl.params.ID" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div style="clear:both;"></div>
+                </div>
+
+
+                <div ng-if="ongoingsCtrl.totalItems > 0" class="overflowContainer">
+                    <div class="row">
+                        <button class="btn btn-primary headFoldButton" type="button" data-toggle="collapse"
+                            data-target="#headCollapse" aria-expanded="false" aria-controls="headCollapse"
+                            style="color: black; background-color: white; border-color: white;">
+                            <i style="font-size: 26px;" class="fa fa-bars"></i>
+                        </button>
+                    </div>
+
+                    <div class="row headerDesktop collapse in" id="headCollapse" style="margin-left: 0px; margin-right: 0; background-color: #F1F3FA; margin-bottom: 15px; padding: 10px; font-size: 14px; font-weight: 500 !important;
+                    color: #67809F; border-bottom: 1px solid #ddd; text-align: center;">
+                        <div class="row">
+                            <div class="col-12-6-3Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        #
+                                    </div>
+                                    <div class="col-md-5">
+                                        {{ 'user' | translate }}
+                                        <br> {{ 'order' | translate }}
+                                    </div>
+                                    <div class="col-md-5">
+                                        {{ 'product' | translate }}
+                                        <br> {{ 'realization_time' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ 'operation' | translate }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ 'process' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-sm-12 col-md-3">
+                                        {{ 'operator' | translate }}
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                        {{ 'volume' | translate }}
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                        {{ 'sheetQuantity' | translate }}
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                        {{ 'square_meters_symbol' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ 'info' | translate }}
+                                    </div>
+                                    <div class="col-md-8">
+                                        {{ 'actions' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <hr
+                                style="background-color: #cecece; height: 3px; width: 90%;margin: auto;margin-top: 10px; margin-bottom: 10px;" />
+                        </div>
+                        <div class="row">
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'ID' | translate }}"
+                                            ng-model="ongoingsCtrl.params.ID" />
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'user_id' | translate }}"
+                                            ng-model="ongoingsCtrl.params.userID" />
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'order_id' | translate }}"
+                                            ng-model="ongoingsCtrl.params.orderID" />
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'product_id' | translate }}"
+                                            ng-model="ongoingsCtrl.params.productID" />
+                                        <br>
+                                        <input ng-change="setParams()" placeholder="{{ 'from' | translate }}"
+                                            dp-datepicker ng-model="ongoingsCtrl.params.realisationTimeFrom" />
+                                        <input dp-datepicker ng-change="setParams()"
+                                            placeholder="{{ 'to' | translate }}"
+                                            ng-model="ongoingsCtrl.params.realisationTimeTo" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'operation_id' | translate }}"
+                                            ng-model="ongoingsCtrl.params.operationID" />
+                                    </div>
+                                    <div class="col-md-6">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-sm-12 col-md-3">
+                                        <input type="text" class="form-control form-filter input-sm"
+                                            ng-change="setParams()" placeholder="{{ 'operator_id' | translate }}"
+                                            ng-model="ongoingsCtrl.params.operatorID" />
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                    </div>
+                                    <div class="col-sm-12 col-md-3">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12-6-33Head col-md-3" style="height: auto;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                    </div>
+                                    <div class="col-md-8">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ng-repeat="task in ongoingsCtrl.items">
+                        <!-- START OF NORMAL ONGOING-->
+                        <div class="row" ng-class="{'in-progress': task.state === 1}" ng-style="{'background-color': task.state != 1 ? '#F1F3FA' : ''}" style="margin-left: 0px; margin-right: 0;  margin-bottom: 15px; padding: 10px; padding-top: 0px;">
+                            <div class="row" style="padding-top: 10px;" ng-class="{'in-progress': task.state === 1}">
+                                <!--DOCK 1-->
+                                <div class="col-12-6-3 col-md-3" style="height: 100px;">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            {{ task.ID }}
+                                        </div>
+                                        <div class="col-md-5">
+                                            <button class="btn btn-default"
+                                                style="width: 100%; padding: 5px; white-space: normal;">
+                                                <!--{{ 'user_id' | translate }}: {{ task.userID }}-->
+                                                {{task.user.name}} {{task.user.lastname}}
+                                            </button>
+                                            <br>
+                                            <button ui-sref="orders-orders({orderID: task.orderID })"
+                                                class="btn btn-default"
+                                                style="width: 100%; padding: 5px; white-space: normal;">
+                                                {{ 'order_id' | translate }}: {{ task.orderID }}
+                                            </button>
+                                        </div>
+                                        <div class="col-md-5">
+                                            {{ task.calculateProduct.typeName }} - {{ task.productID }}
+                                            <br><br>
+                                            <b>{{ task.realisationDate || '-' }}</b>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--DOCK 2-->
+                                <div class="col-12-6-3 col-md-3" style="height: 120px;">
+                                    <div class="row">
+                                        <div ng-if="!task.finished" class="col-md-6">
+                                            <button ng-click="startTask(task);" type="button"
+                                                class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': task.state === 1}" ng-disabled="task.finished"
+                                                tooltip="{{ 'start' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-play"></span>
+                                            </button>
+                                            <button ng-click="pauseTask(task);" type="button"
+                                                class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': task.state === 2}" ng-disabled="task.finished"
+                                                tooltip="{{ 'pause' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-pause"></span>
+                                            </button>
+                                            <button ng-confirm-click="changeState(task, 3, null);"
+                                                confirm-text="{{ 'task_will_be_transferred_to_next_device' | translate }}"
+                                                type="button" class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': task.state === 3}" ng-disabled="task.finished"
+                                                tooltip="{{ 'stop' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-stop"></span>
+                                            </button>
+                                            <br>
+                                            <button
+                                                class="mobileHistory btn btn-default marginTopLight prodPathHistory btn-block"
+                                                style="width: 143px;" ng-click="history(task, false)"
+                                                tooltip="{{ 'detailed_history' | translate }}"><i
+                                                    class="fa fa-calendar"></i>
+                                                {{ 'history' | translate }}
+                                            </button>
+                                        </div>
+                                        <div ng-if="!!task.finished" class="col-md-6">
+                                            <br>
+                                            <button class="btn btn-primary btn-xs marginTopLight"
+                                                ng-click="history(task, false)"
+                                                tooltip="{{ 'detailed_history' | translate }}"><i
+                                                    class="fa fa-calendar"></i>
+                                                {{ 'history' | translate }}
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-lg bg-yellow-crusta">
+                                                <span ng-if="task.operation.processes.length == 0">{{
+                                                    task.operation.name }}</span>
+                                                <span ng-if="task.operation.processes.length > 0 && !task.processID">
+                                                    {{ 'select_process' | translate }}
+                                                </span>
+                                                <span ng-if="task.operation.processes.length > 0 && task.processID">
+                                                    {{ _.findWhere(task.operation.processes, {selected:true}).name }}
+                                                </span>
+                                            </button>
+                                            <br>
+                                            <span ng-if="!task.externalData" class="muted mutedMobile">{{
+                                                task.device.name }}</span>
+                                            <span ng-if="task.externalData" class="muted mutedMobile">{{
+                                                task.device.name }}<br>{{ task.operationName }}
+                                                ({{task.externalData.option.name}})</span>
+
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="actionButtonsMobile">
+                                                <button ng-repeat="process in task.operation.processes"
+                                                    ng-click="changeProcess(task, process.ID)"
+                                                    class="btn btn-xs btn-default"
+                                                    ng-class="{'active': process.selected}">
+                                                    {{ process.name }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--DOCK 3-->
+                                <div class="col-12-6-3 col-md-3" style="height: 100px;">
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-3" ng-if="currentDevice.operationPlannedTime == null || currentDevice.operationPlannedTime == true">
+                                            {{ task.operator.name }}<br> {{ 'planned_time' | translate }}:
+                                            {{toHours(task.estimatedTime)}}
+                                        </div>
+                                        <div class="col-sm-12 col-md-3">
+                                            <span class="onlyMobile">
+                                                {{ 'volume' | translate }}:
+                                            </span>
+                                            <div ng-if="!task.externalData">
+                                                {{ task.volume }}<br> ({{ task.formatName }})<br> {{ 'pages' | translate
+                                                }}: {{ task.calculateProduct.pages }}
+                                            </div>
+                                            <div ng-if="task.externalData">
+                                                {{ task.externalData.quantity }} {{ task.externalData.unit }}
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12 col-md-3">
+                                            <div>
+                                                <span class="onlyMobile">
+                                                    {{ 'sheetQuantity' | translate }}:
+                                                </span> {{ task.sheetsInfo.fullSheetsProjectNumber }} x {{
+                                                task.sheetsInfo.fullProjectSheets }}
+                                            </div>
+                                            <div ng-if="task.sheetsInfo.partProjectSheets">
+                                                ({{ task.sheetsInfo.partValue }}) {{ task.sheetsInfo.partProjectSheets
+                                                }}
+                                            </div>
+                                            <div>
+                                                {{ task.workspace.name }}
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12 col-md-3">
+                                            <span class="onlyMobile">
+                                                {{ 'square_meters_symbol' | translate }}:
+                                            </span> {{ task.numberOfSquareMeters }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--DOCK 4-->
+                                <div class="col-12-6-3 col-md-3" style="height: 120px;">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <button class="mobileInfoButtons" tooltip="{{ 'message' | translate }}"
+                                                ng-click="showOrderMessage(task)" class="btn btn-xs"
+                                                ng-class="{'btn-warning':task.orderMessage, 'btn-default': !task.orderMessage}">
+                                                <i class="fa fa-info"></i>
+                                            </button>
+
+                                            <button tooltip="{{ 'message' | translate }}"
+                                                class="btn btn-xs btn-default mobileInfoButtons mobileInfoButtons2">
+                                                <i class="fa fa-envelope"></i>
+                                            </button>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <a ng-click="getProductCard(task.productID)"
+                                                class="btn btn-default btn-xs marginTopLight btn-block"
+                                                style="clear:left; float:left"
+                                                tooltip="{{ 'productCard' | translate }}"><i class="fa fa-file-o"></i>
+                                                {{ 'productCard' | translate }}
+                                            </a>
+                                            <br>
+                                            <button ng-if="!task.finished" ng-click="move(task)" data-toggle="tooltip"
+                                                data-container="body"
+                                                tooltip="{{ 'move_to_other_related_machine' | translate }}"
+                                                class="btn btn-default btn-xs btn-block" style="float:left;"><i
+                                                    class="icon-action-redo"></i>
+                                                {{ 'move_to_other_machine' | translate }}
+                                            </button>
+                                            <br>
+                                            <button ng-click="changeWorkplace(task)" data-toggle="tooltip"
+                                                data-container="body" tooltip="{{ 'change_workplace' | translate }}"
+                                                class="btn btn-default btn-xs btn-block" style="float:left;"><i
+                                                    class="icon-action-redo"></i>
+                                                {{ 'change_workplace' | translate }}
+                                            </button>
+                                            <br>
+                                            <button ng-click="changeOperator(task)" data-toggle="tooltip"
+                                                data-container="body" tooltip="{{ 'change_operator' | translate }}"
+                                                class="btn btn-default btn-xs btn-block" style="float:left;"><i
+                                                    class="icon-user"></i>
+                                                {{ 'change_operator' | translate }}
+                                            </button>
+                                            <br>
+                                            <button ng-click="additionalOperation(task, currentDevice)" data-toggle="tooltip"
+                                                data-container="body" tooltip="{{ 'change_operator' | translate }}"
+                                                class="btn btn-default btn-xs btn-block" style="float:left;"><i
+                                                    class="icon-magnifier-add"></i>
+                                                {{ 'additional_operation' | translate }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row full_path" ng-class="{'in-progress': task.state === 1}" style="padding: 10px 0;">
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="col-md-1">
+                                        </div>
+                                        <div class="col-md-11">
+                                            <div class="actionButtonsDesktop">
+                                                <button ng-repeat="process in task.operation.processes"
+                                                    ng-click="changeProcess(task, process.ID)"
+                                                    class="btn btn-xs btn-default"
+                                                    ng-class="{'active': process.selected}">
+                                                    {{ process.name }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row full_path" ng-class="{'in-progress': task.state === 1}" >
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="col-md-1">
+                                        </div>
+                                        <div class="col-md-11">
+                                            <form>
+                                                <table style="width: 100%;">
+                                                    <tbody>
+                                                        <tr ng-repeat="n in [] | range: task.sheetsInfo.rangeSheets">
+                                                            <td>
+                                                                <button ng-class="{'blue': task.sheetNumber == n+1,
+                                                        'grey-cascade': task.sheetNumber != n+1}"
+                                                                    ng-click="selectSheetNumber(task, n+1);"
+                                                                    class="btn btn-xs">{{ 'sheet' | translate }}
+                                                                    {{n+1}}</button>
+                                                            </td>
+                                                            <td>
+                                                                <button ng-class="{'blue': task.processSideType == 1 &&
+                                                        task.sheetNumber == n+1,
+                                                        'grey-cascade': task.processSideType != 1}"
+                                                                    ng-click="selectProcessSideType(task, 1)"
+                                                                    class="btn btn-block button-obverse">
+                                                                    {{ 'obverse' | translate }}
+                                                                </button>
+                                                                <button ng-class="{'blue': task.processSideType == 2 &&
+                                                        task.sheetNumber == n+1,
+                                                        'grey-cascade': task.processSideType != 2}"
+                                                                    ng-click="selectProcessSideType(task, 2)"
+                                                                    ng-if="task.doubleSidedSheet" class="btn btn-block">
+                                                                    {{ 'reverse' | translate }}
+                                                                </button>
+                                                            </td>
+                                                            <td>
+                                                                <input ng-model="task.madeSheets[n+1]"
+                                                                    class="form-control input-obverse"
+                                                                    placeholder="{{ 'made_sheets' | translate }}" />
+                                                                <input ng-model="task.madeSheetsReverse[n+1]"
+                                                                    ng-if="task.doubleSidedSheet" class="form-control"
+                                                                    placeholder="{{ 'made_sheets' | translate }}" />
+                                                            </td>
+                                                            <td>
+                                                                <button ng-click="saveProgress(task);"
+                                                                    class="btn btn-block button-obverse">
+                                                                    {{ 'save' | translate }}
+                                                                </button>
+                                                                <button ng-click="saveProgress(task);"
+                                                                    ng-if="task.doubleSidedSheet" class="btn btn-block">
+                                                                    {{ 'save' | translate }}
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <form>
+                                        <table style="width: 100%;">
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <span ng-if="task.progress">{{ task.progress[0].created}}</span>
+                                                        <span ng-if="!task.progress">{{ 'task_not_started_yet' | translate }}</span>
+                                                    </td>
+                                                    <td ng-if="task.progress">
+                                                        <span>{{ task.progress[task.progress.length-1].created}}</span>
+                                                    </td>
+                                                    <td ng-if="task.progress">
+                                                        <span ng-if="task.progress[task.progress.length-1].operatorName">{{ task.progress[task.progress.length-1].operatorName}}</span>
+                                                        <span ng-if="!task.progress[task.progress.length-1].operatorName">{{ 'no_opertor_specified' | translate }}</span>
+                                                    <td style="padding: 5px;" >
+                                                        <button data-toggle="tooltip" data-container="body"
+                                                            tooltip="{{ 'move_to_other_related_machine' | translate }}"
+                                                            class="btn btn-default btn-xs btn-block">
+                                                            {{ 'comment' | translate }}
+                                                        </button>
+                                                    </td>
+                                                    <td style="padding: 5px;">
+                                                        <button data-toggle="tooltip" data-container="body"
+                                                            tooltip="{{ 'move_to_other_related_machine' | translate }}"
+                                                            class="btn btn-default btn-xs btn-block">
+                                                            {{ 'transfer_to_another_operation' | translate }}
+                                                        </button>
+                                                        <button data-toggle="tooltip" data-container="body"
+                                                            tooltip="{{ 'move_to_other_related_machine' | translate }}"
+                                                            class="btn btn-default btn-xs btn-block">
+                                                            {{ 'transfer_to_another_machine' | translate }}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END OF NORMAL ONGOING-->
+                        <!-- START OF ADDITIONAL ONGOING-->
+                        <div ng-repeat="additionalOperation in task.additionalOperation" ng-if="additionalOperation.state !== 3" class="row" style="margin-left: 100px; margin-right: 0; background-color: #cfd9fc; margin-bottom: 15px; padding: 10px; padding-top: 0px;">
+                            <div class="row" style="padding-top: 10px;" ng-class="{'in-progress': additionalOperation.state === 1}">
+                                <!--DOCK 1-->
+                                <div class="col-12-6-3 col-md-3" style="height: 100px;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            {{ task.ID }} <b>({{additionalOperation.ID}})</b>
+                                        </div>
+                                        <div class="col-md-6" ng-if="additionalOperation.operator">
+                                            {{ 'Operator' | translate }}: {{ additionalOperation.operator.name}}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--DOCK 2-->
+                                <div class="col-12-6-3 col-md-3" style="height: 100px;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <button ng-click="changeStateAdditional(additionalOperation, 1);" type="button"
+                                                class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': additionalOperation.state === 1}" ng-disabled="additionalOperation.state === 3"
+                                                tooltip="{{ 'start' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-play"></span>
+                                            </button>
+                                            <button ng-click="changeStateAdditional(additionalOperation, 2);" type="button"
+                                                class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': additionalOperation.state === 2}" ng-disabled="additionalOperation.state === 3"
+                                                tooltip="{{ 'pause' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-pause"></span>
+                                            </button>
+                                            <button ng-click="changeStateAdditional(additionalOperation, 3);"
+                                                type="button" class="btn btn-default iconMobileButton"
+                                                ng-class="{'btn-success': additionalOperation.state === 3}" ng-disabled="additionalOperation.state === 3"
+                                                tooltip="{{ 'stop' | translate }}">
+                                                <span class="iconMobile glyphicon glyphicon-stop"></span>
+                                            </button>
+                                            <br>
+                                            <button
+                                                class="mobileHistory btn btn-default marginTopLight prodPathHistory btn-block"
+                                                style="width: 143px;" ng-click="history(additionalOperation, true)"
+                                                tooltip="{{ 'detailed_history' | translate }}"><i
+                                                    class="fa fa-calendar"></i>
+                                                {{ 'history' | translate }}
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="muted mutedMobile">{{ additionalOperation.operationName }}<br>
+                                                {{ additionalOperation.operationDesc }}
+                                            </span>
+                                            <br>
+                                            <button ng-click="changeOperatorAdditional(additionalOperation)" data-toggle="tooltip"
+                                                data-container="body" tooltip="{{ 'change_operator' | translate }}"
+                                                class="btn btn-default btn-xs btn-block" style="float:left;"><i
+                                                    class="icon-user"></i>
+                                                {{ 'change_operator' | translate }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END OF ADDITIONAL ONGOING-->
+                    </div>
+
+
+
+
+                    <pagination total-items="ongoingsCtrl.totalItems" ng-model="ongoingsCtrl.currentPage"
+                        ng-change="ongoingsCtrl.setPage(ongoingsCtrl.currentPage); ongoingsCtrl.get()"
+                        class="pagination-sm" max-size="10" boundary-links="true" rotate="true"
+                        items-per-page="ongoingsCtrl.params.limit"></pagination>
+
+                </div>
+
+
+
+                <span ng-if="!ongoingsCtrl.items.length" class="btn red-sunglo-stripe"
+                    style="display:block; text-align:left; margin-top:10px;">
+                    {{ 'noTasks' | translate }}
+                </span>
+
+                <span ng-if="!tasks.length && currentDeviceID" class="btn red-sunglo-stripe"
+                    style="display:block; text-align:left; margin-top:10px;">
+                    {{ 'no_operation_for_machine' | translate }}
+                </span>
+
+                <div class="fixedPositionSave">
+                    <button class="btn btn-success" ng-if="sortChange" ng-click="sortSave()">
+                        {{ 'save_the_change_order' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-if="sortChange" ng-click="sortCancel()">
+                        {{ 'cancel' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

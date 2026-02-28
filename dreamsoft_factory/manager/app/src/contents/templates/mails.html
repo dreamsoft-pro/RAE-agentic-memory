@@ -1,0 +1,42 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa fa-edit"></i>Mail Types
+        </div>
+        <!--  -->
+      </div>
+
+      <div class="portlet-body">
+        <div ng-if="!!mailTypes.length" class="overflowContainer">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr role="row" class="heading">
+                <th>#</th>
+                <th>
+                  {{ 'name' | translate }}
+                  <select ng-model="showLang" ng-options="lang.code as lang.name for (key, lang) in languages" ng-init="showLang = currentLang.code"></select>
+
+                </th>
+                <th  class="text-right">{{ 'actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="mailType in mailTypes | orderBy: 'ID'">
+                <td>{{ mailType.ID }}</td>
+                <td>
+                  {{ mailType.names[showLang] || mailType.names.en || '-' }}
+                </td>
+                <td class="text-right">
+                  <a class="edit" ui-sref="contents-mail-content({typeID: mailType.ID})"  tooltip="{{ 'content' | translate }}">{{ 'content' | translate }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

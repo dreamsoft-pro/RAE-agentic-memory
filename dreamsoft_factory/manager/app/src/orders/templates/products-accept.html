@@ -1,0 +1,244 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-check"></i> {{ 'file_acceptation' | translate }}
+                    <br><br>
+                    <ul class="nav nav-pills">
+                        <li role="presentation" ng-class="{'active': ordersCtrl.params.accept == 0}">
+                            <a ng-click="changeFilter(0)">{{ 'wait_for_accept' | translate }}</a>
+                        </li>
+                        <li role="presentation" ng-class="{'active': ordersCtrl.params.accept == -1}">
+                            <a ng-click="changeFilter(-1)">{{ 'items_rejected' | translate }}</a>
+                        </li>
+                        <li role="presentation" ng-class="{'active': ordersCtrl.params.accept == 1}">
+                            <a ng-click="changeFilter(1)">{{ 'products_accepted' | translate }}</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tools">
+                    <well class="btn-sm">{{ 'number_of_rows' | translate }}: <span class="badge">{{ ordersCtrl.totalItems }}</span>
+                    </well>
+
+                    <select class="btn-default input-sm" ng-model="showRows" ng-change="ordersCtrl.setRows(showRows)" ng-options="each for (null, each) in [10,25,50,100]"></select>
+
+                    <button ng-click="ordersCtrl.clearCache()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh"></i> {{ 'refreshOrders' | translate }}
+                    </button>
+                    <button button-faq-accordion="orders.products-accept"></button>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr role="row" class="heading">
+                                <th style="width:5%;">#</th>
+                                <th style="width:10%;">{{ 'user' | translate }}</th>
+                                <th style="width:5%;">{{ 'cart' | translate }}</th>
+                                <th style="width:10%;">{{ 'date' | translate }}</th>
+                                <th style="width:5%;">{{ 'name' | translate }}</th>
+                                <th style="width:45%;">{{ 'attributes' | translate }}</th>
+                                <th style="width:15%;">{{ 'accept' | translate }}/{{ 'reject' | translate }}</th>
+                            </tr>
+                            <tr role="row" class="filter">
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="ID" ng-model="ordersCtrl.params.ID">
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'user_id' | translate }}" ng-model="ordersCtrl.params.userID">
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'cart_id' | translate }}" ng-model="ordersCtrl.params.orderID">
+                                </td>
+                                <td>
+                                    <div ng-model="ordersCtrl.params.dateFrom" ng-change="setParams" dp-datepicker></div>
+                                    <div ng-model="ordersCtrl.params.dateTo" ng-change="setParams" dp-datepicker></div>
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'name' | translate }}" ng-model="ordersCtrl.params.name">
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="product in ordersCtrl.items">
+                                <td>
+                                    {{ product.ID }}
+                                </td>
+                                <td>
+                                    <!--{{ product.userID }}
+                                <button ng-click="showUserAddress(product)" class="btn btn-default" type="button">
+                                    {{ 'user_data' | translate}}
+                                </button>-->
+                                    <a ui-sref="customerservice-userlist({userID: product.userID})" title="{{ 'go_to' | translate }} -  {{ 'user' | translate }}:{{ product.userID }}">
+                                        <b>{{ product.userID }}</b>
+                                    </a>
+                                    <br>
+                                    <span ng-if="product.defaultAddress.apartment">{{ product.defaultAddress.companyName }}</span><br> {{ product.defaultAddress.name }} {{ product.defaultAddress.lastname }}<br />
+                                    <br /> {{ product.defaultAddress.zipcode }} {{ product.defaultAddress.city }}<br /> {{ product.defaultAddress.street }} {{ product.defaultAddress.house }}<span ng-if="product.defaultAddress.apartment">/{{ product.defaultAddress.apartment }}</span>
+                                    <br> +{{ product.defaultAddress.areaCode }} {{ product.defaultAddress.telephone }}
+                                </td>
+                                <td>
+                                    <button class="btn btn-default btn-xs" ui-sref="orders-production-panel({orderID: product.orderID})" tooltip="{{ 'order_no' | translate}} {{ product.orderNumber }}">
+                                    <i class="fa fa-shopping-cart"></i> {{ product.orderNumber }}
+                                </button>
+                                </td>
+                                <td>{{ product.created }}</td>
+                                <td>
+                                    {{ product.type.names[currentLang.code] }}
+                                    <br>
+                                    <small>{{ product.name }}</small>
+                                </td>
+                                <td>
+
+                                    <div ng-repeat="subProduct in product.products">
+                                        <p class="marginBottomNo noWrap">
+                                            {{ subProduct.typeName }}
+                                        </p>
+                                        <p class="marginBottomNo noWrap">
+                                            {{ subProduct.formatName }}
+                                            <b>
+                                            {{ subProduct.formatWidth }} x {{ subProduct.formatHeight }}
+                                            {{ subProduct.formatUnit == 2 ? 'cm' : 'mm' }}
+                                                <img src="{{subProduct.priceTypeIcon}}" width="16">
+                                        </b>
+                                        </p>
+                                        <p class="marginBottomNo noWrap">
+                                            {{ 'pages' | translate }}
+                                            <b>{{ subProduct.pages }}</b>
+                                        </p>
+                                        <p ng-repeat="attr in subProduct.attributes" class="marginBottomNo">
+                                            <span ng-if="attr.emptyChoice != 1">{{ attr.attrName }} <b>{{ attr.optName }}</b></span>
+                                        </p>
+                                        <p ng-repeat="specialAttribute in subProduct.specialAttributes" class="marginBottomNo">
+                                            <span><b>{{ specialAttribute.name }}</b></span>
+                                        </p>
+                                        <br>
+                                    </div>
+
+                                    <p class="marginBottomNo noWrap">
+                                        {{ 'volume' | translate }} <b>{{ product.volume }}</b>
+                                    </p>
+                                </td>
+                                <td>
+
+                                    <div ng-if="product.accept == 0">
+                                        <button class="btn btn-xs btn-success" ng-click="accept(product, true)" tooltip="{{ 'product_acceptance' | translate }}">
+                                        <i class="fa fa-check"></i> {{ 'accept' | translate }}
+                                    </button>
+                                        <button class="btn btn-xs red-sunglo" ng-click="noAccept(product)" tooltip="{{ 'product_rejection' | translate }}">{{ 'reject' | translate }}
+                                    </button>
+                                    </div>
+
+                                    <div ng-if="product.accept == -1">
+                                        {{ 'files_rejected' | translate }}
+                                        <button class="btn btn-xs red-sunglo" ng-click="signAsNew(product)">
+                                        {{ 'set_as_new' | translate }}
+                                    </button>
+                                    </div>
+
+                                    <div ng-if="product.rejectInfo && product.accept == -1" class="alert alert-info break-word" ng-bind-html="product.rejectInfo">
+                                    </div>
+
+                                    <div ng-if="product.accept == 1">
+                                        {{ 'files_accepted' | translate }}<br> {{ 'accept_date' | translate }}: {{ product.acceptDate }}
+                                        <button class="btn btn-xs red-sunglo" ng-click="signAsNew(product)">
+                                        {{ 'set_as_new' | translate }}
+                                    </button>
+                                    </div>
+                                    <br>
+
+                                    <a class="btn btn-primary"
+                                       ng-click="showFiles(product)">
+                                        <span class="badge">{{product.filesCount}}</span>
+                                        {{ 'files' | translate }} </a>
+                                    <br>
+                                    <br>
+
+                                    <a ng-click="sendReport(product)" class="btn btn-primary">
+                                        <span class="badge">{{product.reportsCount}}</span>
+                                        {{ 'send_report' | translate }}
+                                    </a>
+
+                                    <a ng-if="product.labelImpositionID" ng-click="callLabelImposition(product)"
+                                       class="btn btn-primary" style="margin-top: 10px">
+                                        {{ 'labelImpositionGenerate' | translate }}
+                                    </a>
+                                    <label ng-if="product.labelImpositionID">
+
+                                        <span ng-class="{checked: product.copyToSpecialFolders}">
+                                            <input ng-model="product.copyToSpecialFolders"
+                                                   ng-false-value="0" ng-true-value="1"
+                                                   type="checkbox"> {{'copyToSpecialFolders' | translate}}
+                                        </span>
+
+                                    </label>
+                                    <div ng-repeat="labelImposition in product.labelImposition">
+                                        <a href="{{labelImposition.labelImpositionPath}}"
+                                           target="_blank" class="a-link-to-file"><i class="fa fa-external-link"></i>
+                                            {{'imposition' | translate}}</a>
+                                        <br>
+                                        <a href="{{labelImposition.labelImpositionDieCutPath}}"
+                                           target="_blank" class="a-link-to-file"><i
+                                                class="fa fa-external-link"></i>
+                                            {{'impositionDieCut' | translate}}</a>
+                                        <br>
+                                        <a href="{{labelImposition.xmlFile}}"
+                                           target="_blank" class="a-link-to-file"><i
+                                                class="fa fa-external-link"></i>
+                                            {{'impositionXmlFile' | translate}}</a>
+                                        <br>
+                                        <a href="{{labelImposition.hotFolderJobImposition}}"
+                                           target="_blank" class="a-link-to-file"><i
+                                                class="fa fa-external-link"></i>
+                                            {{'hotFolderJobImposition' | translate}}</a>
+                                        <br>
+                                        <a href="{{labelImposition.hotFolderJobMarker}}"
+                                           target="_blank" class="a-link-to-file"><i
+                                                class="fa fa-external-link"></i>
+                                            {{'hotFolderJobMarker' | translate}}</a>
+                                        <br>
+                                        <a ng-if="labelImposition.anotherSignFile" href="{{labelImposition.anotherSignFile}}"
+                                           target="_blank" class="a-link-to-file"><i
+                                                class="fa fa-external-link"></i>
+                                            {{'anotherSignFile' | translate}}</a>
+                                        <table>
+                                            <tr>
+                                                <td>{{'sheetLengthInMm' | translate}}</td>
+                                                <td> {{HelpersService.formatNumber(labelImposition.sheetLengthInMm,0)}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{{'sheetSurfaceInSquareMm' | translate}}</td>
+                                                <td> {{HelpersService.formatNumber(labelImposition.sheetSurfaceInSquareMm,0)}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>{{'sumLabelsOnSheet' | translate}}</td>
+                                                <td> {{HelpersService.formatNumber(labelImposition.sumLabelsOnSheet,0)}}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <span ng-if="!ordersCtrl.items.length" class="btn red-sunglo-stripe" style="display:block; text-align:left; margin-top:10px;">
+        {{ 'no_products_for_approval' | translate }}
+        </span>
+
+                <pagination total-items="ordersCtrl.totalItems" ng-model="ordersCtrl.currentPage" ng-change="ordersCtrl.setPage(ordersCtrl.currentPage); ordersCtrl.get()" class="pagination-sm" max-size="10" boundary-links="true" rotate="true" items-per-page="ordersCtrl.params.limit"></pagination>
+
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+<div class="row">
+  <div class="col-lg-7 col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa icon-bar-chart"></i> {{ 'taxes_settings' | translate }}
+        </div>
+        
+        <div class="tools hidden-lg">
+          <button button-faq-accordion="shop.taxSettings"></button>
+        </div>
+
+      </div>
+      <div class="portlet-body">
+        
+        <div class="overflowContainer">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr role="row" class="heading">
+                <th>{{ 'name' | translate }}</th>
+                <th>{{ 'percentage' | translate }}</th>
+                <th>{{ 'default' | translate }}</th>
+                <th>{{ 'active' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="tax in taxes">
+                <td>
+                  {{ tax.name }}
+                </td>
+                <td>
+                  {{ tax.value }}
+                </td>
+                <td>
+                  <span class="btn blue-stripe btn-xs" ng-class="{ 'red-sunglo-stripe' : !tax.default }">{{ !!tax.default ? 'yes' : 'no' | translate }}</span>
+                </td>
+                <td>
+                  <span class="btn blue-stripe btn-xs"
+                    ng-class="{'red-sunglo-stripe': !tax.active}">
+                    {{ !!tax.active ? 'yes' : 'no' | translate }}
+                  </span>
+                </td>
+                <td class="text-left">
+                  <button ng-click="edit(tax)"
+                    data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}"
+                    class="btn blue-hoki btn-xs">
+                    <span class="glyphicon glyphicon-edit"></span>
+                  </button>
+                  <button ng-confirm-click="remove(tax.ID)"
+                    data-toggle="tooltip" data-container="body" tooltip="{{ 'delete' | translate }}"
+                    class="btn red-sunglo btn-xs">
+                      <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <form class="form-horizontal" role="form" ng-submit="add()">
+          <div class="form-body">
+            <div class="form-group">
+              <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+              <div class="col-md-9">
+                <input ng-model="form.name" type="text" class="form-control" placeholder="{{ 'name' | translate }} ">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">{{ 'percentage' | translate }}</label>
+              <div class="col-md-9">
+                <input ng-model="form.value" type="number" class="form-control" placeholder="{{ 'percentage' | translate }}">
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <div class="row">
+              <div class="col-md-offset-3 col-md-9">
+                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'add' | translate }}</button>
+                <button ng-click="reset()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                </div>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5 visible-lg">
+    <div faq-accordion="shop.taxSettings" ></div>
+  </div>
+</div>

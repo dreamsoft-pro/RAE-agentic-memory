@@ -1,0 +1,32 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'reduce_description_to_selected_formats' | translate }}
+    </h3>
+    <small>Opis widoczny dla wybrancyh formatów (jeśli dla wszystkich formatów opis ma być widoczny, pozostaw niezaznaczone) </small>
+    
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+  <div class="modal-body">
+
+    <div class="list-group clickable">
+      {{ groupDescriptionsFormats }}
+      <a class="list-group-item" style="cursor: pointer;"
+       data-ng-repeat="format in groupDescriptionsFormats"
+       data-ng-click="groupDescriptionsFormats[$index].selected = (groupDescriptionsFormats[$index].selected != 1 ? 1 : 0)"
+
+       data-ng-class="{active: groupDescriptionsFormats[$index].selected}">
+        <h3 class="list-group-item-heading">
+          {{format.name}}           
+        </h3>
+      </a>
+    </div>
+
+    
+  </div>
+  <div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+    <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+  </div>
+
+</form>

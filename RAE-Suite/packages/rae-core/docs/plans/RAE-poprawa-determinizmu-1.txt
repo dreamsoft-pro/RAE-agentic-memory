@@ -1,0 +1,54 @@
+﻿Poniżej daję 3 konkretne rzeczy, które możesz dopiąć bez wag/rerankingu i które realnie przyspieszą + poprawią trafność.
+
+1) Zrób S-D-O także dla query i użyj tego jako „retrieval router”
+Największy zysk jakościowy.
+Dzisiaj S-D-O decyduje gdzie ląduje pamięć.
+Dodaj analogicznie: S-D-O dla pytania (albo uproszczony Q-S-D-O) i na tej podstawie wybieraj politykę szukania.
+Przykład:
+    • query wygląda jak „dlaczego spadło do 11 m²/h o 13:20?” → QUERY_LOG_STREAM
+    • query „jak rozliczyć delegację…” → QUERY_PROCEDURE_DOC
+    • query „co mówi § …” → QUERY_TECHNICAL_FORMAL
+I wtedy:
+    • LOG_STREAM → najpierw filtr po czasie/ID/metrykach + dopiero embedding
+    • PROCEDURE_DOC → najpierw BM25/lexical po krokach + dopiero embedding
+    • TECHNICAL_FORMAL → metadane + BM25 (tabele/specyfikacje lubią lexical)
+    • MIXED_SAFE → ograniczony zakres + auditor path
+To jest deterministyczne, proste w logach audytu: „dlaczego szukałem w tej warstwie?”.
+
+2) Do logów (POLICY_LOG_STREAM) zrób „indeks osi czasu” zamiast udawać RAG
+Tu jest mega zysk na CPU i szybkości.
+W ingest masz POLICY_LOG_STREAM i segmenty po 50 linii + dedupe.
+Dodaj do każdego segmentu metadane:
+    • t_min, t_max
+    • machine_id / source_id
+    • metric_tags (np. speed, error, oi, stop)
+    • hash_signature (dla dedupe)
+Retrieval dla logów:
+    1. parser query → wyciągnij okno czasu (nawet heurystycznie: „wczoraj”, „13:20”, „zmiana A”)
+    2. filtr po machine_id + t_min/t_max → to jest O(log n) w bazie
+    3. dopiero na tym małym zbiorze: embedding lub proste dopasowanie patternów
+Efekt: zamiast „wektory po wszystkim” masz TSDB-like query.
+
+3) „Candidate gating” bez rerankingu: BM25/lexical jako filtr, embedding jako scoring
+To jest Twoje „czyste math”, ale działa genialnie na procedurach/korpo.
+Dla POLICY_PROCEDURE_DOC i POLICY_TECHNICAL_FORMAL:
+    • najpierw lexical (BM25 / nawet prosty inverted index) → 300–2000 kandydatów
+    • potem cosine/dot na embeddingach tylko na shortlist
+To nie jest reranking w sensie „kolejny model”. To jest selekcja kandydatów + dokładny scoring.
+Masz stabilną latencję nawet przy milionach segmentów.
+
+Bonus: 2 małe dopalacze, które są „za darmo”
+A) Query fingerprint cache
+Jeśli agent pętli temat, cache’uj shortlist na 30–120 sekund.
+To jest ogromny zysk w agentic loops.
+B) Hot/Cold index
+    • hot: ostatnie N wspomnień / ostatnie X dni
+    • cold: archiwum
+Najpierw hot, potem cold. W praktyce agent często chce „ostatnie”.
+
+Co bym zrobił u Ciebie jako następny krok (minimalny, ale mocny)
+    1. Q-S-D-O (dla query) → wybór retrieval policy
+    2. Log-index po czasie + źródle (dla POLICY_LOG_STREAM)
+    3. BM25 gating dla procedure/technical
+To łączy ingest i retrieval w jedną spójną maszynę decyzyjną.
+

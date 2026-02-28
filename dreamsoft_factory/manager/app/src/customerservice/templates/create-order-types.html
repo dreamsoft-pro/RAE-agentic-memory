@@ -1,0 +1,77 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered-hoki">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'creating_order' | translate}}
+                </div>
+                <div class="tools">
+                    <button ng-if="typeOfResource.type === 'order'"
+                            button-faq-accordion="customerservice.createOrder"></button>
+                    <button ng-if="typeOfResource.type === 'offer'"
+                            button-faq-accordion="customerservice.createOffer"></button>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="well">
+                        <h4>{{ 'owner_of_order' | translate }}</h4><br>
+                        {{ 'user' | translate }}: <b>{{ orderOwner.login }}</b><br>
+                        {{ 'user_id' | translate }}: <b>{{ orderOwner.ID }}</b>
+                    </div>
+                </div>
+
+                <div ng-if="customProduct" class="col-md-3">
+                    <div class="well">
+                        <h4>{{ 'info_from_custom_query' | translate }}:</h4><br>
+                        {{ 'number' | translate }}: <b>{{ customProduct.ID }}</b><br>
+                        <span ng-if="customProduct.content">
+                            {{ 'content' | translate }}: <b>{{ customProduct.content }}</b><br>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <!-- Typy produktu: -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="portlet light">
+                                <div class="portlet-title">
+                                    <div class="caption">
+                                        <span class="caption-subject font-green-haze bold">{{ 'product' | translate }}: {{currentProduct.name}}</span>
+                                        <p class="caption-helper">{{ 'select_product_type' | translate }}</p>
+                                    </div>
+                                    <div class="tools">
+                                        <button ng-click="goToProducts()" class="btn btn-default text-lightGrey"><span
+                                                class="fa fa-mail-reply-all"></span> {{ 'back' | translate }}
+                                        </button>
+                                    </div>
+                                    <input type="text" class="form-control form-filter input-sm marginedBtn" name=""
+                                           placeholder="{{ 'search' | translate }}" ng-model="search.name">
+                                </div>
+                                <div class="portlet-body">
+                                    <div class="row">
+                                        <div class="col-md-6" ng-repeat="item in types | filter:search">
+
+                                            <button ng-click="selectType(item)"
+                                                    class="btn btn-sm btn-block btn-default marginedBtn breakLine">
+                                                <span class="btn blue-stripe btn-xs ng-binding">ID: {{item.ID}}</span>
+                                                {{ item.name }}
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

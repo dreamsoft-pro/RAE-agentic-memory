@@ -1,0 +1,166 @@
+div#toolsBox {
+    height: calc(100% - 5rem);
+    left: 0;
+    position: fixed;
+    top: 4.97rem;
+    z-index: 900;
+    color: var(--gray-700);
+    display: none;
+
+    @media (min-width: 1024px) {
+        width: var(--tools-box-width);
+        display: block;
+    }
+}
+
+.disable-actions {
+    pointer-events: none;
+}
+
+div#toolsContainer {
+    width: 0;
+    position: absolute;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+div#toolsContainer > * {
+    border: none !important;
+}
+
+div#toolsContent, div#effectsContent, div#positionContent {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+
+/*each tool content*/
+div#toolsContent > div:not(:last-of-type) {
+    height: 100% !important;
+    width: 100% !important;
+    position: absolute;
+    padding: .5rem;
+    background-color: var(--gray-200) !important;
+}
+
+div#effectsContent > div {
+    height: 100% !important;
+    width: 100% !important;
+    position: absolute;
+    padding: 1rem;
+    background-color: var(--gray-200) !important;
+}
+
+div#positionContent > div {
+    height: 100% !important;
+    width: 100% !important;
+    position: absolute;
+    padding: 1rem;
+    background-color: var(--gray-200) !important;
+}
+
+/*making tool content visible*/
+.active-tool-content {
+    z-index: 1000 !important;
+}
+
+.tool {
+    position: relative;
+}
+
+.tool-button:hover {
+    filter: brightness(85%);
+}
+
+.tool-button {
+    background-color: var(--gray-100) !important;
+    color: var(--gray-400) !important;
+    transition: background-color 0.1s;
+    font-family: "EditorIcons";
+    cursor: pointer;
+    font-size: 2.5rem;
+    padding: .25rem;
+    font-weight: 500;
+    width: 2.5rem;
+    aspect-ratio: 1 /1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-right-radius: .5rem;
+    border-bottom-right-radius: .5rem;
+    border: 2px solid var(--gray-200);
+    border-left: none;
+}
+
+.tool-button.active {
+    background-color: var(--gray-200) !important;
+    color: var(--gray-700) !important;
+}
+
+/*classes used in some tool components*/
+.inner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+.buttons-wrapper {
+    display: flex;
+    gap: .5rem;
+    flex-direction: column;
+}
+
+.buttons-container {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    width: 100%;
+}
+
+/*wiekszy przycisk*/
+.main-tool-button {
+    width: 100%;
+    border-radius: var(--border-md-radius);
+    height: 2.25rem;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-wrap: nowrap;
+    font-weight: 500;
+    transition: .1s ease-in-out;
+    background-color: var(--green);
+    cursor: pointer;
+    color: var(--white);
+    position: relative;
+    font-size: 1rem;
+}
+
+.main-tool-button::before {
+    font-family: EditorIcons;
+    font-size: 2rem;
+    overflow: hidden;
+    position: absolute;
+    text-transform: none;
+    left: .5rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.main-tool-button.gray {
+    background-color: var(--gray-300) !important;
+    color: var(--gray-700);
+}
+
+#blankContent {
+    z-index: 100;
+    background-color: var(--gray-200);
+}
+

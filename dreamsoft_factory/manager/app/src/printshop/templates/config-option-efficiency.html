@@ -1,0 +1,405 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-cog"></i> {{ "option" | translate }}: {{ currentOptionName }}
+            <a ng-if="prevOption" ui-sref="printshop-configOptionSettings-efficiency({optID: prevOption})"
+               class="prevNext" tooltip="{{ 'goto_previous_option' | translate }}"><i
+                    class="fa fa-arrow-circle-left"></i></a>
+            <a ng-if="nextOption" ui-sref="printshop-configOptionSettings-efficiency({optID: nextOption})"
+               class="prevNext" tooltip="{{ 'goto_next_option' | translate }}"><i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+<div ui-view="menu"></div>
+<div class="row">
+
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+
+            <a ng-repeat="controller in controllers" ng-click="onSelectController(controller)"
+               class="btn blue-hoki marginedBtn">
+                {{controller.name}}
+            </a>
+            <div ng-if="controllerName" class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-rocket"></i> {{ controllerName }}
+                </div>
+            </div>
+            <!--efficiency-->
+            <div ng-if="controllerName" class="portlet-body form">
+
+                <form class="form-horizontal" role="form" ng-submit="saveEfficiency()">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'device_time' | translate }} [{{ 'unit_minutes' |
+                                translate }}]</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.deviceTime" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'device_time' | translate }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'stack_imposition_time' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.stackImpositionTime" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'stack_imposition_time' | translate }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'stack_height' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.stackHeight" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'stack_height' | translate }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'printed_stack_height' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.printedStackHeight" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'printed_stack_height' | translate }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'transport_time' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.transportTime" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'transport_time' | translate }}">
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success" ng-click="updateEfficiency()"><i
+                                        class="fa fa-check"></i> {{ 'save' | translate }}
+                                </button>
+                                <button ng-click="resetForm()" type="button" class="btn red-sunglo">
+                                    {{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- speeds -->
+    <div ng-if="controllerName" class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ "edition_speed" | translate }}
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form class="form-horizontal" role="form" ng-submit="addSpeed()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'amount' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="speedForm.volume" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'amount' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'speed' | translate }}
+                                [{{deviceService.getSpeedUnit(form.workUnit) | translate }}/h]</label>
+                            <div class="col-md-9">
+                                <input ng-model="speedForm.speed" type="number" min="0" class="form-control"
+                                       placeholder="{{ 'speed' | translate }}">
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                    {{ 'add' | translate }}
+                                </button>
+                                <button ng-click="resetSpeedForm()" type="button"
+                                        class="btn red-sunglo">{{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>#</th>
+                            <th>{{ 'amount' | translate }}</th>
+                            <th>{{ 'speed' | translate }} [{{deviceService.getSpeedUnit(form.workUnit) | translate}}/h]
+                            </th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="speed in speeds">
+                            <td>{{speed.ID}}</td>
+                            <td>{{speed.volume}}</td>
+                            <td>{{speed.speed}}</td>
+                            <td>
+                                <button data-ng-confirm-click="deleteSpeed(speed.ID)"
+                                        data-toggle="tooltip" data-container="body"
+                                        tooltip="{{langArr.delete}}"
+                                        class="btn red-sunglo btn-xs">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!--speed_change-->
+    <div ng-if="controllerName" class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'speed_change' | translate }}
+                </div>
+            </div>
+
+            <form class="form-horizontal" role="form" ng-submit="addSpeedChange()">
+                <div class="form-body">
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'grammage' | translate }} (g/m<sup>2</sup>)</sup>
+                        </label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.grammageMin" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.grammageMax" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'stiffness' | translate }} ()</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.stiffnessMin" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.stiffnessMax" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'thickness' | translate }} (mm)</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.thicknessMin" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.thicknessMax" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'sheet_folds' | translate }}</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.sheetFoldsMin" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.sheetFoldsMax" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'project_sheets' | translate }}</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.projectSheetsMin" type="number" min="0"
+                                   class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.projectSheetsMax" type="number" min="0"
+                                   class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'cut_use' | translate }}</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.cutUseMin" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'from' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="speedChangeForm.cutUseMax" type="number" min="0" class="form-control"
+                                   placeholder="{{ 'to' | translate }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'efficiency_change' | translate }}</label>
+                        <div class="col-md-8">
+                            <input ng-model="speedChangeForm.efficiencyChange" type="number" step="any"
+                                   class="form-control"
+                                   placeholder="{{ 'efficiency_change' | translate }}">
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                {{ 'add' | translate }}
+                            </button>
+                            <button ng-click="resetSpeedChangeForm()" type="button" class="btn red-sunglo">
+                                {{'cancel' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="overflowContainer">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr role="row" class="heading">
+                        <th>#</th>
+                        <th>{{ 'grammage' | translate }}</th>
+                        <th>{{ 'stiffness' | translate }}</th>
+                        <th>{{ 'thickness' | translate }}</th>
+                        <th>{{ 'sheet_folds' | translate }}</th>
+                        <th>{{ 'project_sheets' | translate }}</th>
+                        <th>{{ 'cut_use' | translate }}</th>
+                        <th>{{ 'speed_change' | translate }}</th>
+                        <th>{{ 'actions' | translate }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="change in speedChanges">
+                        <td>{{change.ID}}</td>
+                        <td>{{change.grammageMin}}-{{change.grammageMax}}</td>
+                        <td>{{change.stiffnessMin}}-{{change.stiffnessMax}}</td>
+                        <td>{{change.thicknessMin}}-{{change.thicknessMax}}</td>
+                        <td>{{change.sheetFoldsMin}}-{{change.sheetFoldsMax}}</td>
+                        <td>{{change.projectSheetsMin}}-{{change.projectSheetsMax}}</td>
+                        <td>{{change.cutUseMin}}-{{change.cutUseMax}}</td>
+                        <td>{{change.efficiencyChange>0 ? '+' : ''}}{{change.efficiencyChange}}{{change.efficiencyChange
+                            != 0 ? '%' : ''}}
+                        </td>
+                        <td>
+                            <button data-ng-confirm-click="deleteSpeedChange(change)" data-toggle="tooltip"
+                                    data-container="body" tooltip="{{langArr.delete}}" class="btn red-sunglo btn-xs">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+    <div ng-if="controllerName" class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'speed_change_sides_relation' | translate }}
+                </div>
+            </div>
+            <form class="form-horizontal" role="form" ng-submit="addSideRelation()">
+                <div class="form-body">
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'side_relation' | translate }}</sup></label>
+                        <div class="col-md-4">
+                            <input ng-model="sideRelationForm.sideRelationHeight" type="number" min="0"
+                                   class="form-control"
+                                   placeholder="{{ 'write_number' | translate }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input ng-model="sideRelationForm.sideRelationWidth" type="number" min="0"
+                                   class="form-control"
+                                   placeholder="{{ 'write_number' | translate }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">{{ 'efficiency_change' | translate }}</label>
+                        <div class="col-md-8">
+                            <input ng-model="sideRelationForm.efficiencyChange" type="number" step="any"
+                                   class="form-control"
+                                   placeholder="{{ 'efficiency_change' | translate }}">
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                {{ 'add' | translate }}
+                            </button>
+                            <button ng-click="resetSideRelationForm()" type="button" class="btn red-sunglo">
+                                {{'cancel' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="overflowContainer">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr role="row" class="heading">
+                        <th>#</th>
+                        <th>{{ 'side_relation' | translate }}</th>
+                        <th>{{ 'speed_change' | translate }}</th>
+                        <th>{{ 'actions' | translate }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="relation in speedChangesRelations">
+                        <td>{{relation.ID}}</td>
+                        <td>{{relation.sideRelationWidth}}:{{relation.sideRelationHeight}}</td>
+                        <td>{{relation.efficiencyChange}}</td>
+                        <td>
+                            <button data-ng-confirm-click="deleteSideRelation(relation)" data-toggle="tooltip"
+                                    data-container="body" tooltip="{{langArr.delete}}" class="btn red-sunglo btn-xs">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+        </div>
+    </div>
+
+
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.configOptionEfficiency"></div>
+    </div>
+
+</div>

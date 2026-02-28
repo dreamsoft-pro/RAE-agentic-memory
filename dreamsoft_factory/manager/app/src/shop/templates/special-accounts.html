@@ -1,0 +1,135 @@
+<div class="row">
+	<div class="col-md-12">
+		<div class="portlet light">
+			<div class="portlet-title">
+				<div class="caption">
+					<i class="fa fa-exclamation-circle"></i> {{ 'special_accounts' | translate }}
+				</div>
+				<div class="tools">
+					<span>{{ 'number_of_rows' | translate }}: <span class="badge">{{ usersCtrl.totalItems }}</span> </span>
+				<select ng-model="showRows" ng-change="usersCtrl.setRows(showRows)" ng-options="each for (null, each) in [10,25,50,100]" ></select>
+				<button ng-click="usersCtrl.clearCache()" class="btn btn-primary btn-sm">
+				<i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+				</button>
+				<button button-faq-accordion="shop.specialAccounts"></button>
+			</div>
+			<!--  -->
+		</div>
+		<div class="portlet-body">
+			<div class="overflowContainer">
+				<table class="table table-striped table-hover">
+					<thead>
+						<tr role="row" class="heading">
+							<th>#</th>
+							<th>{{ 'login' | translate }} / {{ 'email' | translate }} <i class="fa fa-info-circle" tooltip="{{ 'mail_typed_forgotten_pass' | translate }}"></i></th>
+							<th>{{ 'firstname' | translate }}</th>
+							<th>{{ 'lastname' | translate }}</th>
+							<th>{{ 'types' | translate }}</th>
+							<th>{{ 'actions' | translate }}</th>
+						</tr>
+						<tr role="row" class="filter">
+							<td>
+							</td>
+							<td>
+								<input type="text" class="form-control form-filter input-sm" placeholder="{{ 'email' | translate }}" ng-model="usersCtrl.params.user" ng-change="setParams()">
+							</td>
+							<td>
+								<input type="text" class="form-control form-filter input-sm" placeholder="{{ 'firstname' | translate }}" ng-model="usersCtrl.params.name" ng-change="setParams()">
+							</td>
+							<td>
+								<input type="text" class="form-control form-filter input-sm" placeholder="{{ 'lastname' | translate }}" ng-model="usersCtrl.params.lastname" ng-change="setParams()">
+							</td>
+							<td>
+								<select type="text" class="form-control form-filter input-sm" placeholder="{{ 'type' | translate }}" ng-model="search.userType" ng-options="userType.ID as userType.name for userType in userTypes">
+									<option value="0">brak</option>
+								</select>
+							</td>
+							<td class="text-left noWrap">
+							</td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="user in usersCtrl.items | filter:search">
+							<td>{{ user.ID }}</td>
+							<td>{{ user.user }}</td>
+							<td>{{ user.name }}</td>
+							<td>{{ user.lastname }}</td>
+							<td>{{ _.findWhere(userTypes, { ID: user.userTypeID }).name }}</td>
+							<td><button ng-click="editType(user, data)" class="btn btn-primary btn-xs">{{ 'edit_type' | translate }}</button><button ng-click="editUser(user)" class="btn blue-hoki btn-xs"><i class="fa fa-edit"></i></button>
+							<button ng-click="removeUser(user)" class="btn red-sunglo btn-xs"><i class="glyphicon glyphicon-remove"></i></button></td>
+						</tr>
+					</tbody>
+				</table>
+			<pagination total-items="usersCtrl.totalItems" ng-model="usersCtrl.currentPage" ng-change="usersCtrl.setPage(usersCtrl.currentPage); usersCtrl.get()" class="pagination-sm" max-size="10" boundary-links="true" rotate="true" items-per-page="usersCtrl.params.limit" ></pagination>
+		</div>
+		<div class="portlet light">
+			<div class="portlet-title">
+				<div class="caption font-green-haze col-md-3 text-right">
+					{{ 'add_new' | translate }}
+				</div>
+			</div>
+			<div class="portlet-body">
+				<form class="form-horizontal" role="form" ng-submit="add()">
+					<div class="form-body">
+						<!-- <div class="form-group">
+									<label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+									<div class="col-md-9">
+												<input class="form-control" ng-model="form.name" placeholder="{{ 'name' | translate }}" required />
+												<span class="help-block">np. jKowalski</span>
+									</div>
+						</div> -->
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'email' | translate }}<br /></label>
+							<div class="col-md-9">
+								<input class="form-control" ng-model="form.user" placeholder="{{ 'mail' | translate }}" required/>
+								<!-- <span class="help-block">{{ 'mail_typed_forgotten_pass' | translate }}</span> -->
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'firstname' |translate }}<br /></label>
+							<div class="col-md-9">
+								<input class="form-control" ng-model="form.name" placeholder="{{ 'firstname' | translate }}" required />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'lastname' |translate }}<br /></label>
+							<div class="col-md-9">
+								<input class="form-control" ng-model="form.lastname" placeholder="{{ 'lastname' | translate }}" required/>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'password' |translate }}<br /></label>
+							<div class="col-md-9">
+								<input type="password" class="form-control" ng-model="form.pass" placeholder="{{ 'password' | translate }}" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'repeat_password' |translate }}<br /></label>
+							<div class="col-md-9">
+								<input type="password" class="form-control" ng-model="form.pass_confirm" placeholder="{{ 'repeat_password' | translate }}" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-3 control-label">{{ 'type' | translate }}</label>
+							<div class="col-md-9">
+								<select ng-model="form.userTypeID" type="text" class="form-control" ng-options="userType.ID as userType.name for userType in userTypes" value="form.userType">
+									<option value="">{{ 'none' | translate }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-actions">
+							<div class="row">
+								<div class="col-md-offset-3 col-md-9">
+									<button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'add' | translate }}</button>
+									<button ng-click="form = {}" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+</div>

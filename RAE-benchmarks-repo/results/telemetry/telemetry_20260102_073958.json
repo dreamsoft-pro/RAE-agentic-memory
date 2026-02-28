@@ -1,0 +1,72 @@
+[
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "LECT",
+    "metric": "consistency",
+    "value": 0.9995228363845271,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "LECT",
+    "metric": "retention",
+    "value": 1.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "MMIT",
+    "metric": "interference",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "GRDT",
+    "metric": "max_depth",
+    "value": 10,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "GRDT",
+    "metric": "coherence",
+    "value": 0.37735849056603776,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "RST",
+    "metric": "noise_threshold",
+    "value": 0.1,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "RST",
+    "metric": "consistency",
+    "value": 0.6752130616280277,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "MPEB",
+    "metric": "convergence",
+    "value": 0.7,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "MPEB",
+    "metric": "adaptation",
+    "value": 0.8937147778540991,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2026-01-02T07:38:01.378643",
+    "benchmark": "ORB",
+    "metric": "pareto_optimal",
+    "value": 4,
+    "metadata": {}
+  }
+]

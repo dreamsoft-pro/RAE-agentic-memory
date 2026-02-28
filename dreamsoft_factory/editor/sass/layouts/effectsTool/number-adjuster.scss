@@ -1,0 +1,91 @@
+@use './../../shared' as *;
+
+.stepper-shadow-container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    align-items: flex-start;
+
+    > *:nth-child(2) {
+        margin-top: 1rem;
+    }
+}
+
+.adjuster-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.adjuster-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .decrease-button {
+        height: 2.2rem;
+        width: 2rem;
+        background-color: var(--gray-600);
+        border-top-left-radius: var(--border-lg-radius);
+        border-bottom-left-radius: var(--border-lg-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        
+        &::before {
+            content: "-";
+            color: var(--white);
+            font-size: 2rem;
+            margin-bottom: .4rem;
+        }
+    }
+
+    .current-value {
+        height: 2.2rem;
+        width: 3rem;
+        background-color: var(--gray-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        cursor: default;
+        text-align: center;
+        color: var(--gray-700);
+        
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        &:focus {
+            outline: none;
+            border: none;
+        }
+        
+        border: none;
+        
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .increase-button {
+        height: 2.2rem;
+        width: 2rem;
+        background-color: var(--gray-600);
+        border-top-right-radius: var(--border-lg-radius);
+        border-bottom-right-radius: var(--border-lg-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        
+        &::before {
+            content: "+";
+            color: var(--white);
+            font-size: 2rem;
+        }
+    }
+}

@@ -1,0 +1,60 @@
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption">
+			<i class="fa fa-male"></i> {{ 'edit' | translate }}
+		</div>
+	</div>
+	<div class="portlet-body">
+		<form class="form-horizontal" role="form" ng-submit="ok()">
+			<div class="form-body">
+				<!-- <div class="form-group">
+					<label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+					<div class="col-md-9">
+						<input class="form-control" ng-model="form.name" placeholder="{{ 'name' | translate }}" required />
+						<span class="help-block">np. jKowalski</span>
+					</div>
+				</div> -->
+				<div class="form-group">
+					<label class="col-md-3 control-label">{{ 'login' | translate }} / {{ 'mail' | translate }}<br /></label>
+					<div class="col-md-9">
+						<input class="form-control" ng-model="form.user" placeholder="{{ 'login' | translate }} {{ 'or' | translate }} {{ 'mail' | translate }}" required/>
+						<span class="help-block">{{ 'mail_typed_forgotten_pass' | translate }}</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-md-3 control-label">{{ 'firstname' |translate }}<br /></label>
+					<div class="col-md-9">
+						<input class="form-control" ng-model="form.name" placeholder="{{ 'firstname' | translate }}" required />
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-md-3 control-label">{{ 'lastname' |translate }}<br /></label>
+					<div class="col-md-9">
+						<input class="form-control" ng-model="form.lastname" placeholder="{{ 'lastname' | translate }}" required/>
+					</div>
+				</div>
+				
+				<!-- <div class="form-group">
+					<label class="col-md-3 control-label">{{ 'password' |translate }}<br /></label>
+					<div class="col-md-9">
+						<input type="password" class="form-control" ng-model="form.pass" placeholder="{{ 'password' | translate }}" />
+					</div>
+				</div> -->
+				<!-- <div class="form-group">
+					<label class="col-md-3 control-label">{{ 'repeat_password' |translate }}<br /></label>
+					<div class="col-md-9">
+						<input type="password" class="form-control" ng-model="form.pass_confirm" placeholder="{{ 'repeat_password' | translate }}" />
+					</div>
+				</div> -->
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset-3 col-md-9">
+							<button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+							<button ng-click="$dismiss()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>

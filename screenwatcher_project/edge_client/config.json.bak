@@ -1,0 +1,10 @@
+{
+    "machine_code": "TM01",
+    "api_url": "http://100.66.252.117:9000/api/collector/ingest/",
+    "api_token": "3a1fcceca964deaeae60c32f9024a685bdc7f9c1",
+    "interval_sec": 10,
+    "monitor_index": 1,
+    "offline_mode": false,
+    "log_level": "INFO",
+    "rois": []
+}

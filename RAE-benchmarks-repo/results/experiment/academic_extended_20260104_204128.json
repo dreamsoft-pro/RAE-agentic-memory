@@ -1,0 +1,413 @@
+{
+  "benchmark": {
+    "name": "academic_extended",
+    "description": "Extended academic benchmark with semantic noise and multi-domain queries",
+    "version": "1.0",
+    "file": "benchmarking/sets/academic_extended.yaml"
+  },
+  "execution": {
+    "timestamp": "2026-01-04T20:41:28.318197",
+    "num_memories": 45,
+    "num_queries": 20,
+    "total_time_seconds": 1.893589735031128
+  },
+  "metrics": {
+    "mrr": 1.0,
+    "hit_rate": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "precision": {
+      "@3": 0.3333333333333333,
+      "@5": 0.2,
+      "@10": 0.1
+    },
+    "recall": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "performance": {
+      "avg_insert_time_ms": 29.869508743286133,
+      "avg_query_time_ms": 27.473092079162598,
+      "p95_query_time_ms": 51.7125129699707,
+      "p99_query_time_ms": 51.7125129699707
+    },
+    "overall_quality_score": 0.88,
+    "math": {
+      "structure": {
+        "graph_connectivity_score": {
+          "value": 0.0,
+          "metadata": {
+            "num_nodes": 45,
+            "num_edges": 0,
+            "average_degree": 0.0
+          }
+        },
+        "graph_entropy": {
+          "value": 0.0,
+          "metadata": {
+            "num_nodes": 45,
+            "degree_distribution": []
+          }
+        }
+      },
+      "dynamics": {
+        "memory_drift_index": {
+          "value": -1.1920928955078125e-07,
+          "metadata": {
+            "memories_t0": 45,
+            "memories_t1": 45,
+            "time_delta_seconds": 0.98563
+          }
+        },
+        "structural_drift": {
+          "value": 0.0,
+          "metadata": {
+            "edges_t0": 0,
+            "edges_t1": 0,
+            "edges_added": 0,
+            "edges_removed": 0,
+            "edges_preserved": 0,
+            "jaccard_similarity": 1.0
+          }
+        }
+      },
+      "policy": {
+        "optimal_retrieval_ratio": {
+          "value": 1.0,
+          "metadata": {
+            "num_queries": 20,
+            "optimal_hits": 20,
+            "k": 5,
+            "avg_rank_of_first_hit": 1.0,
+            "avg_optimal_per_query": 1.0
+          }
+        }
+      }
+    }
+  },
+  "detailed_results": [
+    {
+      "query": "What is the speed of light?",
+      "expected": [
+        "phys_2"
+      ],
+      "retrieved": [
+        "phys_2",
+        "phys_1",
+        "phys_5",
+        "bio_2",
+        "math_3"
+      ],
+      "latency_ms": 19.871950149536133,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Who discovered DNA structure?",
+      "expected": [
+        "bio_1"
+      ],
+      "retrieved": [
+        "bio_1",
+        "bio_4",
+        "bio_5",
+        "chem_2",
+        "math_3"
+      ],
+      "latency_ms": 16.28422737121582,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "What is the capital of France?",
+      "expected": [
+        "geo_5"
+      ],
+      "retrieved": [
+        "geo_5",
+        "geo_4",
+        "hist_2",
+        "econ_5",
+        "econ_4"
+      ],
+      "latency_ms": 21.327495574951172,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Which programming language was created by Guido van Rossum?",
+      "expected": [
+        "cs_1"
+      ],
+      "retrieved": [
+        "cs_1",
+        "cs_3",
+        "math_3",
+        "phys_4",
+        "phys_1"
+      ],
+      "latency_ms": 20.410537719726562,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What is the powerhouse of the cell?",
+      "expected": [
+        "bio_3"
+      ],
+      "retrieved": [
+        "bio_3",
+        "bio_2",
+        "phys_5",
+        "phys_3",
+        "cs_4"
+      ],
+      "latency_ms": 17.548799514770508,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "Who developed the theory of evolution?",
+      "expected": [
+        "bio_4"
+      ],
+      "retrieved": [
+        "bio_4",
+        "phys_1",
+        "math_3",
+        "bio_1",
+        "phys_4"
+      ],
+      "latency_ms": 19.762039184570312,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What equation is considered the most beautiful in mathematics?",
+      "expected": [
+        "math_1"
+      ],
+      "retrieved": [
+        "math_1",
+        "phys_3",
+        "math_3",
+        "math_2",
+        "econ_4"
+      ],
+      "latency_ms": 37.59646415710449,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What did Marie Curie discover?",
+      "expected": [
+        "chem_2"
+      ],
+      "retrieved": [
+        "chem_2",
+        "bio_1",
+        "phys_1",
+        "bio_4",
+        "phys_5"
+      ],
+      "latency_ms": 24.88088607788086,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What technology allows for precise DNA editing?",
+      "expected": [
+        "bio_5"
+      ],
+      "retrieved": [
+        "bio_5",
+        "bio_1",
+        "phys_5",
+        "cs_3",
+        "lit_5"
+      ],
+      "latency_ms": 22.459745407104492,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "Which test evaluates machine intelligence against human intelligence?",
+      "expected": [
+        "cs_3"
+      ],
+      "retrieved": [
+        "cs_3",
+        "cs_2",
+        "cs_4",
+        "bio_2",
+        "phys_5"
+      ],
+      "latency_ms": 33.45036506652832,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What mathematical concept did Newton and Leibniz develop?",
+      "expected": [
+        "math_3"
+      ],
+      "retrieved": [
+        "math_3",
+        "phys_4",
+        "phys_1",
+        "bio_4",
+        "math_1"
+      ],
+      "latency_ms": 39.17646408081055,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What mission landed humans on the Moon?",
+      "expected": [
+        "hist_5"
+      ],
+      "retrieved": [
+        "hist_5",
+        "chem_2",
+        "bio_2",
+        "phys_1",
+        "bio_1"
+      ],
+      "latency_ms": 24.881601333618164,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What scientific theory revolutionized our understanding of gravity?",
+      "expected": [
+        "phys_1"
+      ],
+      "retrieved": [
+        "phys_1",
+        "math_3",
+        "phys_4",
+        "bio_4",
+        "bio_1"
+      ],
+      "latency_ms": 51.7125129699707,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "What historical event marked the transition from medieval to modern times?",
+      "expected": [
+        "hist_2"
+      ],
+      "retrieved": [
+        "hist_2",
+        "hist_4",
+        "hist_3",
+        "econ_3",
+        "phys_4"
+      ],
+      "latency_ms": 29.03294563293457,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "What computing system is inspired by the human brain?",
+      "expected": [
+        "cs_4"
+      ],
+      "retrieved": [
+        "cs_4",
+        "bio_2",
+        "cs_3",
+        "cs_2",
+        "cs_1"
+      ],
+      "latency_ms": 19.095897674560547,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "Who won a Nobel Prize for discovering radioactive elements?",
+      "expected": [
+        "chem_2"
+      ],
+      "retrieved": [
+        "chem_2",
+        "phys_5",
+        "bio_1",
+        "chem_1",
+        "math_3"
+      ],
+      "latency_ms": 29.196500778198242,
+      "difficulty": "very_hard",
+      "category": "multi_hop"
+    },
+    {
+      "query": "What scale measures how acidic or basic something is?",
+      "expected": [
+        "chem_4"
+      ],
+      "retrieved": [
+        "chem_4",
+        "phys_3",
+        "chem_1",
+        "cs_3",
+        "chem_3"
+      ],
+      "latency_ms": 47.34063148498535,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What is the largest ocean on Earth?",
+      "expected": [
+        "geo_3"
+      ],
+      "retrieved": [
+        "geo_3",
+        "geo_1",
+        "geo_2",
+        "geo_4",
+        "geo_5"
+      ],
+      "latency_ms": 35.385847091674805,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Who wrote about a dystopian surveillance state?",
+      "expected": [
+        "lit_2"
+      ],
+      "retrieved": [
+        "lit_2",
+        "econ_1",
+        "bio_1",
+        "phys_4",
+        "cs_3"
+      ],
+      "latency_ms": 23.276329040527344,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What economic theory was proposed by Adam Smith?",
+      "expected": [
+        "econ_1"
+      ],
+      "retrieved": [
+        "econ_1",
+        "phys_1",
+        "bio_4",
+        "econ_4",
+        "econ_3"
+      ],
+      "latency_ms": 16.770601272583008,
+      "difficulty": "hard",
+      "category": "inference"
+    }
+  ]
+}

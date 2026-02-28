@@ -1,0 +1,1 @@
+"""App responsible for forwarding ingested data to external systems."""

@@ -1,0 +1,35 @@
+<div class="modal-header">
+  <h3 class="modal-title">Edit lang</h3>
+</div>
+<div class="modal-body" >
+  <div class="row">
+    <div class="col-md-12">
+
+      <form class="form-horizontal" role="form">
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'key' | translate }}</label>
+          <div class="col-md-9">
+            <input ng-model="form.key" type="text" class="form-control" placeholder="{{ 'key' | translate }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'value' | translate }}</label>
+          <div class="col-md-9">
+            <input ng-model="form.value" type="text" class="form-control" placeholder="{{ 'value' | translate }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'lang' | translate }}</label>
+          <div class="col-md-9">
+            <select class="form-control"  ng-model="form.lang" ng-options="each.code as each.name for each in langlist"></select>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-warning" ng-click="$dismiss()">Cancel</button>
+  <button class="btn btn-primary" ng-click="ok()">OK</button>
+</div>
