@@ -1,67 +1,71 @@
 from typing import Any, Dict, List
-import uuid
+from pydantic import ValidationError
+from ...models.contracts import AgentOutputContract
 
 class EvidenceVerifier:
     def verify(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         sources = payload.get("retrieved_sources", [])
-        draft = payload.get("answer_draft", "")
-        # Minimalistic deterministic logic for now or integrated with LLM prompt
+        analysis = payload.get("analysis", "")
+        
         coverage_ratio = 1.0 if sources else 0.0
-        missing_sources = []
-        if not sources and len(draft) > 10:
+        if not sources and len(analysis) > 50:
             coverage_ratio = 0.0
         
         return {
             "coverage_ratio": coverage_ratio,
-            "missing_sources": missing_sources
+            "has_sources": len(sources) > 0
         }
 
 class ContractEnforcer:
-    def enforce(self, payload: Dict[str, Any]) -> Dict[str, str]:
-        # Minimalistic deterministic policy enforcement
-        return {"contract_status": "ok"}
+    def enforce(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            validated = AgentOutputContract(**payload)
+            return {
+                "status": "valid",
+                "schema": "AgentOutputContract v1.0",
+                "data": validated.model_dump()
+            }
+        except ValidationError as e:
+            return {
+                "status": "invalid",
+                "errors": [str(err["msg"]) for err in e.errors()],
+                "block": True
+            }
 
 class UncertaintyEstimator:
     def estimate(self, payload: Dict[str, Any]) -> Dict[str, float]:
-        draft = payload.get("answer_draft", "")
-        uncertainty = 0.0
-        if "probably" in draft.lower() or "maybe" in draft.lower():
-            uncertainty = 0.3
-        if not payload.get("retrieved_sources"):
-            uncertainty += 0.5
-        return {"uncertainty_level": min(1.0, uncertainty)}
+        confidence = payload.get("confidence", 0.0)
+        sources = payload.get("retrieved_sources", [])
+        risk = 0.0
+        if confidence > 0.8 and not sources:
+            risk = 0.9
+        return {"epistemic_risk": risk}
 
 class L1OperationalReflection:
-    def __init__(self, coverage_threshold: float = 0.5, max_uncertainty: float = 0.4):
+    def __init__(self, risk_threshold: float = 0.7):
         self.evidence_verifier = EvidenceVerifier()
         self.contract_enforcer = ContractEnforcer()
         self.uncertainty_estimator = UncertaintyEstimator()
-        self.coverage_threshold = coverage_threshold
-        self.max_uncertainty = max_uncertainty
+        self.risk_threshold = risk_threshold
 
     def reflect(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        evidence = self.evidence_verifier.verify(payload)
         contract = self.contract_enforcer.enforce(payload)
-        uncertainty = self.uncertainty_estimator.estimate(payload)
+        if contract.get("status") == "invalid":
+            return {"block": True, "reason": "Structural contract violation", "errors": contract.get("errors")}
 
-        coverage_ratio = evidence.get("coverage_ratio", 1.0)
-        contract_status = contract.get("contract_status", "ok")
-        uncertainty_level = uncertainty.get("uncertainty_level", 0.0)
+        evidence = self.evidence_verifier.verify(payload)
+        risk = self.uncertainty_estimator.estimate(payload)
 
-        # Logic for blocking based on rules
         block = False
-        if coverage_ratio < self.coverage_threshold:
+        reasons = []
+        if risk.get("epistemic_risk", 0.0) > self.risk_threshold:
             block = True
-        if contract_status != "ok":
-            block = True
-        if uncertainty_level > self.max_uncertainty:
-            block = True
+            reasons.append("Extreme epistemic risk")
 
         return {
             "block": block,
-            "coverage_ratio": coverage_ratio,
-            "contract_status": contract_status,
-            "uncertainty_level": uncertainty_level,
-            "missing_sources": evidence.get("missing_sources", []),
-            "trace_id": str(uuid.uuid4())
+            "reasons": reasons,
+            "structural_status": "ok",
+            "evidence_coverage": evidence.get("coverage_ratio"),
+            "risk_level": risk.get("epistemic_risk")
         }

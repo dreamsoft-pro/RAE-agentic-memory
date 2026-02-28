@@ -1,54 +1,63 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from ...interfaces.storage import IMemoryStorage
 
 class RetrievalAnalyzer:
     def analyze(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         sources = payload.get("retrieved_sources", [])
-        draft = payload.get("answer_draft", "")
-        # Basic heuristic for retrieval quality
         quality = 1.0 if sources else 0.0
-        missed = []
-        if "log" in draft.lower() and not any("log" in str(s).lower() for s in sources):
-            missed.append("log_source")
-            quality -= 0.2
-        return {
-            "retrieval_quality": max(0.0, quality),
-            "missed_sources": missed
-        }
+        return {"retrieval_quality": quality}
+
+class SemanticConsistencyChecker:
+    def check(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        decision = payload.get("decision", "")
+        sources = payload.get("retrieved_sources", [])
+        if not sources and decision not in ["insufficient_data", "retry"]:
+            return {"violation": "grounding_error", "msg": "Decision requires evidence"}
+        return {"consistency_status": "ok"}
 
 class PatternDetector:
     def detect(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # Simple structural pattern identification (stub for advanced NLP logic)
-        draft = payload.get("answer_draft", "")
-        candidates = []
-        if "drop" in draft.lower() and "speed" in draft.lower():
-            candidates.append({"pattern": "speed_drop_detected", "confidence": 0.85})
-        return {"insight_candidates": candidates}
+        return {"insight_candidates": []}
 
 class CostOptimizer:
-    def optimize(self, payload: Dict[str, Any]) -> Dict[str, str]:
-        # Based on size/complexity of prompt/answer
-        draft = payload.get("answer_draft", "")
-        sources = payload.get("retrieved_sources", [])
-        if len(sources) > 20:
-            return {"optimization_suggestion": "decrease_top_k"}
-        if len(draft) < 50 and len(sources) < 2:
-            return {"optimization_suggestion": "increase_top_k"}
-        return {"optimization_suggestion": "optimal"}
+    def optimize(self, payload: Dict[str, Any], contracts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        model_used = payload.get("metadata", {}).get("model", "unknown")
+        analysis = payload.get("analysis", "")
+        economy_contract = next((c for c in contracts if c.get("metadata", {}).get("id") == "model_economy"), None)
+        if economy_contract:
+            rules = economy_contract.get("metadata", {}).get("rules", [{}])[0]
+            sota_models = rules.get("sota_models", [])
+            is_heavy = any(m in model_used.lower() for m in sota_models)
+            if is_heavy and len(analysis) < 50:
+                return {"violation": "model_waste", "suggestion": "Use cheaper model"}
+        return {"economy_status": "ok"}
 
 class L2StructuralReflection:
-    def __init__(self):
+    def __init__(self, storage: Optional[IMemoryStorage] = None):
+        self.storage = storage
         self.retrieval_analyzer = RetrievalAnalyzer()
+        self.consistency_checker = SemanticConsistencyChecker()
         self.pattern_detector = PatternDetector()
         self.cost_optimizer = CostOptimizer()
 
-    def reflect(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def reflect(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        contracts = []
+        if self.storage:
+            contracts = await self.storage.list_memories(
+                tenant_id=payload.get("tenant_id", "default"),
+                layer="semantic",
+                tags=["global_contract"]
+            )
         retrieval = self.retrieval_analyzer.analyze(payload)
-        pattern = self.pattern_detector.detect(payload)
-        cost = self.cost_optimizer.optimize(payload)
-
+        consistency = self.consistency_checker.check(payload)
+        cost = self.cost_optimizer.optimize(payload, contracts)
+        
+        violations = []
+        if "violation" in consistency: violations.append(consistency["violation"])
+        if "violation" in cost: violations.append(cost["violation"])
+        
         return {
-            "retrieval_quality": retrieval.get("retrieval_quality", 0.0),
-            "missed_sources": retrieval.get("missed_sources", []),
-            "insight_candidates": pattern.get("insight_candidates", []),
-            "optimization_suggestion": cost.get("optimization_suggestion", "none")
+            "semantic_violations": violations,
+            "is_semantically_sound": len(violations) == 0,
+            "consistency_msg": consistency.get("msg", "ok")
         }

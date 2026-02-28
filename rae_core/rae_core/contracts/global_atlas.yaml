@@ -1,0 +1,53 @@
+# RAE Global Contract Atlas v1.0
+# Operationalized from AGENT_CORE_PROTOCOL.md and RAE_AGENTIC_CONTRACT.md
+
+contracts:
+  - id: core_bootstrap
+    level: 3
+    type: epistemic
+    name: Bootstrap First
+    description: Never read a file or call a tool before running bootstrap_session.py.
+    enforcement: hard
+    rules:
+      - session_initialization_required: true
+
+  - id: tool_isolation
+    level: 1
+    type: structural
+    name: No Interactive Tools
+    description: Absolute ban on nano, vim, vi, git add -i.
+    enforcement: hard
+    banned_commands:
+      - nano
+      - vim
+      - vi
+      - git add -i
+      - less
+
+  - id: cluster_strategy
+    level: 2
+    type: semantic
+    name: Cluster First
+    description: Heavy tasks (benchmarks > 1k) must go to Node 1 (Lumina).
+    rules:
+      - threshold: 1000
+        target: node1
+
+  - id: model_economy
+    level: 2
+    type: semantic
+    name: Model Economy
+    description: Use cheaper models for routine checks. Reserve SOTA for complex reasoning.
+    enforcement: advisory
+    rules:
+      - sota_models: ["gemini-1.5-pro", "claude-3-5-sonnet", "gpt-4o"]
+        cheap_models: ["gemini-1.5-flash", "gpt-4o-mini", "ollama/qwen2.5"]
+
+  - id: system_92_isolation
+    level: 3
+    type: epistemic
+    name: Memory Classification
+    description: RESTRICTED data NEVER leaves Working Memory without encryption.
+    rules:
+      - restricted_layer_constraint: "working"
+      - encryption_required: true

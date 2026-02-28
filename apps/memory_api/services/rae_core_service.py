@@ -89,8 +89,14 @@ class RAECoreService:
 
         # New: Reflection Engine
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+        from rae_core.reflection.layers.coordinator import ReflectionCoordinator
 
         self.reflection_engine = ReflectionEngineV2(self)
+        self.reflection_coordinator = ReflectionCoordinator(
+            mode=settings.RAE_PROFILE if settings.RAE_PROFILE in ["standard", "advanced"] else "standard",
+            enforce_hard_frames=True,
+            storage=self.postgres_adapter
+        )
 
         # New: RAERuntime for RAE-First flow (Use Engine for implicit capture policy enforcement)
         self.runtime = RAERuntime(
@@ -673,6 +679,58 @@ class RAECoreService:
         tags = tags or []
         if governance:
             tags = self._detect_agentic_patterns(governance, tags)
+
+        # SYSTEM 93.1: Hard Frames 2.0 Contract Enforcement
+        # We validate memories that represent agentic decisions or outputs
+        if "agent_decision" in tags or "operation_result" in tags or layer == "working":
+            try:
+                # Attempt to parse content as JSON for validation if it looks like JSON
+                import json
+                payload = {}
+                if content.strip().startswith("{") and content.strip().endswith("}"):
+                    try:
+                        payload = json.loads(content)
+                    except Exception:
+                        payload = {"analysis": content}
+                else:
+                    payload = {"analysis": content}
+                
+                # Enrich payload with metadata for L2/L3 context
+                payload.update({
+                    "retrieved_sources": tags, # Use tags as proxy for sources if not in metadata
+                    "decision": metadata.get("decision", "proceed"),
+                    "confidence": metadata.get("confidence", 0.5),
+                    "metadata": metadata
+                })
+
+                validation_results = await self.reflection_coordinator.run_reflections(payload)
+                
+                if validation_results.get("final_decision") == "blocked":
+                    reasons = validation_results.get("block_reasons", [])
+                    logger.error("contract_validation_failed", reasons=reasons, project=project)
+                    
+                    # Store failure in reflective layer for audit
+                    await self.engine.store_memory(
+                        tenant_id=tenant_id,
+                        agent_id=agent_canonical,
+                        content=f"Contract Violation: {', '.join(reasons)}",
+                        layer="reflective",
+                        tags=["contract_violation", "blocked"],
+                        metadata={"target_content_hash": hash(content), "reasons": reasons}
+                    )
+                    
+                    raise SecurityPolicyViolationError(f"Contract Violation: {reasons}")
+                
+                # Add validation success to metadata
+                metadata["contract_audit"] = {
+                    "status": "passed",
+                    "timestamp": datetime.now().isoformat(),
+                    "layers": ["l1", "l2", "l3"]
+                }
+            except SecurityPolicyViolationError:
+                raise
+            except Exception as e:
+                logger.warning("contract_validation_skipped_on_error", error=str(e))
 
         # 3. Context Resolution (Best Practice: Avoid 'default' pollution)
         project_canonical = self._resolve_project_context(project)
