@@ -681,56 +681,63 @@ class RAECoreService:
             tags = self._detect_agentic_patterns(governance, tags)
 
         # SYSTEM 93.1: Hard Frames 2.0 Contract Enforcement
-        # We validate memories that represent agentic decisions or outputs
         if "agent_decision" in tags or "operation_result" in tags or layer == "working":
             try:
-                # Attempt to parse content as JSON for validation if it looks like JSON
                 import json
                 payload = {}
                 if content.strip().startswith("{") and content.strip().endswith("}"):
-                    try:
-                        payload = json.loads(content)
-                    except Exception:
-                        payload = {"analysis": content}
-                else:
-                    payload = {"analysis": content}
+                    try: payload = json.loads(content)
+                    except: payload = {"analysis": content}
+                else: payload = {"analysis": content}
                 
-                # Enrich payload with metadata for L2/L3 context
+                # SYSTEM 93.3: Hallucination Prevention Context
+                # Inject actual source content for L1 Grounding verification
+                source_memories = await self.engine.search_memories(
+                    query=content, tenant_id=tenant_id, top_k=5
+                )
+                payload["retrieved_sources_content"] = [m["content"] for m in source_memories]
+
                 payload.update({
-                    "retrieved_sources": tags, # Use tags as proxy for sources if not in metadata
+                    "retrieved_sources": [str(m["id"]) for m in source_memories],
                     "decision": metadata.get("decision", "proceed"),
                     "confidence": metadata.get("confidence", 0.5),
-                    "metadata": metadata
+                    "metadata": {**metadata, "trace_id": str(session_id or "audit-000")}
                 })
 
+                # SYSTEM 93.4: Full Decision Provenance
+                # We link the decision to the specific memories that influenced it
                 validation_results = await self.reflection_coordinator.run_reflections(payload)
                 
-                if validation_results.get("final_decision") == "blocked":
-                    reasons = validation_results.get("block_reasons", [])
-                    logger.error("contract_validation_failed", reasons=reasons, project=project)
-                    
-                    # Store failure in reflective layer for audit
-                    await self.engine.store_memory(
-                        tenant_id=tenant_id,
-                        agent_id=agent_canonical,
-                        content=f"Contract Violation: {', '.join(reasons)}",
-                        layer="reflective",
-                        tags=["contract_violation", "blocked"],
-                        metadata={"target_content_hash": hash(content), "reasons": reasons}
-                    )
-                    
-                    raise SecurityPolicyViolationError(f"Contract Violation: {reasons}")
+                # PERMANENT AUDIT TRAIL
+                audit_content = (
+                    f"DECISION AUDIT: {name}\n"
+                    f"Decision: {payload['decision']}\n"
+                    f"Confidence: {payload['confidence']}\n"
+                    f"Reasoning: {payload['analysis'][:500]}\n"
+                    f"Evidence IDs: {payload['retrieved_sources']}\n"
+                    f"Validation: {validation_results['final_decision']}"
+                )
                 
-                # Add validation success to metadata
-                metadata["contract_audit"] = {
-                    "status": "passed",
-                    "timestamp": datetime.now().isoformat(),
-                    "layers": ["l1", "l2", "l3"]
-                }
-            except SecurityPolicyViolationError:
-                raise
-            except Exception as e:
-                logger.warning("contract_validation_skipped_on_error", error=str(e))
+                await self.engine.store_memory(
+                    tenant_id=tenant_id,
+                    agent_id="oracle_auditor",
+                    content=audit_content,
+                    layer="reflective",
+                    tags=["decision_provenance", "audit_log"],
+                    metadata={
+                        "target_id": mid,
+                        "evidence_ids": payload["retrieved_sources"],
+                        "validation_full": validation_results
+                    }
+                )
+
+                if validation_results.get("final_decision") == "blocked":
+                    raise SecurityPolicyViolationError(f"Decision Blocked by Oracle: {validation_results['block_reasons']}")
+                
+                metadata["audit_verified"] = True
+                metadata["provenance_link"] = payload["retrieved_sources"]
+            except SecurityPolicyViolationError: raise
+            except Exception as e: logger.warning("audit_failed", error=str(e))
 
         # 3. Context Resolution (Best Practice: Avoid 'default' pollution)
         project_canonical = self._resolve_project_context(project)

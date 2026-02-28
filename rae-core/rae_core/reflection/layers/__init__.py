@@ -1,6 +1,6 @@
 from .l1_operational import L1OperationalReflection, EvidenceVerifier, ContractEnforcer, UncertaintyEstimator
-from .l2_structural import L2StructuralReflection, RetrievalAnalyzer, PatternDetector, CostOptimizer
-from .l3_meta import L3MetaFieldReflection, FieldDensityMonitor, RenormalizationEngine, SymmetryAndAnomalyDetector
+from .l2_structural import L2StructuralReflection, InformationDensityGuard, ModelEfficiencyGuard
+from .l3_meta import L3MetaFieldReflection, EpistemicProvenanceGuard
 from .coordinator import ReflectionCoordinator
 
 __all__ = [
