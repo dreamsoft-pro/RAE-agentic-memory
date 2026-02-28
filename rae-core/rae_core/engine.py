@@ -440,6 +440,27 @@ class RAEEngine:
             chunk_kwargs["content"] = chunk.content
             chunk_kwargs["metadata"] = kwargs.get("metadata", {}).copy()
             chunk_kwargs["metadata"].update(chunk.metadata)
+            
+            target_layer = kwargs.get("layer", "episodic")
+            
+            # --- SYSTEM 93.2: LAYER RETENTION CONTRACTS ---
+            if target_layer == "sensory":
+                # Sensory must have TTL. If missing, enforce 24h.
+                if chunk_kwargs.get("ttl") is None:
+                    chunk_kwargs["ttl"] = 86400
+            
+            elif target_layer == "semantic":
+                # Semantic must have high information density or source
+                if not chunk_kwargs["metadata"].get("source_id") and not chunk_kwargs["metadata"].get("parent_id"):
+                    logger.warning("layer_contract_warning", layer="semantic", reason="provenance_missing")
+            
+            elif target_layer == "working":
+                # Working must be linked to a session
+                if not chunk_kwargs.get("session_id"):
+                    logger.error("layer_contract_violation", layer="working", reason="session_missing")
+                    if self.settings.enforce_hard_frames:
+                        raise RuntimeError("Working memory requires session_id")
+
             chunk_kwargs["metadata"].update({
                 "parent_id": parent_id,
                 "chunk_index": i,

@@ -1,53 +1,29 @@
-# RAE Global Contract Atlas v1.0
-# Operationalized from AGENT_CORE_PROTOCOL.md and RAE_AGENTIC_CONTRACT.md
+# RAE Global Contract Atlas v1.5
+# Hard Frames 2.0 - Anti-Hallucination & Full Traceability
 
 contracts:
-  - id: core_bootstrap
+  - id: grounding_mandate
     level: 3
     type: epistemic
-    name: Bootstrap First
-    description: Never read a file or call a tool before running bootstrap_session.py.
-    enforcement: hard
-    rules:
-      - session_initialization_required: true
+    name: No-Hallucination Guard
+    description: All agent claims must be grounded in retrieved sources.
+    rules: [{min_grounding_score: 0.7, action: block_on_low_evidence}]
 
-  - id: tool_isolation
+  - id: audit_genealogy
     level: 1
     type: structural
-    name: No Interactive Tools
-    description: Absolute ban on nano, vim, vi, git add -i.
-    enforcement: hard
-    banned_commands:
-      - nano
-      - vim
-      - vi
-      - git add -i
-      - less
+    name: Full Decision Traceability
+    description: Every decision must have a traceable path to sources and model ID.
+    rules: [{require_decision_chain: true, require_model_id: true}]
 
-  - id: cluster_strategy
-    level: 2
-    type: semantic
-    name: Cluster First
-    description: Heavy tasks (benchmarks > 1k) must go to Node 1 (Lumina).
-    rules:
-      - threshold: 1000
-        target: node1
-
-  - id: model_economy
-    level: 2
-    type: semantic
-    name: Model Economy
-    description: Use cheaper models for routine checks. Reserve SOTA for complex reasoning.
-    enforcement: advisory
-    rules:
-      - sota_models: ["gemini-1.5-pro", "claude-3-5-sonnet", "gpt-4o"]
-        cheap_models: ["gemini-1.5-flash", "gpt-4o-mini", "ollama/qwen2.5"]
-
-  - id: system_92_isolation
+  - id: hard_frame_boundary
     level: 3
     type: epistemic
-    name: Memory Classification
-    description: RESTRICTED data NEVER leaves Working Memory without encryption.
-    rules:
-      - restricted_layer_constraint: "working"
-      - encryption_required: true
+    name: Isolation Shield
+    description: Prevents data leakage between agent sessions.
+    rules: [{strict_session_isolation: true, block_anonymous_writes: true}]
+
+  - id: information_provenance
+    level: 3
+    type: epistemic
+    rules: [{require_source_metadata: true}]
