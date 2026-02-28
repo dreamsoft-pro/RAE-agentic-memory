@@ -1,0 +1,141 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'edit' | translate }}: {{oryg.name}}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+  <div class="modal-body">
+  
+    <div class="form-body">
+      
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'old_name' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-model="form.name" type="text" class="form-control" placeholder="{{ 'name' | translate }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'lang_name' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-repeat="lang in languages" ng-show="nameLang == lang.code" ng-model="form.names[lang.code]" type="text" class="form-control" placeholder="{{lang.code}}">
+          <select class="form-control" ng-init="nameLang = currentLang.code" ng-model="nameLang" ng-options="each.code as each.name for (key, each) in languages"></select>
+        </div>
+      </div>
+      <div class="form-group" >
+          <label class="col-md-3 control-label">{{'icon' | translate}}</label>
+          <div class="col-md-9">
+              <button type="button" ng-click="uploadIcon( form )" class="btn btn-primary">
+                  {{ 'upload' | translate }}
+              </button>
+              <div ng-show="form.iconUrl">
+                  <img src="{{ form.iconUrl }}"
+                       style="max-width:200px;border:1px solid #3e3e3e;"
+                       class="img-rounded img-responsive" />
+                  <button type="button" ng-confirm-click="deleteIcon( form )" class="btn red-sunglo btn-xs">
+                      <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+              </div>
+          </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'description' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-model="form.adminName" type="text" class="form-control" placeholder="{{ 'description' | translate }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'extended_description' | translate
+          }}</label>
+        <div class="col-md-9">
+          <div ng-repeat="lang in languages"
+               ng-show="descriptionLang == lang.code">
+          <div ds-tinymce
+               ng-model="form.description[lang.code]"
+               placeholder=" {{ 'extended_description' | translate }}"></div>
+          </div>
+          <select class="form-control" ng-init="descriptionLang = currentLang.code"
+                  ng-model="descriptionLang"
+                  ng-options="each.code as each.name for (key, each) in languages"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'type' | translate }}</label>
+        <div class="col-md-9">
+          <select class="form-control"  ng-model="form.type" ng-options="each.ID as each.name for each in types"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'nature' | translate }}</label>
+        <div class="col-md-9">
+          <select class="form-control"  ng-model="form.natureID" ng-options="nature.ID as ('attribute_nature_'+nature.function)|translate for nature in natures"></select>
+        </div>
+      </div>
+
+      <div class="col-md-9 col-md-offset-3">
+        <h3>{{ 'defined_number_pages' | translate }}</h3>
+      </div>
+      
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'minimum_number_of_pages' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-model="form.minPages" type="text" class="form-control" placeholder="{{ 'minimum_number_of_pages' | translate }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'step' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-model="form.step" type="text" class="form-control" placeholder="{{ 'step' | translate }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-md-3 control-label">{{ 'maximum_number_of_pages' | translate }}</label>
+        <div class="col-md-9">
+          <input ng-model="form.maxPages" type="text" class="form-control" placeholder="{{ 'maximum_number_of_pages' | translate }}">
+        </div>
+      </div>
+
+      <div class="portlet light">
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'maximum_number_of_multiple_options'
+          | translate }}</label>
+          <div class="col-md-9">
+            <input ng-model="form.multipleOptionsMax" type="number" min="0" class="form-control"
+                   placeholder="{{ 'maximum_number_of_multiple_options' | translate }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'display_image_on_miniature'
+          | translate }}</label>
+          <div class="col-md-9">
+            <div class="checker"><span
+                    ng-class="{checked: form.displayImageOnMiniature}">
+              <input ng-model="form.displayImageOnMiniature" ng-true-value="1" ng-false-value="0" type="checkbox">
+            </span></div>
+
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-md-3 control-label">{{ 'attribute_special_function' | translate }}</label>
+          <div class="col-md-9">
+            <select class="form-control"  ng-model="form.specialFunction" ng-options="fn as ('attribute_special_function_'+fn)|translate for fn in specialFunctions"></select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    
+  </div>
+  <div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+    <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+  </div>
+
+</form>

@@ -1,0 +1,478 @@
+{
+  "benchmark": {
+    "name": "industrial_small",
+    "description": "Industrial benchmark with real-world messy data, edge cases, and GraphRAG testing",
+    "version": "1.0",
+    "file": "benchmarking/sets/industrial_small.yaml"
+  },
+  "execution": {
+    "timestamp": "2026-01-02T11:04:05.193563",
+    "num_memories": 35,
+    "num_queries": 20,
+    "total_time_seconds": 1.1729984283447266
+  },
+  "metrics": {
+    "mrr": 0.8055555555555556,
+    "hit_rate": {
+      "@3": 0.9,
+      "@5": 0.9,
+      "@10": 0.95
+    },
+    "precision": {
+      "@3": 0.4,
+      "@5": 0.26,
+      "@10": 0.155
+    },
+    "recall": {
+      "@3": 0.725,
+      "@5": 0.7666666666666667,
+      "@10": 0.875
+    },
+    "performance": {
+      "avg_insert_time_ms": 23.4940801348005,
+      "avg_query_time_ms": 17.53528118133545,
+      "p95_query_time_ms": 25.374174118041992,
+      "p99_query_time_ms": 25.374174118041992
+    },
+    "overall_quality_score": 0.7462222222222222
+  },
+  "detailed_results": [
+    {
+      "query": "What issues are customers having with authentication?",
+      "expected": [
+        "ticket_001",
+        "meeting_001"
+      ],
+      "retrieved": [
+        "ticket_001",
+        "meeting_003",
+        "feedback_003",
+        "ticket_005",
+        "code_005",
+        "meeting_001",
+        "doc_004",
+        "meeting_004",
+        "ticket_002",
+        "metric_002"
+      ],
+      "latency_ms": 19.333362579345703,
+      "difficulty": "medium",
+      "category": "aggregation"
+    },
+    {
+      "query": "Are there any critical payment system problems?",
+      "expected": [
+        "ticket_002",
+        "meeting_002"
+      ],
+      "retrieved": [
+        "ticket_002",
+        "meeting_002",
+        "metric_003",
+        "log_004",
+        "metric_002",
+        "meeting_005",
+        "metric_005",
+        "doc_005",
+        "log_005",
+        "feedback_005"
+      ],
+      "latency_ms": 18.329381942749023,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What mobile bugs have been reported?",
+      "expected": [
+        "ticket_004",
+        "feedback_002"
+      ],
+      "retrieved": [
+        "ticket_004",
+        "feedback_002",
+        "meeting_005",
+        "metric_003",
+        "meeting_003",
+        "code_002",
+        "feedback_004",
+        "metric_001",
+        "ticket_003",
+        "metric_002"
+      ],
+      "latency_ms": 18.32747459411621,
+      "difficulty": "medium",
+      "category": "aggregation"
+    },
+    {
+      "query": "What security vulnerabilities were found in code reviews?",
+      "expected": [
+        "code_003",
+        "doc_004"
+      ],
+      "retrieved": [
+        "metric_003",
+        "meeting_005",
+        "doc_005",
+        "metric_004",
+        "code_005",
+        "ticket_002",
+        "code_002",
+        "meeting_001",
+        "doc_004",
+        "metric_001"
+      ],
+      "latency_ms": 19.864320755004883,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What code changes improved performance?",
+      "expected": [
+        "code_004",
+        "code_001"
+      ],
+      "retrieved": [
+        "metric_004",
+        "code_004",
+        "metric_001",
+        "ticket_001",
+        "metric_003",
+        "log_002",
+        "metric_002",
+        "feedback_001",
+        "doc_005",
+        "code_001"
+      ],
+      "latency_ms": 17.261743545532227,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What are the multi-tenancy security requirements?",
+      "expected": [
+        "doc_004",
+        "code_003"
+      ],
+      "retrieved": [
+        "doc_004",
+        "code_003",
+        "metric_003",
+        "meeting_005",
+        "doc_001",
+        "doc_003",
+        "meeting_004",
+        "ticket_005",
+        "feedback_003",
+        "metric_005"
+      ],
+      "latency_ms": 23.119449615478516,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What infrastructure problems need immediate attention?",
+      "expected": [
+        "log_005",
+        "log_001"
+      ],
+      "retrieved": [
+        "metric_003",
+        "metric_005",
+        "meeting_005",
+        "doc_005",
+        "doc_002",
+        "ticket_002",
+        "metric_001",
+        "meeting_002",
+        "metric_002",
+        "ticket_004"
+      ],
+      "latency_ms": 14.914512634277344,
+      "difficulty": "easy",
+      "category": "priority_filtering"
+    },
+    {
+      "query": "What is the rollback procedure if deployment fails?",
+      "expected": [
+        "doc_002"
+      ],
+      "retrieved": [
+        "log_003",
+        "doc_002",
+        "doc_003",
+        "code_001",
+        "meeting_002",
+        "log_004",
+        "metric_003",
+        "meeting_005",
+        "code_002",
+        "ticket_002"
+      ],
+      "latency_ms": 15.403032302856445,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What are our database backup policies?",
+      "expected": [
+        "doc_003"
+      ],
+      "retrieved": [
+        "doc_003",
+        "doc_002",
+        "meeting_005",
+        "meeting_003",
+        "doc_004",
+        "doc_001",
+        "log_005",
+        "metric_005",
+        "meeting_001",
+        "metric_003"
+      ],
+      "latency_ms": 17.53377914428711,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What caused the recent payment system outage?",
+      "expected": [
+        "meeting_002",
+        "log_004"
+      ],
+      "retrieved": [
+        "meeting_002",
+        "ticket_002",
+        "log_004",
+        "doc_002",
+        "doc_005",
+        "meeting_005",
+        "code_003",
+        "feedback_004",
+        "feedback_002",
+        "log_001"
+      ],
+      "latency_ms": 15.851974487304688,
+      "difficulty": "medium",
+      "category": "root_cause_analysis"
+    },
+    {
+      "query": "How is our system performing against SLOs?",
+      "expected": [
+        "metric_001",
+        "doc_005"
+      ],
+      "retrieved": [
+        "doc_005",
+        "metric_001",
+        "doc_001",
+        "metric_003",
+        "meeting_005",
+        "meeting_004",
+        "metric_004",
+        "metric_002",
+        "feedback_005",
+        "ticket_005"
+      ],
+      "latency_ms": 25.374174118041992,
+      "difficulty": "hard",
+      "category": "analytical"
+    },
+    {
+      "query": "What are customers complaining about most?",
+      "expected": [
+        "metric_002",
+        "feedback_002",
+        "ticket_003"
+      ],
+      "retrieved": [
+        "metric_002",
+        "meeting_003",
+        "feedback_005",
+        "metric_004",
+        "ticket_002",
+        "doc_005",
+        "meeting_005",
+        "ticket_001",
+        "metric_003",
+        "metric_001"
+      ],
+      "latency_ms": 18.828630447387695,
+      "difficulty": "hard",
+      "category": "sentiment_analysis"
+    },
+    {
+      "query": "What security vulnerabilities need to be fixed?",
+      "expected": [
+        "metric_003",
+        "meeting_005"
+      ],
+      "retrieved": [
+        "metric_003",
+        "meeting_005",
+        "code_005",
+        "doc_002",
+        "ticket_002",
+        "doc_005",
+        "meeting_003",
+        "doc_004",
+        "meeting_001",
+        "code_001"
+      ],
+      "latency_ms": 15.001535415649414,
+      "difficulty": "medium",
+      "category": "priority_filtering"
+    },
+    {
+      "query": "What are our biggest infrastructure costs?",
+      "expected": [
+        "metric_005"
+      ],
+      "retrieved": [
+        "metric_005",
+        "feedback_005",
+        "doc_001",
+        "metric_003",
+        "metric_002",
+        "ticket_004",
+        "meeting_005",
+        "meeting_004",
+        "metric_001",
+        "code_004"
+      ],
+      "latency_ms": 12.939214706420898,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What features are being prioritized in the next sprint?",
+      "expected": [
+        "meeting_001"
+      ],
+      "retrieved": [
+        "meeting_005",
+        "meeting_001",
+        "meeting_003",
+        "metric_001",
+        "feedback_001",
+        "metric_004",
+        "metric_003",
+        "code_004",
+        "feedback_005",
+        "metric_002"
+      ],
+      "latency_ms": 13.984441757202148,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What architectural changes are planned?",
+      "expected": [
+        "meeting_004"
+      ],
+      "retrieved": [
+        "meeting_001",
+        "meeting_004",
+        "doc_002",
+        "code_004",
+        "metric_003",
+        "feedback_001",
+        "meeting_005",
+        "ticket_003",
+        "code_005",
+        "log_003"
+      ],
+      "latency_ms": 16.389846801757812,
+      "difficulty": "easy",
+      "category": "factual"
+    },
+    {
+      "query": "What is customer sentiment about our product?",
+      "expected": [
+        "feedback_001",
+        "feedback_004",
+        "metric_002"
+      ],
+      "retrieved": [
+        "metric_002",
+        "meeting_003",
+        "feedback_005",
+        "ticket_001",
+        "feedback_004",
+        "meeting_005",
+        "metric_004",
+        "metric_001",
+        "metric_003",
+        "meeting_001"
+      ],
+      "latency_ms": 18.375873565673828,
+      "difficulty": "hard",
+      "category": "sentiment_aggregation"
+    },
+    {
+      "query": "What database issues are we experiencing?",
+      "expected": [
+        "log_001",
+        "metric_004",
+        "log_005"
+      ],
+      "retrieved": [
+        "metric_004",
+        "meeting_003",
+        "meeting_005",
+        "metric_005",
+        "metric_003",
+        "log_001",
+        "log_005",
+        "ticket_002",
+        "doc_002",
+        "log_002"
+      ],
+      "latency_ms": 14.959096908569336,
+      "difficulty": "hard",
+      "category": "multi_match"
+    },
+    {
+      "query": "What feedback did we get about the mobile app?",
+      "expected": [
+        "feedback_002",
+        "ticket_004"
+      ],
+      "retrieved": [
+        "feedback_002",
+        "metric_002",
+        "meeting_003",
+        "ticket_004",
+        "metric_001",
+        "feedback_001",
+        "code_004",
+        "meeting_005",
+        "meeting_001",
+        "feedback_003"
+      ],
+      "latency_ms": 19.79994773864746,
+      "difficulty": "medium",
+      "category": "aggregation"
+    },
+    {
+      "query": "What are the API rate limits for different tiers?",
+      "expected": [
+        "doc_001"
+      ],
+      "retrieved": [
+        "doc_001",
+        "metric_001",
+        "code_004",
+        "feedback_003",
+        "log_004",
+        "doc_005",
+        "log_001",
+        "feedback_005",
+        "metric_002",
+        "log_002"
+      ],
+      "latency_ms": 15.11383056640625,
+      "difficulty": "easy",
+      "category": "factual"
+    }
+  ]
+}

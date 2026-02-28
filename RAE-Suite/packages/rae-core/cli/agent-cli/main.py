@@ -1,0 +1,145 @@
+import json
+import os
+import uuid
+from pathlib import Path
+
+import requests
+import typer
+
+app = typer.Typer(help="A CLI for interacting with the RAE API.")
+
+
+def _get_api_url() -> str:
+    return os.environ.get("RAE_API_URL", "http://localhost:8000")
+
+
+def _get_api_key() -> str:
+    return os.environ.get("RAE_API_KEY", "test-key")
+
+
+def _get_session_id() -> str:
+    """Gets or creates a session ID from .rae_session file."""
+    # Look in current dir and parent dirs
+    current = Path.cwd()
+    paths_to_check = [current] + list(current.parents)
+
+    session_file = None
+    for path in paths_to_check:
+        potential = path / ".rae_session"
+        if potential.exists():
+            session_file = potential
+            break
+
+    if session_file:
+        try:
+            return session_file.read_text().strip()
+        except Exception:
+            pass
+
+    # Fallback: Generate one but don't save (ephemeral CLI session)
+    return str(uuid.uuid4())
+
+
+@app.command()
+def health():
+    """Checks the health of the RAE API."""
+    url = f"{_get_api_url()}/health"
+    try:
+        r = requests.get(url)
+        r.raise_for_status()
+        print(r.json())
+    except requests.RequestException as e:
+        print(f"Error connecting to API at {url}: {e}")
+
+
+@app.command()
+def store(
+    content: str = typer.Argument(..., help="The text content of the memory."),
+    tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
+    project: str = typer.Option(..., "--project", "-p", help="The project ID."),
+    source: str = typer.Option("cli", help="The source of the memory."),
+    layer: str = typer.Option(
+        "semantic",
+        help="The memory layer (e.g., 'episodic', 'semantic', 'reflective').",
+    ),
+):
+    """Stores a new memory in the RAE."""
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project,
+    }
+    payload = {
+        "content": content,
+        "source": source,
+        "layer": layer,
+        "project": project,
+        "session_id": session_id,
+    }
+    url = f"{_get_api_url()}/v2/memory/store"
+    try:
+        r = requests.post(url, json=payload, headers=headers)
+        r.raise_for_status()
+        print(json.dumps(r.json(), indent=2))
+    except requests.RequestException as e:
+        print(f"Error storing memory: {e}")
+
+
+@app.command()
+def query(
+    query_text: str = typer.Argument(..., help="The search query."),
+    tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
+    project: str = typer.Option("default", "--project", "-p", help="The project ID."),
+    k: int = typer.Option(10, help="Number of results to return."),
+):
+    """Queries for memories in the RAE."""
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project,
+    }
+    payload = {"query_text": query_text, "k": k}
+    url = f"{_get_api_url()}/v2/memory/query"
+    try:
+        r = requests.post(url, json=payload, headers=headers)
+        r.raise_for_status()
+        print(json.dumps(r.json(), indent=2, ensure_ascii=False))
+    except requests.RequestException as e:
+        print(f"Error querying memory: {e}")
+
+
+@app.command()
+def ask(
+    prompt: str = typer.Argument(..., help="The prompt for the agent."),
+    tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
+    project: str = typer.Option(..., "--project", "-p", help="The project ID."),
+):
+    """Asks the RAE agent a question."""
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project,
+    }
+    payload = {
+        "tenant_id": tenant,
+        "project": project,
+        "prompt": prompt,
+        "session_id": session_id,
+    }
+    url = f"{_get_api_url()}/v2/agent/execute"
+    try:
+        r = requests.post(url, json=payload, headers=headers)
+        r.raise_for_status()
+        print(json.dumps(r.json(), indent=2, ensure_ascii=False))
+    except requests.RequestException as e:
+        print(f"Error executing agent: {e}")
+
+
+if __name__ == "__main__":
+    app()

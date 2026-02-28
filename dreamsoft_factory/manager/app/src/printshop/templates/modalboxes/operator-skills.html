@@ -1,0 +1,26 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'choose_skill' | translate }}</h3>
+</div>
+
+<div class="modal-body">
+
+<h3 class="modal-title alert alert-info">Operator: {{operator.name}}</h3>
+
+
+  <div class="list-group clickable">
+    <a class="list-group-item"
+      data-ng-repeat="skill in currentSkills"
+      data-ng-click="skill.selected = (skill.selected != 1 ? 1 : 0)"
+      data-ng-class="{active: skill.selected}">
+      <h3 class="list-group-item-heading"> <small>{{skill.ID}} </small>{{skill.name}} </h3>
+      <!-- <p class="list-group-item-text">
+      Lorem ipsum
+      </p> -->
+    </a>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'cancel' | translate }}</button>
+  <button class="btn btn-success" ng-click="ok()"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+</div>

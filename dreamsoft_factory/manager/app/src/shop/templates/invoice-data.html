@@ -1,0 +1,99 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-paperclip" aria-hidden="true"></i> {{ 'data_to_invoice' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="shop.invoiceData""></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <form class="form-horizontal" role="form" ng-submit="saveInvoiceData()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'company_name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.companyName.value" type="text" placeholder="{{ 'name' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'street' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.street.value" type="text" placeholder="{{ 'street' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'house_number' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.houseNumber.value" type="text" placeholder="{{ 'house_number' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'flat_number' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.flatNumber.value" type="text" placeholder="{{ 'flat_number' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'postal_code' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.postalCode.value" type="text" placeholder="{{ 'postal_code' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'location' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.location.value" type="text" placeholder="{{ 'location' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'nip' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.nip.value" type="text" placeholder="{{ 'nip' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'bank_account' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.bankAccount.value" type="text" placeholder="{{ 'bank_account' | translate }}" class="form-control" >
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-plus"></i>
+                                    {{ 'save' | translate }}
+                                </button>
+                                <button ng-click="reset()"
+                                        type="button" class="btn red-sunglo">
+                                    {{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5 visible-lg">
+        <div faq-accordion="shop.invoiceData"></div>
+    </div>
+</div>

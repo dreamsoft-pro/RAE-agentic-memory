@@ -1,0 +1,397 @@
+.tool-button.layers::before {
+    font-family: EditorIcons3;
+    content: "\0064"
+}
+
+.main-tool-button.layers::before {
+    content: "\0064"
+}
+
+#layersContent {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+    overflow-y: scroll;
+}
+
+#editorLayers {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+}
+
+#editorLayers.viewport {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.overview {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#editorLayers ul{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+li ul > li {
+    margin-left: 1.5rem;
+}
+
+li {
+   background-color: var(--gray-300);
+   border-radius: var(--border-md-radius);
+   cursor: pointer;
+   display: flex;
+   flex-direction: column;
+   border: 1px solid transparent;
+}
+
+li.layerSelected {
+    border: 1px solid var(--gray-700);
+}
+
+.mainLayerGroupHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: .4rem .1rem;
+    margin-right: 1.4rem;
+}
+
+.mainLeftLayerGroupHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: .8rem;
+    margin-left: .5rem;
+}
+
+.mainRightLayerGroupHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: .8rem;
+}
+
+.mainLayerGroup {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--border-xs-radius);
+    border: solid 1px var(--gray-700);
+    padding: .3rem .5rem;
+    margin-right: 1rem;
+    margin-bottom: .5rem;
+}
+
+.mainLeftLayerGroup {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: .8rem;
+}
+
+span.objectPadlock::before {
+    content: "\2014";
+    font-family: "EditorIcons";
+    font-size: 1.5rem;
+}
+
+span.objectBrush::before {
+    content: "\0066";
+    font-family: "EditorIcons";
+    font-size: 1.5rem;
+}
+
+span.objectVisibility {
+    cursor: pointer;
+}
+
+span.objectVisibility.visible::before {
+    content: "c";
+    font-family: "EditorIcons";
+    font-size: 1.5rem;
+}
+
+span.objectPadlockModal {
+    background-color: var(--gray-300);
+    border-radius: var(--border-md-radius);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    width: 2.25rem;
+    color: var(--gray-700);
+    font-size: 1.9rem;
+}
+
+span.objectPadlockModal::before {
+    content: "\2014";
+    font-family: "EditorIcons";
+}
+
+span.objectBrushModal {
+    background-color: var(--gray-300);
+    border-radius: var(--border-md-radius);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    width: 2.25rem;
+    color: var(--gray-700);
+    font-size: 2rem;
+}
+
+span.objectBrushModal::before {
+    content: "\0066";
+    font-family: "EditorIcons";
+}
+
+span.objectVisibilityModal.visible {
+    background-color: var(--gray-300);
+    border-radius: var(--border-md-radius);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    width: 2.25rem;
+    color: var(--gray-700);
+    font-size: 2rem;
+}
+
+span.objectVisibilityModal.visible::before {
+    content: "c";
+    font-family: "EditorIcons";
+}
+
+span.objectVisibility.notvisible::before {
+    font-family: 'EditorIcons';
+    content: "\0056";
+    font-size: 1.5rem;
+}
+
+.layerHideButton.hiden::before {
+    font-family: 'EditorIcons3';
+    content: "\0026";
+    font-size: 1.5rem;
+}
+
+.layerHideButton.shown::before {
+    font-family: 'EditorIcons3';
+    content: "\0025";
+    font-size: 1.5rem;
+}
+
+.layerHideButton {
+    cursor: pointer;
+    text-align: center;
+}
+
+#editorLayers ul li.shown > ul {
+    display: block;
+}
+
+#editorLayers ul li.hiden > ul {
+    display: none;
+}
+
+span.objectMiniature {
+    background-position: center center;
+    background-size: cover;
+    border: 1px solid var(--gray-700);
+    display: block;
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+
+/*  */
+/*  */
+/* OLD STYLES */
+
+/* #editorLayers ul ul {
+    margin-left: .5rem;
+}
+
+.viewport {
+    position: relative;
+    height: 779px;
+    width: 100%;
+    overflow: hidden;
+}
+
+#editorLayers li input {
+    display: inline-block;
+    width: 200px;
+}
+
+#editorLayers span {
+    display: block;
+    max-width: 175px;
+    overflow: hidden;
+}
+
+#editorLayers {
+    width: 100%;
+    position: relative;
+    padding: 0;
+}
+
+.layerSelected {
+    background-color: rgba(79, 215, 201, 0.49);
+    padding-left: 10px; 
+}
+
+#editorLayers ul {
+    clear: both;
+    display: block;
+    overflow: hidden;
+    padding: 0;
+}
+
+#editorLayers > ul {
+    display: block;
+    width: 245px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+#editorLayers ul li {
+    border-bottom: 1px solid #67c1be;
+    border-left: 1px solid #fff;
+    cursor: pointer;
+    display: block;
+    float: none;
+    min-height: 47px;
+    overflow: hidden;
+    padding-bottom: 3px;
+    padding-top: 3px;
+}
+
+#editorLayers.viewport {
+    position: relative;
+    height: 779px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.overview {
+    list-style: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 0;
+    width: 100%;
+    margin: 0;
+    margin-top: .25rem;
+}
+
+span.objectVisibility {
+    display: block;
+    float: left;
+    height: 40px;
+    width: 25px;
+    /*background-image: url(images/visibility.png);
+  background-position: center;
+  background-repeat: no-repeat;
+    cursor: pointer;
+
+}
+
+span.objectVisibility.visible::before {
+    content: "c";
+    font-family: "EditorIcons";
+    font-size: 20pt;
+    font-weight: normal;
+    line-height: 41px;
+    margin-left: 4px;
+}
+
+span.objectVisibility.notvisible::before {
+    font-family: 'EditorIcons';
+    font-weight: normal;
+    content: "\0056";
+    font-size: 20pt;
+    line-height: 41px;
+    margin-left: 4px;
+}
+
+
+span.objectName {
+    display: block;
+    float: left;
+    height: 40px;
+    line-height: 40px;
+    margin-left: 15px;
+    color: #FFF;
+    font-size: 16px;
+}
+
+span.objectMiniature {
+    background-position: center center;
+    background-size: cover;
+    border: 1px solid #058178;
+    border-radius: 10px;
+    display: block;
+    float: right;
+    font-size: 30px;
+    height: 40px;
+    line-height: 40px;
+    position: relative;
+    text-align: center;
+    width: 40px;
+    font-family: serif;
+    margin-right: 3px;
+}
+
+.layerHideButton.hiden::before {
+    content: "↑";
+}
+
+
+.layerHideButton.shown::before {
+    content: "↓";
+}
+
+.layerHideButton {
+    cursor: pointer;
+    display: inline-block !important;
+    float: left;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    width: 31px;
+}
+
+li.proposedPositionLayer {
+    background: #3970A6;
+}
+
+li.proposedPositionLayer span.objectMiniature {
+    border-color: #FFF;
+}
+
+#editorLayers ul li.shown > ul {
+    display: block;
+}
+
+#editorLayers ul li.hiden > ul {
+    display: none;
+} */

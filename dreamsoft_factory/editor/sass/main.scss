@@ -1,0 +1,23 @@
+@use 'layouts/carousel';
+@use 'layouts/top-menu';
+@use 'layouts/switch';
+@use 'layouts/effectsTool/photo-options-buttons-container';
+@use 'layouts/sort-modal';
+@use 'layouts/effectsTool/number-adjuster';
+@use 'layouts/grid';
+@use 'layouts/images-tools';
+@use 'layouts/positions-content';
+@use 'layouts/attributes';
+@use 'components/buttons';
+@use 'components/selector-dropdown';
+@use 'components/tool-helper';
+@use 'components/dropdown-on-hover';
+@use 'components/canvas-toolbar';
+@use 'components/single-photo';
+@use 'components/containers';
+@use 'components/bitmap-tools';
+@use 'components/color-picker';
+
+.proposed-text-toolsbox {
+    display: none;
+}

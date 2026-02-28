@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+     "baseUrl": ".",
+     "paths": {
+       "models": [
+         "models"
+          ]
+        },
+    "outDir": "./dist",
+    /*"lib": [
+      "es2015",
+      "es5",
+      "es6",
+      "dom"
+    ],*/
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictFunctionTypes": false,
+    "inlineSourceMap": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true
+    /*"isolatedModules": true,  */
+  },
+  "include": [
+    "./app-admin.ts",
+    "./src/**/*.ts",
+    "./scripts/*.ts"
+  ],
+  "exclude": ["./**/*.js"]
+}

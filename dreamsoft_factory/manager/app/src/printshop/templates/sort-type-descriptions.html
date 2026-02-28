@@ -1,0 +1,24 @@
+<div class="contentier">
+  <div ui-sortable="sortableOptions" ng-model="items" class="row">
+  <div ng-repeat="item in items | orderBy: 'sort'" class="col-xs-4 col-md-2">
+    <div class="thumbnail" style="min-height:200px;">
+      	<h4>
+      		<button 
+      		class="btn btn-default btn-sm button-sort">
+      		<span class="fa fa-arrows-v"></span>
+      		</button>
+      		{{ item.names[currentLang.code] }} ID: {{ item.ID }}
+      	</h4>
+    </div>
+  </div>
+  </div>
+
+
+  <button class="btn btn-success" ng-if="sortChange" ng-click="sortSave()">
+  {{ 'save_the_change_order' | translate }}
+  </button>
+  <button class="btn red-sunglo" ng-if="sortChange" ng-click="sortCancel()">
+  {{ 'cancel' | translate }}
+  </button>
+
+</div>

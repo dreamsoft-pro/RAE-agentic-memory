@@ -1,0 +1,708 @@
+<div class="modal-header">
+    <h3>{{ 'user' | translate }} {{ user.name }}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet light blueHoki" id="myAddresses">
+                <div class="portlet-title">
+                    <h4 class="bold text-muted fontSize21">{{ 'shipping_addresses' | translate }}</h4>
+                </div>
+                <div class="portlet-body">
+                    <div class="list-group">
+                        <div class="list-group-item" ng-repeat="item in addresses">
+                            <i class="fa fa-book"></i> <span class="bold">{{ item.addressName }}</span> | <span
+                                class="bold">{{ item.street }}</span>, <span class="bold">{{ item.zipcode}} {{ item.city }}</span>
+                            | <a ng-show="userCanEdit"
+                                 ng-click="(item.isCollapsed = !item.isCollapsed) && editAddress(item)">{{ 'edit' |
+                            translate }}</a>
+                            <a ng-if="item.default != 1 && userCanRemove" href="javascript:;"
+                               ng-confirm-click="removeAddress(item)">{{ 'delete' | translate }}</a>
+                            <span ng-if="item.default == 1" class="defaultAddress">
+								<small> ({{ 'default' | translate }})</small>
+							</span>
+
+                            <div class="addressEdit margined20" collapse="!item.isCollapsed">
+                                <form class="form-horizontal margined20" ng-submit="save()">
+                                    <div class="row voffset5">
+                                        <div class="col-md-12 col-sm-12">
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="form-group address">
+                                                    <label class="col-md-5 control-label normal">* {{ 'address_name' |
+                                                        translate }}</label>
+                                                    <div class="col-md-7 ">
+                                                        <input type="text" class="form-control"
+                                                               ng-model="item.edit.addressName">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group firstName">
+                                                <label class="col-md-5 control-label normal">* {{ 'firstname' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="item.edit.name"
+                                                           required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group lastname">
+                                                <label class="col-md-5 control-label normal">* {{ 'lastname' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="item.edit.lastname" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group street">
+                                                <label class="col-md-5 control-label normal">* {{ 'street' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="item.edit.street"
+                                                           required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group house-no">
+                                                <label class="col-md-5 control-label normal">* {{ 'no_house' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="{{ 'no_house' | translate }}"
+                                                           ng-model="item.edit.house">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group flat-no">
+                                                <label class="col-md-5 control-label normal">{{ 'flat_number' |
+                                                    translate }}</label>
+                                                <div class="col-md-7">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="{{ 'flat_number' | translate }}"
+                                                           ng-model="item.edit.apartment">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group postal-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'postal_code' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="item.edit.zipcode"
+                                                           required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group city">
+                                                <label class="col-md-5 control-label normal">* {{ 'city' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="item.edit.city"
+                                                           required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group phone">
+                                                <label class="col-md-5 control-label normal">* {{ 'phone' | translate
+                                                    }}</label>
+                                                <div class="col-md-7">
+                                                    <div class="row">
+                                                        <div class="col-md-4 col-sm-4 col-xs-3 area-code">
+                                                            <input type="text" class="form-control" placeholder="+"
+                                                                   ng-model="item.edit.areaCode">
+                                                        </div>
+                                                        <div class="col-md-8 col-sm-8 col-xs-9 phone-number">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.telephone" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group country-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'country' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <select ng-options="country.code as country.name_pl for country in countries"
+                                                            ng-model="item.edit.countryCode" class="form-control"
+                                                            required>
+                                                        <option value="">{{ 'select' | translate }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="row voffset5">
+                                        <div class="col-md-6 requiredFields">
+                                            <div class="checkbox-list">
+                                                <label class="">
+                                                    <div class="checker">
+														<span ng-class="{ checked: !!item.edit.default }">
+															<input type="checkbox" ng-model="item.edit.default"
+                                                                   ng-true-value="1" ng-false-value="0">
+														</span>
+                                                    </div>
+                                                    {{ 'set_as_default' | translate }}
+                                                </label>
+                                            </div>
+                                            <span>* - {{ 'fields_with_star_required' | translate }}</span>
+                                        </div>
+                                        <div class="col-md-4 col-md-offset-2">
+
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <button type="button" ng-click="reset()"
+                                                            class="btn red-sunglo btn-block">{{ 'cancel' | translate }}
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <button class="btn btn-primary btn-block">{{ 'save' | translate }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <a ng-show="canAddOtherAddress"
+                               ng-click="isCollapsedAddAddress = isCollapsedAddAddress  ? false : true"><i
+                                    class="fa fa-plus"></i> {{ 'add_new' | translate }}</a>
+                            <div class="addressAdd margined20" collapse="!isCollapsedAddAddress">
+                                <form class="form-horizontal margined20" ng-submit="addAddress()">
+                                    <div class="row voffset5">
+                                        <div class="col-md-12 col-sm-12">
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="form-group address-name">
+                                                    <label class="col-md-5 control-label normal">* {{ 'address_name' |
+                                                        translate }}</label>
+                                                    <div class="col-md-7 ">
+                                                        <input type="text" class="form-control"
+                                                               ng-model="form.addressName" placeholder="Nazwa adresu"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group firstName">
+                                                <label class="col-md-5 control-label normal">* {{ 'firstname' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.name"
+                                                           placeholder="{{ 'firstname' | translate }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group lastname">
+                                                <label class="col-md-5 control-label normal">* {{ 'lastname' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.lastname"
+                                                           placeholder="Nazwisko" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group street">
+                                                <label class="col-md-5 control-label normal">* {{ 'street' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.street"
+                                                           placeholder="Ulica" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group house-no">
+                                                <label class="col-md-5 control-label normal">
+                                                    * {{ 'no_house' | translate }}
+                                                </label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.house"
+                                                           placeholder="{{ 'no_house' | translate }}" required data-toggle="validator">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group flat-no">
+                                                <label class="col-md-5 control-label normal">
+                                                    {{ 'flat_number' | translate }}
+                                                </label>
+                                                <div class="col-md-7">
+                                                    <input type="text" class="form-control" ng-model="form.apartment"
+                                                           placeholder="{{ 'flat_number' | translate }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group postal-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'postal_code' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.zipcode"
+                                                           placeholder="Kod pocztowy" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group city">
+                                                <label class="col-md-5 control-label normal">
+                                                    * {{ 'city' | translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.city"
+                                                           placeholder="Miasto" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group phone">
+                                                <label class="col-md-5 control-label normal">* {{ 'phone' | translate
+                                                    }}</label>
+                                                <div class="col-md-7">
+                                                    <div class="row">
+                                                        <div class="col-md-4 col-sm-4 col-xs-3 area-code">
+                                                            <input type="text" class="form-control" placeholder="+"
+                                                                   ng-model="form.areaCode">
+                                                        </div>
+                                                        <div class="col-md-8 col-sm-8 col-xs-9 phone-number">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="form.telephone" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group country-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'country' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <select ng-options="country.code as country.name_pl for country in countries"
+                                                            ng-model="form.countryCode" class="form-control"
+                                                            required>
+                                                        <option value="">{{ 'select' | translate }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="row voffset5">
+                                        <div class="col-md-6 requiredFields">
+                                            <div class="checkbox-list">
+                                                <label class="">
+                                                    <input type="checkbox" ng-model="form.default" ng-true-value="1"
+                                                           ng-false-value="0">
+                                                    {{ 'set_as_default' | translate }}
+                                                </label>
+                                            </div>
+                                            <span>* - {{ 'fields_with_star_required' | translate }}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-primary pull-right">{{ 'add' | translate }}</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet light blueHoki" id="myVatAddresses">
+                <div class="portlet-title">
+                    <h4 class="bold text-muted fontSize21">{{ 'invoice_data' | translate }}</h4>
+                </div>
+                <div class="portlet-body">
+                    <div class="list-group">
+                        <div class="list-group-item" ng-repeat="item in addressesVat">
+
+                            <i class="fa fa-book"></i>
+                            <span class="bold">
+								{{ item.addressName}}
+							</span> |
+                            <span class="bold">
+								{{ item.street }}
+							</span> |
+                            <span class="bold">
+								{{ item.zipcode}} {{ item.city }}
+							</span> | <a href="javascript:;" ng-show="userCanEdit"
+                                         ng-click="(item.isCollapsed = item.isCollapsed ? false : true) && editAddressVat(item)">
+                            {{ 'edit' | translate }}
+                        </a>
+                            <a ng-if="item.default != 1 && userCanRemove" href="javascript:;"
+                               ng-confirm-click="removeAddressVat(item)">{{ 'delete' | translate }}</a>
+                            <span ng-if="item.default == 1" class="defaultAddress">
+								<small>({{ 'default' | translate }})</small>
+							</span>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="addressEdit margined20" collapse="!item.isCollapsed">
+                                        <form class="form-horizontal margined20" ng-submit="save()">
+                                            <div class="row voffset5">
+                                                <div class="col-md-12 col-sm-12">
+                                                    <div class="col-md-6 col-sm-6">
+                                                        <div class="form-group address-name">
+                                                            <label class="col-md-5 control-label normal">* {{
+                                                                'address_name' | translate }}</label>
+                                                            <div class="col-md-7 ">
+                                                                <input type="text" class="form-control"
+                                                                       ng-model="item.edit.addressName"
+                                                                       placehodler="{{ 'address_name' | translate }}"
+                                                                       required>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group company-name">
+                                                        <label class="col-md-5 control-label normal">* {{ 'company_name'
+                                                            | translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.companyName"
+                                                                   placeholder="{{ 'company_name' | translate }}"
+                                                                   required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group nip">
+                                                        <label class="col-md-5 control-label normal">* NIP</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.nip" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group firstName">
+                                                        <label class="col-md-5 control-label normal">{{ 'firstname' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   placeholder="{{ 'firstname' | translate }}"
+                                                                   ng-model="item.edit.name">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group lastname">
+                                                        <label class="col-md-5 control-label normal">{{ 'lastname' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   placeholder="{{ 'lastname' | translate  }}"
+                                                                   ng-model="item.edit.lastname">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group street">
+                                                        <label class="col-md-5 control-label normal">* {{ 'street' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.street"
+                                                                   placeholder="{{ 'street' | translate }}" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group house-no">
+                                                        <label class="col-md-5 control-label normal">
+                                                            * {{ 'no_house' | translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   placeholder="{{ 'no_house' | translate }}"
+                                                                   ng-model="item.edit.house">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group flat-no">
+                                                        <label class="col-md-5 control-label normal">{{ 'flat_number' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7">
+                                                            <input type="text" class="form-control"
+                                                                   placeholder="{{ 'apartment_no' | translate }}"
+                                                                   ng-model="item.edit.apartment">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group postal-code">
+                                                        <label class="col-md-5 control-label normal">* {{ 'postal_code'
+                                                            | translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.zipcode" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group city">
+                                                        <label class="col-md-5 control-label normal">* {{ 'city' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="item.edit.city"
+                                                                   placeholder="{{ 'city' | translate }}" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group phone">
+                                                        <label class="col-md-5 control-label normal">* {{ 'phone' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7">
+                                                            <div class="row">
+                                                                <div class="col-md-4 col-sm-4 col-xs-3 area-code">
+                                                                    <input type="text" class="form-control"
+                                                                           placeholder="+"
+                                                                           ng-model="item.edit.areaCode">
+                                                                </div>
+                                                                <div class="col-md-8 col-sm-8 col-xs-9 phone-number">
+                                                                    <input type="text" class="form-control"
+                                                                           ng-model="item.edit.telephone" required>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="form-group country-code">
+                                                        <label class="col-md-5 control-label normal">* {{ 'country' |
+                                                            translate }}</label>
+                                                        <div class="col-md-7 ">
+                                                            <select ng-options="country.code as country.name_pl for country in countries"
+                                                                    ng-model="item.edit.countryCode"
+                                                                    class="form-control" required>
+                                                                <option value="">{{ 'select' | translate }}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <div class="row voffset5">
+                                                <div class="col-md-6 requiredFields">
+                                                    <div class="checkbox-list">
+                                                        <label class="">
+                                                            <input type="checkbox" ng-model="item.edit.default"
+                                                                   ng-true-value="1" ng-false-value="0">
+                                                            {{ 'set_as_default' | translate }}
+                                                        </label>
+                                                    </div>
+                                                    <span>* - {{ 'fields_with_star_required' | translate }}</span>
+                                                </div>
+                                                <div class="col-md-4 col-md-offset-2">
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <button type="button" ng-click="reset()"
+                                                                    class="btn red-sunglo btn-block">{{ 'cancel' |
+                                                                translate }}
+                                                            </button>
+                                                        </div>
+                                                        <div class="col-md-8">
+                                                            <button class="btn btn-block btn-primary">{{ 'save' |
+                                                                translate }}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <a ng-show="canAddOtherAddress" ng-click="isCollapsed9 = !isCollapsed9"><i
+                                    class="fa fa-plus"></i> {{ 'add_new' | translate }}</a>
+                            <div class="addressVatAdd margined20" collapse="!isCollapsed9">
+                                <form class="form-horizontal margined20" ng-submit="addAddressVat()">
+                                    <div class="row voffset5">
+                                        <div class="col-md-12 col-sm-12">
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="form-group address-name">
+                                                    <label class="col-md-5 control-label normal">* {{ 'address_name' |
+                                                        translate }}</label>
+                                                    <div class="col-md-7 ">
+                                                        <input type="text" class="form-control"
+                                                               ng-model="form.add.addressName"
+                                                               placeholder="{{ 'address_name' | translate }}" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group company-name">
+                                                <label class="col-md-5 control-label normal">* {{ 'company_name' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="form.add.companyName"
+                                                           placeholder="{{ 'company_name' | translate }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group nip">
+                                                <label class="col-md-5 control-label normal">* NIP</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.nip"
+                                                           placeholder="NIP" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group firstName">
+                                                <label class="col-md-5 control-label normal">{{ 'firstname' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.name"
+                                                           placeholder="{{ 'firstname' | translate }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group lastname">
+                                                <label class="col-md-5 control-label normal">{{ 'lastname' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.lastname"
+                                                           placeholder="{{ 'lastname' | translate }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group street">
+                                                <label class="col-md-5 control-label normal">* {{ 'street' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.street"
+                                                           placeholder="{{ 'street' | translate }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group house-no">
+                                                <label class="col-md-5 control-label normal">* {{ 'no_house' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.house"
+                                                           placeholder="{{ 'no_house' | translate }}" required
+                                                           data-toggle="validator">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group flat-no">
+                                                <label class="col-md-5 control-label normal">{{ 'flat_number' |
+                                                    translate }}</label>
+                                                <div class="col-md-7">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="form.add.apartment"
+                                                           placeholder="{{ 'flat_number' | translate }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group postal-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'postal_code' |
+                                                    translate }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.zipcode"
+                                                           placeholder="{{ 'postal_code' | translate }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group city">
+                                                <label class="col-md-5 control-label normal">* {{ 'city' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <input type="text" class="form-control" ng-model="form.add.city"
+                                                           placeholder="{{ 'city' | translate }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group phone">
+                                                <label class="col-md-5 control-label normal">* {{ 'phone' | translate
+                                                    }}</label>
+                                                <div class="col-md-7">
+                                                    <div class="row">
+                                                        <div class="col-md-4 col-sm-4 col-xs-3 area-code">
+                                                            <input type="text" class="form-control" placeholder="+"
+                                                                   ng-model="form.add.areaCode">
+                                                        </div>
+                                                        <div class="col-md-8 col-sm-8 col-xs-9 phone-number">
+                                                            <input type="text" class="form-control"
+                                                                   ng-model="form.add.telephone" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="form-group country-code">
+                                                <label class="col-md-5 control-label normal">* {{ 'country' | translate
+                                                    }}</label>
+                                                <div class="col-md-7 ">
+                                                    <select ng-options="country.code as country.name_pl for country in countries"
+                                                            ng-model="form.add.countryCode" class="form-control"
+                                                            required>
+                                                        <option value="">{{ 'select' | translate }}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="row voffset5">
+                                        <div class="col-md-6 requiredFields">
+                                            <div class="checkbox-list">
+                                                <label class="">
+                                                    <input type="checkbox" ng-model="form.add.default" ng-true-value="1"
+                                                           ng-false-value="0">
+                                                    {{ 'set_as_default' | translate }}
+                                                </label>
+                                            </div>
+                                            <span>* - {{ 'fields_with_star_required' | translate }}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-primary pull-right">{{ 'add' | translate }}</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

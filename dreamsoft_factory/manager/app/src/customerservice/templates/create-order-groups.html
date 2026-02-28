@@ -1,0 +1,138 @@
+<script type="text/ng-template" id="findTypeTpl.html">
+    <a>
+        <span ng-bind-html="match.model.name | typeaheadHighlight:query"></span>
+        <span ng-repeat="item in match.model.langs">
+            (<span ng-bind-html="item.name | typeaheadHighlight:query"></span>)
+        </span>
+        -
+        <span ng-bind-html="match.model.ID | typeaheadHighlight:query"></span>
+        | {{ 'group' | translate }}: <span ng-bind-html="match.model.groupName"></span> - {{ match.model.groupID }}
+    </a>
+</script>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered-hoki">
+            <div class="portlet-title">
+                <div class="caption">
+                    <span ng-if="typeOfResource.type === 'order'">{{ 'creating_order' | translate}}</span>
+                    <span ng-if="typeOfResource.type === 'offer'">{{ 'creating_offer' | translate}}</span>
+                </div>
+                <div class="tools">
+                    <div class="row">
+                        <div class="col-md-offset-6 col-md-5">
+                            <div class="input-group">
+                                    <span class="input-group-addon">
+                                        {{ "search_type" | translate }}
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                <input type="text" class="form-control" ng-model="searchForm.type"
+                                       autocomplete="off"
+                                       typeahead="type as type.name for type in findType($viewValue, 'name') | limitTo: typesLimit"
+                                       typeahead-template-url="findTypeTpl.html"
+                                       typeahead-no-results="noResults"
+                                       typeahead-editable="false"
+                                       placeholder="{{ 'type' | translate }}">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" ng-click="goToType()"
+                                            tooltip="{{ 'go_to' | translate }}" type="button">
+                                        <i class="fa fa-arrow-circle-right"></i>
+                                    </button>
+                                  </span>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="pull-right" ng-if="typeOfResource.type === 'order'"
+                                    button-faq-accordion="customerservice.createOrder"></button>
+                            <button class="pull-right" ng-if="typeOfResource.type === 'offer'"
+                                    button-faq-accordion="customerservice.createOffer"></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-offset-6 col-md-3">
+                    <div ng-if="customProduct" class="well">
+                        <h4>{{ 'info_from_custom_query' | translate }}:</h4><br>
+                        {{ 'number' | translate }}: <b>{{ customProduct.ID }}</b><br>
+                        <span ng-if="customProduct.content">
+                            {{ 'content' | translate }}: <b>{{ customProduct.content }}</b><br>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="well">
+                        <h4>{{ 'owner_of_order' | translate }}</h4><br>
+                        <div ng-if="orderOwner">
+                            {{ 'user' | translate }}:
+                            <b ng-if="!orderOwner.super">{{ orderOwner.login }}</b>
+                            <b ng-if="orderOwner.super">{{ 'main_admin' | translate }}</b>
+                            <br>
+                            {{ 'user_id' | translate }}: <b>{{ orderOwner.ID }}</b>
+                            <br>
+                            <span ng-if="orderOwner.fvAddress.companyName">
+                                {{ 'company_name' | translate }}: <b>{{ orderOwner.fvAddress.companyName }}</b><br>
+                            </span>
+                            <span ng-if="orderOwner.fvAddress.nip">
+                                {{ 'nip' | translate }}: <b>{{ orderOwner.fvAddress.nip }}</b><br>
+                            </span>
+                            <div ng-if="orderOwner.discountGroups.length > 0">
+                                {{ 'discount_groups' | translate }}:
+                                <span ng-repeat="discountGroup in orderOwner.discountGroups">
+                                    <b>{{ discountGroup.langs[currentLang.code].name }}</b><span ng-if="!$last"> | </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="portlet light">
+                                <div class="portlet-title">
+                                    <div class="caption">
+                                        <span class="caption-subject font-green-haze bold">{{ 'products' | translate }}</span>
+                                        <p class="caption-helper">{{ 'choose_right_product' | translate }}</p>
+                                    </div>
+                                    <input type="text" class="form-control form-filter input-sm marginedBtn" name=""
+                                           placeholder="{{ 'search' | translate }}" ng-model="search.name">
+                                </div>
+                                <div class="portlet-body">
+                                    <div class="row">
+                                        <div class="col-md-6" ng-repeat="group in groups | filter:search">
+
+                                            <button ng-if="typeOfResource.type === 'order'" ui-sref="create-order-types({'groupID': group.ID})"
+                                                    ng-click="selectProduct(group)"
+                                                    class="btn btn-sm btn-default btn-block marginedBtn breakLine">
+                                                <span class="btn blue-stripe btn-xs ng-binding">ID: {{group.ID}}</span>
+                                                {{ group.name }}
+                                            </button>
+
+                                            <button ng-if="typeOfResource.type === 'offer'" ui-sref="create-offer-types({'groupID': group.ID})"
+                                                    ng-click="selectProduct(group)"
+                                                    class="btn btn-sm btn-default btn-block marginedBtn breakLine">
+                                                <span class="btn blue-stripe btn-xs ng-binding">ID: {{group.ID}}</span>
+                                                {{ group.name }}
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

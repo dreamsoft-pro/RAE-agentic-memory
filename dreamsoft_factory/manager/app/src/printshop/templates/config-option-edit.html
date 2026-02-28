@@ -1,0 +1,237 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-cog"></i> {{ "option" | translate }}: {{ currentOptionName }}
+            <a ng-if="prevOption" ui-sref="printshop-configOptionSettings-edit({optID: prevOption})" class="prevNext"
+               tooltip="{{ 'goto_previous_option' | translate }}"><i class="fa fa-arrow-circle-left"></i></a>
+            <a ng-if="nextOption" ui-sref="printshop-configOptionSettings-edit({optID: nextOption})" class="prevNext"
+               tooltip="{{ 'goto_next_option' | translate }}"><i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div ui-view="menu"></div>
+
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-body form">
+
+                <form class="form-horizontal" role="form" ng-submit="save()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.name" type="text" class="form-control"
+                                       placeholder="{{ 'name' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'lang_name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-repeat="lang in languages" ng-show="nameLang == lang.code"
+                                       ng-model="form.names[lang.code]" type="text" class="form-control"
+                                       placeholder="{{lang.code}}">
+                                <select class="form-control" ng-init="nameLang = currentLang.code" ng-model="nameLang"
+                                        ng-options="each.code as each.name for (key, each) in languages"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'description' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.adminName" type="text" class="form-control"
+                                       placeholder="{{ 'show_only_for_admin' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'minimum_thickness' | translate }} (mm)</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.minThickness" type="text" class="form-control"
+                                       placeholder="{{ 'minimum_thickness' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'maximum_thickness' | translate }} (mm)</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.maxThickness" type="text" class="form-control"
+                                       placeholder="{{ 'maximum_thickness' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'minimum_number_of_pages' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.minPages" type="text" class="form-control"
+                                       placeholder="{{ 'minimum_number_of_pages' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'maximum_number_of_pages' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.maxPages" type="text" class="form-control"
+                                       placeholder="{{ 'maximum_number_of_pages' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'item_weight' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.itemWeight" type="text" class="form-control"
+                                       placeholder="{{ 'item_weight' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'weight_per_current_meter' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.weightPerMeter" type="text" class="form-control"
+                                       placeholder="{{ 'weight_per_current_meter' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group" ng-if="attr.type == 3">
+                            <label class="col-md-3 control-label">{{ 'page_weight_grammage' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.weight" type="text" class="form-control"
+                                       placeholder="page_weight_grammage">
+                            </div>
+                        </div>
+
+                        <div class="form-group" ng-if="attr.type == 3">
+                            <label class="col-md-3 control-label">{{ 'sheet_thickness' | translate }} (mm)</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.sizePage" type="text" class="form-control" placeholder="mm">
+                            </div>
+                        </div>
+
+                        <div class="form-group" ng-if="attr.type == 3">
+                            <label class="col-md-3 control-label">{{ 'maximum_number_of_folds' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.maxFolds" type="text" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group" ng-if="attr.type == 3">
+                            <label class="col-md-3 control-label">{{ 'roll_length' | translate }} (cm)</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.rollLength" type="text" class="form-control" placeholder="cm">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.active}"><input
+                                                ng-model="form.active" type="checkbox"></span></div>
+                                        {{ 'active' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" ng-if="attr.type == 2">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.oneSide}"><input
+                                                ng-model="form.oneSide" type="checkbox"></span></div>
+                                        {{ 'specyfing_number_of_pages_double' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.emptyChoice}"><input
+                                                ng-model="form.emptyChoice" type="checkbox"></span></div>
+                                        {{ 'empty_option' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.doubleSidedSheet}"><input
+                                                ng-model="form.doubleSidedSheet" type="checkbox"></span></div>
+                                        {{ 'double_sided_sheet' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.repeatedOperation}"><input
+                                                ng-model="form.repeatedOperation" type="checkbox"></span></div>
+                                        {{ 'repeated_operation' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'special_option' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-model="form.special"
+                                        ng-options="each.value as each.name for each in specialFunctionsList">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'minimum_volume' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.minVolume" type="number" min="1" class="form-control"
+                                       placeholder="{{ 'minimum_volume' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'repeated_operation_number' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.repeatedOperationsCount" type="text" class="form-control"
+                                       placeholder="{{ 'repeated_operation_number' | translate }}">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' |
+                                    translate }}
+                                </button>
+                                <button ng-click="resetForm()" type="button" class="btn red-sunglo">{{ 'cancel' |
+                                    translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.configOptionsEdit"></div>
+    </div>
+
+</div>

@@ -1,0 +1,762 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block container_class %}container-fluid p-0{% endblock %}
+
+{% block extra_head %}
+<!-- GridStack CSS (CDN) -->
+<link href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css" rel="stylesheet"/>
+<!-- Bootstrap Icons (CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<!-- GridStack JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack-all.js"></script>
+<!-- ECharts JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<!-- Flatpickr CSS (CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+    .grid-stack { background: #f8f9fa; border: 1px dashed #ced4da; min-height: 80vh; }
+    .grid-stack-item-content { background: white; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    
+    .widget-header { 
+        background: #f8f9fa; padding: 5px 12px; height: 38px; border-bottom: 1px solid #eee; 
+        display: flex; justify-content: space-between; align-items: center; 
+        cursor: move; 
+    }
+    .widget-header-title { display: flex; align-items: center; min-width: 0; }
+    .widget-controls { display: flex; align-items: center; flex-shrink: 0; margin-left: auto !important; }
+    .widget-range-label { font-size: 0.75rem; font-weight: 300; color: #6c757d; }
+    
+    .widget-body { padding: 10px; flex-grow: 1; width: 100%; position: relative; min-height: 250px; }
+    .chart-container { width: 100%; height: 100%; min-height: 240px; }
+    .widget-controls .btn { font-size: 1rem; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+    .grid-stack-item:hover .widget-controls .btn { opacity: 1; }
+    
+    /* 95% Width Container */
+    .dashboard-container { width: 95%; max-width: 95%; margin: 0 auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="bi bi-speedometer text-primary me-2"></i>Dashboard: {{ dashboard.name }} <span class="badge bg-danger">!!! VERSION NEW 13:00 !!!</span></h4>
+        <div class="me-3 text-muted small" id="available-machines">Checking nodes...</div>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" onclick="openGlobalSettings()">⚙️ Global</button>
+            <button class="btn btn-outline-success" onclick="addNewWidget('production_trend', 'Prod. Trend')">+ Production</button>
+            <button class="btn btn-outline-info" onclick="addNewWidget('temp_trend', 'Temp. Trend')">+ Temp</button>
+            <button class="btn btn-outline-info" onclick="addNewWidget('pressure_trend', 'Pressure')">+ Pressure</button>
+            <button class="btn btn-outline-warning" onclick="addNewWidget('oee_gauge', 'OEE Gauge')">+ OEE</button>
+            <button class="btn btn-outline-dark" onclick="addNewWidget('machine_gantt', 'Status Gantt')">+ Status</button>
+            <button class="btn btn-outline-danger" onclick="addNewWidget('oee_heatmap', 'OEE Heatmap')">+ Heatmap</button>
+            <button class="btn btn-outline-primary" onclick="addNewWidget('multi_series_chart', 'Custom Chart')">+ Custom</button>
+            <button class="btn btn-primary ms-2" onclick="saveDashboard()">Save Layout</button>
+        </div>
+    </div>
+    <div class="grid-stack"></div>
+</div>
+
+<!-- Global Settings Modal -->
+<div class="modal fade" id="globalSettingsModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5>Global Settings</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <label class="form-label">Default Range (Apply to all)</label>
+            <select class="form-select mb-3" id="globalRange">
+                <option value="30s">30 Seconds</option>
+                <option value="1m">1 Minute</option>
+                <option value="5m">5 Minutes</option>
+                <option value="15m">15 Minutes</option>
+                <option value="1h">1 Hour</option>
+                <option value="6h">6 Hours</option>
+                <option value="8h">8 Hours</option>
+                <option value="12h">12 Hours</option>
+                <option value="24h" selected>24 Hours</option>
+                <option value="7d">7 Days</option>
+                <option value="30d">30 Days</option>
+                <option value="custom">Custom Range (Pick Dates)</option>
+            </select>
+
+            <div id="globalCustomDateContainer" class="d-none border p-3 rounded bg-light">
+                <div class="mb-2">
+                    <label class="small fw-bold">Global Start:</label>
+                    <input type="text" class="form-control form-control-sm flatpickr" id="globalCustomStart" placeholder="Select start time...">
+                </div>
+                <div class="mb-2">
+                    <label class="small fw-bold">Global End:</label>
+                    <input type="text" class="form-control form-control-sm flatpickr" id="globalCustomEnd" placeholder="Select end time...">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="applyGlobalSettings()">Apply to All</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Widget Configuration Modal -->
+<div class="modal fade" id="widgetModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5>Widget Configuration</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="editWidgetId">
+            <div class="mb-3"><label class="form-label">Title</label><input type="text" class="form-control" id="editTitle"></div>
+            
+            <div class="mb-3">
+                <label class="form-label">Source Machine</label>
+                <select class="form-select" id="editMachine">
+                    <option value="">-- Select Machine --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Time Range</label>
+                <select class="form-select" id="editRange">
+                    <option value="30s">30 Seconds</option>
+                    <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="6h">6 Hours</option>
+                    <option value="8h">8 Hours</option>
+                    <option value="12h">12 Hours</option>
+                    <option value="24h">24 Hours</option>
+                    <option value="7d">7 Days</option>
+                    <option value="30d">30 Days</option>
+                    <option value="custom">Custom Range...</option>
+                </select>
+            </div>
+
+            <div id="customDateContainer" class="d-none border p-2 rounded bg-light">
+                <div class="mb-2">
+                    <label class="small text-muted">Start:</label>
+                    <input type="text" class="form-control form-control-sm flatpickr" id="editCustomStart" placeholder="Select start time...">
+                </div>
+                <div class="mb-2">
+                    <label class="small text-muted">End:</label>
+                    <input type="text" class="form-control form-control-sm flatpickr" id="editCustomEnd" placeholder="Select end time...">
+                </div>
+            </div>
+
+            <div id="thresholdContainer" class="mt-3 d-none">
+                <label class="form-label">Micro-stop Threshold (seconds)</label>
+                <input type="number" class="form-control" id="editThreshold" min="1" step="1">
+                <div class="form-text">Gaps between jobs larger than this will be marked as Micro-stops.</div>
+            </div>
+
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveWidgetSettings()">Update Widget</button></div>
+    </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class ChartRegistry {
+        constructor() {
+            this.renderers = {};
+            this.instances = {};
+            console.log("ChartRegistry V6.5 Initialized.");
+        }
+
+        register(type, renderer) {
+            this.renderers[type] = renderer;
+        }
+
+        initWidget(widgetId, widgetType, container, config) {
+            if (!this.renderers[widgetType]) return;
+            if (this.instances[widgetId]) this.instances[widgetId].dispose();
+            const chart = echarts.init(container);
+            this.instances[widgetId] = chart;
+            this.refreshWidget(widgetId, widgetType, config);
+            new ResizeObserver(() => { setTimeout(() => chart.resize(), 100); }).observe(container);
+        }
+
+        async refreshWidget(widgetId, widgetType, config) {
+            let chart = this.instances[widgetId];
+            const container = document.getElementById(`chart-${widgetId}`);
+            if (!container) return;
+
+            // Ensure widgetId is in config for renderers that need it (like summary/table)
+            const renderConfig = { ...config, id: widgetId };
+
+            // Update badge immediately
+            const rangeBadge = document.getElementById(`range-${widgetId}`);
+            if (rangeBadge) {
+                const rDisplay = config.range === 'custom' ? 'Custom' : (config.range || '24h');
+                rangeBadge.innerText = rDisplay;
+            }
+
+            if (chart) chart.showLoading();
+
+            try {
+                const baseUrl = this.buildApiUrl(widgetId, widgetType, config);
+                const apiUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                
+                console.log(`[${widgetId}] Fetching: ${apiUrl}`);
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                console.log(`[${widgetId}] Data received:`, data);
+                
+                const option = this.renderers[widgetType](data, renderConfig, widgetType);
+                
+                if (option && option.series) {
+                    if (!this.instances[widgetId]) {
+                        this.instances[widgetId] = echarts.init(container);
+                    }
+                    chart = this.instances[widgetId];
+                    
+                    // Force X-axis to match the actual data range returned by server
+                    const minTime = data.range_start || new Date(renderConfig._calculatedStart).getTime();
+                    const maxTime = data.range_end || new Date(renderConfig._calculatedEnd).getTime();
+
+                    if (option.xAxis) {
+                        const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+                        axes.forEach(ax => {
+                            if (ax.type === 'time') {
+                                ax.min = minTime;
+                                ax.max = maxTime;
+                            }
+                        });
+                    }
+
+                    // Reset zoom to 100% width
+                    if (option.dataZoom) {
+                        option.dataZoom.forEach(dz => {
+                            dz.start = 0;
+                            dz.end = 100;
+                        });
+                    }
+
+                    chart.hideLoading();
+                    chart.setOption(option, true);
+                    // FIX: Force resize after render to handle GridStack layout shifts
+                    setTimeout(() => chart.resize(), 500);
+                }
+            } catch (error) {
+                console.error(`[${widgetId}] Render Error:`, error);
+                if (chart) chart.hideLoading();
+            }
+        }
+        
+        resetZoom(widgetId) {
+            const chart = this.instances[widgetId];
+            if (chart) chart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+        }
+
+        buildApiUrl(widgetId, widgetType, config) {
+            let startStr, endStr;
+            const now = new Date();
+            
+            if (config.range === 'custom' && config.customStart && config.customEnd) {
+                startStr = new Date(config.customStart).toISOString();
+                endStr = new Date(config.customEnd).toISOString();
+            } else {
+                const start = new Date();
+                const rangeMap = { 
+                    '30s': 0.5/60, '1m': 1/60, '5m': 5/60, '15m': 15/60, 
+                    '1h': 1, '6h': 6, '8h': 8, '12h': 12, '24h': 24, '7d': 168, '30d': 720 
+                };
+                const hours = rangeMap[config.range] || 24;
+                start.setTime(now.getTime() - (hours * 3600000));
+                startStr = start.toISOString();
+                endStr = now.toISOString();
+            }
+            
+            config._calculatedStart = startStr;
+            config._calculatedEnd = endStr;
+
+            const machineId = config.machine_id || "";
+
+            if (widgetType.endsWith('_trend') && widgetType !== 'production_trend') {
+                const metricMap = { 'temp_trend': 'temp', 'pressure_trend': 'pressure' };
+                // FIX: Allow config to override metric
+                const metric = config.metric || metricMap[widgetType] || widgetType.replace('_trend', '');
+                return `/dashboard/api/series/?machine_id=${machineId}&metric=${metric}&from=${startStr}&to=${endStr}`;
+            }
+            if (widgetType === 'machine_gantt') {
+                return `/dashboard/api/status_history/?machine_id=${machineId}&from=${startStr}&to=${endStr}`;
+            }
+            return `/dashboard/api/widgets/${widgetId}/data/?from=${startStr}&to=${endStr}`;
+        }
+    }
+
+    const chartRegistry = new ChartRegistry();
+
+    const timeSeriesRenderer = (data, config, widgetType) => {
+        const rawData = data.data || [];
+        // Robust filtering: ensure t and v exist and v is a valid number
+        let seriesData = rawData
+            .map(d => {
+                const t = new Date(d[0] || d.t).getTime();
+                const v = parseFloat(d[1] || d.v);
+                return [t, v];
+            })
+            .filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+        
+        console.log(`[${config.id}] Rendering ${seriesData.length} points for ${config.title}`);
+        
+        return {
+            tooltip: { trigger: 'axis' },
+            legend: { show: true, top: 0 },
+            grid: { left: 60, right: 40, bottom: 40, top: '15%', containLabel: false },
+            xAxis: { 
+                type: 'time',
+                splitLine: { show: true, lineStyle: { type: 'dashed', color: '#eee' } }
+            },
+            yAxis: { 
+                type: 'value', 
+                scale: true,
+                min: 0,
+                splitLine: { show: true, lineStyle: { color: '#eee' } }
+            },
+            dataZoom: [
+                { type: 'slider', bottom: 0, height: 30 }, 
+                { type: 'inside' }
+            ],
+            series: [{ 
+                name: config.title || 'Speed', 
+                type: 'line', 
+                step: 'end',
+                symbol: 'none',
+                connectNulls: true, // Connect gaps to show continuity
+                data: seriesData,
+                itemStyle: { color: '#000' },
+                lineStyle: { width: 2, color: '#000' }
+            }]
+        };
+    };
+
+    chartRegistry.register('production_trend', (data, config) => ({
+        graphic: [{
+            type: 'text',
+            left: 'center',
+            top: 'center',
+            style: {
+                text: (data.total || 0).toLocaleString() + ' m²',
+                fontSize: 48,
+                fontWeight: 'bold',
+                fill: '#2c3e50'
+            }
+        }, {
+            type: 'text',
+            left: 'center',
+            top: '65%',
+            style: {
+                text: 'TOTAL PRODUCTION',
+                fontSize: 14,
+                fill: '#7f8c8d',
+                fontWeight: 'bold'
+            }
+        }]
+    }));
+
+    chartRegistry.register('temp_trend', timeSeriesRenderer);
+    chartRegistry.register('pressure_trend', timeSeriesRenderer);
+    chartRegistry.register('production_efficiency', timeSeriesRenderer);
+    chartRegistry.register('ink_efficiency', timeSeriesRenderer);
+    chartRegistry.register('production_gaps', (data, config) => chartRegistry.renderers['machine_gantt'](data, config));
+
+    chartRegistry.register('oee_gauge', (data, config) => ({
+        series: [{
+            type: 'gauge', min: 0, max: 100, radius: '100%',
+            detail: { valueAnimation: true, fontSize: 24, formatter: '{value}%' },
+            data: [{ value: (data.oee?.oee || 0).toFixed(1), name: 'OEE' }]
+        }]
+    }));
+
+    chartRegistry.register('reliability_card', (data, config) => {
+         return {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['Availability', 'Performance', 'Quality'] },
+            yAxis: { type: 'value', max: 100 },
+            series: [{
+                data: [
+                    Math.round(data.availability || 0), 
+                    Math.round(data.performance || 0), 
+                    Math.round(data.quality || 0)
+                ],
+                type: 'bar',
+                showBackground: true,
+                itemStyle: { color: '#5470c6' },
+                label: { show: true, position: 'top', formatter: '{c}%' }
+            }]
+        };
+    });
+
+    chartRegistry.register('production_summary_total', (data, config, widgetType) => {
+        const widgetId = config.id;
+        const area = (data.total_area || 0).toLocaleString(undefined, {maximumFractionDigits: 1});
+        const html = `
+            <div class="d-flex flex-column justify-content-center align-items-center h-100 text-center" style="min-height: 200px;">
+                <div style="font-size: 3.5rem; font-weight: bold; color: #2c3e50; line-height: 1;">${area}</div>
+                <div style="font-size: 1.2rem; font-weight: bold; color: #7f8c8d; margin-bottom: 15px;">METRÓW KWADRATOWYCH</div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary" style="padding: 8px 12px;">${data.job_count || 0} Zadań</span>
+                    <span class="badge bg-info text-dark" style="padding: 8px 12px;">${(data.total_ink/1000 || 0).toFixed(1)} L Atramentu</span>
+                </div>
+            </div>
+        `;
+        
+        const updateDom = () => {
+            const body = document.getElementById(`chart-${widgetId}`);
+            if (body) {
+                body.innerHTML = html;
+                console.log(`[${widgetId}] Summary rendered.`);
+            } else {
+                console.warn(`[${widgetId}] Container not found, retrying...`);
+                setTimeout(updateDom, 100);
+            }
+        };
+        updateDom();
+        return { series: [] };
+    });
+
+    chartRegistry.register('job_list', (data, config, widgetType) => {
+        const jobs = data.data || [];
+        const widgetId = config.id;
+        
+        let html = '';
+        if (jobs.length === 0) {
+            html = '<div class="p-4 text-center text-muted">Brak zadań w wybranym zakresie.</div>';
+        } else {
+            html = `
+                <div style="height: 100%; overflow-y: auto;">
+                <table class="table table-sm table-hover table-striped" style="font-size: 0.85rem; margin-bottom: 0;">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            <th>Czas</th><th>Zadanie</th><th>m²</th><th>mL</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            jobs.forEach(j => {
+                const rowClass = j.status === 'CANCELLED' ? 'table-danger' : '';
+                // Pokazujemy nazwę pliku, usuwając ścieżkę (jeśli jest)
+                const taskFull = j.task.split(/[\\/]/).pop();
+                html += `
+                    <tr class="${rowClass}">
+                        <td>${new Date(j.time).toLocaleString()}</td>
+                        <td title="${j.task}" class="text-nowrap" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                            ${taskFull}
+                        </td>
+                        <td class="fw-bold text-end">${j.area.toFixed(2)}</td>
+                        <td class="text-end">${j.ink.toFixed(0)}</td>
+                        <td class="text-center"><span class="badge ${j.status === 'OK' ? 'bg-success' : 'bg-danger'}">${j.status}</span></td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table></div>';
+        }
+
+        const updateDom = () => {
+            const body = document.getElementById(`chart-${widgetId}`);
+            if (body) {
+                body.innerHTML = html;
+                console.log(`[${widgetId}] Job list rendered (${jobs.length} items).`);
+            } else {
+                setTimeout(updateDom, 100);
+            }
+        };
+        updateDom();
+        return { series: [] };
+    });
+
+    chartRegistry.register('machine_gantt', (data, config) => {
+        const rawData = data.data || data || [];
+        const colors = { 
+            'JOB': '#91cc75',
+            'MICRO-STOP': '#fd7e14',
+            'LONG-STOP': '#ee6666',
+            'STOPPED': '#ee6666'
+        };
+        return {
+            tooltip: { 
+                formatter: (p) => {
+                    const d = Math.round(p.value[3] / 1000);
+                    return `<b>${p.name}</b><br/>Duration: ${d}s`;
+                }
+            },
+            grid: { left: 60, right: 40, bottom: 80, top: '10%', containLabel: false },
+            xAxis: { 
+                type: 'time',
+                splitLine: { show: true, lineStyle: { type: 'dashed', color: '#eee' } }
+            },
+            yAxis: { 
+                type: 'category', 
+                data: ['Timeline'], 
+                axisLine: {show: false}, 
+                axisLabel: {show: false}, 
+                axisTick: {show: false}, 
+                splitLine: {show: false} 
+            },
+            dataZoom: [
+                { type: 'slider', bottom: 20, height: 25, filterMode: 'none' }, 
+                { type: 'inside', filterMode: 'none' }
+            ],
+            series: [{
+                type: 'custom',
+                renderItem: (params, api) => {
+                    const categoryIndex = api.value(0);
+                    const start = api.coord([api.value(1), categoryIndex]);
+                    const end = api.coord([api.value(2), categoryIndex]);
+                    const height = 30;
+                    
+                    let width = end[0] - start[0];
+                    if (width < 8) width = 8;
+                    
+                    return { 
+                        type: 'rect', 
+                        shape: { x: start[0], y: start[1] - height/2, width: width, height: height }, 
+                        style: api.style({ stroke: '#fff', lineWidth: 0.5 }) 
+                    };
+                },
+                data: rawData.map(item => {
+                    const type = item.name.startsWith('JOB') ? 'JOB' : item.name.split(' ')[0];
+                    // FIX: Convert ISO strings to timestamps for renderItem
+                    const t1 = new Date(item.value[1]).getTime();
+                    const t2 = new Date(item.value[2]).getTime();
+                    return {
+                        name: item.name, 
+                        value: [0, t1, t2, item.value[3]],
+                        itemStyle: { color: colors[type] || '#999' }
+                    };
+                })
+            }]
+        };
+    });
+    chartRegistry.register('production_gaps', (data, config) => chartRegistry.renderers['machine_gantt'](data, config));
+
+    chartRegistry.register('multi_series_chart', (data, config) => {
+        const seriesList = data.series || [];
+        const hasRightAxis = seriesList.some(s => s.yAxisIndex === 1);
+        return {
+            tooltip: { trigger: 'axis' },
+            legend: { show: true, top: 0, left: 'center' },
+            grid: { left: '3%', right: '10%', bottom: 80, top: '15%', containLabel: true },
+            xAxis: { type: 'time' },
+            yAxis: [
+                { type: 'value', scale: true, position: 'left', name: 'Speed' },
+                hasRightAxis ? { type: 'value', scale: true, position: 'right', name: 'Area', splitLine: {show: false} } : null
+            ].filter(Boolean),
+            dataZoom: [{ type: 'slider', bottom: 10, height: 25 }, { type: 'inside' }],
+            series: seriesList.map(s => ({
+                name: s.name, type: s.type || 'line', yAxisIndex: s.yAxisIndex,
+                symbol: 'none', data: s.data.map(d => [new Date(d[0]).getTime(), d[1]]),
+                itemStyle: s.color ? { color: s.color } : undefined
+            }))
+        };
+    });
+
+    // --- PAGE LOGIC ---
+    let grid;
+    const initialWidgets = {{ widgets_json|safe|default:"[]" }};
+    const widgetConfigs = {}; 
+    let allMachines = [];
+    const pickers = {};
+
+    document.addEventListener("DOMContentLoaded", () => {
+        grid = GridStack.init({ cellHeight: 80, float: true, margin: 5, handle: '.widget-header' });
+        
+        // Init Flatpickr
+        const fpConfig = { 
+            enableTime: true, 
+            enableSeconds: true, 
+            dateFormat: "Y-m-d H:i:S", 
+            time_24hr: true,
+            allowInput: true
+        };
+        pickers.start = flatpickr("#editCustomStart", fpConfig);
+        pickers.end = flatpickr("#editCustomEnd", fpConfig);
+        pickers.globalStart = flatpickr("#globalCustomStart", fpConfig);
+        pickers.globalEnd = flatpickr("#globalCustomEnd", fpConfig);
+
+        fetchMachines();
+        initialWidgets.forEach(w => {
+            // Ensure config and range exist
+            w.config = w.config || {};
+            if (!w.config.range) w.config.range = '24h';
+            
+            widgetConfigs[w.id] = w;
+            renderWidget(w);
+        });
+    });
+
+    async function fetchMachines() {
+        const statusEl = document.getElementById('available-machines');
+        try {
+            const r = await fetch('/api/registry/machines/');
+            if (!r.ok) throw new Error(`Status ${r.status}`);
+            allMachines = await r.json();
+            statusEl.innerText = `Nodes: ${allMachines.map(m => m.code).join(', ')}`;
+            populateMachineSelector();
+        } catch (e) {
+            statusEl.innerText = "Nodes: error (check login)";
+        }
+    }
+
+    function populateMachineSelector() {
+        const sel = document.getElementById('editMachine');
+        if (sel && allMachines.length > 0) {
+            sel.innerHTML = '<option value="">-- Select Machine --</option>' + 
+                allMachines.map(m => `<option value="${m.id}">${m.name} [${m.code}]</option>`).join('');
+        }
+    }
+
+    function renderWidget(w) {
+        w.config = w.config || {};
+        const rangeDisplay = w.config.range === 'custom' ? 'Custom' : (w.config.range || '24h');
+        const html = `
+                <div class="widget-header d-flex justify-content-between align-items-center">
+                    <div class="widget-header-title d-flex align-items-center">
+                        <span class="widget-title text-truncate" style="max-width: 150px; font-weight: 500;">${w.title}</span>
+                        <span class="badge bg-light text-dark border widget-range-label ms-2" id="range-${w.id}">${rangeDisplay}</span>
+                    </div>
+                    <div class="widget-controls d-flex">
+                        <button class="btn btn-link text-primary p-0 me-2" onclick="chartRegistry.resetZoom('${w.id}')" title="Reset Zoom"><i class="bi bi-zoom-out"></i></button>
+                        <button class="btn btn-link text-secondary p-0 me-2" onclick="openWidgetSettings('${w.id}')" title="Settings"><i class="bi bi-gear-fill"></i></button>
+                        <button class="btn btn-link text-danger p-0 ms-1" onclick="removeWidget('${w.id}')" title="Remove"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                </div>
+                <div class="widget-body"><div id="chart-${w.id}" class="chart-container"></div></div>`;
+        const el = grid.addWidget({ id: w.id, x: w.x, y: w.y, w: w.w, h: Math.max(w.h, 5), content: html });
+        setTimeout(() => chartRegistry.initWidget(w.id, w.type, el.querySelector('.chart-container'), w.config), 100);
+    }
+
+    function openGlobalSettings() {
+        if (typeof bootstrap === 'undefined') {
+            console.error("Bootstrap JS is not loaded. Cannot open modal.");
+            alert("Error: Bootstrap JS not loaded. Please refresh.");
+            return;
+        }
+        new bootstrap.Modal(document.getElementById('globalSettingsModal')).show();
+    }
+
+    function addNewWidget(type, title) {
+        const id = 'new-' + Date.now();
+        const w = { id, type, title, x: 0, y: 0, w: 6, h: 5, config: { range: '24h' } };
+        widgetConfigs[id] = w;
+        renderWidget(w);
+    }
+
+    function openWidgetSettings(id) {
+        const w = widgetConfigs[id];
+        document.getElementById('editWidgetId').value = id;
+        document.getElementById('editTitle').value = w.title;
+        document.getElementById('editRange').value = w.config.range || '24h';
+        
+        const custom = document.getElementById('customDateContainer');
+        if (w.config.range === 'custom') {
+            custom.classList.remove('d-none');
+            if (pickers.start) pickers.start.setDate(w.config.customStart || "");
+            if (pickers.end) pickers.end.setDate(w.config.customEnd || "");
+        } else {
+            custom.classList.add('d-none');
+        }
+
+        const thresholdCont = document.getElementById('thresholdContainer');
+        if (w.type === 'production_gaps') {
+            thresholdCont.classList.remove('d-none');
+            document.getElementById('editThreshold').value = w.config.microstop_threshold || 10;
+        } else {
+            thresholdCont.classList.add('d-none');
+        }
+
+        populateMachineSelector();
+        const selMachine = document.getElementById('editMachine');
+        if (selMachine) selMachine.value = w.config.machine_id || "";
+        new bootstrap.Modal(document.getElementById('widgetModal')).show();
+    }
+
+    function applyGlobalSettings() {
+        const globalRange = document.getElementById('globalRange').value;
+        const gStart = document.getElementById('globalCustomStart').value;
+        const gEnd = document.getElementById('globalCustomEnd').value;
+
+        Object.keys(widgetConfigs).forEach(id => {
+            const w = widgetConfigs[id];
+            w.config.range = globalRange;
+            
+            if (globalRange === 'custom') {
+                w.config.customStart = gStart;
+                w.config.customEnd = gEnd;
+            } else {
+                delete w.config.customStart;
+                delete w.config.customEnd;
+            }
+            
+            chartRegistry.refreshWidget(id, w.type, w.config);
+            const rangeBadge = document.getElementById(`range-${id}`);
+            if (rangeBadge) {
+                rangeBadge.innerText = globalRange === 'custom' ? 'Global Custom' : globalRange;
+            }
+        });
+        bootstrap.Modal.getInstance(document.getElementById('globalSettingsModal')).hide();
+    }
+
+    function saveWidgetSettings() {
+        const id = document.getElementById('editWidgetId').value;
+        const w = widgetConfigs[id];
+        w.title = document.getElementById('editTitle').value;
+        w.config.range = document.getElementById('editRange').value;
+        w.config.machine_id = document.getElementById('editMachine').value;
+        if (w.config.range === 'custom') {
+            w.config.customStart = document.getElementById('editCustomStart').value;
+            w.config.customEnd = document.getElementById('editCustomEnd').value;
+        }
+        if (w.type === 'production_gaps') {
+            w.config.microstop_threshold = document.getElementById('editThreshold').value;
+        }
+        chartRegistry.refreshWidget(id, w.type, w.config);
+        bootstrap.Modal.getInstance(document.getElementById('widgetModal')).hide();
+    }
+
+    function removeWidget(id) {
+        if (confirm('Remove this widget?')) {
+            const el = document.querySelector(`[gs-id="${id}"]`);
+            if (el) grid.removeWidget(el);
+            delete widgetConfigs[id];
+        }
+    }
+
+    document.getElementById('editRange').addEventListener('change', (e) => {
+        const custom = document.getElementById('customDateContainer');
+        if (e.target.value === 'custom') custom.classList.remove('d-none');
+        else custom.classList.add('d-none');
+    });
+
+    document.getElementById('globalRange').addEventListener('change', (e) => {
+        const custom = document.getElementById('globalCustomDateContainer');
+        if (e.target.value === 'custom') custom.classList.remove('d-none');
+        else custom.classList.add('d-none');
+    });
+
+    function saveDashboard() {
+        const layout = grid.getGridItems().map(item => ({
+            id: item.getAttribute('gs-id').startsWith('new') ? null : item.getAttribute('gs-id'),
+            type: widgetConfigs[item.getAttribute('gs-id')].type,
+            title: widgetConfigs[item.getAttribute('gs-id')].title,
+            x: parseInt(item.getAttribute('gs-x')), y: parseInt(item.getAttribute('gs-y')),
+            w: parseInt(item.getAttribute('gs-w')), h: parseInt(item.getAttribute('gs-h')),
+            config: widgetConfigs[item.getAttribute('gs-id')].config
+        }));
+        fetch(`/dashboard/api/management/{{ dashboard.id }}/save_layout/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ widgets: layout })
+        }).then(() => window.location.reload());
+    }
+</script>
+{% endblock %}

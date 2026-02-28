@@ -1,0 +1,106 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'product' | translate }}: {{ task.name }} </h3>
+</div>
+<div class="modal-body">
+    <div class="overflowContainer">
+        <span ng-if="!logs.length" class="btn red-sunglo-stripe">
+            {{ 'noLogs' | translate }}
+        </span>
+
+        <table ng-if="!!logs.length" class="table table-striped table-hover">
+            <thead>
+                <tr role="row" class="heading">
+                    <th width="8%">#</th>
+                    <th>{{ 'date' | translate }}</th>
+                    <th>{{ 'operationName' | translate }}</th>
+                    <th>{{ 'process' | translate }}</th>
+                    <th>
+                        Operator
+                    </th>
+                    <th>{{ 'state' | translate }}</th>
+                    <th>{{ 'realizationTime' | translate }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="log in logs"
+                    ng-if="log.isAdditional == false">
+                    <td colspan="3" ng-if="log.asAdditionalOperator == 1">
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        {{ log.ID }}
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        {{ log.date }}
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        {{ log.operation.name }}
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        {{ log.process.name }}
+                    </td>
+                    <td ng-if="log.asAdditionalOperator == 1">
+                        {{ 'additional_operator' | translate }}
+                    </td>
+                    <td colspan="3" ng-if="log.asAdditionalOperator == 1">
+                        {{ log.operator.name }} ({{ log.operator.userFirstName }} {{ log.operator.userLastName }})
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        {{ log.operator.name }} ({{ log.operator.userFirstName }} {{ log.operator.userLastName }})
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        <button type="button" class="btn btn-default btn-xs"
+                            ng-style="{backgroundColor: log.pause.color}"
+                            ng-class="{'btn-success': log.state == 1, 'btn-danger': log.state == 3}" ng-disabled="1">
+                            <span class="glyphicon"
+                                ng-class="{ 'glyphicon-play': log.state == 1, 'glyphicon-pause': log.state == 2, 'glyphicon-stop': log.state == 3 }"></span>
+                            <span ng-if="log.pauseReason != ''">{{ log.pauseReason }}</span>
+                        </button>
+                    </td>
+                    <td ng-if="log.asAdditionalOperator != 1">
+                        <span>{{ formatTime(log.sumTime) }}</span>
+                    </td>
+                    <td class="noWrap">
+                    </td>
+                </tr>
+                <tr ng-if="additionals == true">
+                    <td colspan="8" style="text-align: center;"><b>{{ 'additional_operations' | translate }}</b></td>
+                </tr>
+                <tr ng-repeat="log in logs" ng-if="log.isAdditional == true">
+                    <td>
+                        {{ log.ID }}
+                    </td>
+                    <td>
+                        {{ log.date }}
+                    </td>
+                    <td>
+                        {{ log.operation.operationName }}
+                    </td>
+                    <td>
+
+                    </td>
+                    <td>
+                        {{ log.operator.name }} ({{ log.operator.userFirstName }} {{ log.operator.userLastName }})
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-default btn-xs"
+                            ng-style="{backgroundColor: log.pause.color}"
+                            ng-class="{'btn-success': log.state == 1, 'btn-danger': log.state == 3}" ng-disabled="1">
+                            <span class="glyphicon"
+                                ng-class="{ 'glyphicon-play': log.state == 1, 'glyphicon-pause': log.state == 2, 'glyphicon-stop': log.state == 3 }"></span>
+                            <span ng-if="log.pauseReason != ''">{{ log.pauseReason }}</span>
+                        </button>
+                    </td>
+                    <td>
+                        <span>{{ formatTime(log.sumTime) }}</span>
+                    </td>
+                    <td class="noWrap">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

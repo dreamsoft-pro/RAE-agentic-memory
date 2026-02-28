@@ -1,0 +1,99 @@
+<div class="modal-header">
+  <h3 class="modal-title">Keys Module: {{module.module}}</h3>
+</div>
+<div class="modal-body" >
+  <div class="row">
+    <div class="col-md-12">
+      <div class="overflowContainer">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr role="row" class="heading">
+              <th>#</th>
+              <th>Key</th>
+              <th>
+                Title
+                <select ng-model="showLang" ng-options="lang.code as lang.name for (key, lang) in languages" ng-init="showLang = currentLang.code"></select>
+              </th>
+              <th>Description {{showLang}}</th>
+              <th>{{ 'active' | translate }}</th>
+              <th  class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="key in keys">
+              <td>{{ key.ID }}</td>
+              <td>{{ key.key }}</td>
+              <td>{{ key.texts[showLang].title }} {{  }}</td>
+              <td ng-bind-html="key.texts[showLang].description"></td>
+              <td>
+                <span class="btn blue-stripe btn-xs"
+                ng-class="{'red-sunglo-stripe': !key.active}">
+                {{ !!key.active ? 'yes' : 'no' | translate }}
+                </span>
+              </td>
+              <td class="text-right">
+                <a class="edit" href="javascript:;" ng-click="edit(key)">Edit</a>
+                <a class="edit" href="javascript:;" ng-confirm-click="remove(key.ID)">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-12">
+          
+          <div class="portlet light">
+            <div class="portlet-title">
+              <div class="caption">
+                <i class="fa fa-gift"></i> Add
+              </div>
+            </div>
+            <div class="portlet-body form">
+              <form class="form-horizontal" role="form" ng-submit="add()">
+                <div class="form-body">
+                  
+                  <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'key' | translate }}</label>
+                    <div class="col-md-9">
+                      <input ng-model="form.key" type="text" class="form-control" placeholder="{{ 'key' | translate }}">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label">Wybierz język</label>
+                    <div class="col-md-9">
+                    <select class="form-control" ng-init="selectLang = currentLang.code" ng-model="selectLang" ng-options="each.code as each.name for (key, each) in languages"></select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">Tytuł</label>
+                  <div class="col-md-9">
+                    <input ng-repeat="lang in languages" ng-show="selectLang == lang.code" ng-model="form.texts[lang.code].title" type="text" class="form-control" placeholder="" >
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">Treść</label>
+                  <div class="col-md-9" ng-repeat="lang in languages" ng-show="selectLang == lang.code">
+                    <div ds-tinymce ng-model="form.texts[lang.code].description"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <div class="row">
+                  <div class="col-md-offset-3 col-md-9">
+                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'add' | translate }}</button>
+                    <button ng-click="form = {}" type="button" class="btn btn-success">{{ 'cancel' | translate }}</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-warning" ng-click="$dismiss()">Close</button>
+</div>

@@ -1,0 +1,361 @@
+{
+  "benchmark": {
+    "name": "academic_extended",
+    "description": "Extended academic benchmark with semantic noise and multi-domain queries",
+    "version": "1.0",
+    "file": "benchmarking/sets/academic_extended.yaml"
+  },
+  "execution": {
+    "timestamp": "2026-01-02T18:32:10.998371",
+    "num_memories": 45,
+    "num_queries": 20,
+    "total_time_seconds": 1.4303627014160156
+  },
+  "metrics": {
+    "mrr": 1.0,
+    "hit_rate": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "precision": {
+      "@3": 0.3333333333333333,
+      "@5": 0.2,
+      "@10": 0.1
+    },
+    "recall": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "performance": {
+      "avg_insert_time_ms": 23.89715512593587,
+      "avg_query_time_ms": 17.74953603744507,
+      "p95_query_time_ms": 24.73616600036621,
+      "p99_query_time_ms": 24.73616600036621
+    },
+    "overall_quality_score": 0.88
+  },
+  "detailed_results": [
+    {
+      "query": "What is the speed of light?",
+      "expected": [
+        "phys_2"
+      ],
+      "retrieved": [
+        "phys_2",
+        "phys_1",
+        "phys_5",
+        "bio_2",
+        "math_3"
+      ],
+      "latency_ms": 20.945072174072266,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Who discovered DNA structure?",
+      "expected": [
+        "bio_1"
+      ],
+      "retrieved": [
+        "bio_1",
+        "bio_4",
+        "bio_5",
+        "chem_2",
+        "math_3"
+      ],
+      "latency_ms": 14.529943466186523,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "What is the capital of France?",
+      "expected": [
+        "geo_5"
+      ],
+      "retrieved": [
+        "geo_5",
+        "geo_4",
+        "hist_2",
+        "econ_5",
+        "econ_4"
+      ],
+      "latency_ms": 15.76089859008789,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Which programming language was created by Guido van Rossum?",
+      "expected": [
+        "cs_1"
+      ],
+      "retrieved": [
+        "cs_1",
+        "cs_3",
+        "math_3",
+        "phys_4",
+        "phys_1"
+      ],
+      "latency_ms": 20.15972137451172,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What is the powerhouse of the cell?",
+      "expected": [
+        "bio_3"
+      ],
+      "retrieved": [
+        "bio_3",
+        "bio_2",
+        "phys_5",
+        "phys_3",
+        "cs_4"
+      ],
+      "latency_ms": 24.73616600036621,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "Who developed the theory of evolution?",
+      "expected": [
+        "bio_4"
+      ],
+      "retrieved": [
+        "bio_4",
+        "phys_1",
+        "math_3",
+        "bio_1",
+        "phys_4"
+      ],
+      "latency_ms": 16.446590423583984,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What equation is considered the most beautiful in mathematics?",
+      "expected": [
+        "math_1"
+      ],
+      "retrieved": [
+        "math_1",
+        "phys_3",
+        "math_3",
+        "math_2",
+        "econ_4"
+      ],
+      "latency_ms": 17.802715301513672,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What did Marie Curie discover?",
+      "expected": [
+        "chem_2"
+      ],
+      "retrieved": [
+        "chem_2",
+        "bio_1",
+        "phys_1",
+        "bio_4",
+        "phys_5"
+      ],
+      "latency_ms": 16.785860061645508,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What technology allows for precise DNA editing?",
+      "expected": [
+        "bio_5"
+      ],
+      "retrieved": [
+        "bio_5",
+        "bio_1",
+        "phys_5",
+        "cs_3",
+        "lit_5"
+      ],
+      "latency_ms": 15.625715255737305,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "Which test evaluates machine intelligence against human intelligence?",
+      "expected": [
+        "cs_3"
+      ],
+      "retrieved": [
+        "cs_3",
+        "cs_2",
+        "cs_4",
+        "bio_2",
+        "phys_5"
+      ],
+      "latency_ms": 17.919301986694336,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What mathematical concept did Newton and Leibniz develop?",
+      "expected": [
+        "math_3"
+      ],
+      "retrieved": [
+        "math_3",
+        "phys_4",
+        "phys_1",
+        "bio_4",
+        "math_1"
+      ],
+      "latency_ms": 16.003847122192383,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What mission landed humans on the Moon?",
+      "expected": [
+        "hist_5"
+      ],
+      "retrieved": [
+        "hist_5",
+        "chem_2",
+        "bio_2",
+        "phys_1",
+        "bio_1"
+      ],
+      "latency_ms": 16.515731811523438,
+      "difficulty": "hard",
+      "category": "inference"
+    },
+    {
+      "query": "What scientific theory revolutionized our understanding of gravity?",
+      "expected": [
+        "phys_1"
+      ],
+      "retrieved": [
+        "phys_1",
+        "math_3",
+        "phys_4",
+        "bio_4",
+        "bio_1"
+      ],
+      "latency_ms": 18.6769962310791,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "What historical event marked the transition from medieval to modern times?",
+      "expected": [
+        "hist_2"
+      ],
+      "retrieved": [
+        "hist_2",
+        "hist_4",
+        "hist_3",
+        "econ_3",
+        "phys_4"
+      ],
+      "latency_ms": 16.58463478088379,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "What computing system is inspired by the human brain?",
+      "expected": [
+        "cs_4"
+      ],
+      "retrieved": [
+        "cs_4",
+        "bio_2",
+        "cs_3",
+        "cs_2",
+        "cs_1"
+      ],
+      "latency_ms": 17.485380172729492,
+      "difficulty": "very_hard",
+      "category": "semantic_noise"
+    },
+    {
+      "query": "Who won a Nobel Prize for discovering radioactive elements?",
+      "expected": [
+        "chem_2"
+      ],
+      "retrieved": [
+        "chem_2",
+        "phys_5",
+        "bio_1",
+        "chem_1",
+        "math_3"
+      ],
+      "latency_ms": 18.454313278198242,
+      "difficulty": "very_hard",
+      "category": "multi_hop"
+    },
+    {
+      "query": "What scale measures how acidic or basic something is?",
+      "expected": [
+        "chem_4"
+      ],
+      "retrieved": [
+        "chem_4",
+        "phys_3",
+        "chem_1",
+        "cs_3",
+        "chem_3"
+      ],
+      "latency_ms": 19.63520050048828,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What is the largest ocean on Earth?",
+      "expected": [
+        "geo_3"
+      ],
+      "retrieved": [
+        "geo_3",
+        "geo_1",
+        "geo_2",
+        "geo_4",
+        "geo_5"
+      ],
+      "latency_ms": 15.734195709228516,
+      "difficulty": "easy",
+      "category": "factual_recall"
+    },
+    {
+      "query": "Who wrote about a dystopian surveillance state?",
+      "expected": [
+        "lit_2"
+      ],
+      "retrieved": [
+        "lit_2",
+        "econ_1",
+        "bio_1",
+        "phys_4",
+        "cs_3"
+      ],
+      "latency_ms": 17.100095748901367,
+      "difficulty": "medium",
+      "category": "semantic_matching"
+    },
+    {
+      "query": "What economic theory was proposed by Adam Smith?",
+      "expected": [
+        "econ_1"
+      ],
+      "retrieved": [
+        "econ_1",
+        "phys_1",
+        "bio_4",
+        "econ_4",
+        "econ_3"
+      ],
+      "latency_ms": 18.088340759277344,
+      "difficulty": "hard",
+      "category": "inference"
+    }
+  ]
+}

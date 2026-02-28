@@ -1,0 +1,9 @@
+<button 
+    class="btn btn-xs btn-info"
+    ng-class="{'btn-warning': _.contains(settings.sortingOrder, key) || _.contains(settings.sortingReverse, key)
+    }"><i class="glyphicon "
+            ng-class="{
+            'glyphicon-arrow-up': _.contains(settings.sortingReverse, key),
+            'glyphicon-arrow-down': !_.contains(settings.sortingReverse, key)
+            }"></i>
+</button>

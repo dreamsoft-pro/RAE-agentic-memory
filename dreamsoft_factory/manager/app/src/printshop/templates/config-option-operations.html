@@ -1,0 +1,59 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-cog"></i> {{ "option" | translate }}: {{ currentOptionName }}
+            <a ng-if="prevOption" ui-sref="printshop-configOptionSettings-operations({optID: prevOption})" class="prevNext"
+               tooltip="{{ 'goto_previous_option' | translate }}"><i class="fa fa-arrow-circle-left"></i></a>
+            <a ng-if="nextOption" ui-sref="printshop-configOptionSettings-operations({optID: nextOption})" class="prevNext"
+               tooltip="{{ 'goto_next_option' | translate }}"><i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+<div ui-view="menu"></div>
+<div class="row">
+    <div class="col-md-12 col-lg-7">
+        <div class="portlet light">
+
+            <a ng-click="selectController(item)" class="btn blue-hoki marginedBtn" ng-repeat="item in controllers">
+                {{item.name}}
+            </a>
+            <div style="margin-top: 15px;" class="portlet light"
+                 ng-if="selectedController">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-dollar"></i> {{ selectedController.name }}
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" ng-click="refresh()" class="reload">
+                        </a>
+                    </div>
+                </div>
+            <div class="portlet-body">
+                <div class="list-group clickable">
+                    <a class="list-group-item"
+                       ng-repeat="operation in operations"
+                       ng-click="setOperation(operation.ID)"
+                       ng-class="{active: (_.findWhere(selectedOperations, {operationID: operation.ID}) ) }">
+                        <span class="btn blue-stripe btn-xs">ID: {{operation.ID}}</span>
+                        <b>{{operation.name}} </b>
+                        <small> {{ operation.description }}</small>
+                        <button ng-if="_.findWhere(selectedOperations, {operationID: operation.ID})"
+                                data-ng-click="operationOption(operation);$event.stopPropagation()"
+                                class="btn btn-default btn-sm" style="position: absolute; right: 10px; top: 5px;"
+                                ng-class="{'btn-warning warning-contrast': _.findWhere(selectedOperations, {operationID: operation.ID}).controllers.length > 0}"
+                                tooltip="{{ 'settings' | translate }}">
+                            <i class="fa fa-cog"></i>
+                        </button>
+                    </a>
+                </div>
+
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.configOptionsOperations"></div>
+    </div>
+
+</div>

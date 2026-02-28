@@ -1,0 +1,95 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{'add_files' | translate}} : {{oryg.langs[currentLang.code].name}}</h3>
+</div>
+<div class="modal-body">
+
+    <div ng-if="form" class="row">
+
+        <div class="col-md-12">
+
+            <form class="form-horizontal" role="form" ng-submit="save()">
+
+                <div class="form-body">
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                        <div class="col-md-9">
+                            <select class="form-control" ng-init="descriptionLang = currentLang.code" ng-model="descriptionLang"
+                                    ng-options="each.code as each.name for (key, each) in languages"></select>
+                            <input ng-repeat="lang in languages" ng-show="descriptionLang == lang.code"
+                                   ng-model="form.langs[lang.code].name" type="text" class="form-control"
+                                   placeholder="{{lang.code}}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            <button class="btn btn-success">
+                                <i class="fa fa-check"></i>
+                                {{ 'save' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12" ng-show="selectedFiles.length > 0">
+            <div class="text-left">Wybrane pliki:</div>
+
+            <div tooltip="{{selectThumb.name}}" ng-repeat="selectThumb in selectedFiles track by selectThumb.ID"
+                 style="background: url('{{selectThumb.miniatureUrl}}');
+                min-height:100px;height:100px; 
+                min-width:100px;
+                width:100px; 
+                background-repeat:no-repeat;
+                background-size:cover"
+                 alt="Description" class="img-thumbnail" alt="">
+                <button type="button" class="btn red-sunglo btn-xs" ng-click="removeDescFile(selectThumb.ID)">
+                    <i class="glyphicon glyphicon-remove"></i></button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <button class="btn btn-success text-right" ng-show="selectedFiles.length >0"
+                    ng-click="savePictures(currentDescID)">
+                <i class="fa fa-check"></i>
+                {{ 'save' | translate }}
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-success text-left" type="button" ng-click="uploadFiles()">
+                {{ 'upload_photos' | translate }}
+            </button>
+            <div class="text-left">
+                {{ 'or' | translate }} {{ 'select_files_that_you_want_add' | translate }}
+            </div>
+        </div>
+    </div>
+    <div class="thumbs row">
+        <div class="col-md-12 text-center">
+
+            <div class="gallery-thumb" ng-repeat="file in thumbFiles | orderBy:'-ID'" >
+                <button type="button" class="btn red-sunglo btn-xs remove-button"
+                        ng-click="removeFile(file)"><i
+                        class="glyphicon glyphicon-remove"></i></button>
+
+                <img tooltip="{{file.name}}" ng-mouseover="showName = true"
+                     ng-click="addPicture(file, currentDescID);"
+                     class="img-thumbnail"
+                     ng-src="{{file.miniatureUrl}}"
+                     alt=""
+                     style="min-height:100px;height:100px; min-width:100px;width:100px;"/>
+            </div>
+        </div>
+    </div>
+
+</div>

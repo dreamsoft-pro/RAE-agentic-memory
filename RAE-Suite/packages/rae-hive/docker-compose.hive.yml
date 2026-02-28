@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  hive-builder:
+    build:
+      context: ../
+      dockerfile: agent_hive/Dockerfile
+    container_name: hive-builder
+    user: root
+    environment:
+      - RAE_API_URL=http://rae-api-dev:8000
+      - OLLAMA_URL=http://host.docker.internal:11435/api/generate
+    volumes:
+      - ./work_dir:/app/work_dir
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - rae-network
+    restart: unless-stopped
+
+networks:
+  rae-network:
+    external: true
+    name: rae-agentic-memory-agnostic-core_rae-network

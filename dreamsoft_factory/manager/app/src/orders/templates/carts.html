@@ -1,0 +1,186 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa icon-basket"></i> {{ 'carts' | translate }}
+        </div>
+        <div class="tools">
+          <well class="btn-sm">{{ 'number_of_rows' | translate }}: <span class="badge">{{ cartsCtrl.totalItems }}</span> </well>
+          <select ng-model="showRows" class="btn-default input-sm" ng-change="cartsCtrl.setRows(showRows)" ng-options="each for (null, each) in [10,25,50,100]" ></select>
+          <button ng-click="cartsCtrl.clearCache()" class="btn btn-primary btn-sm">
+            <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+          </button>
+          <button button-faq-accordion="orders.carts"></button>
+          <button class="btn btn-xs" ng-click="export()">Export</button>
+        </div>
+      </div>
+      <div class="portlet-body">
+      
+
+        <div class="wrapper1">
+          <div class="div1"></div>
+        </div>
+
+        <div class="overflowContainer">  
+          <table class="table table-striped table-hover"  >
+          <thead>
+          <tr role="row" class="heading">
+            <th width="5%" sort-trigger>#</th>
+            <th width="6%" sort-trigger>{{ 'user' | translate }}</th>
+            <th width="10%">{{ 'date' | translate }}</th>
+            <th>{{ 'company' | translate }}/{{ 'user' | translate }}</th>
+            <th>{{ 'contact' | translate }}</th>
+            <th>{{ 'products' | translate }}</th>
+            <th>{{ 'price' | translate }}</th>
+            <th>{{ 'payment_status' | translate }}</th>
+            <th>{{ 'invoice_type' | translate }}</th>
+            <th>{{ 'invoice_data' | translate }}</th>
+            <th width="10%">{{ 'realization' | translate }}</th>
+            <th width="10%">{{ 'status' | translate }}</th>
+            <th>{{ 'domain' | translate }}</th>
+          </tr>
+          <tr role="row" class="filter">
+            <td>
+              <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="ID" ng-model="cartsCtrl.params.ID">
+              <!-- ng-change="cartsCtrl.setParam('ID', cartsCtrl.filter.ID).get();" -->
+            </td>
+            <td>
+              <input type="text" class="form-control form-filter input-sm" ng-change="setParams()" placeholder="{{ 'user_id' | translate }}" ng-model="cartsCtrl.params.userID">
+            </td>
+            <td>
+              <div ng-model="cartsCtrl.params.dateFrom" ng-change="setParams" dp-datepicker></div>
+              <div ng-model="cartsCtrl.params.dateTo" ng-change="setParams" dp-datepicker></div>
+            </td>
+            <td>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" name="order_id" placeholder="{{ 'company_name' | translate }}" ng-model="cartsCtrl.params.companyName">
+              </div>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" placeholder="{{ 'nip' | translate }}" ng-model="cartsCtrl.params.nip">
+              </div>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" name="order_id" placeholder="{{ 'firstname' | translate }}" ng-model="cartsCtrl.params.name">
+              </div>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" name="order_id" placeholder="{{ 'surname' | translate }}" ng-model="cartsCtrl.params.lastname" />
+              </div>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" placeholder="{{ 'postal_code' | translate }}" ng-model="cartsCtrl.params.zipcode" />
+              </div>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" placeholder="{{ 'location' | translate }}" ng-model="cartsCtrl.params.city" />
+              </div>
+            </td>
+            <td>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" placeholder="{{ 'email' | translate }}" ng-model="cartsCtrl.params.user">
+              </div>
+            </td>
+            <td>
+              <div class="margin-bottom-5">
+                <input type="text" ng-change="setParams()"  class="form-control form-filter input-sm" placeholder="{{ 'product_id' | translate }}" ng-model="cartsCtrl.params.productID">
+              </div>
+            </td>
+            <td></td>
+            <td>
+              <select ng-change="setParams()"  class="form-control form-filter input-sm" ng-model="cartsCtrl.params.paid">
+                <option value="">{{ 'payment' | translate }}...</option>
+                <option value="1">{{ 'paid' | translate }}</option>
+                <option value="0">{{ 'not_paid' | translate }}</option>
+              </select>
+            </td>
+            <td>
+              <select ng-change="setParams()"  class="form-control form-filter input-sm" ng-model="cartsCtrl.params.isVat">
+                <option value="">{{ 'invoice_type' | translate }}...</option>
+                <option value="1">{{ 'invoice' | translate }}</option>
+                <option value="0">{{ 'proforma' | translate }}</option>
+              </select>
+            </td>
+            <td></td>
+            <td>
+              <div ng-model="cartsCtrl.params.realizationDateFrom" ng-change="setParams" dp-datepicker></div>
+              <div ng-model="cartsCtrl.params.realizationDateTo" ng-change="setParams" dp-datepicker></div>
+            </td>
+            <td>
+              <select ng-change="setParams()" name="order_status" class="form-control form-filter input-sm" ng-model="cartsCtrl.params.status" ng-options="status.ID as status.name for status in statuses">
+                <option value="">{{ 'status' | translate }}...</option>
+              </select>
+            </td>
+            <td></td>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="cart in cartsCtrl.items">
+            <td>
+              {{ cart.ID }}
+              <div>
+                <button class="btn btn-xs btn-primary glyphicon glyphicon-comment" ng-class="{'red-sunglo': cart.countMsg}" ng-click="showMessages(cart)"></button>
+              </div>
+            </td>
+            <td>{{ cart.uID }}</td>
+            <td>
+              <div>{{ cart.dateTS*1000 | date:'dd-MM-yyyy' }}</div>
+              <div>{{ cart.dateTS*1000 | date:'HH:mm:ss' }}</div>
+            </td>
+            <td>
+              <b ng-if="cart.fvNip">{{ cart.fvCompanyName  }}<br />{{cart.fvNip}} <br /></b>
+              {{ cart.caName }} {{ cart.caLastname }} <br />
+              {{ cart.caZipcode }} {{ cart.caCity }} <br />
+              <span ng-if="cart.caHouse">{{ cart.caHouse }}/</span>{{ cart.caApartment }} {{ cart.caStreet }}
+            </td>
+            <td>
+              <div>{{ cart.user }}</div>
+              <div>{{ cart.caTelephone }}</div>
+            </td>
+            <td>
+              <p ng-repeat="order in cart.orders" class="noWrap">
+                <button class="btn btn-default btn-xs" ui-sref="orders-products({productID: order.orderID})" tooltip="{{ 'order_no' | translate}} {{ task.orderID }}"><i class="fa fa-shopping-cart"></i> {{ order.orderID }}</button><br/>
+                <b>{{ order.name }}</b>
+                <span ng-if="order.volume">
+                      {{ order.amount + ' x ' + order.volume }}
+                    </span>
+                <span ng-if="!order.volume">
+                      {{ order.amount + ' x ' }}
+                    </span>
+                <br />
+                <a target="_blank" href="{{ order.attachment }}" ng-if="order.attachment">{{ 'attachment' | translate  }}</a>
+              </p>
+            </td>
+            <td>
+              {{ cart.formatPrice }} {{ 'currency' | translate }}
+            </td>
+            <td class="text-center">
+              <button ng-class="{hide: !cart.paid}" class="btn btn-success btn-xs" ng-confirm-click="toggleValue(cart, 'paid')" confirm-text="are_you_sure">
+                {{ 'paid' | translate }}
+              </button>
+              <button ng-class="{hide: cart.paid}" class="btn red-sunglo btn-xs" ng-click="toggleValue(cart, 'paid')">
+                {{ 'not_paid' | translate }}</button>
+            </td>
+            <td>
+              <button class="btn btn-default btn-xs" ng-class="{hide: !cart.isVat}" ng-click="toggleValue(cart, 'isVat')">{{ 'invoice' | translate }}</button>
+              <button class="btn btn-default btn-xs" ng-class="{hide: !!cart.isVat}" ng-click="toggleValue(cart, 'isVat')">{{ 'proforma' | translate }}</button>
+            </td>
+            <td>
+              <button class="btn btn-default btn-xs" ng-click="invoiceData(cart)">{{ 'invoice_data' | translate }}</button>
+            </td>
+            <td>
+              {{ cart.realizationDate }}
+            </td>
+            <td>
+              <select ng-change="changeStatus(cart)" name="order_status" class="form-control form-filter input-sm" ng-model="cart.status" ng-options="status.ID as status.name for status in statuses">
+              </select>
+            </td>
+            <td>{{ cart.domainName }}</td>
+          </tr>
+          </tbody>
+        </table>
+        </div>
+        <pagination total-items="cartsCtrl.totalItems" ng-model="cartsCtrl.currentPage" ng-change="cartsCtrl.setPage(cartsCtrl.currentPage); cartsCtrl.get()" class="pagination-sm" max-size="10" boundary-links="true" rotate="true" items-per-page="cartsCtrl.params.limit" ></pagination>
+
+       <!--  
+       <pagination total-items="filterLangs.length" ng-model="pagination.currentPage" ng-click="pagination.setPage(pagination.currentPage)" class="pagination-sm" max-size="10" boundary-links="true" items-per-page="pagination.perPage"></pagination> -->
+      </div>
+    </div>
+  </div>
+</div>

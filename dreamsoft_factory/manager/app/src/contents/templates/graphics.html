@@ -1,0 +1,300 @@
+<!-- Poniżej część odpowiedzialna za dodawanie logo -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light col-md-12">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-flag-o"></i>{{ 'logo' | translate}}
+                </div>
+                <div class="tools">
+                    <button ui-sref="contents-graphics" class="btn btn-default"><i class="fa fa-mail-reply-all"></i> {{
+                        'back' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="portlet-body" uploader="uploader">
+                <div class="col-md-4 thumbnail logoThumbBox">
+                    <img ng-src="{{logoPath}}" alt="Brak logo"/>
+                    <!-- /<span class="text-center" style="display: inline-block; vertical-align: middle; float: none;"> Brak logo</span> -->
+                </div>
+                <div class="col-md-8" uploader="uploader">
+                    <div ng-show="uploader.isHTML5">
+                        <div nv-file-drop="" uploader="uploader">
+                            <div nv-file-over="" uploader="uploader" over-class="another-file-over-class"
+                                 class="well my-drop-zone">
+                                Upuść logo tutaj
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="text-left"> Lub</div>
+                        <input type="file" nv-file-select="" uploader="uploader"/><br/>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-success btn-s" ng-click="addLogo()"
+                                ng-disabled="!uploader.getNotUploadedItems().length">
+                            <span class="glyphicon glyphicon-upload"></span> {{'upload' | translate}}
+                        </button>
+                    </div>
+                    <div class="col-md-12" ng-repeat="item in uploader.queue">
+                        <strong>{{ item.file.name }}</strong>
+                    </div>
+
+                    <div class="col-md-12">
+                        <span ng-show="uploader.progress == uploader.progress || uploader.progress > 0">{{'progress' | translate}}: {{uploader.progress + '%'}}</span>
+                        <span ng-show="uploader.progress != uploader.progress">{{'progress' | translate}}: {{'100'+ '%'}}</span>
+                        <div class="progress" style="">
+                            <div class="progress-bar" ng-show="uploader.progress == uploader.progress"
+                                 role="progressbar" ng-style="{ 'width': uploader.progress + '%' }"></div>
+                            <div class="progress-bar" ng-show="uploader.progress != uploader.progress"
+                                 role="progressbar" ng-style="{ 'width': 100 + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Poniżej część odpowiedzialna za ikony do makiet -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light col-md-12">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-file-image-o"></i>{{ 'models_file_icon' | translate}}
+                </div>
+            </div>
+
+            <div class="portlet-body">
+                <div class="col-md-4">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Rozszerzenie</th>
+                            <th>Ikona</th>
+                        </tr>
+                        <tr ng-repeat="modelIco in modelsFiles">
+                            <td>{{ modelIco.ext }}</td>
+                            <td><img style="height:50px; width:50px" ng-src="{{modelFilePath}}{{ modelIco.name }}"/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-8" uploader="uploaderModels">
+                    <div class="form-group text-center col-md-12">
+                        <label class="col-md-2 control-label">{{ 'model_extension' | translate }}</label>
+                        <div class="col-md-10">
+                            <select class="form-control" ng-init="form.modelsExtensions = 'pdf'"
+                                    ng-model="form.modelsExtensions"
+                                    ng-options="each.extension as each.extension for (key, each) in modelsExtensions"></select>
+                        </div>
+                    </div>
+                    <div class="col-md-12" ng-show="uploaderModels.isHTML5">
+                        <div nv-file-drop="" uploader="uploaderModels">
+                            <div nv-file-over="" uploader="uploaderModels" over-class="another-file-over-class"
+                                 class="well my-drop-zone">
+                                Upuść ikonę tutaj
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="text-left"> Lub</div>
+                        <input type="file" nv-file-select="" uploader="uploaderModels"/><br/>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-success btn-s" ng-click="addModelsIcon()"
+                                ng-disabled="!uploaderModels.getNotUploadedItems().length">
+                            <span class="glyphicon glyphicon-upload"></span> {{'upload' | translate}}
+                        </button>
+                    </div>
+                    <div class="col-md-12" ng-repeat="item in uploaderModels.queue">
+                        <strong>{{ item.file.name }}</strong>
+                    </div>
+                    <div class="col-md-12">
+                        <span ng-show="uploaderModels.progress == uploaderModels.progress || uploaderModels.progress > 0">{{'progress' | translate}}: {{uploaderModels.progress + '%'}}</span>
+                        <span ng-show="uploaderModels.progress != uploaderModels.progress">{{'progress' | translate}}: {{'100'+ '%'}}</span>
+                        <div class="progress" style="">
+                            <div class="progress-bar" ng-show="uploaderModels.progress == uploaderModels.progress"
+                                 role="progressbar" ng-style="{ 'width': uploaderModels.progress + '%' }"></div>
+                            <div class="progress-bar" ng-show="uploaderModels.progress != uploaderModels.progress"
+                                 role="progressbar" ng-style="{ 'width': 100 + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Poniżej część odpowiedzialna za baner/slider na głownej -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light col-md-12">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-file-image-o"></i>{{ 'banner' | translate }} - {{ 'home_page' | translate }}
+                </div>
+            </div>
+
+            <div class="portlet-body">
+
+
+                <div class="row">
+
+                    <div class="col-md-6">
+                        <form class="form-horizontal" role="form" ng-submit="saveSliderOptions()">
+                            <div class="form-body">
+
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">
+                                        {{ 'duration_of_one_slide' | translate }}
+                                    </label>
+                                    <div class="col-md-9">
+                                        <input ng-model="sliderForm.sliderAutoSlide.value"
+                                               type="number" class="form-control" placeholder="">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">{{ 'type_of_slider_animation' | translate }}</label>
+                                    <div class="col-md-9">
+                                        <select class="form-control" ng-model="sliderForm.sliderTransition.value"
+                                                ng-options="transition.value as transition.value for transition in sliderTransitions">
+                                            <option value="">{{ 'select' | translate }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <div class="row">
+                                        <div class="col-md-offset-3 col-md-9">
+                                            <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <div class="row banner-thumbs">
+                    <div class="col-md-12" ng-show="selectedFiles.length > 0">
+                        <div class="text-left">{{ 'selected_files' | translate }}:</div>
+
+                        <div tooltip="{{selectThumb.name}}" class="banner-thumb" ng-repeat="selectThumb in selectedFiles">
+
+                            <button type="button" class="btn red-sunglo btn-xs remove-button"
+                                    ng-click="removeBanerFile(selectThumb.ID)"><i
+                                    class="glyphicon glyphicon-remove"></i></button>
+                            <button type="button" class="btn btn-primary btn-xs add-link-button"
+                                    ng-click="addLinkToBanner(selectThumb.ID)"><i class="glyphicon glyphicon-link"></i>
+                            </button>
+
+                            <img tooltip="{{file.name}}" ng-mouseover="showName = true" ng-mouseout="showName = false"
+                                 ng-click="addBanerPic(file) "
+                                 ng-src="{{ STATIC_URL }}uploadedFiles/{{companyID}}/thumbs/{{selectThumb.path}}"
+                                 class="img-thumbnail"
+                                 style="min-height:100px;height:100px;"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <button class="btn btn-success text-right" ng-click="savePictures(currentDescID)"><i
+                                class="fa fa-check"></i> {{ 'save' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <button class="btn btn-success text-left" type="button" ng-click="uploadBannerFiles()">{{
+                            'upload_photos' | translate }}
+                        </button>
+                        <div class="text-left">lub wybierz z listy pliki które chcesz dodać do banera</div>
+                    </div>
+                </div>
+                <div class="row thumbs">
+                    <div class="col-md-12 text-center">
+
+
+                        <div class="gallery-thumb" ng-repeat="file in thumbFiles | orderBy:'-ID'" >
+
+                            <button type="button" class="btn red-sunglo btn-xs remove-button"
+                                    ng-click="removeFile(file)"><i
+                                    class="glyphicon glyphicon-remove"></i></button>
+
+                            <img tooltip="{{file.name}}" ng-mouseover="showName = true" ng-mouseout="showName = false"
+                                 ng-click="addBanerPic(file) "
+                                 ng-src="{{ STATIC_URL }}uploadedFiles/{{currentDomain.companyID}}/thumbs/{{file.path}}"
+                                 class="img-thumbnail"
+                                 style="min-height:100px;height:100px;"
+                            />
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light col-md-12">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-flag-o"></i>favicon
+                </div>
+            </div>
+
+            <div class="portlet-body" uploader="uploader">
+                <div class="col-md-4 thumbnail logoThumbBox">
+                    <img ng-src="{{logoPath}}" alt="Brak logo"/>
+                </div>
+                <div class="col-md-8" uploader="uploader">
+                    <div ng-show="uploader.isHTML5">
+                        <div nv-file-drop="" uploader="uploader">
+                            <div nv-file-over="" uploader="uploader" over-class="another-file-over-class"
+                                 class="well my-drop-zone">
+                                Upuść logo tutaj
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="text-left"> Lub</div>
+                        <input type="file" nv-file-select="" uploader="uploader"/><br/>
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-success btn-s" ng-click="addLogo()"
+                                ng-disabled="!uploader.getNotUploadedItems().length">
+                            <span class="glyphicon glyphicon-upload"></span> {{'upload' | translate}}
+                        </button>
+                    </div>
+                    <div class="col-md-12" ng-repeat="item in uploader.queue">
+                        <strong>{{ item.file.name }}</strong>
+                    </div>
+
+                    <div class="col-md-12">
+                        <span ng-show="uploader.progress == uploader.progress || uploader.progress > 0">{{'progress' | translate}}: {{uploader.progress + '%'}}</span>
+                        <span ng-show="uploader.progress != uploader.progress">{{'progress' | translate}}: {{'100'+ '%'}}</span>
+                        <div class="progress" style="">
+                            <div class="progress-bar" ng-show="uploader.progress == uploader.progress"
+                                 role="progressbar" ng-style="{ 'width': uploader.progress + '%' }"></div>
+                            <div class="progress-bar" ng-show="uploader.progress != uploader.progress"
+                                 role="progressbar" ng-style="{ 'width': 100 + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>

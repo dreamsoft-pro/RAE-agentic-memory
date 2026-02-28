@@ -1,0 +1,14 @@
+<div class="modal-header">
+  <h3 class="modal-title">{{ 'cart' | translate }}: {{ cart.ID }} </h3>
+</div>
+<div class="modal-body">
+  {{ cart.fvCompanyName }}<br />
+  {{ cart.fvNip }}<br />
+  {{ cart.fvZipcode }} {{ cart.fvCity }}<br />
+  {{ cart.fvStreet }} {{ cart.fvHouse }}/{{ cart.fvApartment }}<br />
+  +{{ cart.fvAreaCode }} {{ cart.fvTelephone }}
+
+</div>
+<div class="modal-footer">
+  <button class="btn btn-warning" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

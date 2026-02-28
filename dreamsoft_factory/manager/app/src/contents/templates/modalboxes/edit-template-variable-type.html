@@ -1,0 +1,54 @@
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-male"></i> {{ 'edit_template_variable_type' | translate }}
+        </div>
+    </div>
+    <div class="portlet-body">
+        <form class="form-horizontal" role="form" ng-submit="ok()">
+            <div class="form-body">
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'variable_name' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.name" type="text" class="form-control"
+                               placeholder="{{ 'variable_name' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'value' | translate }}
+                        <i class="fa fa-info-circle" tooltip="Lista wartości separowanych '|'"></i>
+                    </label>
+                    <div class="col-md-9">
+                        <input ng-model="form.values" type="text" class="form-control"
+                               placeholder="{{ 'values' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'template' | translate }}</label>
+                    <div class="col-md-9">
+                        <select title="{{ 'select_template' | translate }}"
+                                class="form-control" required
+                                ng-model="form.templateName"
+                                ng-options="template.name as template.name for template in templates">
+                            <option value="">{{ 'select_template' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}
+                            </button>
+                            <button ng-click="$dismiss()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

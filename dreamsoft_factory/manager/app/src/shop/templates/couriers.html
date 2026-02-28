@@ -1,0 +1,63 @@
+<div class="row">
+  <div class="col-lg-7 col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa icon-plane"></i> {{ 'couriers_settings' | translate }}
+        </div>
+        
+        <div class="tools hidden-lg">
+          <button button-faq-accordion="shop.couriersSettings"></button>
+        </div>
+
+      </div>
+      <div class="portlet-body">
+        <div class="row" ng-repeat="courier in couriers"
+          ng-init="couriersEdit[courier.key] = couriersEdit[courier.key] || {}">
+          <div class="col-md-12">
+            <div class="portlet light">
+              <div class="portlet-title">
+                <div class="caption">
+                  <i class="fa fa-dot-circle-o"></i> {{ courier.name }}
+                </div>
+                <!-- <div class="tools">
+                  <a href="javascript:;" ng-click="refresh()" class="reload">
+                  </a>
+                </div> -->
+              </div>
+              <div class="portlet-body form portlet-empty">
+                <form class="form-horizontal" role="form" ng-submit="save(courier)">
+                  <div class="form-body">
+                    <div class="form-group" ng-repeat="key in courier.keys" >
+                      <label class="col-md-3 control-label">{{ key.langs[currentLang.code].name }}</label>
+                      <div class="col-md-9">
+                        <input  ng-if="key.type != 'select' && key.type != 'price'" ng-model="key.value" type="{{key.type}}" class="form-control" placeholder="{{ key.langs[currentLang.code].name }}">
+                        <input  ng-if="key.type == 'price'" ng-model="key.value" type="text" class="form-control" placeholder="{{ key.langs[currentLang.code].name }}">
+                        <select class="form-control" ng-if="key.type == 'select'"
+                          ng-model="key.value"
+                          ng-options="option.value as option.langs[currentLang.code].name for option in key.options">
+                        ></select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <div class="row">
+                      <div class="col-md-offset-3 col-md-9">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+                        <button ng-click="refresh(courier.key)" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5 visible-lg">
+    <div faq-accordion="shop.couriersSettings" ></div>
+  </div>
+</div>

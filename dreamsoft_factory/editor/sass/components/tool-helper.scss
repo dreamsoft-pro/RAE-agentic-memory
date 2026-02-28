@@ -1,0 +1,77 @@
+@use './../shared' as *;
+
+.tool-helper-container {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  &.x {
+    left: 8rem;
+    transition: left 0.25s, visibility 0.1s;
+
+    & .arrow {
+      border-top: 6px solid transparent;
+      border-right: 6px solid $gray-300;
+      border-bottom: 6px solid transparent;
+    }
+  }
+
+  &.y {
+    top: 0;
+    transition: top 0.25s, visibility 0.1s;
+
+    .tool-helper-content {
+      flex-direction: column;
+    }
+
+    & .arrow {
+      border-left: 6px solid transparent;
+      border-bottom: 6px solid $gray-300;
+      border-right: 6px solid transparent;
+    }
+  }
+
+  .tool-helper-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .arrow {
+      width: 0;
+      height: 0;
+    }
+
+    .text {
+      background: var(--gray-200);
+      border-radius: var(--border-xs-radius);
+      font-family: MainFont;
+      padding: .5rem;
+      width: 12rem;
+      text-align: center;
+      font-size: .95rem;
+      border: solid 2px $gray-300;
+      color: $gray-500;
+      z-index: 1000;
+    }
+  }
+}
+
+.tool-helper-button {
+  &:hover ~ .tool-helper-container {
+    opacity: 1;
+    display: block;
+    visibility: visible;
+
+    &.x {
+      left: 3.5rem;
+      transition: left 0.5s, visibility 0.3s;
+    }
+
+    &.y {
+      top: calc(100% + 3.5rem);
+      transition: top 0.5s, visibility 0.3s;
+    }
+  }
+}

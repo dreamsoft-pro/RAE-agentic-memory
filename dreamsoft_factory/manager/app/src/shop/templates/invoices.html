@@ -1,0 +1,105 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-money" aria-hidden="true"></i> {{ 'invoices_settings' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="shop.invoiceSettings"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <form class="form-horizontal" role="form" ng-submit="saveInvoice()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker">
+                                            <span ng-class="{checked: form.invoiceOn.value}">
+                                                <input ng-model="form.invoiceOn.value" type="checkbox">
+                                            </span>
+                                        </div>
+                                        {{ 'invoices_turn_on' | translate }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'invoices_text' | translate }}</label>
+                            <div class="col-md-9">
+                                <div class="help-block">
+                                    <div button-name="{{ 'variables' | translate }}"
+                                         button-faq-accordion="shop.invoiceHints">test
+                                    </div>
+                                </div>
+                                <textarea ng-repeat="lang in languages" ng-show="nameLang == lang.code"
+                                          ng-model="form.invoiceText[lang.code]"
+                                          type="text" class="form-control" placeholder="{{lang.code}}"></textarea>
+                                <select class="form-control" ng-init="nameLang = currentLang.code" ng-model="nameLang"
+                                        ng-options="each.code as each.name for (key, each) in languages"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'proforma_invoice_mask' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.proformaInvoiceMask.value" placeholder="{m}/{r}/{nr}" type="text" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'invoice_mask' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.invoiceMask.value" type="text" placeholder="{m}/{r}/{nr}" class="form-control" >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'numeration_invoices' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-options="obj.value as obj.name | translate for obj in numerationData" ng-model="form.numerationInvoices.value">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'select_status_triggers_vat' | translate }} multi</label>
+                            <div class="col-md-9">
+                                <select class="form-control" multiple ng-multiple="true" size="6"
+                                        ng-model="invoiceVatStatuses" ng-options="each.ID as each.langs[nameLang] for each in statuses"></select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-plus"></i>
+                                    {{ 'save' | translate }}
+                                </button>
+                                <button ng-click="reset()"
+                                        type="button" class="btn red-sunglo">
+                                    {{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5 visible-lg">
+        <div faq-accordion="shop.invoiceSettings"></div>
+    </div>
+</div>

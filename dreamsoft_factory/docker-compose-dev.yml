@@ -1,0 +1,123 @@
+version: '3.8'
+services:
+  mysql:
+    container_name: mysql
+    image: mariadb:10.5.13
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: dupa123
+    ports:
+      - 3307:3306
+    volumes:
+      - ./database/data:/var/lib/mysql
+      - ./database/dump:/tmp/dump
+
+  mongo:
+    container_name: mongo
+    image: mongo:4.2
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: M0nG0f69b54
+    ports:
+      - 27017:27017
+    volumes:
+      - ./docker/mongo-import/mongo-backup:/data/mongodump
+
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    restart: always
+    ports:
+      - 80:80
+      - 81:81
+      - 443:443
+    volumes:
+      - ./proxy/data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: dupa123
+
+  authapp:
+    container_name: authapp
+    build:
+      context: ./authApp
+    depends_on:
+      - mysql
+      - mongo
+    volumes:
+      - ./authApp:/app
+
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-dev
+    depends_on:
+      - mysql
+    volumes:
+      - ./data:/var/www/app/data
+      - ./backend:/var/www/app
+
+  manager:
+    container_name: manager
+    build:
+      context: ./manager
+      dockerfile: Dockerfile-dev
+    depends_on:
+      - mysql
+    volumes:
+      - ./manager:/app
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile-dev
+    depends_on:
+      - proxy
+    volumes:
+      - ./frontend:/app
+      - ./data:/app/data
+
+  static:
+    container_name: static
+    build:
+      context: ./static
+    depends_on:
+      - proxy
+    volumes:
+      - ./data:/var/www/app/static
+
+  editor:
+    container_name: editor
+    build:
+      context: ./editor
+    depends_on:
+      - proxy
+
+  editor-backend:
+    container_name: editor-backend
+    build:
+      context: ./editor-backend
+      dockerfile: Dockerfile-dev
+    depends_on:
+      - mongo
+    volumes:
+      - ./editor-backend:/app
+
+  rendertron:
+    container_name: rendertron
+    build:
+      context: ./rendertron
+    depends_on:
+      - proxy
+
+networks:
+  default:
+    name: dreamsoft_factory_default

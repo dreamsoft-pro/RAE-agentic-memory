@@ -1,0 +1,64 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'group_of_papers' | translate }}</h3>
+</div>
+
+<div class="portlet-body">
+	<div ng-if="!!groupOptions.length" class="overflowContainer">
+	  <table class="table table-striped table-hover">
+		    <thead>
+		      <tr role="row" class="heading">
+		        <th>#</th>
+		        <th>
+		          {{ 'name' | translate }}
+		        </th>
+		        <th class="text-right">{{ 'actions' | translate }}</th>
+		      </tr>
+		    </thead>
+		    <tbody>
+		      <tr ng-repeat="group in groupOptions | orderBy: 'ID' | filter: idFilter">
+		        <td class="noWrap verticalMiddle">
+		          {{ group.ID }}
+		        </td>
+		        <td>
+		          {{ group.name }}
+		        </td>
+		        <td class="text-right">
+		          <button class="btn blue-hoki btn-xs" ng-click="editConnectStart(group)" tooltip="{{ 'edit' | translate }}">
+		            <i class="glyphicon glyphicon-edit"></i>
+		          </button>
+		          <button class="btn blue-hoki btn-xs" ng-click="editPaperPrice(group)" tooltip="{{ 'prices' | translate }}">
+		            <i class="glyphicon glyphicon-euro"></i>
+		          </button>
+		          <button class="btn red-sunglo btn-xs" ng-confirm-click="deleteConnectOption(group)" tooltip="{{ 'delete' | translate }}">
+		            <i class="glyphicon glyphicon-remove"></i>
+		          </button>
+		        </td>
+		      </tr>
+		    </tbody>
+		</table>
+
+	</div>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+  <div class="modal-body">
+
+  <div class="form-body">
+    <div class="form-group">
+      <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+      <div class="col-md-9">
+        <input type="text" ng-model="form.name" class="form-control" placeholder="">  
+      </div>
+    </div>
+  </div>
+
+
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'cancel' | translate }}</button>
+    <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+  </div>
+
+</form>

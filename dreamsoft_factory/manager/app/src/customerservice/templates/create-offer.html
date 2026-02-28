@@ -1,0 +1,360 @@
+<script type="text/ng-template" id="findUserTpl.html">
+<a>
+  <span ng-bind-html="match.model.companyName || '' | typeaheadHighlight:query"></span>
+  <span ng-bind-html="match.model.name | typeaheadHighlight:query"></span>
+  <span ng-bind-html="match.model.lastname | typeaheadHighlight:query"></span>
+  <span ng-bind-html="match.model.user | typeaheadHighlight:query"></span>
+</a>
+</script>
+<div class="row">
+	<div class="col-md-12">
+		<div class="portlet light bordered-hoki">
+			<div class="portlet-title">
+				<div class="caption">
+					{{ 'creating_offer_query' | translate }}
+				</div>
+				<div class="tools">
+					<button button-faq-accordion="customerservice.createOffer"></button>
+				</div>
+				
+			</div>
+			<div class="row">
+				<div class="col-sm-6 col-xs-12">
+					<!-- Produkty -->
+					<div class="row">
+						<div class="col-md-12">
+							<div class="portlet light" ng-if="!currentProduct">
+								<div class="portlet-title">
+									<div class="caption">
+										<span class="caption-subject font-green-haze bold">{{ 'products' | translate }}</span>
+										<p class="caption-helper">{{ 'choose_right_product' | translate }}</p>
+									</div>
+									<input type="text" class="form-control form-filter input-sm marginedBtn" name="" placeholder="{{ 'search' | translate }}" ng-model="search.name">
+								</div>
+								<div  class="portlet-body">
+								<div class="row">
+									<div class="col-md-6" ng-repeat="item in products | filter:search">
+									<button  ng-click="selectProduct(item)" class="btn btn-sm btn-block btn-default marginedBtn breakLine">{{ item.name }}</button>
+								</div>
+								</div>
+								</div>
+								
+							</div>
+						</div>
+					</div>
+					<!-- Typy produktu: -->
+					<div class="row">
+						<div class="col-md-12">
+							<div class="portlet light" ng-if="!!currentProduct && !currentType">
+								<div class="portlet-title">
+									<div class="caption">
+										<span class="caption-subject font-green-haze bold">{{ 'product' | translate }}: {{currentProduct.name}}</span>
+										<p class="caption-helper">{{ 'select_product_type' | translate }}</p>
+									</div>
+									<div class="tools">
+										<button ng-click="goToProducts()" class="btn btn-default text-lightGrey"><span class="fa fa-mail-reply-all"></span> {{ 'back' | translate }}</button>
+									</div>
+									<input type="text" class="form-control form-filter input-sm marginedBtn" name="" placeholder="{{ 'search' | translate }}" ng-model="search.name">
+								</div>
+								<div class="portlet-body">
+								<div class="row">
+								<div class="col-md-6"  ng-repeat="item in types | filter:search">
+									<button ng-if="!item.complex" ng-click="selectType(item)" class="btn btn-sm btn-block btn-default marginedBtn breakLine"><span>{{ item.name }}</span></button>
+								</div>
+								</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div ng-if="!!currentProduct && !!currentType" class="row">
+						<div class="col-md-12">
+							<div class="portlet light">
+								<div class="portlet-title">
+									<div class="caption">
+										<span class="caption-subject font-green-haze bold">{{currentType.name}} <span class="auctionsCaptionSmall">- {{ 'parameters' | translate }}</span></span>
+										<p class="caption-helper">{{ 'select_and_choose_right_parameters' | translate }}</p>
+									</div>
+									<div class="tools">
+										<button ng-click="goToTypes()" class="btn btn-default text-lightGrey"><span class="fa fa-mail-reply-all"></span> {{ 'back' | translate }}</button>
+									</div>
+								</div>
+								<div class="portlet-body">
+									<form ng-submit="addItem()" class="form-horizontal">
+										<div class="form-group">
+											<label class="col-md-3 control-label">{{ 'product_name' | translate }}</label>
+											<div class="col-md-9 col-lg-6">
+												<input ng-model="productItem.name" class="form-control" type="text" placeholder="{{ 'product_name' | translate }}" required>
+											</div>
+										</div>
+										<div class="form-group">
+											<label class="col-md-3 control-label">{{ 'signature' | translate }}</label>
+											<div class="col-md-9 col-lg-6">
+												<input ng-model="productItem.signature" class="form-control" type="text" placeholder="{{ 'signature' | translate }}" required>
+											</div>
+										</div>
+										<div class="form-body">
+											<!-- FORMATY -->
+											<div class="form-group">
+												<label class="col-md-3 control-label">{{ 'formats' | translate }}</label>
+												<div class="col-md-9 col-lg-6">
+													
+													<select ng-model="currentFormat" ng-change="selectFormat(currentFormat)" class="form-control" ng-options="item as item.name for item in formats" >
+													</select>
+												</div>
+											</div>
+											<!-- format dowolny szerokość -->
+                      <div class="form-group" ng-if="!!currentFormat.custom">
+                        <label class="col-md-3 control-label">{{ 'width' | translate }} mm</label>
+                        <div class="col-md-9 col-lg-6">
+                          
+                          <!-- jeżeli nie ma maxWidth -->
+                          <input ng-if="!currentFormat.maxWidth"
+                          ng-model="currentFormat.customWidth"
+                          type="number" min="{{ currentFormat.minWidth - currentFormat.slope*2 }}" class="form-control" />
+                          <!-- jeżeli jest maxWidth -->
+                          <input ng-if="currentFormat.maxWidth"
+                          ng-model="currentFormat.customWidth"
+                          type="number" min="{{ currentFormat.minWidth - currentFormat.slope*2 }}" max="{{ currentFormat.maxWidth - currentFormat.slope*2 }}" class="form-control" />
+                        </div>
+                      </div>
+                      <!-- format dowolny wysokosc -->
+                      <div class="form-group" ng-if="!!currentFormat.custom">
+                        <label class="col-md-3 control-label">{{ 'height' | translate }} mm</label>
+                        <div class="col-md-9 col-lg-6">
+                          <!-- jeżeli nie ma maksymalnej wysokości -->
+                          <input ng-if="!currentFormat.maxHeight"
+                          ng-model="currentFormat.customHeight"
+                          type="number" min="{{ currentFormat.minHeight - currentFormat.slope*2}}" class="form-control" />
+                          <!-- jeżeli jest maksymalna wysokość -->
+                          <input ng-if="currentFormat.maxHeight"
+                          ng-model="currentFormat.customHeight"
+                          type="number" min="{{ currentFormat.minHeight - currentFormat.slope*2}}" max="{{ currentFormat.maxHeight - currentFormat.slope*2}}" class="form-control" />
+                        </div>
+                      </div>
+											<!-- STRONY -->
+											<div ng-if="pages.length" class="form-group">
+												<label class="col-md-3 control-label">{{ 'pages' | translate }}</label>
+												<div class="col-md-9 col-lg-6">
+													<select ng-if="pages[0].pages"
+														ng-model="currentPages" ng-change="selectPages(currentPages)" class="form-control" ng-options="item.pages as item.pages for item in pages" >
+													</select>
+													<input ng-if="!!pages[0].minPages" ng-model="currentPages" ng-change="selectPages(currentPages)" type="number" min="{{pages[0].minPages}}" max="{{pages[0].maxPages}}" step="{{pages[0].step}}"
+													class="form-control">
+												</div>
+												<!--  -->
+											</div>
+											<!-- CECHY -->
+											<div class="form-group" ng-repeat="attribute in attributes">
+												<label class="col-md-3 control-label">
+													{{ ::attribute.attrName }}
+												</label>
+												<div class="col-md-9 col-lg-6">
+													
+													<select ng-model="selectedOptions[attribute.attrID]" ng-change="selectOption(attribute.attrID)" class="form-control" ng-required="true">
+													 <!-- ng-options="item.ID as item.name for (key, item) in attribute.options |filter:item.excluded=='false'" -->
+														<option ng-if="!_.contains(excludedOptions, item.ID)" ng-repeat="item in attribute.options" value="{{item.ID}}">{{ item.name }}</option>
+													</select>
+
+												</div>
+											</div>
+											<!-- FORM -->
+											<div class="form-group">
+												<label class="col-md-3 control-label">
+														<input class="form-controll"  type="radio" name="productItem.deliveryType" value="single" ng-model="productItem.deliveryType"  />
+														{{ 'shipping_in_one_place' | translate }}
+												</label>
+												<!-- single -->
+												<div class="col-md-9 col-lg-6" ng-if="productItem.deliveryType == 'single'">
+													<select ng-model="productItem.singleDelivery" class="form-control" ng-options="singleDelivery.value as singleDelivery.name for singleDelivery in singleDeliveries" required>
+														<option value="">{{ 'select' | translate }}</option>
+													</select>
+													<textarea class="form-control" maxlength="255" ng-model="productItem.singleDeliveryOther" ng-if="productItem.singleDelivery == 'other'" placeholder="Proszę wypełnić" required></textarea>
+												</div>
+												
+											</div>
+
+											<div class="form-group">
+												<label class="col-md-3 control-label">
+														<input class="form-controll" type="radio" name="productItem.deliveryType" value="multi" ng-model="productItem.deliveryType"  />
+														{{ 'shipping_by_distribution_list' | translate }}
+												</label>
+												<!-- multi -->
+												<div class="col-md-9 col-lg-6" ng-if="productItem.deliveryType == 'multi'">
+													<input ng-model="productItem.multiDelivery" class="form-control" type="number" min="0" placeholder="ilość adresów" required>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<label class="col-md-3 control-label">{{ 'volume' | translate }}</label>
+												<div class="col-md-9 col-lg-6">
+													<input ng-model="productItem.volume" class="form-control" type="text" placeholder="{{ 'volume' | translate }}" required>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="col-md-3 control-label">{{ 'notices' | translate }}</label>
+												<div class="col-md-9 col-lg-6">
+													<textarea ng-model="productItem.description" class="form-control" type="text" placeholder="{{ 'notices' | translate }}"></textarea>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-md-6 col-md-offset-3">
+												<button class="btn btn-block btn-primary btn-lg">{{ 'add_product_to_inquiry' | translate }}</button>
+											</div>
+										</div>
+									</form>
+								</div>
+								
+								
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6 col-xs-12">
+					<div class="portlet light">
+						<div class="portlet-title">
+							<div class="caption">
+								<span class="caption-subject font-green-haze bold">{{ 'products_list' | translate }}</span>
+								<P class="caption-helper">{{ 'create_offer_for_products' | translate }}</P>
+							</div>
+						</div>
+						<div ng-if="currentOffer.items" class="portlet-body">
+							<div class="wrapper1">
+								<div class="div1"></div>
+							</div>
+							<div class="overflowContainer">
+								<table class="table table-striped table-hover">
+									<thead>
+										<tr role="row" class="heading">
+											<th width="5%">#</th>
+											<th>{{ 'product' | translate }}</th>
+											<th>{{ 'add_your_preview_image' | translate }}</th>
+											<th>{{ 'actions' | translate }}</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr ng-repeat="item in currentOffer.items">
+											<td>
+												{{ item.ID }}
+											</td>
+											<td class="currentAuctionsProduct">
+												<span><i class="fa fa-cube"></i> {{ item.productName }}</span>
+												<p>
+													{{ 'product_name'| translate}}: <b>{{ item.name }}</b>
+												</p>
+												<p>
+													{{ 'signature'| translate}}: <b>{{ item.signature }}</b>
+												</p>
+												<p ng-if="item.pages">
+													{{ 'pages'| translate}}: <b>{{ item.pages }}</b>
+												</p>
+												<p>
+													{{ 'format'| translate}}: <b>{{ item.formatName }} {{ item.formatWidth ? item.formatWidth + ' x ' + item.formatHeight + ' mm' : ''}} </b>
+												</p>
+												<p ng-repeat="opt in item.options">
+													{{ opt.attrName }}: <b>{{ opt.optName }}</b>
+												</p>
+												<p>
+													{{ 'volume'| translate}}: <b>{{ item.volume }}</b>
+												</p>
+												<p ng-if="item.singleDelivery">
+													{{ 'shipping_in_one_place' | translate }}: <b>{{ item.singleDelivery }}</b>
+												</p>
+												<p ng-if="item.multiDelivery">
+													{{ 'shipping_by_distribution_list' | translate }}: <b>{{ item.multiDelivery }}</b>
+												</p>
+												<p>
+													{{ 'notices' | translate }}:
+													<b> {{item.description}} </b>
+												</p>
+											</td>
+											<td class="fileField">
+												<input type="file" ng-model="item.files" ngf-select ngf-accept="'image/*,application/pdf'" ngf-multiple="true" ngf-change="uploadItemFile(item)" />
+												<div padding="5%" id="bar" class="progress progress-striped" role="progressbar">
+													<div class="progress-bar progress-bar-progress" style="width: {{ item.progress }}%">
+													</div>
+												</div>
+												<div ng-repeat="file in item.fileList">
+													{{ 'name' | translate }}: 
+													<!-- <a  ng-click="getFile(file)"> -->
+													<a href="{{ getFile(file) }}">
+														{{ file.name }}
+													</a>
+													<button ng-confirm-click="removeItemFile(item, file)" class="btn red-sunglo btn-xs" datatoggle="tooltip" tooltip="{{ 'delete' | translate }}"><span class="glyphicon glyphicon-remove"></span></button>
+												</div>
+											</td>
+											<td>
+												<button ng-confirm-click="removeItem(item)" class="btn red-sunglo btn-sm" datatoggle="tooltip" tooltip="{{ 'delete' | translate }}"><span class="glyphicon glyphicon-remove"></span></button>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							
+							<form ng-submit="sendOffer()" class="form-horizontal">
+								<div class="form-body">
+									<div class="form-group">
+										<label class="col-md-3 control-label">{{ 'suggested_realization_term' | translate }}</label>
+										<div class="col-md-9 col-lg-5">
+											<div ng-model="currentOffer.realizationDate" dp-datepicker ng-required="true"></div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">{{ 'agency' | translate }}</label>
+										<div class="col-md-9 col-lg-5">
+										<select ng-model="currentOffer.agency" class="form-control" ng-options="agency.value as agency.name for agency in agencies" required>
+											<option value="">{{ 'select' | translate }}</option>
+										</select>
+										<textarea class="form-control" maxlength="255" ng-model="currentOffer.agencyOther" ng-if="currentOffer.agency == 'other'" placeholder="Proszę podać namiary do Key Accounta" required></textarea>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">{{ 'description' | translate }}</label>
+										<div class="col-md-9 col-lg-5">
+											<textarea ng-model="currentOffer.description" class="form-control" type="text" placeholder="{{ 'description' | translate }}"></textarea>
+										</div>
+									</div>
+								</div>
+
+								<div ng-if="checkIfAuctionUser()">
+									<div class="form-group">
+										<label class="col-sm-3 control-label" >{{ 'user' | translate }}</label>
+										<div class="col-sm-9 col-lg-5" >
+											<input class="form-control" name="Użytkownik" type="text" ng-model="currentOffer.searchUser" typeahead="user as user.user for user in findUser($viewValue) | limitTo: userLimit" typeahead-template-url="findUserTpl.html"
+											typeahead-editable="false" placeholder="Search user" ng-disabled="!!currentUser">
+											<!-- findUser($viewValue) -->
+										</div>
+									</div>
+									<div ng-if="currentOffer.searchUser.user" class="form-group">
+										<label class="col-sm-3 control-label" >{{ 'company_name' | translate }}</label>
+										<div class="col-sm-9 col-lg-6" >
+											<input class="form-control" name="companyName" type="text" ng-model="currentOffer.searchUser.companyName"  placeholder="Empty" ng-disabled="true" >
+										</div>
+									</div>
+									<div ng-if="currentOffer.searchUser.user" class="form-group">
+										<label class="col-sm-3 control-label" >{{ 'firstname' | translate }}</label>
+										<div class="col-sm-9 col-lg-6" >
+											<input class="form-control" name="name" type="text" ng-model="currentOffer.searchUser.name" ng-disabled="true" placeholder="Search result" >
+										</div>
+									</div>
+									<div ng-if="currentOffer.searchUser.user" class="form-group">
+										<label class="col-sm-3 control-label" >{{ 'lastname' | translate }}</label>
+										<div class="col-sm-9 col-lg-6" >
+											<input class="form-control" name="lastname" type="text" ng-model="currentOffer.searchUser.lastname" ng-disabled="true" placeholder="Search result" >
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-md-9 col-lg-5 col-md-offset-3">
+										<button class="btn btn-primary btn-lg btn-block">{{ 'send_inquiry' | translate }}</button>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

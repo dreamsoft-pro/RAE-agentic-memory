@@ -1,0 +1,31 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        {{ 'address' | translate }} - {{ reclamation.ID }}
+    </h4>
+</div>
+
+
+<div class="modal-body reclamationMsgContent">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <b>{{ 'name' | translate }}: {{ address.addressName }}</b><br/>
+            <span ng-if="address.companyName">{{ address.companyName }}</span><br />
+            <span ng-if="address.lastname">{{ address.name }} {{ address.lastname }}</span><br>
+
+            {{ address.nip }}<br />
+            {{ address.zipcode }} {{ address.city }}<br />
+            {{ address.street }} {{ address.house }}<span>/</span>{{ address.apartment }}<br />
+            +{{ address.areaCode }} {{ address.telephone }}
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

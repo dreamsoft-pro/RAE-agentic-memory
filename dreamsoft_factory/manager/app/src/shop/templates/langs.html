@@ -1,0 +1,66 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa fa-language"></i> {{ 'language_edition' | translate }}
+        </div>
+        
+        <div class="tools">
+          <button button-faq-accordion="shop.languageEdition"></button>
+        </div>
+
+      </div>
+      <div class="portlet-body">
+        
+        <div class="overflowContainer">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr role="row" class="heading">
+                <th>#</th>
+                <th>{{ 'key' | translate }}</th>
+                <th>{{ 'value' | translate }}</th>
+                <th>{{ 'language' | translate }}</th>
+                <th>{{ 'created' | translate }}</th>
+                <th>{{ 'actions' | translate }}</th>
+              </tr>
+              <tr role="row" class="filter">
+                <td>
+                </td>
+                <td>
+                  <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'key' | translate }}" ng-model="filterData.key" ng-change="search()">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'value' | translate }}" ng-model="filterData.original" ng-change="search()">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'language' | translate }}" ng-model="filterData.lang" ng-change="search()">
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="lang in filterLangs | offset: (pagination.currentPage-1) * pagination.perPage | limitTo: pagination.perPage "
+              ng-class="{warning: lang.change == true}">
+                <td>{{ lang.ID }}</td>
+                <td>{{ lang.key }}</td>
+                <td>{{ lang.value || lang.original }}</td>
+                <td>{{ lang.lang }}</td>
+                <td>{{ lang.create }}</td>
+                <td>
+                  <a class="edit" href="javascript:;" ng-click="edit(lang)">{{ 'edit' | translate }}</a>
+                  <a class="edit" href="javascript:;" ng-confirm-click="remove(lang)" ng-if="lang.change">{{ 'delete' | translate }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <pagination total-items="filterLangs.length" ng-model="pagination.currentPage" ng-click="pagination.setPage(pagination.currentPage)" class="pagination-sm" max-size="10" boundary-links="true" items-per-page="pagination.perPage"></pagination>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<div ui-view="lang-export-import"></div>

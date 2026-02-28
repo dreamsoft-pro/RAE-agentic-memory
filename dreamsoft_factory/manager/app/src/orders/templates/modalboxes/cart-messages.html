@@ -1,0 +1,42 @@
+<div class="modal-header">
+  <h3 class="modal-title">{{ 'cart' | translate }}: {{ cart.ID }} </h3>
+</div>
+<div class="modal-body">
+  <table class="table table-condensed">
+    <thead>
+      <tr>
+        <th>
+          {{ 'author' | translate }}
+        </th>
+        <th>
+          {{ 'content' | translate }}
+        </th>
+        <th>
+          {{ 'date' | translate }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="message in currentMessages"
+        ng-class="{ 'bg-info': message.isAdmin,
+        'bg-success': !message.isAdmin }">
+        <td>
+          {{ message.isAdmin ? 'Drukarnia' : 'Użytkownik'}}
+        </td>
+        <td class="wrapword">
+          {{message.content}}
+        </td>
+        <td>
+          {{message.created}}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <form role="form" class="inline-form" ng-submit="send(message)">
+    <textarea style="width: 100%" ng-model="message"></textarea>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="submit" class="btn btn-success">{{'save' | translate}}</button>
+  <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

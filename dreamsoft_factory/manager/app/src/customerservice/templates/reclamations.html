@@ -1,0 +1,150 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-basket"></i> {{ 'reclamations' | translate }}
+                </div>
+                <div class="tools">
+                    <well class="btn-sm">{{ 'number_of_rows' | translate }}: <span class="badge">{{ reclamationsCtrl.totalItems }}</span>
+                    </well>
+                    <select ng-model="showRows" class="btn-default input-sm" ng-change="reclamationsCtrl.setRows(showRows)"
+                            ng-options="each for (null, each) in [10,25,50,100]"></select>
+                    <button ng-click="reclamationsCtrl.clearCache()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+                    </button>
+                    <button button-faq-accordion="orders.orders"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <div class="wrapper1">
+                    <div class="div1"></div>
+                </div>
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th width="5%">#</th>
+                            <th>{{ 'user' | translate }}</th>
+                            <th>{{ 'products' | translate }}</th>
+                            <th>{{ 'date' | translate }}</th>
+                            <th>{{ 'address' | translate }}</th>
+                            <th>{{ 'invoice_number' | translate }}</th>
+                            <th width="20%">{{ 'damages_list' | translate }}</th>
+                            <th>{{ 'files' | translate }}</th>
+                            <th>{{ 'status' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        <tr role="row" class="filter">
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"
+                                       placeholder="{{ 'ID' | translate }}" ng-model="reclamationsCtrl.params.ID">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"
+                                       placeholder="{{ 'user_id' | translate }}" ng-model="reclamationsCtrl.params.userID">
+                                <input type="text" ng-change="setParams()" class="form-control form-filter input-sm"
+                                       placeholder="{{ 'email' | translate }}"
+                                       ng-model="reclamationsCtrl.params.userMail">
+                                <input type="text" ng-change="setParams()" class="form-control form-filter input-sm"
+                                       placeholder="{{ 'order_id' | translate }}"
+                                       ng-model="reclamationsCtrl.params.orderID">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"
+                                       placeholder="{{ 'product_id' | translate }}" ng-model="reclamationsCtrl.params.productID">
+                            </td>
+                            <td>
+                                <div class="margin-bottom-5">
+                                    <div ng-model="reclamationsCtrl.params.dateFrom" ng-change="setParams()"
+                                         dp-datepicker></div>
+                                    <div ng-model="reclamationsCtrl.params.dateTo" ng-change="setParams()"
+                                         dp-datepicker></div>
+                                </div>
+                            </td>
+                            <td>
+
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <select ng-model="reclamationsCtrl.params.statusID"
+                                        ng-options="status.ID as status.langs[currentLang.code].name for status in statuses"
+                                        class="form-control form-filter input-sm" ng-change="setParams()" >
+                                    <option value="">{{ 'select' | translate }}</option>
+                                </select>
+                            </td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="reclamation in reclamationsCtrl.items">
+                            <td>
+                                {{ reclamation.ID }}
+                            </td>
+                            <td>
+                                {{ 'user_id' | translate }}: <b>{{ reclamation.userID }}</b>
+                                <br>
+                                {{ reclamation.user.user }}
+                                <br>
+                                {{ reclamation.user.name }} {{ reclamation.user.lastname }}
+                                <br>
+                                <span ng-if="reclamation.address.companyName">{{ reclamation.address.companyName }}</span>
+                                <br>
+                                {{ 'order_id'| translate }}: <b>{{ reclamation.orderID }}</b>
+                            </td>
+                            <td>
+                                <ul>
+                                    <li ng-repeat="product in reclamation.products">
+                                        {{ product.type.names[currentLang.code] }} (<b>ID: {{ product.productID }}</b>)
+                                    </li>
+                                </ul>
+                            </td>
+                            <td>
+                                {{ reclamation.created | date }}
+                            </td>
+                            <td>
+                                <button href="javascript:;" class="btn btn-default btn-xs" ng-click="defaultAddress( reclamation.user )">
+                                    {{ 'address' | translate }}
+                                </button>
+                            </td>
+                            <td>
+                                <span ng-if="reclamation.invoiceNumber">{{ reclamation.invoiceNumber }}</span>
+                            </td>
+                            <td>
+                                {{ 'description' | translate }}: {{ reclamation.description }}
+                                <br><br>
+                                <ul style="list-style: none;margin-left: 0;padding-left: 0;">
+                                    <li ng-repeat="fault in reclamation.faults">{{ fault.descriptions[currentLang.code].name }}</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <button ng-if="reclamation.files.user.length > 0 || reclamation.files.admin.length > 0" href="javascript:;" class="btn btn-default btn-xs" ng-click="files(reclamation)">
+                                    {{ 'files' | translate }}
+                                </button>
+                            </td>
+                            <td>
+                                <select ng-change="changeStatus(reclamation)" name="reclamation_status"
+                                        class="form-control form-filter input-sm" ng-model="reclamation.statusID"
+                                        ng-options="status.ID as status.langs[currentLang.code].name for status in statuses"></select>
+                            </td>
+                            <td>
+                                <button ng-click="messages(reclamation)" ng-class="{'btn-danger': reclamation.unreadMessages}" class="btn btn-default" type="button">
+                                    <i class="fa fa-comments-o" aria-hidden="true"></i>
+                                    <span ng-if="reclamation.unreadMessages" class="badge">{{ reclamation.unreadMessages }}</span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pagination total-items="reclamationsCtrl.totalItems" ng-model="reclamationsCtrl.currentPage"
+                            ng-change="reclamationsCtrl.setPage(reclamationsCtrl.currentPage); reclamationsCtrl.get()"
+                            class="pagination-sm" max-size="10" boundary-links="true" rotate="true"
+                            items-per-page="reclamationsCtrl.params.limit"></pagination>
+            </div>
+        </div>
+    </div>
+</div>

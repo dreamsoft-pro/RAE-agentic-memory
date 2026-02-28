@@ -1,0 +1,279 @@
+<div class="modal-header">
+    <h3>{{ 'user' | translate }} {{ user.name }}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()" data-toggle="validator">
+
+    <div class="modal-body">
+
+            <div class="form-body">
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'email_or_username' | translate }}</label>
+                    <div class="col-md-9">
+                        <div class="input-group">
+                      <span class="input-group-addon">
+                      <i class="fa fa-envelope"></i>
+                      </span>
+                            <input ng-model="form.user" type="text" class="form-control" placeholder="{{ 'email_or_username' | translate }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputPassword" class="col-md-3 control-label">{{ 'password' | translate }}
+                    </label>
+                    <div class="col-md-9">
+                        <input ng-model="form.pass" id="inputPassword" type="password" class="form-control" placeholder="{{ 'password' | translate }}" >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'repeat_password' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.pass_confirm" type="password" class="form-control" placeholder="{{ 'repeat_password' | translate }}"
+                               data-match="#inputPassword" data-match-error="{{ 'password_incorrect' | translate }}" >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'firstname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.name" type="text" class="form-control" placeholder="{{ 'firstname' | translate }}" >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'surname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.lastname" type="text" class="form-control" placeholder="{{ 'surname' | translate }}" >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label"> {{ 'discounts_group' | translate }} </label>
+                    <div class="col-md-9">
+                        <select multiple class="form-control form-filter input-sm"
+                                ng-options="each.ID as each.langs[currentLang.code].name for each in discountGroups"
+                                ng-model="form.discountGroups">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <div class="checkbox-list">
+                            <label>
+                                <div class="checker"><span ng-class="{checked: form.hasDelAddress}"><input
+                                        ng-model="form.hasDelAddress" type="checkbox"></span></div>
+                                {{ 'register_with_addres' | translate }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'firstname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_name" type="text" class="form-control"
+                               placeholder="{{ 'firstname' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'surname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_lastname" type="text" class="form-control"
+                               placeholder="{{ 'surname' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'street' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_street" type="text" class="form-control"
+                               placeholder="{{ 'street' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'no_house' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_house" type="text" class="form-control"
+                               placeholder="{{ 'no_house' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'local_number' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_apartment" type="text" class="form-control"
+                               placeholder="{{ 'local_number' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'postal_code' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_zipcode" type="text" class="form-control"
+                               placeholder="{{ 'postal_code' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'city' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_city" type="text" class="form-control"
+                               placeholder="{{ 'city' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'area_code' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_areaCode" type="text" class="form-control"
+                               placeholder="{{ 'area_code' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">{{ 'phone' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.ad_telephone" type="text" class="form-control"
+                               placeholder="{{ 'phone' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasDelAddress">
+                    <label class="col-md-3 control-label">
+                        {{ 'country' | translate }}
+                    </label>
+                    <div class="col-md-9">
+                        <select ng-options="country.code as country.name_pl for country in countries"
+                                ng-model="form.ad_countryCode" class="form-control">
+                            <option value="">{{ 'select' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <div class="checkbox-list">
+                            <label>
+                                <div class="checker"><span ng-class="{checked: form.hasFvAddress}"><input
+                                        ng-model="form.hasFvAddress" type="checkbox"></span></div>
+                                {{ 'invoice_data' | translate }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'company_name' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_companyName" type="text" class="form-control"
+                               placeholder="{{ 'company_name' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">NIP</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_nip" type="text" class="form-control" placeholder="NIP">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'firstname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_name" type="text" class="form-control"
+                               placeholder="{{ 'firstname' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'surname' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_lastname" type="text" class="form-control"
+                               placeholder="{{ 'surname' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'street' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_street" type="text" class="form-control"
+                               placeholder="{{ 'street' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'no_house' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_house" type="text" class="form-control"
+                               placeholder="{{ 'no_house' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'local_number' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_apartment" type="text" class="form-control"
+                               placeholder="{{ 'local_number' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'postal_code' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_zipcode" type="text" class="form-control"
+                               placeholder="{{ 'postal_code' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'city' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_city" type="text" class="form-control"
+                               placeholder="{{ 'city' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'area_code' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_areaCode" type="text" class="form-control"
+                               placeholder="{{ 'area_code' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">{{ 'phone' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.fv_telephone" type="text" class="form-control"
+                               placeholder="{{ 'phone' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="form.hasFvAddress">
+                    <label class="col-md-3 control-label">
+                        {{ 'country' | translate }}
+                    </label>
+                    <div class="col-md-9">
+                        <select ng-options="country.code as country.name_pl for country in countries"
+                                ng-model="form.fv_countryCode" class="form-control">
+                            <option value="">{{ 'select' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-success">{{ 'save' | translate }}</button>
+        <button type="button" class="btn btn-default" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+    </div>
+
+</form>

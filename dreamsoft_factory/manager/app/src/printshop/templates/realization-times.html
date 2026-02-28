@@ -1,0 +1,260 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-speedometer"></i>{{ 'realization_times' | translate }}
+                </div>
+                <div class="tools">
+                    <button button-faq-accordion="printshop.realizationTimes"></button>
+                    <button ng-click="refreshTimes()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="portlet-body">
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th width="5%" sort-trigger>#</th>
+                            <th sort-trigger>{{'name' | translate }}</th>
+                            <th>
+                                {{ 'name' | translate }}
+                                <select ng-model="showLang"
+                                        ng-options="lang.code as lang.name for (key, lang) in languages"
+                                        ng-init="showLang = currentLang.code"></select>
+                            </th>
+                            <th>{{ 'days_number' | translate }}</th>
+                            <th>{{ 'price' | translate }}</th>
+                            <th>{{ 'color' | translate }}</th>
+                            <th>{{ 'active' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody ui-sortable="sortableOptions" ng-model="realizationTimes">
+                        <tr ng-repeat="realizationTime in realizationTimes">
+                            <td>
+                                <button tooltip="{{langArr.sort}}"
+                                        class="btn btn-default btn-sm button-sort">
+                                    <i class="fa fa-arrows-v"></i>
+                                </button>
+                                {{ realizationTime.ID }}
+                            </td>
+                            <td>
+                                {{ realizationTime.name }}
+                            </td>
+                            <td>
+                                {{ realizationTime.names[showLang] }}
+                            </td>
+                            <td>
+                                {{ realizationTime.days }}
+                            </td>
+                            <td>
+                                {{ realizationTime.pricePercentage }}%
+                            </td>
+                            <td>
+                                <div style="width:20px;height:20px;background-color:{{ realizationTime.color }};" ></div>
+                            </td>
+                            <td>
+                  <span class="btn blue-stripe btn-xs"
+                        ng-class="{'red-sunglo-stripe': !realizationTime.active}">
+                    {{!!realizationTime.active ? 'yes' : 'no' | translate }}
+                  </span>
+                            </td>
+                            <td>
+                                <button ng-click="editStart(realizationTime)"
+                                        data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}"
+                                        class="btn blue-hoki btn-xs">
+                                    <span class="glyphicon glyphicon-edit"></span>
+                                </button>
+                                <button ng-confirm-click="remove(realizationTime)"
+                                        data-toggle="tooltip" data-container="body" tooltip="{{ 'delete' | translate }}"
+                                        class="btn red-sunglo btn-xs">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="fixedPositionSave" ng-show="sortChange">
+                    <button class="btn btn-success" ng-click="sortSave()">
+                        {{ 'save_the_change_order' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-click="sortCancel()">
+                        {{ 'cancel' | translate }}
+                    </button>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="portlet light">
+                            <div class="portlet-title">
+                                <div class="caption font-green-haze col-md-3 text-right">
+                                    {{ 'add_new' | translate }}
+                                </div>
+                            </div>
+                            <div class="portlet-body form">
+
+                                <form class="form-horizontal" role="form" ng-submit="add()">
+                                    <div class="form-body">
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.name" type="text" class="form-control"
+                                                       placeholder="{{ 'name' | translate }}" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'lang_name' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-repeat="lang in languages" ng-show="nameLang == lang.code"
+                                                       ng-model="form.names[lang.code]" type="text" class="form-control"
+                                                       placeholder="{{lang.code}}">
+                                                <select class="form-control" ng-init="nameLang = currentLang.code"
+                                                        ng-model="nameLang"
+                                                        ng-options="each.code as each.name for (key, each) in languages"></select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">
+                                                {{ 'realization_term' | translate}}
+                                            </label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.days" type="text" class="form-control"
+                                                       placeholder="{{ 'days_number' | translate }}" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'price' | translate }} +</label>
+                                            <div class="col-md-9">
+                                                <div class="input-inline">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                          %
+                                                        </span>
+                                                        <input ng-model="form.pricePercentage" type="text"
+                                                               class="form-control"
+                                                               placeholder="{{ 'price' | translate }}" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">
+                                                {{ 'color' | translate}}
+                                            </label>
+                                            <div class="col-md-9">
+                                                <input colorpicker="hex" ng-model="form.color" type="text" class="form-control"
+                                                       placeholder="{{ 'color' | translate }}" />
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                                <button ng-click="form = {}" type="button" class="btn red-sunglo">{{
+                                                    'cancel' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-calendar-times-o"></i>
+                    {{ 'working_hours' | translate }}
+                </div>
+                <div class="tools">
+                    <button button-faq-accordion="printshop.workingHours"></button>
+                </div>
+            </div>
+
+            <div class="protlet-body">
+
+                <form ng-submit="saveWorkingHours()" >
+
+                    <div class="form-body">
+                        <table class="table">
+                            <tr>
+                                <th>#</th>
+                                <th>{{ 'day' | translate }}</th>
+                                <th>{{ 'hour_of_start' | translate }}</th>
+                                <th>{{ 'hour_of_end' | translate }}</th>
+                                <th>{{ 'active' | translate }}</th>
+                            </tr>
+                            <tr ng-repeat="day in weekDays">
+                                <td>
+                                    {{ workingHoursForm[day].ID }}
+                                </td>
+                                <td>
+                                    {{ workingHoursForm[day].day }}
+                                    <input ng-model="workingHoursForm[day].day" type="hidden"
+                                           ng-value="workingHoursForm[day].day" />
+                                </td>
+                                <td>
+                                    <input title="startHour" class="form-control"
+                                           ng-model="workingHoursForm[day].startHour" type="number" max="24" min="0" />
+                                </td>
+                                <td>
+                                    <input title="endHour" class="form-control" ng-model="workingHoursForm[day].endHour"
+                                           type="number" max="24" min="0" />
+                                </td>
+                                <td>
+                                    <div class="checker">
+                                        <span ng-class="{checked: !!parseInt(workingHoursForm[day].active)}">
+                                            <input ng-model="workingHoursForm[day].active" ng-true-value="1"
+                                                   ng-false-value="0" type="checkbox">
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fa fa-check"></i>
+                                        {{ 'save' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

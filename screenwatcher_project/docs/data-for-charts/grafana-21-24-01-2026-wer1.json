@@ -1,0 +1,341 @@
+{
+  "id": 1,
+  "type": "timeseries",
+  "title": "Wydajność, Status i Przestoje",
+  "gridPos": {
+    "x": 0,
+    "y": 0,
+    "h": 16,
+    "w": 24
+  },
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineInterpolation": "stepBefore",
+        "barAlignment": 0,
+        "barWidthFactor": 0.6,
+        "lineWidth": 2,
+        "fillOpacity": 10,
+        "gradientMode": "none",
+        "spanNulls": false,
+        "insertNulls": false,
+        "showPoints": "auto",
+        "showValues": false,
+        "pointSize": 5,
+        "stacking": {
+          "mode": "none",
+          "group": "A"
+        },
+        "axisPlacement": "auto",
+        "axisLabel": "",
+        "axisColorMode": "text",
+        "axisBorderShow": false,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "axisCenteredZero": false,
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        },
+        "axisWidth": 80
+      },
+      "color": {
+        "mode": "palette-classic"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          }
+        ]
+      },
+      "unit": "short"
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Brak Danych (tło)"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "#808080",
+              "mode": "fixed"
+            }
+          },
+          {
+            "id": "custom.drawStyle",
+            "value": "bars"
+          },
+          {
+            "id": "custom.fillOpacity",
+            "value": 100
+          },
+          {
+            "id": "custom.lineWidth",
+            "value": 0
+          },
+          {
+            "id": "custom.spanNulls",
+            "value": false
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Status"
+        },
+        "properties": [
+          {
+            "id": "custom.drawStyle",
+            "value": "points"
+          },
+          {
+            "id": "custom.fillOpacity",
+            "value": 20
+          },
+          {
+            "id": "custom.lineWidth",
+            "value": 0
+          },
+          {
+            "id": "custom.spanNulls",
+            "value": false
+          },
+          {
+            "id": "unit",
+            "value": "none"
+          },
+          {
+            "id": "mappings",
+            "value": [
+              {
+                "options": {
+                  "0": {
+                    "color": "yellow",
+                    "text": "Brak danych"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "0.8": {
+                    "color": "orange",
+                    "text": "Postój"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "1": {
+                    "color": "green",
+                    "text": "Praca"
+                  }
+                },
+                "type": "value"
+              }
+            ]
+          },
+          {
+            "id": "color",
+            "value": {
+              "mode": "thresholds"
+            }
+          },
+          {
+            "id": "thresholds",
+            "value": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "yellow",
+                  "value": null
+                },
+                {
+                  "color": "orange",
+                  "value": 0.8
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Prędkość (m2/h)"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "blue",
+              "mode": "fixed"
+            }
+          },
+          {
+            "id": "custom.lineWidth",
+            "value": 2
+          },
+          {
+            "id": "custom.spanNulls",
+            "value": false
+          },
+          {
+            "id": "unit",
+            "value": "m²/h"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Mikroprzestoje (15s-5min)"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "red",
+              "mode": "fixed"
+            }
+          },
+          {
+            "id": "custom.drawStyle",
+            "value": "points"
+          },
+          {
+            "id": "custom.barAlignment",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "Dłuższe przestoje (>5min)"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "purple",
+              "mode": "fixed"
+            }
+          },
+          {
+            "id": "custom.drawStyle",
+            "value": "points"
+          },
+          {
+            "id": "custom.barAlignment",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  },
+  "pluginVersion": "12.3.2",
+  "targets": [
+    {
+      "dataset": "screenwatcher",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "editorMode": "code",
+      "format": "time_series",
+      "interval": "10s",
+      "legendFormat": "Brak Danych (tło)",
+      "rawSql": "SELECT\n  $__timeGroup(sub.time_bucket, '$__interval', 0) AS time,\n  MAX(CASE WHEN sub.metric_count = 0 THEN 1 ELSE NULL END) AS \"Brak Danych (tło)\"\nFROM (\n  SELECT\n    $__timeGroup(cmr.timestamp, '$__interval', 0) AS time_bucket,\n    COUNT(cmr.value) AS metric_count\n  FROM screenwatcher.collector_metricreading cmr\n  WHERE\n    cmr.machine_id = '534cdb2b-39f3-4eb1-9e36-f107cfc3e687'\n    AND cmr.name = 'speed_m2h'\n    AND $__timeFilter(cmr.timestamp)\n  GROUP BY 1\n) AS sub\nGROUP BY 1\nORDER BY 1",
+      "refId": "A"
+    },
+    {
+      "dataset": "screenwatcher",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "editorMode": "code",
+      "format": "time_series",
+      "interval": "10s",
+      "legendFormat": "{{metric}}",
+      "rawSql": "WITH CombinedMachineData AS (\n  SELECT\n    mr.timestamp,\n    mr.machine_id,\n    mr.value AS speed_m2h,\n    mc.value AS current_idle_state_key,\n    LAG(mc.value, 1) OVER (PARTITION BY mc.machine_id ORDER BY mr.timestamp) AS prev_idle_state_key\n  FROM screenwatcher.collector_metricreading mr\n  LEFT JOIN screenwatcher.collector_metriccontext mc ON\n    mr.timestamp = mc.timestamp AND mr.machine_id = mc.machine_id AND mc.key = 'idle_state_key'\n  WHERE\n    mr.machine_id = '534cdb2b-39f3-4eb1-9e36-f107cfc3e687'\n    AND mr.name = 'speed_m2h'\n    AND $__timeFilter(mr.timestamp)\n)\nSELECT\n  $__timeGroup(cmd.timestamp, '$__interval', 0) AS time,\n  MAX(CASE\n    WHEN cmd.speed_m2h IS NULL THEN 0.0 -- Data Gap\n    WHEN cmd.current_idle_state_key IS NOT NULL AND cmd.current_idle_state_key <=> cmd.prev_idle_state_key THEN 0.8 -- Machine Idle\n    WHEN cmd.speed_m2h > 10 THEN 1.0 -- Working\n    ELSE 0.8 -- Default to idle/stopped if not working or data gap\n  END) AS \"Status\"\nFROM CombinedMachineData cmd\nGROUP BY 1\nORDER BY 1",
+      "refId": "B"
+    },
+    {
+      "dataset": "screenwatcher",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "editorMode": "code",
+      "format": "time_series",
+      "interval": "10s",
+      "legendFormat": "Prędkość (m2/h)",
+      "rawSql": "WITH CombinedMachineData AS (\n  SELECT\n    mr.timestamp,\n    mr.machine_id,\n    mr.value AS speed_m2h,\n    mc.value AS current_idle_state_key,\n    LAG(mc.value, 1) OVER (PARTITION BY mc.machine_id ORDER BY mr.timestamp) AS prev_idle_state_key\n  FROM screenwatcher.collector_metricreading mr\n  LEFT JOIN screenwatcher.collector_metriccontext mc ON\n    mr.timestamp = mc.timestamp AND mr.machine_id = mc.machine_id AND mc.key = 'idle_state_key'\n  WHERE\n    mr.machine_id = '534cdb2b-39f3-4eb1-9e36-f107cfc3e687'\n    AND mr.name = 'speed_m2h'\n    AND $__timeFilter(mr.timestamp)\n)\nSELECT\n  $__timeGroup(cmd.timestamp, '$__interval', 0) AS time,\n  CASE WHEN cmd.current_idle_state_key IS NOT NULL AND cmd.current_idle_state_key <=> cmd.prev_idle_state_key THEN 0 ELSE cmd.speed_m2h END AS \"Prędkość (m2/h)\"\nFROM CombinedMachineData cmd\nWHERE\n  cmd.speed_m2h <= 450 \nORDER BY time",
+      "refId": "C"
+    },
+    {
+      "dataset": "screenwatcher",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "editorMode": "code",
+      "format": "time_series",
+      "interval": "10s",
+      "legendFormat": "Mikroprzestoje (15s-5min)",
+      "rawSql": "WITH CombinedMachineData AS (\n  SELECT\n    mr.timestamp,\n    mr.machine_id,\n    mr.value AS speed_m2h,\n    mc.value AS current_idle_state_key,\n    LAG(mc.value, 1) OVER (PARTITION BY mc.machine_id ORDER BY mr.timestamp) AS prev_idle_state_key\n  FROM screenwatcher.collector_metricreading mr\n  LEFT JOIN screenwatcher.collector_metriccontext mc ON\n    mr.timestamp = mc.timestamp AND mr.machine_id = mc.machine_id AND mc.key = 'idle_state_key'\n  WHERE\n    mr.machine_id = '534cdb2b-39f3-4eb1-9e36-f107cfc3e687'\n    AND mr.name = 'speed_m2h'\n    AND $__timeFilter(mr.timestamp)\n),\nMachineStatus AS (\n    SELECT\n        cmd.timestamp,\n        cmd.machine_id,\n        CASE\n            WHEN cmd.speed_m2h > 10 THEN 'RUNNING'\n            WHEN cmd.current_idle_state_key IS NOT NULL AND cmd.current_idle_state_key <=> cmd.prev_idle_state_key THEN 'STOPPED'\n            ELSE 'STOPPED'\n        END AS status\n    FROM CombinedMachineData cmd\n),\nCalculatedDurations AS (\n    SELECT\n        ms.timestamp,\n        ms.status,\n        TIMESTAMPDIFF(SECOND, ms.timestamp, LEAD(ms.timestamp) OVER (PARTITION BY ms.machine_id ORDER BY ms.timestamp)) AS duration_s\n    FROM MachineStatus ms\n)\nSELECT\n    cd.timestamp AS \"time\",\n    cd.duration_s AS \"Mikroprzestoje (15s-5min)\"\nFROM CalculatedDurations cd\nWHERE\n    cd.status = \"STOPPED\"\n    AND cd.duration_s >= 15\n    AND cd.duration_s <= 300\nORDER BY cd.timestamp ASC",
+      "refId": "D"
+    },
+    {
+      "dataset": "screenwatcher",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "editorMode": "code",
+      "format": "time_series",
+      "interval": "10s",
+      "legendFormat": "Dłuższe przestoje (>5min)",
+      "rawSql": "WITH CombinedMachineData AS (\n  SELECT\n    mr.timestamp,\n    mr.machine_id,\n    mr.value AS speed_m2h,\n    mc.value AS current_idle_state_key,\n    LAG(mc.value, 1) OVER (PARTITION BY mc.machine_id ORDER BY mr.timestamp) AS prev_idle_state_key\n  FROM screenwatcher.collector_metricreading mr\n  LEFT JOIN screenwatcher.collector_metriccontext mc ON\n    mr.timestamp = mc.timestamp AND mr.machine_id = mc.machine_id AND mc.key = 'idle_state_key'\n  WHERE\n    mr.machine_id = '534cdb2b-39f3-4eb1-9e36-f107cfc3e687'\n    AND mr.name = 'speed_m2h'\n    AND $__timeFilter(mr.timestamp)\n),\nMachineStatus AS (\n    SELECT\n        cmd.timestamp,\n        cmd.machine_id,\n        CASE\n            WHEN cmd.speed_m2h > 10 THEN 'RUNNING'\n            WHEN cmd.current_idle_state_key IS NOT NULL AND cmd.current_idle_state_key <=> cmd.prev_idle_state_key THEN 'STOPPED'\n            ELSE 'STOPPED'\n        END AS status\n    FROM CombinedMachineData cmd\n),\nCalculatedDurations AS (\n    SELECT\n        ms.timestamp,\n        ms.status,\n        TIMESTAMPDIFF(SECOND, ms.timestamp, LEAD(ms.timestamp) OVER (PARTITION BY ms.machine_id ORDER BY ms.timestamp)) AS duration_s\n    FROM MachineStatus ms\n)\nSELECT\n    cd.timestamp AS \"time\",\n    cd.duration_s AS \"Dłuższe przestoje (>5min)\"\nFROM CalculatedDurations cd\nWHERE\n    cd.status = \"STOPPED\"\n    AND cd.duration_s > 300\nORDER BY cd.timestamp ASC",
+      "refId": "E"
+    }
+  ],
+  "datasource": {
+    "type": "mysql",
+    "uid": "${DS_MYSQL}"
+  },
+  "options": {
+    "tooltip": {
+      "mode": "multi",
+      "sort": "none",
+      "hideZeros": false
+    },
+    "legend": {
+      "showLegend": true,
+      "displayMode": "list",
+      "placement": "bottom",
+      "calcs": []
+    }
+  }
+}

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+envsubst '$NGX_WORKERS,$NGX_CONN,$NGX_SRVNAME,$NGX_HTTPCONFIG,$NGX_SERVERCONFIG' < /etc/nginx/nginx.conf.tmp  > /etc/nginx/nginx.conf
+
+echo "changing content to $companyID,$domain,$frameworkUrl,$authUrl,$staticUrl,$backendUrl"
+for i in $(grep -Rl 'companyID\|domain\|frameworkUrl\|authUrl\|staticUrl\|backendUrl' /app/*)
+do
+  echo "$i"
+  mv $i $i.tmp
+  envsubst '$companyID,$domain,$frameworkUrl,$authUrl,$staticUrl,$backendUrl' < $i.tmp > $i
+  rm $i.tmp
+done
+
+echo "starting"
+exec "$@"

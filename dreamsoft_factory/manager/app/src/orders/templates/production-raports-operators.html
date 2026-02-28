@@ -1,0 +1,127 @@
+<div ui-view="raportsMenu"></div>
+
+<div class="row">
+    <div class="col-lg-12 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-male"></i> {{ 'operators' | translate }}
+                </div>
+
+                <div class="tools">
+                    <button button-faq-accordion="productionPath.raportOperators"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="overflowContainer">
+                    <div>
+                        <button ng-click="changeDate('last_full_week')" class="btn btn-primary btn-sm">{{
+                            'last_full_week' | translate }}
+                        </button>
+                        <button ng-click="changeDate('last_full_month')" class="btn btn-primary btn-sm">{{
+                            'last_full_month' | translate }}
+                        </button>
+                        <button ng-click="changeDate('today')" class="btn btn-primary btn-sm">{{
+                            'today' | translate }}
+                        </button>
+                        <button ng-click="changeDate('yesterday')" class="btn btn-primary btn-sm">{{
+                            'yesterday' | translate }}
+                        </button>
+                        <button ng-click="changeDate('last_week')" class="btn btn-primary btn-sm">{{
+                            'last_week' | translate }}
+                        </button>
+                        <button ng-click="changeDate('last_month')" class="btn btn-primary btn-sm">{{
+                            'last_month' | translate }}
+                        </button>
+                    </div>
+                    <div style="width: 200px;">
+                        {{ 'date_from' | translate }}<br>
+                        <div ng-model="dateStart" ng-change="dateChange" dp-datepicker></div>
+                        {{ 'date_to' | translate }}<br>
+                        <div ng-model="dateEnd" ng-change="dateChange" dp-datepicker></div>
+                    </div>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>#</th>
+                            <th>{{ 'name' | translate }}</th>
+                            <th>Login</th>
+                            <th>{{ 'firstname' | translate }}</th>
+                            <th>{{ 'lastname' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                            <th>{{ 'late_tasks' | translate }}</th>
+                            <th>{{ 'overdue_tasks' | translate }}</th>
+                            <th>{{ 'time_difference' | translate }}</th>
+                            <th>{{ 'total_breake_time' | translate }}</th>
+                        </tr>
+                        <tr role="row" class="filter">
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'id' | translate }}" ng-model="filterData.operator.ID" ng-change="search()">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'name' | translate }}" ng-model="filterData.operator.name" ng-change="search()">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'login' | translate }}" ng-model="filterData.operator.user" ng-change="search()">
+                            </td><td>
+                                <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'firstname' | translate }}" ng-model="filterData.operator.firstname" ng-change="search()">
+                            </td><td>
+                                <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'lastname' | translate }}" ng-model="filterData.operator.lastname" ng-change="search()">
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="operatorData in operatorsData | filter:filterData">
+                            <td>
+                                {{ operatorData.operator.ID }}
+                            </td>
+                            <td>
+                                {{ operatorData.operator.name }}
+                            </td>
+                            <td>
+                                {{ operatorData.operator.user }}
+                            </td>
+                            <td>
+                                {{ operatorData.operator.firstname }}
+                            </td>
+                            <td>
+                                {{ operatorData.operator.lastname }}
+                            </td>
+                            <td class="text-left noWrap">
+                                <a class="btn blue-madison btn-xs" ui-sref="production-raport-operator({operatorID: operatorData.operator.ID})">
+                                    {{ 'show_raport' | translate }}
+                                </a>
+                            </td>
+                            <td class="text-center noWrap">
+                                <span><div ng-style="{'background-color': operatorData.data.lateOngoings > 0 ? 'red' : 'green'}" style="display: inline-block; width: 20px; height: 20px; color: white; font-weight: bold;">{{ operatorData.data.lateOngoings }}</div></span> <span ng-if="operatorData.data.lateOngoings > 0"> / {{ operatorData.data.ongoings }}</span>
+                            </td>
+                            <td class="text-center noWrap">
+                                <span><div ng-style="{'background-color': operatorData.data.overdueOngoings > 0 ? 'red' : 'green'}" style="display: inline-block; width: 20px; height: 20px; color: white; font-weight: bold;">{{ operatorData.data.overdueOngoings }}</div></span> <span ng-if="operatorData.data.overdueOngoings > 0"> / {{ operatorData.data.ongoings }}</span>
+                            </td>
+                            <td>
+                                <span ng-if="(operatorData.data.totalPlannedTimes - operatorData.data.totalRealTimes) > 0" style="color: green;">
+                                    + {{ formatTime((operatorData.data.totalPlannedTimes - operatorData.data.totalRealTimes)) }}
+                                </span>
+                                <span ng-if="(operatorData.data.totalPlannedTimes - operatorData.data.totalRealTimes) <= 0" style="color: red;">
+                                    - {{ formatTime((operatorData.data.totalPlannedTimes - operatorData.data.totalRealTimes) * -1) }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ formatTime(operatorData.data.totalTasksBreakesTime) }}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <span ng-if="!operatorsData.length" class="btn red-sunglo-stripe">
+                        {{ 'noLogs' | translate }}<br>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

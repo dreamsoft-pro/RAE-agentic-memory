@@ -1,0 +1,43 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'related_workspaces' | translate }} - {{oryg.name}}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+    <div class="modal-body">
+
+        <h3 class="modal-title alert alert-info ng-binding">{{ 'workspaces' | translate }}:</h3>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{ 'name' | translate }}</th>
+                    <th>{{ 'use_for_sheet' | translate }}</th>
+                    <th>{{ 'operation_duplication' | translate }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr data-ng-repeat="workspace in workspaces">
+                <td>
+                    {{workspace.name}}
+                </td>
+                <td>
+                    <input ng-model="workspace.usePerSheet" type="number"
+                           class="form-control" placeholder="{{ 'use_for_sheet' | translate }}" tabindex="2">
+                </td>
+                <td>
+                    <input ng-model="workspace.operationDuplication" type="number"
+                           class="form-control" placeholder="{{ 'operation_duplication' | translate }}" tabindex="2">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+        <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+    </div>
+
+</form>

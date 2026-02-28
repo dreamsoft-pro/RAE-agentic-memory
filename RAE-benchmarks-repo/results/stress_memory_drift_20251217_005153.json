@@ -1,0 +1,326 @@
+{
+  "benchmark": {
+    "name": "stress_memory_drift",
+    "description": "Stress test for memory drift and stability - measures how memory system behaves under continuous updates, reflections, and semantic drift",
+    "version": "1.0",
+    "file": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/benchmarking/sets/stress_memory_drift.yaml"
+  },
+  "execution": {
+    "timestamp": "2025-12-17T00:51:53.113215",
+    "num_memories": 19,
+    "num_queries": 17,
+    "total_time_seconds": 2.6864874362945557
+  },
+  "metrics": {
+    "mrr": 0.8725490196078431,
+    "hit_rate": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "precision": {
+      "@3": 0.5098039215686274,
+      "@5": 0.31764705882352945,
+      "@10": 0.15882352941176472
+    },
+    "recall": {
+      "@3": 0.9264705882352942,
+      "@5": 0.9411764705882353,
+      "@10": 0.9411764705882353
+    },
+    "performance": {
+      "avg_insert_time_ms": 125.22632197329872,
+      "avg_query_time_ms": 18.069842282463522,
+      "p95_query_time_ms": 26.129722595214844,
+      "p99_query_time_ms": 26.129722595214844
+    },
+    "overall_quality_score": 0.837843137254902
+  },
+  "detailed_results": [
+    {
+      "query": "What is Python?",
+      "expected": [
+        "cs_v1_001",
+        "cs_v2_001"
+      ],
+      "retrieved": [
+        "cs_v1_001",
+        "cs_v2_001",
+        "cs_v1_003",
+        "edge_long",
+        "multi_001"
+      ],
+      "latency_ms": 17.119646072387695,
+      "difficulty": "medium",
+      "category": "semantic_drift"
+    },
+    {
+      "query": "Explain JavaScript for web development",
+      "expected": [
+        "cs_v1_002",
+        "cs_v2_002"
+      ],
+      "retrieved": [
+        "cs_v1_002",
+        "cs_v2_002",
+        "cs_v1_001",
+        "multi_001",
+        "cs_v1_003"
+      ],
+      "latency_ms": 17.90928840637207,
+      "difficulty": "medium",
+      "category": "semantic_drift"
+    },
+    {
+      "query": "What is machine learning?",
+      "expected": [
+        "cs_v1_003",
+        "cs_v2_003"
+      ],
+      "retrieved": [
+        "cs_v1_003",
+        "multi_001",
+        "tech_002",
+        "tech_003",
+        "edge_long"
+      ],
+      "latency_ms": 17.33112335205078,
+      "difficulty": "medium",
+      "category": "semantic_drift"
+    },
+    {
+      "query": "What are the latest Python features?",
+      "expected": [
+        "cs_v2_001"
+      ],
+      "retrieved": [
+        "cs_v1_001",
+        "cs_v2_001",
+        "cs_v2_002",
+        "edge_long",
+        "cs_v2_003"
+      ],
+      "latency_ms": 24.582624435424805,
+      "difficulty": "hard",
+      "category": "recency_bias"
+    },
+    {
+      "query": "Modern JavaScript frameworks",
+      "expected": [
+        "cs_v2_002"
+      ],
+      "retrieved": [
+        "cs_v2_002",
+        "cs_v1_002",
+        "cs_v1_001",
+        "edge_long",
+        "cs_v2_003"
+      ],
+      "latency_ms": 26.129722595214844,
+      "difficulty": "medium",
+      "category": "recency_bias"
+    },
+    {
+      "query": "Latest advances in AI and machine learning",
+      "expected": [
+        "cs_v2_003"
+      ],
+      "retrieved": [
+        "tech_002",
+        "multi_001",
+        "cs_v2_003",
+        "tech_003",
+        "cs_v1_003"
+      ],
+      "latency_ms": 15.960454940795898,
+      "difficulty": "medium",
+      "category": "recency_bias"
+    },
+    {
+      "query": "What is the capital of France?",
+      "expected": [
+        "conflict_001",
+        "conflict_002",
+        "conflict_003"
+      ],
+      "retrieved": [
+        "conflict_001",
+        "conflict_003",
+        "conflict_002",
+        "noise_002",
+        "cs_v1_001"
+      ],
+      "latency_ms": 18.613100051879883,
+      "difficulty": "hard",
+      "category": "deduplication"
+    },
+    {
+      "query": "What is the current world population?",
+      "expected": [
+        "time_001"
+      ],
+      "retrieved": [
+        "time_002",
+        "time_001",
+        "noise_002",
+        "noise_001",
+        "cs_v2_002"
+      ],
+      "latency_ms": 19.045352935791016,
+      "difficulty": "medium",
+      "category": "temporal"
+    },
+    {
+      "query": "Future population projections",
+      "expected": [
+        "time_002"
+      ],
+      "retrieved": [
+        "time_002",
+        "time_001",
+        "noise_001",
+        "cs_v2_003",
+        "noise_002"
+      ],
+      "latency_ms": 16.507387161254883,
+      "difficulty": "easy",
+      "category": "temporal"
+    },
+    {
+      "query": "How do neural networks work?",
+      "expected": [
+        "tech_001",
+        "tech_002",
+        "tech_003"
+      ],
+      "retrieved": [
+        "tech_001",
+        "tech_003",
+        "tech_002",
+        "cs_v1_003",
+        "edge_long"
+      ],
+      "latency_ms": 16.251802444458008,
+      "difficulty": "hard",
+      "category": "semantic_overlap"
+    },
+    {
+      "query": "What is deep learning?",
+      "expected": [
+        "tech_002"
+      ],
+      "retrieved": [
+        "tech_002",
+        "edge_long",
+        "tech_001",
+        "cs_v1_003",
+        "tech_003"
+      ],
+      "latency_ms": 16.230106353759766,
+      "difficulty": "medium",
+      "category": "semantic_precision"
+    },
+    {
+      "query": "GPU",
+      "expected": [
+        "edge_short",
+        "edge_long"
+      ],
+      "retrieved": [
+        "edge_short",
+        "edge_long",
+        "cs_v2_003",
+        "cs_v1_002",
+        "noise_001"
+      ],
+      "latency_ms": 23.59151840209961,
+      "difficulty": "medium",
+      "category": "length_variance"
+    },
+    {
+      "query": "Explain GPU architecture and machine learning",
+      "expected": [
+        "edge_long"
+      ],
+      "retrieved": [
+        "edge_long",
+        "edge_short",
+        "cs_v1_003",
+        "tech_002",
+        "tech_001"
+      ],
+      "latency_ms": 16.894817352294922,
+      "difficulty": "easy",
+      "category": "detail_preference"
+    },
+    {
+      "query": "Tell me about coffee and weather",
+      "expected": [
+        "noise_001",
+        "noise_002"
+      ],
+      "retrieved": [
+        "noise_002",
+        "noise_001",
+        "cs_v1_001",
+        "cs_v1_003",
+        "cs_v2_003"
+      ],
+      "latency_ms": 14.875173568725586,
+      "difficulty": "easy",
+      "category": "noise"
+    },
+    {
+      "query": "What is AI in different languages?",
+      "expected": [
+        "multi_001"
+      ],
+      "retrieved": [
+        "multi_001",
+        "cs_v2_003",
+        "cs_v1_001",
+        "tech_003",
+        "tech_001"
+      ],
+      "latency_ms": 16.470670700073242,
+      "difficulty": "easy",
+      "category": "multilingual"
+    },
+    {
+      "query": "Summarize what we know about programming languages",
+      "expected": [
+        "cs_v1_001",
+        "cs_v1_002",
+        "cs_v2_001",
+        "cs_v2_002"
+      ],
+      "retrieved": [
+        "cs_v1_001",
+        "cs_v1_003",
+        "cs_v2_003",
+        "multi_001",
+        "cs_v2_002"
+      ],
+      "latency_ms": 15.785455703735352,
+      "difficulty": "very_hard",
+      "category": "reflection_synthesis"
+    },
+    {
+      "query": "Compare old and new knowledge about AI",
+      "expected": [
+        "cs_v1_003",
+        "cs_v2_003"
+      ],
+      "retrieved": [
+        "multi_001",
+        "cs_v2_003",
+        "cs_v1_003",
+        "cs_v1_001",
+        "tech_003"
+      ],
+      "latency_ms": 13.889074325561523,
+      "difficulty": "very_hard",
+      "category": "reflection_comparison"
+    }
+  ]
+}

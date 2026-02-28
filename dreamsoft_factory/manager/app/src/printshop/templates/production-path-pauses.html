@@ -1,0 +1,137 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-fax"></i> {{ 'pauses' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="printshop.pauses"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <form ng-submit="savePauses()" >
+                    <div class="overflowContainer">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr role="row" class="heading">
+                                    <th>#</th>
+                                    <th>{{ 'name' | translate }}</th>
+                                    <th>{{ 'color' | translate }}</th>
+                                    <th>{{ 'actions' | translate }}</th>
+                                    <th>{{ 'active_sheet_report' | translate }}</th>
+                                </tr>
+                                <tr role="row" class="filter">
+                                    <td>
+                                        <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'id' | translate }}" ng-model="filterData.ID" ng-change="search()">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-filter input-sm" placeholder="{{ 'name' | translate }}" ng-model="filterData.name" ng-change="search()">
+                                    </td>
+                                    <td>
+                                    </td>
+                                    <td>
+                                    </td>
+                                    <td>
+        
+                                    </td>
+                                </tr>
+                            </thead>
+                            <tbody ui-sortable="sortableOptions" ng-model="pauses">
+                                <tr ng-repeat="pause in pauses | filter:filterData">
+                                    <td>
+                                        <button tooltip="Sort" class="btn btn-default btn-sm button-sort">
+                                            <span class="fa fa-arrows-v"></span>
+                                        </button> {{ pause.ID }}
+                                    </td>
+                                    <td>
+                                        {{ pause.name }}
+                                    </td>
+                                    <td>
+                                        <div style="width:20px;height:20px;background-color:{{ pause.color }};" ng-style=""></div>
+                                    </td>
+                                    <td class="text-left noWrap">
+                                        <button ng-click="edit(pause)" data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}" class="btn blue-hoki btn-xs">
+                                            <span class="glyphicon glyphicon-edit"></span>
+                                        </button>
+                                        <button ng-confirm-click="remove(pause.ID)" data-toggle="tooltip" data-container="body" tooltip="{{ 'delete' | translate }}" class="btn red-sunglo btn-xs">
+                                            <span class="glyphicon glyphicon-remove"></span>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="checker">
+                                            <span ng-class="{checked: !!parseInt(pause.report_sheets)}">
+                                                <input ng-model="pause.report_sheets" ng-true-value="1"
+                                                    ng-false-value="0" type="checkbox">
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-check"></i>
+                                    {{ 'save' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+
+                <div class="fixedPositionSave" ng-show="sortChange">
+                    <button class="btn btn-success" ng-click="sortSave()">
+                        {{ 'save_the_change_order' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-click="sortCancel()">
+                        {{ 'cancel' | translate }}
+                    </button>
+                </div>
+
+                <form class="form-horizontal" role="form" ng-submit="add()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="form.name" placeholder="{{ 'name' | translate }}" required/>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {{ 'color' | translate}}
+                            </label>
+                            <div class="col-md-9">
+                                <input colorpicker="hex" ng-model="form.color" type="text" class="form-control" placeholder="{{ 'color' | translate }}" />
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                        {{ 'add' | translate }}
+                                    </button>
+                                    <button ng-click="reset()" type="button" class="btn red-sunglo">
+                                        {{ 'cancel' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.pauses"></div>
+    </div>
+</div>

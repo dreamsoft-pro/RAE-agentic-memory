@@ -1,0 +1,3 @@
+Startup at Fri Feb 20 14:22:03 2026
+App Dir: C:\Screenwatcher
+Imports loaded successfully

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "compiling"
+
+grunt auto-build --apiUrl=${API_URL} --authUrl=${AUTH_URL} --staticUrl=${STATIC_URL} --socketUrl=${SOCKET_URL} --editorUrl=${EDITOR_URL}
+
+envsubst < /etc/nginx/nginx.conf.tmp  > /etc/nginx/nginx.conf
+
+echo "starting"
+exec $@

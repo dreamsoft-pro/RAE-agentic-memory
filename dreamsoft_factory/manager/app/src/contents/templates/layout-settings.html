@@ -1,0 +1,103 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-settings"></i> {{ 'view_settings' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="contents.viewSettings"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <form class="form-horizontal" role="form" ng-submit="save()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker">
+                                            <span ng-class="{checked: form.menuLeft.value}">
+                                                <input ng-model="form.menuLeft.value" type="checkbox">
+                                            </span>
+                                        </div>
+                                        {{ 'turn_on_mega_menu' | translate }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'menu_type' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="btn-default input-sm" ng-model="form.menuType.value"
+                                        ng-options="each for (null, each) in menuTypes"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'css_skin_name' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-model="form.skinName.value" ng-options="skin.value as skin.value for skin in skins">
+                                    <option value="">{{ 'select' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'number_of_volumes_shows_in_offer' | translate }}</label>
+                            <div class="col-md-9">
+                                <input value="{{ form.numberOfVolumesInOffer.value }}" ng-model="form.numberOfVolumesInOffer.value" type="text" class="form-control" placeholder="">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'web_master_verify_tag' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-value="form.webMasterVerifyTag.value" ng-model="form.webMasterVerifyTag.value" type="text" class="form-control" placeholder="">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'number_of_lines_in_product_description_texts' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-value="form.numberOfLinesInDescription.value"
+                                       ng-model="form.numberOfLinesInDescription.value"
+                                       type="number" class="form-control" placeholder="{{ 'number_lines' | translate }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'website_style' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-model="form.websiteStyle.value" ng-options="style.value as style.name | translate for style in websiteStyles">
+                                    <option value="">{{ 'select' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'save' | translate }}</button>
+                                <button ng-click="reset();" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="view.viewSettings" ></div>
+    </div>
+</div>
