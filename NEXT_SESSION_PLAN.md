@@ -1,23 +1,24 @@
-# Plan na kolejną sesję - Dreamsoft Pro 2.0
+# Next Session Plan: Repository Cleanup & Standardization
 
-## 🛠 Stan Infrastruktury (Laptop)
-- **MySQL:** Działa na porcie **3307** (unikaj 3306 - konflikt ze ScreenWatcher).
-- **PHPMyAdmin:** root / `dupa123` (dostęp: http://myadmin.localtest.me).
-- **Proxy:** Naprawione mapowanie wolumenu `./proxy/data:/data`.
-- **Domeny:** http://localtest.me i http://manager.localtest.me są aktywne.
-- **Kontenery:** Wszystkie (11/11) mają status UP. Naprawiono błędy `sharp` (manager) i brakujące zależności (authapp).
+## Objective
+The root directory of the RAE repository is currently cluttered with operational scripts, backups, and temporary files. The goal is to establish a senior-grade project structure that adheres to the **Model Economy** and **Zero Drift** principles.
 
-## 🤖 Postęp Modernizacji (Node 1 - Lumina)
-- **Status:** Hive Engine zaktualizowany do **v5.3** (PID 13902 w rae-api-dev).
-- **Zmiany w v5.3:** 
-  - Całkowity zakaz `bluebird`.
-  - Wymuszony `import api from '@/lib/api'`.
-  - Wszystkie 228 początkowych plików zostało automatycznie "wyczyszczonych" (sed).
-- **Statystyki:** 
-  - Ukończono: **322** z ok. 537 serwisów (~60%).
-  - Lokalizacja plików: `/mnt/extra_storage/RAE-agentic-memory-agnostic-core/apps/memory_api/services/`.
+## 🧹 Phase 1: Structural Cleanup (Muda Elimination)
+- [ ] **Move Scripts**: Migrate all top-level `.py` scripts (e.g., `verify_hard_frames_v2.py`, `business_continuity_indexer.py`) to the `scripts/` directory.
+- [ ] **Archive Legacy**: Move old guide files and backups (e.g., `SILICON_ORACLE_100K_GUIDE.md`, `PLAN_RECOVERY_LUMINA.md`) to a new `docs/archive/` directory.
+- [ ] **Unified Config**: Move all root-level configuration files to the `config/` directory.
+- [ ] **Remove Junk**: Identify and delete temporary log files (`*.log`), pid files, and unused `.sh` files from the root.
 
-## 🎯 Cele na następny raz
-1. Sprawdzić, czy proces dobił do 100% (537 plików).
-2. Wykonać "Operację Lustro" - porównać ceny/logikę w nowym froncie Next.js z oryginalnym AngularJS.
-3. Przenieść gotowe serwisy z `apps/memory_api/services/` do właściwego katalogu frontendowego na Laptopie.
+## 🏗️ Phase 2: Factory Reactivation (Operacja Lustro)
+- [ ] **Verify Node 1 Status**: Check if Kubuś has finished and if Lumina is ready for production.
+- [ ] **Sync Contracts**: Propagate the **Global Contract Atlas v1.5** to Node 1.
+- [ ] **Restart Swarm**: Re-launch the **Consensus Swarm Engine** using the newly established Hard Frames 2.1 protocols.
+- [ ] **Audit First 10**: Perform a manual senior-level audit of the first 10 components generated under the new rygor.
+
+## ⚖️ Phase 3: Senior Architecture Standard
+- [ ] **Zod Schema Injection**: Update the Hive Engine to automatically generate Zod schemas based on the MySQL dump.
+- [ ] **Tailwind Token Validator**: Add a linter rule to L2 Structural validation that checks for Tailwind utility classes instead of CSS variables.
+
+---
+**Status:** System is stable, unified, and auditable. Ready for deep refactoring.
+**Last Action:** Pushed v3.6.1-LTS documentation and error protocol to GitHub.
