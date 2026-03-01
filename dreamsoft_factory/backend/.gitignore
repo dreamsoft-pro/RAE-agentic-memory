@@ -1,8 +1,0 @@
-sftp-config.json
-data
-uploads
-deployment-config.json
-.idea
-/vendor
-/composer.lock
-/out/

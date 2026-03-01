@@ -1,1 +1,0 @@
-"""App for generating and displaying statistics from ingested data."""

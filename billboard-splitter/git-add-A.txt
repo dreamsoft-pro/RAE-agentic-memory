@@ -1,3 +1,0 @@
-git add -A
-git commit -m "add scale in GUI"
-git push origin main
