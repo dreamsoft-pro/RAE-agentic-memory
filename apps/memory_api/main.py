@@ -208,7 +208,37 @@ Instrumentator().instrument(app).expose(app)
 
 
 # --- Exception Handlers ---
+from rae_core.exceptions.base import RAEError, ContractViolationError, InfrastructureError, SecurityPolicyViolationError
 
+@app.exception_handler(RAEError)
+async def rae_exception_handler(request: Request, exc: RAEError):
+    """Handle domain-specific RAE errors and log them to memory."""
+    logger = structlog.get_logger("apps.memory_api.errors")
+    logger.error("rae_domain_error", type=type(exc).__name__, message=exc.message)
+    
+    # SYSTEM 93.5: Autonomous Error Logging
+    # We try to record the incident in RAE for Kaizen analysis
+    try:
+        service = request.app.state.rae_core_service
+        await service.engine.store_memory(
+            tenant_id=request.headers.get("X-Tenant-Id", "system"),
+            agent_id="oracle_error_monitor",
+            content=f"INCIDENT: {type(exc).__name__} - {exc.message}",
+            layer="reflective",
+            tags=["incident", "error_audit", type(exc).__name__.lower()],
+            metadata={"error_type": type(exc).__name__, "path": request.url.path}
+        )
+    except: pass # Prevent infinite loop if RAE is down
+
+    status_code = 400
+    if isinstance(exc, ContractViolationError): status_code = 422
+    elif isinstance(exc, InfrastructureError): status_code = 503
+    elif isinstance(exc, SecurityPolicyViolationError): status_code = 403
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": {"code": str(status_code), "type": type(exc).__name__, "message": exc.message}},
+    )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

@@ -1,25 +1,32 @@
-"""Base exceptions for RAE-core."""
-
+from typing import Any, Dict, Optional
 
 class RAEError(Exception):
-    """Base exception for all RAE-core errors."""
+    """Base class for all RAE exceptions."""
+    def __init__(self, message: str, metadata: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.message = message
+        self.metadata = metadata or {}
 
+class InfrastructureError(RAEError):
+    """Raised when a component like Postgres or Qdrant fails."""
     pass
 
-
-class StorageError(RAEError):
-    """Exception raised for errors in storage adapters."""
-
+class ContractViolationError(RAEError):
+    """Raised when an agent output violates Hard Frames 2.0."""
     pass
 
-
-class ValidationError(RAEError):
-    """Exception raised for validation failures."""
-
+class EpistemicConflictError(RAEError):
+    """Raised when a severe contradiction is found between memory layers."""
     pass
 
+class MathStabilityError(RAEError):
+    """Raised when weights or resonance factors become unstable."""
+    pass
 
 class SecurityPolicyViolationError(RAEError):
-    """Exception raised when a security policy is violated (ISO 27000)."""
+    """Raised when ISO 27000/42001 policies are breached."""
+    pass
 
+class ResourceDriftError(RAEError):
+    """Raised by OCP when a managed resource deviates from desired state."""
     pass

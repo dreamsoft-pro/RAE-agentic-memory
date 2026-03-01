@@ -732,7 +732,8 @@ class RAECoreService:
                 )
 
                 if validation_results.get("final_decision") == "blocked":
-                    raise SecurityPolicyViolationError(f"Decision Blocked by Oracle: {validation_results['block_reasons']}")
+                    from rae_core.exceptions.base import ContractViolationError
+                    raise ContractViolationError(f"Decision Blocked by Oracle: {validation_results['block_reasons']}")
                 
                 metadata["audit_verified"] = True
                 metadata["provenance_link"] = payload["retrieved_sources"]

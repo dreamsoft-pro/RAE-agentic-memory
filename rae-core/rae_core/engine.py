@@ -457,9 +457,10 @@ class RAEEngine:
             elif target_layer == "working":
                 # Working must be linked to a session
                 if not chunk_kwargs.get("session_id"):
+                    from rae_core.exceptions.base import ContractViolationError
                     logger.error("layer_contract_violation", layer="working", reason="session_missing")
                     if self.settings.enforce_hard_frames:
-                        raise RuntimeError("Working memory requires session_id")
+                        raise ContractViolationError("Working memory requires session_id")
 
             chunk_kwargs["metadata"].update({
                 "parent_id": parent_id,

@@ -2,53 +2,36 @@ from typing import Any, Dict, List
 from pydantic import ValidationError
 from ...models.contracts import AgentOutputContract
 
-class GroundingVerifier:
-    """Hard Gate: Eliminates hallucinations by checking claims against sources."""
-    def verify(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        sources = payload.get("retrieved_sources_content", [])
-        analysis = payload.get("analysis", "").lower()
-        
-        if not sources and len(analysis) > 30:
-            return {"grounded": False, "score": 0.0, "msg": "Claim made without any retrieved sources."}
-            
-        # Basic heuristic grounding check: do key terms from analysis exist in sources?
-        # In full version this uses semantic similarity
-        if sources:
-            source_text = " ".join(sources).lower()
-            keywords = [w for w in analysis.split() if len(w) > 5]
-            if not keywords: return {"grounded": True, "score": 1.0}
-            
-            matches = sum(1 for k in keywords if k in source_text)
-            match_ratio = matches / len(keywords)
-            
-            if match_ratio < 0.3: # Threshold for hard block
-                return {"grounded": False, "score": match_ratio, "msg": "Hallucination detected: analysis drift from sources."}
-                
-        return {"grounded": True, "score": 1.0}
+class ContractEnforcer:
+    def enforce(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            AgentOutputContract(**payload)
+            return {"status": "ok"}
+        except ValidationError as e:
+            return {"status": "invalid", "errors": str(e), "block": True}
+
+class UncertaintyEstimator:
+    def estimate(self, payload: Dict[str, Any]) -> Dict[str, float]:
+        confidence = payload.get("confidence", 0.0)
+        risk = 0.9 if confidence > 0.8 and not payload.get("retrieved_sources") else 0.0
+        return {"epistemic_risk": risk}
 
 class L1OperationalReflection:
     def __init__(self, risk_threshold: float = 0.7):
-        self.grounding_verifier = GroundingVerifier()
-        self.contract_enforcer = ContractEnforcer() # Assuming ContractEnforcer exists in same file or scope
+        self.contract_enforcer = ContractEnforcer()
+        self.uncertainty_estimator = UncertaintyEstimator()
+        self.risk_threshold = risk_threshold
 
     def reflect(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # 1. Structure Check
-        try:
-            AgentOutputContract(**payload)
-        except ValidationError as e:
-            return {"block": True, "reason": "Structural violation", "errors": str(e)}
+        contract = self.contract_enforcer.enforce(payload)
+        if contract.get("status") == "invalid":
+            return {"block": True, "reason": "Structural contract violation", "errors": contract.get("errors")}
 
-        # 2. Hallucination Check (Grounding)
-        grounding = self.grounding_verifier.verify(payload)
-        if not grounding["grounded"]:
-            return {"block": True, "reason": grounding["msg"], "score": grounding["score"]}
-
+        risk = self.uncertainty_estimator.estimate(payload)
+        block = risk.get("epistemic_risk", 0.0) > self.risk_threshold
+        
         return {
-            "block": False,
+            "block": block,
             "structural_status": "ok",
-            "grounding_score": grounding["score"]
+            "risk_level": risk.get("epistemic_risk")
         }
-
-class ContractEnforcer:
-    def enforce(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {"status": "ok"}
