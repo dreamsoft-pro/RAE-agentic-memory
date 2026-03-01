@@ -49,14 +49,22 @@ RAE solves this by introducing a structured memory architecture that preserves d
 
 ---
 
-## 🧠 Core Architecture: 4 Layers / 3 Math Planes
+## 🧠 Core Architecture: 6 Layers / 3 Math Planes
 
-RAE models memory as **four functionally distinct layers**:
+RAE models memory as **six functionally distinct layers**, governed by a 3-layer Mathematical Verification Engine:
 
-1.  **Episodic Memory** – What happened (Stream of events).
-2.  **Semantic Memory** – What is known (Facts and knowledge graph).
-3.  **Working Memory** – What is currently relevant (Agent's active context).
-4.  **Reflective Memory** – Why decisions were made (Self-correction and mapping).
+### Time-Domain Layers
+1.  **Sensory Memory** – Raw signals and transient context (High noise, short TTL).
+2.  **Episodic Memory** – What happened (Immutable stream of events).
+3.  **Working Memory** – What is currently relevant (Agent's active context / Hard Frames).
+4.  **Semantic Memory** – What is known (Consolidated facts and deep knowledge graph).
+5.  **Long-term Memory** – Compressed institutional knowledge (Permanent storage).
+
+### Cognitive-Domain Layer (Reflective Core)
+6.  **Reflective Memory** – Why decisions were made. It operates as a 3-tiered QFT-inspired system:
+    *   **L1: Operational** – Real-time validation of structural contracts and evidence grounding.
+    *   **L2: Structural** – Semantic consistency, model economy, and topological linkage.
+    *   **L3: Meta (Supreme)** – Epistemic symmetry, field stabilization, and senioral vision.
 
 It is governed by a 3-layer Mathematical Verification Engine (Logic, Set Theory, Graph) that ensures retrieved context is not just semantically similar, but logically consistent.
 
