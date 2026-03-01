@@ -129,9 +129,31 @@ All three environments can run side-by-side without interfering with each other.
 
 ### 5. Secure Mode (Hard Frames)
 
-If you are developing security-critical agents that require physical network isolation:
--   See the **[Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md)**.
--   Use `docker compose -f docker-compose.secure.yml up -d`.
+Hard Frames provide a deterministic, isolated environment for security-critical agents. In this mode, every agent decision is strictly validated against a 3-layer contract (Structural, Semantic, and Epistemic).
+
+There are three ways to enable Hard Frames:
+
+#### Method A: Global Enforcement (System Profile)
+The most common way is to set the environment variable. This forces all agents into the Hard Frame validation pipeline.
+*   **Env Var:** `RAE_PROFILE=advanced` or `RAE_ENFORCE_HARD_FRAMES=1`
+*   **Action:** Add to your `.env` file or export before starting Docker.
+*   **Effect:** The `ReflectionCoordinator` will automatically block any memory store operation that fails contract validation.
+
+#### Method B: Agent-Level Enforcement (Dynamic)
+You can enable Hard Frames for a specific agent or session by passing metadata during the API request.
+*   **Header/Tag:** Include `hard_frame` in the `tags` list when calling `POST /v2/memories`.
+*   **Metadata:** Send `"metadata": {"enforce_contracts": true}` in the request body.
+*   **Effect:** This overrides the global profile for that specific interaction, useful for testing security-critical branches within a standard environment.
+
+#### Method C: Infrastructure Isolation (Physical)
+For the highest level of security, use the dedicated secure compose profile which isolates the agent from the external network and mounts the filesystem as read-only.
+*   **How to Run:**
+    ```bash
+    docker compose -f docker-compose.secure.yml up -d
+    ```
+*   **Effect:** The agent is physically cut off from the world, with RAE as its only window for communication. Every byte must pass through the Oracle validation core.
+
+See the **[Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md)** for more details.
 
 ### 6. RAE Mesh (Federated Memory)
 
