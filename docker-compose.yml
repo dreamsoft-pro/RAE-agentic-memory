@@ -1,5 +1,5 @@
 # RAE-agentic-memory-agnostic-core
-# Docker Compose Configuration - FIXED FOR HOST NETWORK
+# Docker Compose Configuration - LOCAL STABLE (Laptop Bridge)
 
 services:
   postgres:
@@ -14,9 +14,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - /home/operator/pgvector_libs/vector.so:/usr/local/lib/postgresql/vector.so
-      - /home/operator/pgvector_libs/vector.control:/usr/local/share/postgresql/extension/vector.control
-      - /home/operator/pgvector_libs/vector--0.5.1.sql:/usr/local/share/postgresql/extension/vector--0.5.1.sql
     networks:
       - rae-network
 
@@ -43,17 +40,6 @@ services:
     networks:
       - rae-network
 
-  ollama-dev:
-    image: ollama/ollama:latest
-    container_name: rae-ollama-dev
-    restart: unless-stopped
-    ports:
-      - "11435:11434"
-    volumes:
-      - /mnt/extra_storage/ollama:/root/.ollama
-    networks:
-      - rae-network
-
   rae-api-dev:
     image: rae-memory:latest
     container_name: rae-api-dev
@@ -61,26 +47,24 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    # FIXED: Using host network mode to resolve connection issues
-    network_mode: host
+    ports:
+      - "8001:8000"
     environment:
       - POSTGRES_USER=rae
       - POSTGRES_PASSWORD=rae_password
       - POSTGRES_DB=rae
-      - POSTGRES_HOST=127.0.0.1
-      - REDIS_URL=redis://127.0.0.1:6379/0
-      - QDRANT_HOST=127.0.0.1
-      - OLLAMA_API_URL=http://127.0.0.1:11435
+      - POSTGRES_HOST=rae-postgres
+      - REDIS_URL=redis://rae-redis:6379/0
+      - QDRANT_HOST=rae-qdrant
       - RAE_API_KEY=test-key
+      - RAE_DB_MODE=ignore
     volumes:
       - ./rae-core:/app/rae-core
       - ./apps:/app/apps
       - ./rae_adapters:/app/rae_adapters
-      - /home/operator/RAE-Suite-Modular/packages/rae-hive:/app/agent_hive
-      - /home/operator/RAE-Suite-Modular/packages/rae-phenix:/app/rae-phenix
-
-  # Other services truncated for brevity in this repair operation...
-  # (I will keep the rest of the file as it was on Node 1)
+      - ./alembic:/app/alembic
+    networks:
+      - rae-network
 
 networks:
   rae-network:

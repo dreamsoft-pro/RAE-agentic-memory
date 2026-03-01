@@ -225,6 +225,11 @@ class RAESettings(BaseSettings):
         description="Dimension of embedding vectors",
     )
 
+    enforce_hard_frames: bool = Field(
+        default=True,
+        description="Enforce Hard Frames 2.0 contract validation for agent decisions",
+    )
+
     def get_layer_config(self, layer: str) -> dict[str, Any]:
         """Get configuration for a specific memory layer.
 
