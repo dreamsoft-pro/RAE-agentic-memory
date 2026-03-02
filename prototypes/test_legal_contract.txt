@@ -1,0 +1,51 @@
+# AGREEMENT FOR PROVISION OF AI CONSULTING SERVICES
+
+This Agreement ("Agreement") is made and entered into as of this 18th day of February, 2026 ("Effective Date"), by and between **Innovate Corp.**, a Delaware corporation with its principal place of business at 123 Tech Avenue, Silicon Valley, CA 94000 ("Client"), and **RAE Systems LLC**, a Wyoming limited liability company with its principal place of business at 456 Logic Lane, Cheyenne, WY 82001 ("Consultant").
+
+## ARTICLE 1: SCOPE OF SERVICES
+
+**1.1. General Scope.** Consultant shall provide to Client expert consulting services related to the implementation, optimization, and governance of artificial intelligence systems, as more fully described in Exhibit A attached hereto ("Services"). The Services will focus on enhancing the Client's existing data infrastructure to support advanced retrieval-augmented generation (RAG) capabilities.
+
+**1.2. Specific Deliverables.** The primary deliverable shall be a comprehensive architectural audit and strategic recommendation report ("Report"). The Report shall include, at a minimum:
+    (a) An analysis of the Client's current data ingestion and segmentation pipeline.
+    (b) A comparative study of the Client's existing methods against state-of-the-art academic and open-source solutions (e.g., hierarchical recursive segmentation, percentile-based semantic chunking).
+    (c) A strategic roadmap for evolving the Client's architecture to be LLM-agnostic, auditable, and compliant with ISO 42001 standards.
+    (d) A prototype implementation of a recommended segmentation module, delivered as a self-contained Python script with relevant test cases.
+
+**1.3. Excluded Services.** This Agreement does not include the provision of legal advice, the acquisition of hardware, or the development of production-level software beyond the prototype mentioned in Section 1.2(d). Any such services shall require a separate written agreement.
+
+## ARTICLE 2: TERM AND TERMINATION
+
+**2.1. Term.** The term of this Agreement shall commence on the Effective Date and shall continue for a period of ninety (90) days, unless terminated earlier as provided herein ("Term").
+
+**2.2. Termination for Cause.** Either party may terminate this Agreement immediately upon written notice to the other party if the other party breaches any material provision of this Agreement and fails to cure such breach within thirty (30) days after receipt of written notice thereof. A material breach shall include, but not be limited to, the failure to make timely payments or the unauthorized disclosure of Confidential Information.
+
+**2.3. Termination for Convenience.** The Client may terminate this Agreement for any reason upon providing the Consultant with at least fourteen (14) days' prior written notice. In such event, Client shall pay Consultant for all Services performed up to the effective date of termination.
+
+## ARTICLE 3: COMPENSATION AND PAYMENT
+
+**3.1. Fees.** In consideration for the Services, Client shall pay Consultant a fixed fee of one hundred thousand U.S. Dollars ($100,000.00), payable in two installments as described in Section 3.2.
+
+**3.2. Payment Schedule.**
+    (a) Fifty percent (50%) of the total fee shall be due and payable upon execution of this Agreement.
+    (b) The remaining fifty percent (50%) shall be due and payable upon the Client's acceptance of the final Report as described in Article 1.
+
+**3.3. Expenses.** The fixed fee is inclusive of all anticipated expenses. No additional expenses shall be billed to the Client without prior written approval.
+
+## ARTICLE 4: INTELLECTUAL PROPERTY
+
+**4.1. Pre-Existing IP.** Each party shall retain all right, title, and interest in and to its own pre-existing intellectual property ("Pre-Existing IP"). Consultant shall not use any of its Pre-Existing IP in connection with the Services without the Client's prior written consent.
+
+**4.2. Ownership of Deliverables.** Upon full and final payment of all fees due under this Agreement, all right, title, and interest in and to the Report and any prototypes developed hereunder (collectively, the "Deliverables") shall be the sole and exclusive property of the Client. Consultant agrees to assign, and hereby assigns, all of its rights in the Deliverables to the Client.
+
+## ARTICLE 5: CONFIDENTIALITY
+
+**5.1. Definition.** "Confidential Information" shall mean any and all non-public information disclosed by one party to the other, including but not limited to business plans, financial data, customer lists, and the terms of this Agreement. The Services and the Deliverables shall be considered Confidential Information of the Client.
+
+**5.2. Obligation.** Each party agrees to hold the other party's Confidential Information in strict confidence and not to disclose such information to any third party without the prior written consent of the disclosing party. This obligation shall survive the termination of this Agreement for a period of five (5) years.
+
+## ARTICLE 6: GENERAL PROVISIONS
+
+**6.1. Governing Law.** This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict of laws principles.
+
+**6.2. Entire Agreement.** This Agreement, including Exhibit A, constitutes the entire agreement between the parties with respect to the subject matter hereof and supersedes all prior oral or written agreements. It may not be modified except in a writing signed by both parties.
