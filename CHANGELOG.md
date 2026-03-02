@@ -37,3 +37,10 @@
 ### 📚 Documentation
 - **zenodo**: update metadata for v3.6.0 and add CITATION.cff
 - add cluster sync scripts and update agent documentation
+
+## [2026-02-20] - Industrial Analytics Attempt 1 (Heuristic)
+### Challenges:
+- Model hallucinations regarding machine counts.
+- Brittle hardcoded filters.
+### Pivot:
+- Implementing Agentic Text-to-SQL for dynamic data exploration.

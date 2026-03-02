@@ -28,6 +28,7 @@ from apps.memory_api.observability import (
     setup_opentelemetry,
 )
 from apps.memory_api.routes import (
+    procedural,
     dashboard,
     evaluation,
     event_triggers,
@@ -285,6 +286,7 @@ app.include_router(agent_v2.router)  # /v2/agent
 app.include_router(feedback_v2.router)  # /v2/feedback
 app.include_router(compliance_v2.router)  # /v2/compliance
 app.include_router(mesh_v2.router)  # /v2/mesh
+app.include_router(procedural.router) # /procedural
 
 # Helper Services (Migrated to V2 prefix)
 app.include_router(dashboard.router, prefix="/v2/dashboard", tags=["Dashboard"])
