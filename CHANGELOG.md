@@ -44,3 +44,14 @@
 - Brittle hardcoded filters.
 ### Pivot:
 - Implementing Agentic Text-to-SQL for dynamic data exploration.
+
+## [2026-03-02] - Industrial Analytics Attempt 2 (Text-to-SQL & Sanity Check)
+### Accomplished:
+- Implemented **Agentic Text-to-SQL**: Model now generates dynamic parameters (date, machine) instead of relying on brittle heuristic filters.
+- **SQL Sanity Guard**: Added hard capping in SQL (value < 450 m2/h) to physically block OCR hallucinations.
+- **Improved Grounding**: Enforced 2026 as the default year to prevent '2021' hallucinations.
+### Challenges Identified:
+- **Calculation Drift**: Simple SQL averages mismatch Grafana metrics because they ignore process 'nuances' (downtime vs work time, hash-based status).
+- **Tooling Mismatch**: RAE needs the exact 'WITH RealtimeStatus' logic from Grafana to provide consistent business answers.
+### Next Step:
+- Synchronize  with Grafana's CTE-based SQL logic (Common Table Expressions) for Net Performance and Downtime calculation.
