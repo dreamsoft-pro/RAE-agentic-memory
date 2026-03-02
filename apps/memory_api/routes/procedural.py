@@ -4,6 +4,7 @@ from typing import List, Optional, Any
 import structlog
 import re
 import json
+from datetime import datetime
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.industrial_bridge import ScreenWatcherBridge
@@ -23,39 +24,34 @@ async def query_procedural(
     try:
         bridge = ScreenWatcherBridge()
         
-        # 1. Wyciąganie parametrów
+        # 1. Wyciąganie parametrów przez LLM
         parsing_prompt = (
-            f"Z pytania: '{request.query}' wyciągnij: start_date, end_date, start_hour, end_hour, machine.\n"
+            f"Z pytania: '{request.query}' wyciągnij: date (YYYY-MM-DD) i machine (M01, M02, K01).\n"
             "ZAKŁADAJ ROK 2026. Zwróć TYLKO JSON."
         )
         params_raw = await rae_service.engine.generate_text(prompt=parsing_prompt, system_prompt="Parser parametrów.")
         try:
             p = json.loads(re.search(r'(\{.*\})', params_raw).group(1))
         except:
-            p = {"start_date": None, "end_date": None, "start_hour": None, "end_hour": None, "machine": None}
+            p = {"date": "2026-02-18", "machine": "M01"} # Fallback
 
-        # 2. Buduj SQL z FILTREM REALIZMU (Max 450 m2/h)
-        where = ["r.name = 'real_speed_m2h'", "r.value < 450"] # Odrzucamy błędy OCR
-        if p.get("start_date") and p.get("end_date"):
-            where.append(f"DATE(r.timestamp) BETWEEN '{p['start_date']}' AND '{p['end_date']}'")
-        if p.get("start_hour") is not None and p.get("end_hour") is not None:
-            where.append(f"HOUR(r.timestamp) BETWEEN {p['start_hour']} AND {p['end_hour']}")
-        if p.get("machine"):
-            where.append(f"m.code = '{p['machine']}'")
-        
-        sql = f"SELECT m.code, m.name, AVG(r.value) as avg_speed, MAX(r.value) as max_speed FROM collector_metricreading r JOIN registry_machine m ON r.machine_id = m.id WHERE {' AND '.join(where)} GROUP BY m.code, m.name"
-        
-        db_result = bridge.execute_query(sql)
+        # 2. POBIERANIE SMART METRYK (Logika z Grafany)
+        db_result = bridge.get_smart_metrics(p.get("machine", "M01"), p.get("date", "2026-02-18"))
 
-        # 3. Finalna odpowiedź z zakazem zmyślania wielkich liczb
+        # Konwersja Decimal na float dla modelu LLM
+        if isinstance(db_result, list) and len(db_result) > 0:
+            for k, v in db_result[0].items():
+                if hasattr(v, '__float__'): db_result[0][k] = float(v)
+
+        # 3. Finalna odpowiedź
         final_prompt = (
-            f"PYTANIE: {request.query}\nWYNIK BAZY: {str(db_result)}\n"
-            "Podaj średnią i maksymalną prędkość. Jednostka to m2/h. "
-            "UWAGA: Maksymalna wydajność maszyny to 400 m2/h. Jeśli w WYNIK BAZY widzisz większe liczby, zignoruj je. "
-            "Jeśli dane są puste, powiedz że brak odczytów."
+            f"PYTANIE: {request.query}\n"
+            f"DANE OEE Z BAZY (LOGIKA GRAFANY): {str(db_result)}\n"
+            "Odpowiedz po polsku. Używaj pojęć: 'Wydajność Netto' (podczas pracy), 'Mikroprzestoje' (sumarycznie w minutach), 'Przerwy' (powyżej 5 min). "
+            "Bądź bardzo precyzyjny co do liczb. Jednostka wydajności to m2/h."
         )
         
-        raw_answer = await rae_service.engine.generate_text(prompt=final_prompt, system_prompt="Jesteś Silicon Oracle. Podajesz tylko REALNE liczby z bazy.")
+        raw_answer = await rae_service.engine.generate_text(prompt=final_prompt, system_prompt="Jesteś Ekspertem OEE Silicon Oracle.")
 
         return {
             "instruction": raw_answer,
@@ -64,4 +60,4 @@ async def query_procedural(
 
     except Exception as e:
         logger.error("procedural_query_failed", error=str(e))
-        return {"instruction": f"Błąd: {str(e)}", "results": []}
+        return {"instruction": f"Błąd analizy: {str(e)}", "results": []}

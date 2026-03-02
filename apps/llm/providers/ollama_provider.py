@@ -5,6 +5,7 @@ Implements the LLM provider interface for local Ollama models.
 """
 
 import json
+import os
 from collections.abc import AsyncIterator
 from typing import Any, Dict, cast
 
@@ -26,7 +27,7 @@ class OllamaProvider:
     LLM provider for local Ollama models.
     """
 
-    def __init__(self, api_url: str = "http://localhost:11434"):
+    def __init__(self, api_url: str | None = None):
         """
         Initialize the Ollama provider.
 
@@ -38,8 +39,8 @@ class OllamaProvider:
         self.supports_streaming = True
         self.supports_tools = False  # Ollama has limited tool support
 
-        self.api_url = api_url
-        self.client = httpx.AsyncClient(base_url=api_url, timeout=120.0)
+        self.api_url = api_url or os.getenv("OLLAMA_API_URL", "http://ollama-dev:11434")
+        self.client = httpx.AsyncClient(base_url=self.api_url, timeout=120.0)
 
     def _convert_messages(self, request: LLMRequest) -> tuple[str, str]:
         """

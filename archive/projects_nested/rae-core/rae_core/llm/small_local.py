@@ -4,6 +4,7 @@ Optimized for Windows Standalone usage.
 """
 
 import re
+import os
 import httpx
 import structlog
 from typing import Any, List, Dict, Optional
@@ -23,7 +24,7 @@ class SmallLocalLLMProvider(ILLMProvider):
     
     def __init__(self, 
                  onnx_model_path: Optional[str] = None,
-                 ollama_url: str = "http://localhost:11434", 
+                 ollama_url: str = os.getenv("OLLAMA_API_URL", "http://ollama-dev:11434"), 
                  model: str = "llama3:8b"):
         self.ollama_url = ollama_url
         self.model = model

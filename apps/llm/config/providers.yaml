@@ -24,7 +24,7 @@ providers:
     supports_tools: true
 
   ollama:
-    endpoint: http://localhost:11434
+    endpoint: http://ollama-dev:11434
     api_key_env: null  # Ollama doesn't require API key
     max_context: 8192
     supports_streaming: true
