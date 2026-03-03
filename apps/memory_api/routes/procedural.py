@@ -15,6 +15,7 @@ logger = structlog.get_logger(__name__)
 class QueryRequest(BaseModel):
     query: str
     project: str = "default"
+    model: Optional[str] = None
 
 @router.post("/query")
 async def query_procedural(
@@ -29,7 +30,11 @@ async def query_procedural(
             f"Z pytania: '{request.query}' wyciągnij: date (YYYY-MM-DD) i machine (M01, M02, K01).\n"
             "ZAKŁADAJ ROK 2026. Zwróć TYLKO JSON."
         )
-        params_raw = await rae_service.engine.generate_text(prompt=parsing_prompt, system_prompt="Parser parametrów.")
+        params_raw = await rae_service.engine.generate_text(
+            prompt=parsing_prompt, 
+            system_prompt="Parser parametrów.",
+            model=request.model or "default"
+        )
         try:
             p = json.loads(re.search(r'(\{.*\})', params_raw).group(1))
         except:
@@ -51,7 +56,11 @@ async def query_procedural(
             "Bądź bardzo precyzyjny co do liczb. Jednostka wydajności to m2/h."
         )
         
-        raw_answer = await rae_service.engine.generate_text(prompt=final_prompt, system_prompt="Jesteś Ekspertem OEE Silicon Oracle.")
+        raw_answer = await rae_service.engine.generate_text(
+            prompt=final_prompt, 
+            system_prompt="Jesteś Ekspertem OEE Silicon Oracle.",
+            model=request.model or "default"
+        )
 
         return {
             "instruction": raw_answer,

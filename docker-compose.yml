@@ -95,6 +95,8 @@ services:
     restart: unless-stopped
     ports:
       - "8506:8080"
+    volumes:
+      - ./rae_lite/ui/app.py:/app/main.py
     environment:
       - RAE_API_URL=http://smallai.printdisplay.pl/api
     networks:

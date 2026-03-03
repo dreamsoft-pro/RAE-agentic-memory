@@ -55,3 +55,12 @@
 - **Tooling Mismatch**: RAE needs the exact 'WITH RealtimeStatus' logic from Grafana to provide consistent business answers.
 ### Next Step:
 - Synchronize  with Grafana's CTE-based SQL logic (Common Table Expressions) for Net Performance and Downtime calculation.
+
+## [2026-03-02] - Model Selector and UI Overhaul
+### Features Added:
+- **Model Selector**: Added a dropdown in the Oracle UI to switch between models (Qwen 2.5 3B, Llama 3 8B, etc.).
+- **API Model Support**: The `/procedural/query` endpoint now accepts a `model` parameter to route requests to specific LLM backends.
+- **UI Refresh**: Modernized the Oracle UI with better layout, iconography, and OEE-specific labels.
+### Technical Improvements:
+- Stabilized volume mapping for UI code persistence.
+- Implemented robust error handling for model switching on CPU (increased timeouts).
