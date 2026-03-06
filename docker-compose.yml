@@ -89,6 +89,31 @@ services:
           - rae-api-dev
           - rae-api
 
+  rae-celery-worker-dev:
+    image: rae-memory:latest
+    container_name: rae-celery-worker-dev
+    command: bash -c "pip install --no-cache-dir mysql-connector-python && celery -A apps.memory_api.celery_app worker --loglevel=info"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=rae
+      - POSTGRES_PASSWORD=rae_password
+      - POSTGRES_DB=rae
+      - POSTGRES_HOST=rae-postgres
+      - REDIS_URL=redis://rae-redis:6379/0
+      - CELERY_BROKER_URL=redis://rae-redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://rae-redis:6379/0
+      - QDRANT_HOST=rae-qdrant
+      - PYTHONPATH=/app:/app/rae_core
+    volumes:
+      - ./archive/projects_nested/rae-core/rae_core:/app/rae_core
+      - ./apps:/app/apps
+      - ./rae_adapters:/app/rae_adapters
+    networks:
+      - rae-network
+    depends_on:
+      - redis
+      - postgres
+
   rae-oracle-ui:
     image: rae-oracle:latest
     container_name: rae-oracle-ui
