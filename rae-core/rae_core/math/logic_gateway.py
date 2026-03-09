@@ -12,6 +12,7 @@ from rae_core.math.features_v2 import FeatureExtractorV2
 from rae_core.math.metadata_injector import MetadataInjector
 from rae_core.math.policy import PolicyRouter
 from rae_core.math.resonance import SemanticResonanceEngine
+from rae_core.math.theories.registry import FluidDispatcher
 
 logger = structlog.get_logger(__name__)
 
@@ -25,6 +26,7 @@ class LogicGateway:
         self.graph_store = None
         self.storage = None
         self.router = PolicyRouter(confidence_threshold=0.4)
+        self.dispatcher = FluidDispatcher(profile=self.config)
 
         project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
         model_path = os.path.join(project_root, "models/cross-encoder/model.onnx")
@@ -61,7 +63,9 @@ class LogicGateway:
         for strategy, results in strategy_results.items():
             for rank, item in enumerate(results):
                 m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
-                if isinstance(m_id, str): m_id = UUID(m_id)
+                if isinstance(m_id, str) and len(m_id) >= 32:
+                    try: m_id = UUID(m_id)
+                    except ValueError: pass
                 
                 # Sharp exponential decay for rank
                 strategy_scores[strategy][m_id] = math.exp(-rank / 3.0)
@@ -83,6 +87,10 @@ class LogicGateway:
         fused_scores: dict[UUID, float] = {}
         features = self.extractor.extract(query)
         
+        # Pull parameters from profile or fallback to defaults
+        res_factor = float(profile.get("strategy", {}).get("thresholds", {}).get("resonance_factor", 0.5)) if profile else 0.5
+        rerank_limit = int(profile.get("strategy", {}).get("features", {}).get("rerank_limit", 15)) if profile else 15
+
         for m_id in candidate_data:
             base_score = sum(strategy_scores[s].get(m_id, 0.0) for s in strategy_scores)
             
@@ -96,7 +104,7 @@ class LogicGateway:
         # Global Resonance (5 iterations)
         if fused_scores and self.graph_store:
             try:
-                res_engine = SemanticResonanceEngine(resonance_factor=0.5, iterations=5)
+                res_engine = SemanticResonanceEngine(resonance_factor=res_factor, iterations=5)
                 initial_list = [ {**candidate_data[m_id], "search_score": fused_scores[m_id]} for m_id in fused_scores ]
                 initial_list.sort(key=lambda x: x["search_score"], reverse=True)
                 
@@ -109,10 +117,20 @@ class LogicGateway:
                 logger.error("resonance_failed", error=str(e))
 
         candidates = [ {**candidate_data[m_id], "score": fused_scores[m_id]} for m_id in fused_scores ]
+        
+        # SYSTEM 100.0: Fluid Theory Cascade
+        # Pass candidates through the dispatcher to apply Phoenix, Decay, and Resonance theories
+        theory_results = self.dispatcher.execute_cascade(candidates, query)
+        
+        # Update candidate scores with theory outcomes
+        theory_scores = {cid: score for cid, score in theory_results}
+        for c in candidates:
+            c["score"] = theory_scores.get(c["id"], c["score"])
+            
         candidates.sort(key=lambda x: x["score"], reverse=True)
         
-        # Neural Tie-Breaker with Sigmoid Normalization
-        to_rerank = candidates[:15]
+        # Neural Tie-Breaker with Dynamic Limit
+        to_rerank = candidates[:rerank_limit]
         if self.reranker and query and to_rerank:
             pairs = []
             for c in to_rerank:

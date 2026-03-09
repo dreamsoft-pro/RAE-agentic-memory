@@ -1,0 +1,15 @@
+name: "Quantum 100k (MRR 1.0)"
+description: "High-performance search for large datasets using MAB and Sparse Vectors"
+strategy:
+  fusion: "softmax"
+  weights:
+    dense: 1.0
+    sparse: 5.0
+    fulltext: 10.0
+  thresholds:
+    min_similarity: 0.85
+    resonance_factor: 0.4
+  features:
+    use_bandit: true
+    use_resonance: true
+    lazy_fetching: true

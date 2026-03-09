@@ -86,7 +86,7 @@ class InMemoryVectorStore(IVectorStore):
         filters: dict[str, Any] | None = None,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]:
         """Search for similar vectors using cosine similarity."""
         _project = kwargs.get("project")
         async with self._lock:
@@ -133,7 +133,10 @@ class InMemoryVectorStore(IVectorStore):
                 if score_threshold is not None and similarity < score_threshold:
                     continue
 
-                results.append((memory_id, similarity))
+                # Get importance from metadata
+                importance = vector_data["metadata"].get("importance", 0.5)
+
+                results.append((memory_id, similarity, float(importance)))
 
             # Sort by similarity (descending) and limit
             results.sort(key=lambda x: x[1], reverse=True)
@@ -241,7 +244,7 @@ class InMemoryVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
-    ) -> list[list[tuple[UUID, float]]]:
+    ) -> list[list[tuple[UUID, float, float]]]:
         """Search for similar vectors for multiple queries.
 
         Args:

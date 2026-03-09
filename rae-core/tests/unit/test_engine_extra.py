@@ -74,6 +74,7 @@ async def test_store_memory_basic(
 ):
     mock_embedding_provider.embed_text = AsyncMock(return_value=[0.1] * 128)
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
+    engine.search_engine._unpack_candidate_with_audit = MagicMock(side_effect=lambda x: (x[0], x[1], x[2] if len(x) > 2 else 0.5, x[3] if len(x) > 3 else {}))
 
     await engine.store_memory(tenant_id="t1", agent_id="a1", content="content")
 
@@ -86,11 +87,12 @@ async def test_search_memories_with_custom_weights(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
+    engine.search_engine._unpack_candidate_with_audit = MagicMock(side_effect=lambda x: (x[0], x[1], x[2] if len(x) > 2 else 0.5, x[3] if len(x) > 3 else {}))
     mem_id = uuid4()
 
     # Mock search engine results
     with patch.object(
-        engine.search_engine, "search", AsyncMock(return_value=[(mem_id, 0.8)])
+        engine.search_engine, "search", AsyncMock(return_value=[(mem_id, 0.8, 0.5, {})])
     ):
         mock_storage.get_memory.return_value = {
             "id": mem_id,
@@ -113,6 +115,7 @@ async def test_get_status_detailed(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
+    engine.search_engine._unpack_candidate_with_audit = MagicMock(side_effect=lambda x: (x[0], x[1], x[2] if len(x) > 2 else 0.5, x[3] if len(x) > 3 else {}))
     status = engine.get_status()
     assert status["engine"].startswith("RAE-Core")
     assert "vector" in status["search_strategies"]

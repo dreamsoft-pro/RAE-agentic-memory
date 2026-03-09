@@ -21,6 +21,21 @@ class IMemoryStorage(Protocol):
         """Store a new memory."""
         ...
 
+    async def store_reflection_audit(
+        self,
+        query_id: str,
+        tenant_id: str,
+        fsi_score: float,
+        final_decision: str,
+        l1_report: dict[str, Any],
+        l2_report: dict[str, Any],
+        l3_report: dict[str, Any],
+        agent_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> UUID:
+        """Store a 3-layer reflection audit result."""
+        ...
+
     async def get_memory(
         self,
         memory_id: UUID,
