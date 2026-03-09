@@ -1,0 +1,44 @@
+Subject: [RELEASE] RAE v3.5.0 - GPU Acceleration, MCP Integration & External Reranking
+
+Team,
+
+We are pleased to announce the release of **RAE v3.5.0 (Silicon Oracle Enhanced)**.
+
+This release marks a significant architectural shift towards high-performance hardware utilization and modular external integration.
+
+### 🚀 Key Highlights
+
+1.  **Native GPU Acceleration**:
+    - We have successfully enabled **ONNX Runtime GPU** support (CUDA 12.4) on Node 1.
+    - This delivers a massive performance boost for embedding generation on NVIDIA hardware.
+    - Verified on RTX 4080 (Lumina).
+
+2.  **External Reranking**:
+    - RAE is no longer bound to heavy local reranking models.
+    - New `APIReranker` and `MCPreranker` allow offloading this task to external APIs or MCP tools.
+    - This supports our "Lite" philosophy by keeping the core footprint small while allowing powerful remote capabilities.
+
+3.  **Stability & Quality**:
+    - **Zero Warning Policy** enforced.
+    - **100% Test Pass Rate** (1165 tests passed).
+    - `RAECoreService` refactored for better maintainability.
+
+### 📦 Deployment
+
+The release is tagged as `v3.5.0` on the `develop` branch.
+
+**Update Command:**
+```bash
+git checkout v3.5.0
+docker compose up -d --build
+```
+
+**GPU Activation (Node 1):**
+Ensure `RAE_USE_GPU=True` in your `.env` file.
+
+### 🔗 Resources
+- **Release Tag:** v3.5.0
+- **Docs:** updated `RELEASE_NOTES.md`
+
+Best regards,
+The RAE Team
