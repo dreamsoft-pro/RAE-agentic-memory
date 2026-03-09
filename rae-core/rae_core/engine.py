@@ -31,6 +31,7 @@ class RAEEngine:
         self.embedding_provider = embedding_provider
         self.llm_provider = llm_provider
         self.settings = settings
+        self.cache_provider = cache_provider
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
@@ -45,18 +46,36 @@ class RAEEngine:
             resonance_factor=float(res_factor)
         )
 
-        # Modular Search Engine with ORB 4.0
+        # Flattened Search Engine Strategies (System 43.0)
+        # We register all available vector spaces as independent strategies for global fusion
+        strategies = {
+            "fulltext": self._init_fulltext_strategy(),
+            "anchor": self._init_anchor_strategy(),
+        }
+        
+        # Dynamic Multi-Vector Registration
+        from rae_core.embedding.manager import EmbeddingManager
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+
+        if isinstance(self.embedding_provider, EmbeddingManager):
+            for name, provider in self.embedding_provider.providers.items():
+                # Register each named vector space as a first-class strategy
+                strategy_key = f"vector_{name}"
+                strategies[strategy_key] = VectorSearchStrategy(
+                    self.vector_store, provider, vector_name=name
+                )
+        else:
+            strategies["vector"] = VectorSearchStrategy(
+                self.vector_store, self.embedding_provider
+            )
+
         if search_engine:
             self.search_engine = search_engine
         else:
             from rae_core.search.engine import HybridSearchEngine
 
             self.search_engine = HybridSearchEngine(
-                strategies={
-                    "vector": self._init_vector_strategy(),
-                    "fulltext": self._init_fulltext_strategy(),
-                    "anchor": self._init_anchor_strategy(),
-                },
+                strategies=strategies,
                 embedding_provider=self.embedding_provider,
                 memory_storage=self.memory_storage,
             )
@@ -157,6 +176,7 @@ class RAEEngine:
             "strategy_weights",
             "enable_reranking",
             "custom_weights",
+            "limit",
         ]:
             search_kwargs.pop(k, None)
 
@@ -167,12 +187,12 @@ class RAEEngine:
         candidates = await self.search_engine.search(
             query=query,
             tenant_id=tenant_id,
+            agent_id=agent_id,
             filters=search_filters,
             limit=int(engine_limit),
             strategies=active_strategies,
             strategy_weights=strategy_weights,
             enable_reranking=enable_reranking,
-            math_controller=self.math_ctrl,
             **search_kwargs,
         )
 
@@ -190,22 +210,64 @@ class RAEEngine:
         elif custom_weights:
             scoring_weights = custom_weights
 
-        memories = []
+        # 1. RETRIEVAL & DEDUPLICATION
+        # We ensure each memory ID appears only once, with its best score
+        best_candidates = {}
         for item in candidates:
-            # Robust Unpacking
+            # Robust unpacking for variable result formats (2, 3, or 4 values)
             m_id = item[0]
             sim_score = item[1]
-            importance = item[2] if len(item) > 2 else 0.0
+            importance = item[2] if len(item) > 2 else 0.5
+            audit_log = item[3] if len(item) > 3 else {}
+            
+            if m_id not in best_candidates or sim_score > best_candidates[m_id][0]:
+                best_candidates[m_id] = (sim_score, importance, audit_log)
 
+        memories = []
+        for m_id, (sim_score, importance, audit_log) in best_candidates.items():
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
+                # 2. DESIGNED MATH SCORING
+                # We calculate math score, but if we have a Symbolic Hard-Lock from Stage 1,
+                # we must ensure it remains the dominant factor.
                 math_score = self.math_ctrl.score_memory(
                     memory, query_similarity=sim_score, weights=scoring_weights
                 )
-                memory["math_score"] = math_score
-                memory["search_score"] = sim_score
-                memory["importance"] = importance or memory.get("importance", 0.5)
-                memories.append(memory)
+                
+                # Silicon Oracle: If audit_log contains SIC (Symbolic Information Content), 
+                # we use the fused sim_score directly as it already contains the SIC multiplier.
+                if audit_log.get("sic_boost"):
+                    math_score = sim_score
+                
+                if isinstance(memory, object) and hasattr(memory, "to_dict"):
+                    memory_dict = memory.to_dict()
+                elif not isinstance(memory, dict):
+                    # Fallback for unexpected types
+                    memory_dict = dict(memory)
+                else:
+                    memory_dict = memory
+
+                memory_dict["math_score"] = math_score
+                memory_dict["search_score"] = sim_score
+                memory_dict["importance"] = importance or memory_dict.get("importance", 0.5)
+                memory_dict["audit_trail"] = audit_log
+                
+                # Explicitly log the winning feature for auditability
+                if math_score > 0.8:
+                    win_feature = "unknown"
+                    if audit_log.get("sic_boost"): win_feature = "symbolic_hard_lock"
+                    elif audit_log.get("hard_lock"): win_feature = "symbolic_hard_lock"
+                    elif audit_log.get("anchor_hit"): win_feature = "anchor_match"
+                    elif audit_log.get("cat_boost"): win_feature = "category_match"
+                    elif audit_log.get("quant_boost"): win_feature = "quantitative_resonance"
+                    
+                    logger.info("memory_selection_proof", 
+                                 id=str(m_id), 
+                                 score=math_score, 
+                                 feature=win_feature,
+                                 audit=audit_log)
+                
+                memories.append(memory_dict)
 
         # 3. SEMANTIC RESONANCE
         if hasattr(self.memory_storage, "get_neighbors_batch") and memories:
@@ -239,115 +301,89 @@ class RAEEngine:
                                 UUID(mid_str), tenant_id
                             )
                             if induced_mem:
-                                induced_mem["math_score"] = float(
+                                induced_mem_dict = dict(induced_mem) if not isinstance(induced_mem, dict) else induced_mem
+                                induced_mem_dict["math_score"] = float(
                                     np.tanh(energy_map[mid_str])
                                 )
-                                induced_mem["resonance_metadata"] = {
+                                induced_mem_dict["resonance_metadata"] = {
                                     "induced": True,
                                     "boost": float(energy_map[mid_str]),
                                 }
-                                memories.append(induced_mem)
+                                memories.append(induced_mem_dict)
                         except Exception:
                             continue
 
-        memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+        # SYSTEM 40.17: Guaranteed Tier Isolation
+        memories.sort(key=lambda x: (x.get("audit_trail", {}).get("tier", 2), -x.get("math_score", 0.0)))
 
-        # 4. ACTIVE SZUBAR LOOP (System 5.0 - Neighbor Recruitment)
-        # Instead of just retrying with weights, we expand the search horizon using the Graph.
-        # "If I can't find it, maybe it's connected to something I found."
+        # 4. ACTIVE SZUBAR LOOP (System 52.0 - Neighbor Recruitment)
+        # "Success from Failure": If confidence is low, explore the graph for missing links.
         top_score = memories[0].get("math_score", 0.0) if memories else 0.0
 
-        if top_score < 0.75 and not kwargs.get("_is_retry"):
-            logger.info("active_szubar_expansion", query=query, top_score=top_score)
+        if top_score < 0.75 and not kwargs.get("_is_retry") and hasattr(self.memory_storage, "get_neighbors_batch"):
+            logger.info("active_szubar_expansion_triggered", query=query, top_score=top_score)
 
-            # 1. Identify Anchor Points for Expansion (Top 5 weak candidates)
-            seed_ids = [m["id"] for m in memories[:5]]
-
-            # 2. Fetch Neighbors (Deterministic Graph Traversal)
-            # neighbor_memories = []
-            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
-                # Assuming get_neighbors_batch returns list of connected MemoryItems or dicts
-                # We need to implement/verify this method in storage interface
-                try:
-                    # Fetch adjacency list
-                    # Note: Using get_neighbors_batch might need adaptation if it returns just IDs
-                    # For now, we simulate finding neighbors if the method exists
-                    pass
-                except Exception as e:
-                    logger.warning("graph_expansion_failed", error=str(e))
-
-            # Since get_neighbors_batch might not return full objects, let's use a simpler strategy
-            # available in the current codebase: Resonance Engine already computes energy.
-            # We can use the 'induced_ids' logic but apply it aggressively here.
-
-            # RE-USE RESONANCE to find hidden gems
-            # We explicitly ask Resonance Engine for "High Potential Neighbors" that were NOT in the search results
-
-            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
-                edges = await self.memory_storage.get_neighbors_batch(
-                    seed_ids, tenant_id
-                )
-                if edges:
-                    # Calculate energy flow
-                    _, energy_map = self.resonance_engine.compute_resonance(
-                        memories[:50], edges
+            # 1. Identify seed anchors (Top candidates that almost made it)
+            seed_ids = [m["id"] for m in memories[:10]]
+            
+            # 2. Fetch adjacency list from Knowledge Graph
+            edges = await self.memory_storage.get_neighbors_batch(seed_ids, tenant_id)
+            if edges:
+                # 3. Identify recruited candidates (Neighbors NOT in original results)
+                current_ids = {m["id"] for m in memories}
+                recruited_ids = []
+                for _, neighbors in edges.items():
+                    for n_id, _ in neighbors:
+                        if n_id not in current_ids: recruited_ids.append(n_id)
+                
+                if recruited_ids:
+                    # 4. Fetch full content for deep verification
+                    new_mems_data = await self.memory_storage.get_memories_batch(
+                        recruited_ids[:30], tenant_id
                     )
-
-                    # Identify nodes with high energy that are NOT in our current 'memories' list
-                    current_ids = {m["id"] for m in memories}
-                    recruited_ids = []
-
-                    for node_id_str, energy in energy_map.items():
-                        try:
-                            n_uuid = UUID(node_id_str)
-                            if (
-                                n_uuid not in current_ids and energy > 0.1
-                            ):  # Low threshold to catch everything
-                                recruited_ids.append(n_uuid)
-                        except Exception:
-                            pass
-
-                    if recruited_ids:
-                        # Fetch full content for these neighbors
-                        new_mems_data = await self.memory_storage.get_memories_batch(
-                            recruited_ids[:20], tenant_id
-                        )
-
-                        if new_mems_data:
-                            logger.info(
-                                "szubar_recruited_neighbors", count=len(new_mems_data)
+                    
+                    if new_mems_data:
+                        logger.info("szubar_neighbor_recruitment", count=len(new_mems_data))
+                        
+                        # 5. RE-SCORING: Run recruited neighbors through the same logic
+                        # We simulate a "mini-search" for these specific items
+                        recruited_results = []
+                        for m in new_mems_data:
+                            # Re-run Math + Neural logic for the new candidate
+                            # We use LogicGateway directly if available
+                            multiplier, audit = self.search_engine.fusion_strategy.gateway._apply_mathematical_logic(
+                                query, m["content"], m.get("metadata", {})
                             )
+                            
+                            # Probabilistic score for the newcomer
+                            # We treat it as if it was found at a baseline rank
+                            base_p = 0.5 # Neutral prior for recruited node
+                            final_logit = math.log(base_p / (1.0 - base_p)) + math.log(max(multiplier, 1e-9))
+                            
+                            # Neural Verification if enabled
+                            if kwargs.get("enable_reranking") and self.search_engine.fusion_strategy.gateway.reranker:
+                                pair = (query, f"[CONTENT] {m['content']}")
+                                logit = self.search_engine.fusion_strategy.gateway.reranker.predict([pair])[0]
+                                final_logit += logit
+                                audit["neural_logit"] = logit
 
-                            # Normalize new memories for scoring
-                            candidates_to_score = []
-                            for m in new_mems_data:
-                                # Neighbors inherit "Similarity" from their energy level (proxy)
-                                # But ideally we want to RERANK them against the query
-                                candidates_to_score.append(m)
-
-                            # We need to score these new candidates against the query using ONNX
-                            # We can reuse the Search Engine's reranker if accessible, or Math Controller
-
-                            # Let's verify them with Neural Scalpel (via Math Controller scoring? No, that's math)
-                            # We need vector/cross-encoder score.
-
-                            # Fast Path: Check if they contain query terms (Late Interaction)
-                            # Or just append them and let the user see them? No, we need sorting.
-
-                            # CRITICAL: We inject them into the results with a flag
-                            for m in new_mems_data:
-                                # Heuristic score for neighbor: Base on energy
-                                # Real fix: We should run cross-encoder here, but for now we trust the Graph
-                                m["math_score"] = 0.5 + (
-                                    energy_map.get(str(m["id"]), 0.0) * 0.5
-                                )
-                                m["metadata"]["szubar_recruited"] = True
-                                memories.append(m)
-
-                            # Re-sort with new candidates
-                            memories.sort(
-                                key=lambda x: x.get("math_score", 0.0), reverse=True
-                            )
+                            m_dict = dict(m) if not isinstance(m, dict) else m
+                            m_dict["math_score"] = self.search_engine.fusion_strategy.gateway.sigmoid(final_logit)
+                            m_dict["audit_trail"] = audit
+                            m_dict["audit_trail"]["szubar_recruited"] = True
+                            recruited_results.append(m_dict)
+                        
+                        # Inject and re-sort
+                        memories.extend(recruited_results)
+                        memories.sort(key=lambda x: (x.get("audit_trail", {}).get("tier", 2), -x.get("math_score", 0.0)))
+                        
+                        # Check if Szubar saved the day
+                        new_top_score = memories[0].get("math_score", 0.0)
+                        if new_top_score > top_score:
+                            logger.info("szubar_recovery_success", 
+                                        old_score=top_score, 
+                                        new_score=new_top_score,
+                                        recovered_id=str(memories[0]["id"]))
 
         return memories[:top_k]
 
@@ -365,82 +401,82 @@ class RAEEngine:
         if "layer" not in kwargs:
             kwargs["layer"] = "episodic"
 
-        # Chunking strategy
-        chunk_size = 1500
-        overlap = 200
+        # SYSTEM 40.14: Universal Ingest Pipeline (UICTC)
+        from rae_core.ingestion.pipeline import UniversalIngestPipeline
+        pipeline = UniversalIngestPipeline()
         
-        if len(content) <= chunk_size:
-            # Short content - store as single memory
-            m_id = await self.memory_storage.store_memory(**kwargs)
+        # Process text through the 5-stage pipeline
+        chunks, signature, audit_trail, policy = await pipeline.process(
+            content, 
+            metadata=kwargs.get("metadata")
+        )
+        
+        if not chunks:
+            return None
+
+        # SYSTEM 92.2: Dedup Hash Check (Stop the spiral)
+        if self.cache_provider and chunks:
+            agent_id = kwargs.get("agent_id", "default")
+            project = kwargs.get("project", "default")
+            text_hash = chunks[0].metadata.get("content_hash")
             
-            # Prepare kwargs for embedding (remove duplicated args)
-            embed_kwargs = kwargs.copy()
-            if "content" in embed_kwargs:
-                del embed_kwargs["content"]
-            if "tenant_id" in embed_kwargs:
-                del embed_kwargs["tenant_id"]
-                
-            await self._embed_and_store_vector(m_id, content, tenant_id, **embed_kwargs)
-            return m_id
+            cache_key = f"last_mem_hash:{project}:{agent_id}"
+            last_hash = await self.cache_provider.get(cache_key)
+            
+            if last_hash == text_hash:
+                logger.info("skipping_duplicate_memory_write", project=project, agent_id=agent_id)
+                return None
+            
+            await self.cache_provider.set(cache_key, text_hash, ttl=300) # 5 min protection
+
+        # SYSTEM 92.3: Operational State Isolation
+        # If it's a fallback, we don't want it to be highly retrievable or vectorized
+        is_operational = (policy == "POLICY_FALLBACK")
         
-        # Long content - split into chunks
         import uuid
         parent_id = str(uuid.uuid4())
-        chunks = []
-        
-        # Simple splitting by paragraphs first
-        paragraphs = content.split("\n\n")
-        current_chunk = ""
-        
-        for p in paragraphs:
-            if len(current_chunk) + len(p) < chunk_size:
-                current_chunk += p + "\n\n"
-            else:
-                if current_chunk:
-                    chunks.append(current_chunk.strip())
-                current_chunk = p + "\n\n"
-                
-                # If a single paragraph is huge, split it by characters
-                while len(current_chunk) > chunk_size:
-                    split_point = current_chunk.rfind(" ", 0, chunk_size)
-                    if split_point == -1: split_point = chunk_size
-                    chunks.append(current_chunk[:split_point])
-                    current_chunk = current_chunk[split_point - overlap:] # overlap
-        
-        if current_chunk:
-            chunks.append(current_chunk.strip())
-            
-        # Store chunks
         memory_ids = []
-        base_metadata = kwargs.get("metadata", {}).copy()
-        base_source = kwargs.get("source", "unknown")
         
-        for i, chunk_text in enumerate(chunks):
+        # Store chunks with full provenance
+        for i, chunk in enumerate(chunks):
             chunk_kwargs = kwargs.copy()
-            chunk_kwargs["content"] = chunk_text
-            chunk_kwargs["metadata"] = base_metadata.copy()
+            chunk_kwargs["content"] = chunk.content
+            chunk_kwargs["metadata"] = kwargs.get("metadata", {}).copy()
+            chunk_kwargs["metadata"].update(chunk.metadata)
             chunk_kwargs["metadata"].update({
                 "parent_id": parent_id,
                 "chunk_index": i,
                 "total_chunks": len(chunks),
-                "is_chunk": True
+                "is_chunk": True,
+                "ingest_audit": [a.__dict__ for a in audit_trail] if audit_trail else [],
+                "is_operational": is_operational
             })
-            # Append chunk index to source for clarity
-            chunk_kwargs["source"] = f"{base_source} [part {i+1}/{len(chunks)}]"
+            
+            # Use original source if provided, otherwise default to chunk index
+            base_source = kwargs.get("source", "universal_ingest")
+            chunk_kwargs["source"] = f"{base_source} [p{i+1}/{len(chunks)}]"
+            
+            # Operational data has zero importance for semantic retrieval
+            if is_operational:
+                chunk_kwargs["importance"] = 0.0
+                chunk_kwargs["tags"] = chunk_kwargs.get("tags", []) + ["operational", "non_retrievable"]
             
             m_id = await self.memory_storage.store_memory(**chunk_kwargs)
             
-            # Prepare kwargs for embedding (remove duplicated args)
-            embed_kwargs = chunk_kwargs.copy()
-            if "content" in embed_kwargs:
-                del embed_kwargs["content"]
-            if "tenant_id" in embed_kwargs:
-                del embed_kwargs["tenant_id"]
+            # Skip vector store for operational/fallback data (Anti-Echo)
+            if not is_operational:
+                # Embed and store vector
+                embed_kwargs = chunk_kwargs.copy()
+                if "content" in embed_kwargs: del embed_kwargs["content"]
+                if "tenant_id" in embed_kwargs: del embed_kwargs["tenant_id"]
                 
-            await self._embed_and_store_vector(m_id, chunk_text, tenant_id, **embed_kwargs)
+                await self._embed_and_store_vector(m_id, chunk.content, tenant_id, **embed_kwargs)
+            else:
+                logger.info("skipping_vector_store_for_operational_data", memory_id=str(m_id))
+                
             memory_ids.append(m_id)
             
-        return memory_ids[0] # Return first ID for compatibility
+        return memory_ids[0]
 
     async def _embed_and_store_vector(self, m_id, content, tenant_id, **kwargs):
         if hasattr(self.embedding_provider, "generate_all_embeddings"):

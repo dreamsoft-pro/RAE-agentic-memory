@@ -78,7 +78,8 @@ services:
       - PYTHONPATH=/app:/app/rae_core
       - OLLAMA_API_URL=http://ollama-dev:11434
     volumes:
-      - ./archive/projects_nested/rae-core/rae_core:/app/rae_core
+      - ./rae-core/rae_core:/app/rae_core
+      - ./archive/projects_nested/rae-core/rae_core:/app/rae_core_legacy
       - ./rae_core/rae_core/models/contracts.py:/app/rae_core/models/contracts.py
       - ./apps:/app/apps
       - ./rae_adapters:/app/rae_adapters

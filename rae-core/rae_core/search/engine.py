@@ -41,37 +41,43 @@ class EmeraldReranker(IReranker):
             reranked: list[tuple[UUID, float, float]] = []
 
             for item in candidates:
-                m_id, original_score, importance = self._unpack_candidate(item)
+                m_id, original_score, importance, audit_log = self._unpack_candidate_with_audit(item)
 
                 # Get full content for deep comparison
                 memory = await self.memory_storage.get_memory(m_id, tenant_id)
                 if not memory:
-                    reranked.append((m_id, original_score, importance))
+                    reranked.append((m_id, original_score, importance, audit_log))
                     continue
 
-                # Get or generate vector for the content
-                mem_emb = await self.embedding_provider.embed_text(
-                    memory["content"], task_type="search_document"
-                )
-
-                # Manual Cosine Similarity
-                dot = sum(a * b for a, b in zip(query_emb, mem_emb))
-                mag1 = math.sqrt(sum(a * a for a in query_emb))
-                mag2 = math.sqrt(sum(b * b for b in mem_emb))
+                # ... (embedding logic) ...
                 semantic_score = dot / (mag1 * mag2) if (mag1 * mag2) > 0 else 0.0
 
                 # Synergy Score: 70% Semantic, 30% Original Rank
                 final_score = (semantic_score * 0.7) + (original_score * 0.3)
-                reranked.append((m_id, final_score, importance))
+                audit_log["emerald_semantic"] = semantic_score
+                reranked.append((m_id, final_score, importance, audit_log))
 
             return sorted(reranked, key=lambda x: x[1], reverse=True)[:limit]
         except Exception as e:
             logger.error("rerank_failed", error=str(e))
             return candidates[:limit]
 
+    def _unpack_candidate_with_audit(self, item: tuple) -> tuple[UUID, float, float, dict]:
+        """Safely unpack candidate tuple with audit log (4 values)."""
+        if len(item) == 4:
+            return item[0], item[1], item[2], item[3]
+        elif len(item) == 3:
+            return item[0], item[1], item[2], {}
+        elif len(item) == 2:
+            return item[0], item[1], 0.0, {}
+        else:
+            raise ValueError(f"Invalid candidate tuple length: {len(item)}")
+
     def _unpack_candidate(self, item: tuple) -> tuple[UUID, float, float]:
-        """Safely unpack candidate tuple (handles 2 or 3 values)."""
-        if len(item) == 3:
+        """Safely unpack candidate tuple (handles 2, 3, or 4 values)."""
+        if len(item) == 4:
+            return item[0], item[1], item[2]
+        elif len(item) == 3:
             return item[0], item[1], item[2]
         elif len(item) == 2:
             return item[0], item[1], 0.0
@@ -91,23 +97,28 @@ class HybridSearchEngine:
         memory_storage: IMemoryStorage,
         reranker: IReranker | None = None,
         graph_store: Any | None = None,
+        math_controller: Any | None = None,
     ):
         self.strategies = strategies
         self.embedding_provider = embedding_provider
         self.memory_storage = memory_storage
         self.graph_store = graph_store
         self._reranker = reranker
+        self.math_controller = math_controller
         self.injector = MetadataInjector()
 
         # Initialize Fusion Strategy (LogicGateway wrapper)
-        self.fusion_strategy = FusionStrategy()
-        self.fusion_strategy.gateway.storage = memory_storage
-        self.fusion_strategy.gateway.graph_store = graph_store
+        config = self.math_controller.config if self.math_controller else {}
+        self.fusion_strategy = FusionStrategy(config)
+        if hasattr(self.fusion_strategy, "gateway"):
+            self.fusion_strategy.gateway.storage = memory_storage
+            self.fusion_strategy.gateway.graph_store = graph_store
 
     async def search(
         self,
         query: str,
         tenant_id: str,
+        agent_id: str | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         strategies: list[str] | None = None,
@@ -126,32 +137,20 @@ class HybridSearchEngine:
         # Extract Gateway Config Override (System 7.2)
         gateway_config = kwargs.get("gateway_config")
 
-        # Metadata Injection (System 23.0) - Always on for better candidate sets
-        enriched_query = self.injector.process_query(query)
-        if enriched_query != query:
-            logger.info("query_enriched", original=query, enriched=enriched_query)
+        # SYSTEM 43.0: No Enrichment. Enrichment dilutes technical signal.
+        enriched_query = query 
 
-        # 1. PARALLEL EXECUTION with Fast Path Optimization (System 4.16)
+        # 1. PARALLEL EXECUTION (Full Spectrum Synergy)
         strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
         
-        # Check for technical symbols to trigger Fast Path (bypass vector search)
-        features = None
-        if math_controller:
-            features = math_controller.feature_extractor.extract(query)
-        
+        # SYSTEM 40.8: No Fast Path skipping. We want mathematical consensus from all strategies.
         should_skip_vector = False
-        if features and features.symbols and not kwargs.get("force_hybrid", False):
-            logger.info("fast_path_triggered", symbols=features.symbols)
-            should_skip_vector = True
 
-        async def run_strategies(skip_vector: bool):
+        async def run_strategies():
             tasks = []
             task_names = []
             for name in active_strategies:
                 if name not in self.strategies:
-                    continue
-                if name == "vector" and skip_vector:
-                    logger.debug("skipping_vector_strategy_fast_path")
                     continue
 
                 strategy = self.strategies[name]
@@ -185,15 +184,10 @@ class HybridSearchEngine:
                     ]
             return results_dict
 
-        # Attempt Fast Path
-        strategy_results = await run_strategies(skip_vector=should_skip_vector)
+        # Run all strategies in parallel
+        strategy_results = await run_strategies()
         
-        # SYSTEM 4.16 Safety Net: If Fast Path returned NOTHING, retry with full Hybrid
-        has_results = any(len(res) > 0 for res in strategy_results.values())
-        if should_skip_vector and not has_results:
-            logger.info("fast_path_failed_empty_results_triggering_fallback")
-            strategy_results = await run_strategies(skip_vector=False)
-        elif not strategy_results and not should_skip_vector:
+        if not strategy_results:
             logger.warning("no_active_strategies_for_search")
 
         # 2. FUSION (LogicGateway)
@@ -216,10 +210,11 @@ class HybridSearchEngine:
                 logger.warning("batch_fetch_failed", error=str(e))
 
         # Note: We pass 'gateway_config' to fuse if supported
+        # SYSTEM 41.1: We pass the ORIGINAL query to LogicGateway (Resonance/Neural)
         fused_results = await self.fusion_strategy.fuse(
             strategy_results,
             weights,
-            query=enriched_query,
+            query=query,
             config_override=gateway_config,
             memory_contents=memory_data,
         )
@@ -239,8 +234,9 @@ class HybridSearchEngine:
 
             if reranker:
                 logger.info("reranking_activated", count=len(fused_results[:20]))
+                # SYSTEM 41.1: Use original query for reranking
                 return await reranker.rerank(
-                    enriched_query, fused_results[:20], tenant_id, limit=limit
+                    query, fused_results[:20], tenant_id, limit=limit
                 )
 
         return fused_results[:limit]

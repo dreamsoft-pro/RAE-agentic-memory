@@ -12,6 +12,7 @@ Principle: This segmenter combines hierarchical structural splitting with
 """
 import numpy as np
 import re
+import os
 from typing import List, Optional, Any
 from rae_core.ingestion.interfaces import IngestChunk, IngestAudit
 
@@ -48,14 +49,20 @@ class SemanticRecursiveSegmenter:
         semantic_separators: Optional[List[str]] = None,
         chunk_size: int = 1000,
         semantic_threshold_percentile: int = 90,
-        embedding_model_path: str = "/app/models/all-MiniLM-L6-v2/model.onnx", # Use RAE's ONNX model
-        embedding_tokenizer_path: str = "/app/models/all-MiniLM-L6-v2/tokenizer.json"
+        embedding_model_path: Optional[str] = None,
+        embedding_tokenizer_path: Optional[str] = None
     ):
         self._structural_separators = structural_separators or ["\n\n", "\n", " ", ""]
         self._chunk_size = chunk_size
         self._semantic_separators = semantic_separators or [". ", "? ", "! ", "\n"]
         self.semantic_threshold_percentile = semantic_threshold_percentile
         
+        # Resolve paths dynamically
+        if not embedding_model_path:
+            project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
+            embedding_model_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/model.onnx")
+            embedding_tokenizer_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/tokenizer.json")
+
         # Instantiate RAE's NativeEmbeddingProvider
         self._embedder = NativeEmbeddingProvider(
             model_path=embedding_model_path,
