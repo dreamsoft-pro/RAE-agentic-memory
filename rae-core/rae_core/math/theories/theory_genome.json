@@ -3,12 +3,7 @@
     "generation": 3,
     "domains": {
         "industrial": {
-            "sequence": [
-                "logos",
-                "synergy",
-                "entropy",
-                "decay"
-            ],
+            "sequence": ["logos", "synergy", "entropy", "decay"],
             "params": {
                 "logic_boost": 19.0,
                 "synergy_factor": 3.0,
@@ -18,14 +13,8 @@
         }
     },
     "pillars": {
-        "logos": {
-            "weight": 0.7
-        },
-        "psyche": {
-            "weight": 0.3
-        },
-        "noos": {
-            "weight": 0.5
-        }
+        "logos": {"weight": 0.7},
+        "psyche": {"weight": 0.3},
+        "noos": {"weight": 0.5}
     }
 }

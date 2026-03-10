@@ -337,8 +337,12 @@ class QdrantVectorStore(IVectorStore):
         """
         await self._ensure_collection()
 
+        from qdrant_client.models import FieldCondition, MatchValue
+        
         # Build filter - mandatory tenant_id
-        must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
+        must_conditions = [
+            FieldCondition(key="tenant_id", match=MatchValue(value=str(tenant_id)))
+        ]
 
         # Support extracting core filters from the filters dict if not provided directly
         effective_agent_id = agent_id or (filters.get("agent_id") if filters else None)
@@ -346,13 +350,19 @@ class QdrantVectorStore(IVectorStore):
         effective_layer = layer or (filters.get("layer") if filters else None)
 
         if effective_agent_id:
-            must_conditions.append({"key": "agent_id", "match": {"value": effective_agent_id}})
+            must_conditions.append(
+                FieldCondition(key="agent_id", match=MatchValue(value=str(effective_agent_id)))
+            )
 
         if effective_session_id:
-            must_conditions.append({"key": "session_id", "match": {"value": effective_session_id}})
+            must_conditions.append(
+                FieldCondition(key="session_id", match=MatchValue(value=str(effective_session_id)))
+            )
 
         if effective_layer:
-            must_conditions.append({"key": "layer", "match": {"value": effective_layer}})
+            must_conditions.append(
+                FieldCondition(key="layer", match=MatchValue(value=str(effective_layer)))
+            )
 
         # Apply generic metadata filters
         if filters:

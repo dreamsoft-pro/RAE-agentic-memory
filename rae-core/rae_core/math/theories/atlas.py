@@ -11,38 +11,47 @@ from .theory_semantic_stability import SemanticStabilityTheory
 from .theory_decay_exponential import ExponentialDecayTheory
 from .theory_synergy import SynergyTheory
 from .theory_entropy import EntropyTheory
+from .theory_identity import IdentityTheory
+from .theory_structural_gravity import StructuralGravityTheory
+from .theory_exclusivity import KeywordExclusivityTheory
 
 # Poziom 3: Trzy Filary Bytu (Pillars)
 PILLARS = {
-    "logos": LogicFramerTheory,      # Pillar 1: Lexical/Deterministic (Concrete)
+    "logos": IdentityTheory,         # Pillar 1: Pure Identity / Determinism
     "psyche": SemanticStabilityTheory, # Pillar 2: Semantic/Intuitive (Stability)
     "noos": QuantumResonanceTheory     # Pillar 3: Relational/Context (Resonance)
 }
 
 # Poziom 6: Sześciu Modulatorów (Modulators)
 MODULATORS = {
+    "identity": IdentityTheory,
+    "logos": IdentityTheory,        # Alias for Evolver
+    "logic": LogicFramerTheory,
     "decay": ExponentialDecayTheory,
     "resonance": QuantumResonanceTheory,
+    "noos": QuantumResonanceTheory, # Alias
     "stability": SemanticStabilityTheory,
+    "psyche": SemanticStabilityTheory, # Alias
     "synergy": SynergyTheory,
     "entropy": EntropyTheory,
-    # Future additions: Gravity
+    "gravity": StructuralGravityTheory,
+    "exclusivity": KeywordExclusivityTheory
 }
 
 # Poziom 9: Dziewięć Domen Świata (Domain Profiles)
 DOMAINS = {
-    "industrial": ["logos", "synergy", "entropy", "decay"],
+    "industrial": ["identity", "exclusivity", "gravity", "synergy"],
     "medical": ["psyche", "noos", "synergy"],
-    "legal": ["logos", "psyche", "noos"],
-    "it_support": ["logos", "synergy", "noos"],
+    "legal": ["identity", "psyche", "noos"],
+    "it_support": ["identity", "logic", "gravity"],
     "creative": ["psyche", "noos"],
     "administrative": ["stability", "decay"],
     "scientific": ["noos", "stability", "synergy"],
     "personal": ["psyche", "decay"],
-    "security": ["logos", "entropy", "stability"]
+    "security": ["identity", "entropy", "stability"]
 }
 
 def get_theory_by_id(theory_id: str) -> Type[IMathematicalTheory] | None:
     """Helper to find theory in any level of the 3-6-9 hierarchy."""
-    all_theories = {**PILLARS, **MODULATORS}
+    all_theories = {**MODULATORS}
     return all_theories.get(theory_id)
