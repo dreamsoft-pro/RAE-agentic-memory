@@ -48,19 +48,22 @@ class PostgreSQLStorage(IMemoryStorage):
             # 3. Federated UPSERT (Evidence Consolidation)
             sql = """
                 INSERT INTO memories (
-                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source, info_class, governance
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source, info_class, governance, human_label
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 ON CONFLICT (tenant_id, content_hash) DO UPDATE SET
                     importance = GREATEST(memories.importance, EXCLUDED.importance),
                     usage_count = memories.usage_count + 1,
                     last_accessed_at = now(),
                     source = memories.source || ', ' || EXCLUDED.source,
                     metadata = memories.metadata || EXCLUDED.metadata,
-                    governance = memories.governance || EXCLUDED.governance
+                    governance = memories.governance || EXCLUDED.governance,
+                    human_label = COALESCE(EXCLUDED.human_label, memories.human_label)
                 RETURNING id
             """
             
             m_id = kwargs.get("memory_id") or uuid4()
+            human_label = kwargs.get("human_label") or new_metadata.get("human_label")
+            
             row = await conn.fetchrow(
                 sql,
                 m_id,
@@ -76,7 +79,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 kwargs.get("project"),
                 source,
                 kwargs.get("info_class", "internal"),
-                json.dumps(kwargs.get("governance", {}))
+                json.dumps(kwargs.get("governance", {})),
+                human_label
             )
             return row["id"]
 
@@ -196,8 +200,8 @@ class PostgreSQLStorage(IMemoryStorage):
         word_conditions = []
         for i, w in enumerate(words):
             word_idx = len(params) + 1
-            # Search both content and the human_label in metadata
-            word_conditions.append(f"(content ILIKE ${word_idx} OR metadata->>'human_label' ILIKE ${word_idx})")
+            # Search both content and the dedicated human_label column
+            word_conditions.append(f"(content ILIKE ${word_idx} OR human_label ILIKE ${word_idx})")
             params.append(f"%{w}%")
         
         word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"
