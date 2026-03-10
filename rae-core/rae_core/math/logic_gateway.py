@@ -74,7 +74,24 @@ class LogicGateway:
         active_mode = (config_override or {}).get("fusion_mode") or self.config.get("fusion_mode", "legacy_416")
         strategy = self.strategies.get(active_mode, self.strategies["legacy_416"])
         
-        # 3. Execution
+        # SYSTEM 369.2: Apply Pillar Philosophical Weights (from Evolver)
+        if weights:
+            # genome format: {"pillars": {"logos": {"weight": 0.7}, ...}}
+            # profile format: {"pillars": {"logos": {"weight": 0.7}, ...}}
+            p_config = (config_override or self.config).get("pillars", {})
+            if p_config:
+                w_logos = float(p_config.get("logos", {}).get("weight", 1.0))
+                w_psyche = float(p_config.get("psyche", {}).get("weight", 1.0))
+                w_noos = float(p_config.get("noos", {}).get("weight", 1.0))
+                
+                # Apply multipliers to strategy weights
+                if "fulltext" in weights: weights["fulltext"] *= w_logos
+                if "vector_dense" in weights: weights["vector_dense"] *= w_psyche
+                if "vector_nomic" in weights: weights["vector_nomic"] *= w_noos
+                # Legacy compatibility
+                if "vector" in weights: weights["vector"] *= w_psyche
+
+        # 3. Execution (System 369.3 - Fluid Signal Fusion)
         base_results = await strategy.fuse(
             strategy_results=strategy_results,
             query=query,
@@ -82,6 +99,64 @@ class LogicGateway:
             memory_contents=memory_contents or {},
             weights=weights
         )
+
+        import re
+        query_tokens = set(re.findall(r"\b(?:0x[0-9A-F]+|[a-z0-9]{3,}(?:[-_][a-z0-9]+)+|ticket_\d+|log_\d+|srv-\d+|incident_\d+)\b", query, re.I))
+
+        # Signal Weights from Config (for Evolution)
+        cfg_math = (config_override or self.config).get("math", {})
+        w_id = float(cfg_math.get("identity_signal_weight", 100.0))
+        w_shape = float(cfg_math.get("shape_signal_weight", 10.0))
+        w_temp = float(cfg_math.get("temporal_signal_weight", 0.0000001)) # Tiny weight for huge timestamps
+
+        boosted_results = []
+        for r in base_results:
+            m_id, score, importance, audit = r
+            mem_data = (memory_contents or {}).get(m_id, {})
+            content = str(mem_data.get("content", "")).lower()
+            
+            # A. Calculate Technical Signals
+            # 1. Identity Lock (Exact Token Matches)
+            id_count = sum(1 for t in query_tokens if t.lower() in content)
+            id_signal = id_count * w_id
+            
+            # 2. Structural Shape Fit
+            has_brackets = 1.0 if "[" in content and "]" in content else 0.0
+            has_hex = 1.0 if "0x" in content else 0.0
+            shape_signal = ((has_brackets + has_hex) / 2.0) * w_shape
+            
+            # 3. Temporal Signal (Relative to current time to avoid overflow)
+            try:
+                ts_str = mem_data.get("metadata", {}).get("timestamp", "")
+                temp_v = datetime.fromisoformat(ts_str.replace('Z', '+00:00')).timestamp() if ts_str else 0.0
+            except:
+                temp_v = 0.0
+            temp_signal = temp_v * w_temp
+
+            # B. Apply Fast Path Short-Circuit (Tiering)
+            is_anchor = False
+            anchor_val = str(mem_data.get("metadata", {}).get("anchor") or "").lower()
+            if anchor_val and any(t.lower() == anchor_val for t in query_tokens):
+                is_anchor = True
+                score = score * 1000.0 # Absolute priority for anchors
+            
+            # C. Fluid Fusion of All Signals
+            final_score = score + id_signal + shape_signal + temp_signal
+            
+            new_audit = {
+                **audit,
+                "signals": {
+                    "id": round(id_signal, 2),
+                    "shape": round(shape_signal, 2),
+                    "temp": round(temp_signal, 2)
+                },
+                "tier": 0 if is_anchor else 1,
+                "fast_path": is_anchor
+            }
+            boosted_results.append((m_id, final_score, importance, new_audit))
+
+        # Re-sort after fluid fusion
+        base_results = sorted(boosted_results, key=lambda x: (x[3].get("tier", 2), -x[1]))
         
         # DEBUG: Trace input signals
         with open("DEBUG_FUSION.jsonl", "a") as f:

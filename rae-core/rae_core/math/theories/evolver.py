@@ -9,6 +9,7 @@ import os
 import subprocess
 import random
 import uuid
+import sys
 import structlog
 from typing import Dict, Any
 from rae_core.math.theories.contract import EvolutionContract
@@ -23,70 +24,128 @@ class TheoryEvolver:
         self.genome = self.load_genome()
         self.current_rationale = ""
         self.current_trace_id = ""
+        # Use current python interpreter for sub-processes
+        self.python_bin = sys.executable
         
     def load_genome(self) -> Dict[str, Any]:
         if os.path.exists(GENOME_PATH):
             with open(GENOME_PATH, "r") as f:
                 return json.load(f)
-        return {"best_mrr": 0.0, "generation": 0, "domains": {}}
+        return {
+            "best_mrr": 0.0, 
+            "generation": 0, 
+            "domains": {},
+            "pillars": {
+                "logos": {"weight": 0.7},
+                "psyche": {"weight": 0.3},
+                "noos": {"weight": 0.5}
+            }
+        }
 
     def save_genome(self):
         with open(GENOME_PATH, "w") as f:
             json.dump(self.genome, f, indent=4)
 
     def mutate(self):
-        """Mutates the genome using Tesla 3-6-9 harmonics with ISO Rationale."""
+        """Mutates the genome using Structural Evolution (Tesla 3-6-9 Harmony)."""
         self.current_trace_id = str(uuid.uuid4())
         logger.info("evolution_mutation_start", 
                     generation=self.genome["generation"], 
                     trace_id=self.current_trace_id)
         
-        # 1. Mutate Industrial Domain (Our current target)
         if "industrial" not in self.genome["domains"]:
-            self.genome["domains"]["industrial"] = {"sequence": ["logos", "synergy", "entropy", "decay"], "params": {}}
+            self.genome["domains"]["industrial"] = {
+                "sequence": ["logos", "synergy", "entropy", "decay"], 
+                "params": {"logic_boost": 19.0, "synergy_factor": 3.0, "entropy_penalty": 0.5}
+            }
             
-        params = self.genome["domains"]["industrial"]["params"]
+        domain_cfg = self.genome["domains"]["industrial"]
+        params = domain_cfg["params"]
+        sequence = domain_cfg["sequence"]
         
-        # Choose which parameter to mutate
-        param_to_mutate = random.choice(["logic_boost", "synergy_factor", "entropy_penalty"])
-        tesla_factor = random.choice([3, 6, 9])
+        # Ensure pillars exist
+        if "pillars" not in self.genome:
+            self.genome["pillars"] = {
+                "logos": {"weight": 0.7},
+                "psyche": {"weight": 0.3},
+                "noos": {"weight": 0.5}
+            }
         
-        if param_to_mutate == "logic_boost":
-            current = params.get("logic_boost", 10.0)
-            change = tesla_factor if random.random() > 0.5 else -tesla_factor
-            params["logic_boost"] = max(1.0, current + change)
-            self.current_rationale = f"Adjusted logic_boost by {change} to sharpen/relax technical identity matching (Logos Pillar)."
+        # Determine mutation type: 40% Parametric, 40% Structural, 20% Pillar
+        dice = random.random()
+        
+        if dice < 0.4:
+            # 1. Parametric Mutation (Fine-tuning)
+            # Ensure all available params are considered
+            all_params = list(params.keys())
+            for p in ["identity_signal_weight", "shape_signal_weight", "temporal_signal_weight"]:
+                if p not in all_params: all_params.append(p)
+                
+            param_to_mutate = random.choice(all_params)
+            tesla_factor = random.choice([3, 6, 9])
             
-        elif param_to_mutate == "synergy_factor":
-            current = params.get("synergy_factor", 3.0)
-            # Factor-based mutation for synergy
-            direction = "increase" if random.random() > 0.5 else "decrease"
-            params["synergy_factor"] = current * 1.3 if direction == "increase" else max(1.1, current / 1.3)
-            self.current_rationale = f"{direction.capitalize()}d synergy_factor to modulate non-linear cross-theory agreement."
+            if param_to_mutate == "logic_boost":
+                params["logic_boost"] = max(1.0, params.get("logic_boost", 19.0) + (tesla_factor if random.random() > 0.5 else -tesla_factor))
+            elif "signal_weight" in param_to_mutate:
+                current = params.get(param_to_mutate, 1.0)
+                params[param_to_mutate] = current * 1.5 if random.random() > 0.5 else current * 0.5
+            else:
+                current = params.get(param_to_mutate, 1.0)
+                params[param_to_mutate] = current * 1.3 if random.random() > 0.5 else current * 0.7
+                
+            self.current_rationale = f"Parametric drift of {param_to_mutate} using Tesla factor {tesla_factor}."
+
+        elif dice < 0.8:
+            # 2. Structural Mutation (Architecture change)
+            from rae_core.math.theories.atlas import MODULATORS
+            available_modulators = list(MODULATORS.keys())
             
-        elif param_to_mutate == "entropy_penalty":
-            current = params.get("entropy_penalty", 0.5)
-            direction = "increase" if random.random() > 0.5 else "decrease"
-            params["entropy_penalty"] = min(1.0, current + 0.1) if direction == "increase" else max(0.0, current - 0.1)
-            self.current_rationale = f"{direction.capitalize()}d entropy_penalty to filter out search noise."
+            sub_dice = random.random()
+            if sub_dice < 0.4 and len(sequence) > 1:
+                # Swap (Reorder)
+                idx1, idx2 = random.sample(range(len(sequence)), 2)
+                sequence[idx1], sequence[idx2] = sequence[idx2], sequence[idx1]
+                self.current_rationale = f"Structural reorder: swapped elements in cascade."
+            elif sub_dice < 0.7:
+                # Add new theory from Atlas
+                new_theory = random.choice(available_modulators)
+                if new_theory not in sequence:
+                    sequence.insert(random.randint(0, len(sequence)), new_theory)
+                    self.current_rationale = f"Structural expansion: added {new_theory} to cascade."
+                else:
+                    self.current_rationale = "Structural mutation skipped: theory already in sequence."
+            else:
+                # Remove theory
+                if len(sequence) > 1:
+                    removed = sequence.pop(random.randint(0, len(sequence)-1))
+                    self.current_rationale = f"Structural reduction: removed {removed} from cascade."
+                else:
+                    self.current_rationale = "Structural mutation skipped: sequence too short."
+
+        else:
+            # 3. Pillar Mutation (Philosophical balance)
+            pillar = random.choice(["logos", "psyche", "noos"])
+            current_weight = self.genome["pillars"][pillar]["weight"]
+            self.genome["pillars"][pillar]["weight"] = min(1.0, max(0.1, current_weight + (0.1 if random.random() > 0.5 else -0.1)))
+            self.current_rationale = f"Philosophical shift: adjusted {pillar} weight to {self.genome['pillars'][pillar]['weight']:.2f}."
             
         self.genome["generation"] += 1
 
     def run_experiment(self) -> float:
         """Executes the benchmark in a stable sandbox tenant and returns MRR."""
-        # Use a deterministic UUID v5 for sandbox instead of strings/zeros
-        tenant_id = EvolutionContract.generate_deterministic_id("EVO-SANDBOX-369")
+        # Fixed Sandbox Tenant ID (ISO Compliant Namespace)
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"
         
         benchmark_cmd = [
-            ".venv/bin/python3", 
+            self.python_bin, 
             "benchmarking/scripts/run_benchmark.py", 
             "--set", "benchmarking/sets/industrial_small.yaml",
-            "--tenant", str(tenant_id)
+            "--tenant", tenant_id
         ]
         
         logger.info("evolution_experiment_run", 
                     cmd=" ".join(benchmark_cmd), 
-                    tenant=str(tenant_id),
+                    tenant=tenant_id,
                     trace_id=self.current_trace_id,
                     iso_audit=True)
         
@@ -132,7 +191,7 @@ class TheoryEvolver:
             self.genome = backup_genome
             self.save_genome()
 
-    def save_to_iso_audit(self, mrr: float, tenant_id: UUID):
+    def save_to_iso_audit(self, mrr: float, tenant_id: uuid.UUID):
         """Saves the experiment result to the ISO Compliance Genealogy log."""
         payload = EvolutionContract.get_reflective_payload(
             mrr, 
@@ -162,8 +221,43 @@ class TheoryEvolver:
             
         logger.info("iso_compliance_logged", trace_id=self.current_trace_id, path=ISO_AUDIT_PATH)
 
+    def run_tournament(self):
+        """Systematically tests every theory in the Atlas alone with default params."""
+        from rae_core.math.theories.atlas import MODULATORS
+        logger.info("evolution_tournament_start", total_theories=len(MODULATORS))
+        
+        results = {}
+        
+        for name in MODULATORS.keys():
+            logger.info("tournament_round_start", theory=name)
+            
+            # Temporary override genome to test ONLY this theory
+            original_sequence = self.genome["domains"]["industrial"]["sequence"]
+            self.genome["domains"]["industrial"]["sequence"] = [name]
+            self.save_genome()
+            
+            mrr = self.run_experiment()
+            results[name] = mrr
+            logger.info("tournament_round_result", theory=name, mrr=mrr)
+            
+            # Restore
+            self.genome["domains"]["industrial"]["sequence"] = original_sequence
+            
+        # Sort and report
+        sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
+        print("\n🏆 THEORY TOURNAMENT RESULTS (Baseline MRR):")
+        for name, mrr in sorted_results:
+            print(f"   - {name:15}: {mrr:.4f}")
+        print("\n")
+        
+        return sorted_results
+
 if __name__ == "__main__":
     evolver = TheoryEvolver()
-    # Run 5 generations to find better synergy
-    for _ in range(5):
+    
+    # 1. Run Tournament to see who is the baseline leader
+    evolver.run_tournament()
+    
+    # 2. Run Final Evolution (Structural & Parametric) - 200 generations
+    for _ in range(200):
         evolver.step()

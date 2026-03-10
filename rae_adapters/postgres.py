@@ -8,6 +8,54 @@ import asyncpg
 from rae_core.interfaces.storage import IMemoryStorage
 
 
+class PostgreSQLGraphStore:
+    """PostgreSQL implementation of Knowledge Graph storage."""
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
+
+    async def add_node(self, tenant_id: UUID, project_id: str, node_id: str, label: str, properties: dict = None):
+        sql = """
+            INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (tenant_id, project_id, node_id) DO UPDATE SET
+                label = EXCLUDED.label,
+                properties = knowledge_graph_nodes.properties || EXCLUDED.properties,
+                updated_at = now()
+        """
+        async with self.pool.acquire() as conn:
+            await conn.execute(sql, tenant_id, project_id, node_id, label, json.dumps(properties or {}))
+
+    async def add_edge(self, tenant_id: UUID, project_id: str, source_node_id: str, target_node_id: str, label: str, properties: dict = None):
+        # We need the internal UUIDs of the nodes
+        sql_get_ids = "SELECT id, node_id FROM knowledge_graph_nodes WHERE tenant_id = $1 AND node_id IN ($2, $3)"
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(sql_get_ids, tenant_id, source_node_id, target_node_id)
+            id_map = {r["node_id"]: r["id"] for r in rows}
+            
+            if source_node_id not in id_map or target_node_id not in id_map:
+                return # Nodes must exist first
+                
+            sql_edge = """
+                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (tenant_id, project_id, source_node_id, target_node_id, relation) DO NOTHING
+            """
+            await conn.execute(sql_edge, tenant_id, project_id, id_map[source_node_id], id_map[target_node_id], label, json.dumps(properties or {}))
+
+    async def get_neighbors(self, tenant_id: UUID, node_id: str) -> list[str]:
+        """Returns list of node_ids connected to the given node."""
+        sql = """
+            SELECT n2.node_id 
+            FROM knowledge_graph_nodes n1
+            JOIN knowledge_graph_edges e ON e.source_node_id = n1.id OR e.target_node_id = n1.id
+            JOIN knowledge_graph_nodes n2 ON (n2.id = e.source_node_id OR n2.id = e.target_node_id) AND n2.id != n1.id
+            WHERE n1.tenant_id = $1 AND n1.node_id = $2
+        """
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(sql, tenant_id, node_id)
+            return [r["node_id"] for r in rows]
+
+
 class PostgreSQLStorage(IMemoryStorage):
     def __init__(
         self,

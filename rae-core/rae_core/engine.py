@@ -25,6 +25,7 @@ class RAEEngine:
         search_engine: Any = None,
         math_controller: Any = None,
         resonance_engine: Any = None,
+        graph_store: Any = None,
     ):
         self.memory_storage = memory_storage
         self.vector_store = vector_store
@@ -32,6 +33,7 @@ class RAEEngine:
         self.llm_provider = llm_provider
         self.settings = settings
         self.cache_provider = cache_provider
+        self.graph_store = graph_store
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
@@ -464,6 +466,49 @@ class RAEEngine:
             
             m_id = await self.memory_storage.store_memory(**chunk_kwargs)
             
+            # SYSTEM 369.4: Knowledge Graph Structural Ingest (The Glue)
+            if hasattr(self, "graph_store") and self.graph_store:
+                try:
+                    # 1. Register Chunk as Node
+                    await self.graph_store.add_node(
+                        tenant_id=tenant_id,
+                        project_id=kwargs.get("project", "default"),
+                        node_id=str(m_id),
+                        label="MemoryChunk",
+                        properties={
+                            "content_hash": chunk.metadata.get("content_hash"),
+                            "layer": chunk_kwargs["layer"]
+                        }
+                    )
+                    
+                    # 2. Link to Parent Document (Lineage)
+                    if i > 0: # Link chunks of the same document
+                        await self.graph_store.add_edge(
+                            tenant_id=tenant_id,
+                            project_id=kwargs.get("project", "default"),
+                            source_node_id=str(memory_ids[0]),
+                            target_node_id=str(m_id),
+                            label="CONTINUES_IN",
+                            properties={"order": i}
+                        )
+                        
+                    # 3. Automatic Entity Extraction (Technical Anchors)
+                    if "server_id" in chunk_kwargs["metadata"]:
+                        srv_id = chunk_kwargs["metadata"]["server_id"]
+                        # Ensure server node exists
+                        await self.graph_store.add_node(
+                            tenant_id=tenant_id, project_id=kwargs.get("project", "default"),
+                            node_id=f"SRV-{srv_id}", label="Server", properties={"name": srv_id}
+                        )
+                        # Link memory to server
+                        await self.graph_store.add_edge(
+                            tenant_id=tenant_id, project_id=kwargs.get("project", "default"),
+                            source_node_id=str(m_id), target_node_id=f"SRV-{srv_id}",
+                            label="OCCURRED_ON"
+                        )
+                except Exception as e:
+                    logger.warning("graph_ingest_failed", error=str(e), memory_id=str(m_id))
+
             # Skip vector store for operational/fallback data (Anti-Echo)
             if not is_operational:
                 # Embed and store vector

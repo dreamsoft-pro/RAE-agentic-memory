@@ -56,7 +56,11 @@ class ContentSignatureDetector(ISignatureDetector):
         if line_count == 0: return {"mode": "EMPTY"}
         
         time_markers = len(re.findall(r'\d{2,4}[-:/]\d{2}[-:/]\d{2,4}', text))
-        machine_markers = sum(1 for l in lines if re.search(r'\b(Speed|Size|Job\s*ID|Ink|Print\s*Area)\b', l, re.I))
+        
+        # SYSTEM 42.1: Expanded technical/industrial markers
+        tech_markers = r'\b(Speed|Size|Job\s*ID|Ink|Print\s*Area|ERROR|WARN|CRITICAL|Metric|Priority|Status|Service|0x[0-9A-F]+|srv-\d+|ID-\d+)\b'
+        machine_markers = sum(1 for l in lines if re.search(tech_markers, l, re.I))
+        
         list_markers = sum(1 for l in lines if re.match(r'^(?:Krok|Step|Kolejno|\d+[\.)]|[-*•])', l, re.I))
         
         # SYSTEM 92.1: Operational Fallback Detection (Anti-Echo)
