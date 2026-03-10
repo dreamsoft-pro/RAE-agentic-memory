@@ -3,13 +3,13 @@
   "inputs": {
     "memory": {
       "importance": 0.8,
-      "last_accessed_at": "2026-03-09T18:22:41.764236+00:00",
-      "created_at": "2026-03-09T18:22:41.764236+00:00",
+      "last_accessed_at": "2026-01-06T10:01:50.964438+00:00",
+      "created_at": "2026-01-06T10:01:50.964438+00:00",
       "access_count": 5
     },
     "query_similarity": 0.9
   },
-  "output": 0.9000000000000001,
+  "output": 0.8899999967045872,
   "metadata": {
     "component": "MathLayerController"
   }

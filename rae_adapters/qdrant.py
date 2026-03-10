@@ -124,20 +124,26 @@ class QdrantVectorStore(IVectorStore):
             vectors_config = collection_info.config.params.vectors
             logger.info("collection_exists", collection=self.collection_name, vectors=list(vectors_config.keys()) if isinstance(vectors_config, dict) else "single")
         except Exception:
-            # Collection doesn't exist, create it with System 41.0 Multi-Vector schema
+            # Collection doesn't exist, create it with Dynamic Multi-Vector schema
             from qdrant_client.models import VectorParams, SparseVectorParams
 
             try:
-                # We pre-provision both MiniLM (384) and Nomic (768) dimensions to be agnostic
+                # Default configuration if none provided
+                # We use the embedding_dim passed to constructor for the default 'dense' vector
+                v_config = {
+                    self.vector_name: VectorParams(size=self.embedding_dim, distance=self.distance)
+                }
+                
+                # Special case: if we are in System 41.0 mode, we might want to pre-provision others
+                # But better to let the user define it via a setup call or similar.
+                # For now, we'll keep it flexible.
+                
                 await self.client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config={
-                        "dense": VectorParams(size=384, distance=self.distance),
-                        "nomic": VectorParams(size=768, distance=self.distance),
-                    },
+                    vectors_config=v_config,
                     sparse_vectors_config={"text": SparseVectorParams()},
                 )
-                logger.info("collection_created_multi_vector", collection=self.collection_name)
+                logger.info("collection_created_dynamic", collection=self.collection_name, primary_vector=self.vector_name, dim=self.embedding_dim)
             except Exception as e:
                 if "already exists" in str(e):
                     logger.info("collection_created_parallel", collection=self.collection_name)
@@ -145,6 +151,44 @@ class QdrantVectorStore(IVectorStore):
                     logger.error("collection_creation_failed", error=str(e))
 
         self._initialized = True
+
+    async def update_collection_schema(self, vectors_config: dict[str, Any]) -> None:
+        """
+        Dynamically add new vector spaces to existing collection.
+        Note: size and distance cannot be changed for existing vectors.
+        """
+        from qdrant_client.models import VectorParams
+        
+        try:
+            collection_info = await self.client.get_collection(self.collection_name)
+            existing_vectors = collection_info.config.params.vectors
+            if not isinstance(existing_vectors, dict):
+                # If it's a single vector, we might need to convert it to named vectors
+                # but Qdrant doesn't support this easily without recreation.
+                logger.warn("collection_not_named_vectors", collection=self.collection_name)
+                return
+
+            for name, params in vectors_config.items():
+                if name in existing_vectors:
+                    logger.info("vector_space_exists", vector=name)
+                    continue
+
+                if isinstance(params, int):
+                    v_params = VectorParams(size=params, distance=self.distance)
+                else:
+                    v_params = params
+                
+                # To add NEW vectors to existing collection, we use update_collection 
+                # but only with the NEW fields in vectors_config.
+                await self.client.update_collection(
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        name: v_params
+                    }
+                )
+                logger.info("collection_schema_updated", vector=name)
+        except Exception as e:
+            logger.error("schema_update_failed", error=str(e))
 
     async def add_vector(
         self,

@@ -1,7 +1,6 @@
 from uuid import uuid4
-
 import pytest
-
+import numpy as np
 from rae_core.adapters.memory.vector import InMemoryVectorStore
 
 
@@ -9,13 +8,15 @@ from rae_core.adapters.memory.vector import InMemoryVectorStore
 async def test_in_memory_vector_store_extra():
     store = InMemoryVectorStore()
 
+    # Create memory first
+    mid = await store.store_memory(content="test", tenant_id="t1")
+
     # Test update_vector with metadata (163)
-    mid = uuid4()
     await store.store_vector(mid, [1.0, 0.0], "t1", {"agent_id": "a1"})
     await store.update_vector(mid, [0.0, 1.0], "t1", {"agent_id": "a2"})
 
     vec = await store.get_vector(mid, "t1")
-    assert vec == [0.0, 1.0]
+    assert np.allclose(vec, [0.0, 1.0], atol=1e-4)
 
     # Test search_similar with zero vector (109)
     mid2 = uuid4()

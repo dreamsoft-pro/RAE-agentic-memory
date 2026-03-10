@@ -120,6 +120,7 @@ class RAEEngine:
     ) -> list[dict[str, Any]]:
         """
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
+        Supports cross-layer search with Layer Gravity if layer=None.
         """
         search_filters = {**(filters or {})}
         if agent_id:
@@ -128,6 +129,9 @@ class RAEEngine:
             search_filters["project"] = project
         if layer:
             search_filters["layer"] = layer
+        
+        # Ensure we don't accidentally block cross-layer search if layer is None
+        # The storage/vector adapters will handle layer=None as "search all"
 
         # 1. BANDIT TUNING: Get "weights" and PARAMS (Spectrum Strategy)
         custom_weights = kwargs.get("custom_weights")
@@ -214,14 +218,11 @@ class RAEEngine:
         # We ensure each memory ID appears only once, with its best score
         best_candidates = {}
         for item in candidates:
-            # Robust unpacking for variable result formats (2, 3, or 4 values)
             m_id = item[0]
             sim_score = item[1]
-            importance = item[2] if len(item) > 2 else 0.5
-            audit_log = item[3] if len(item) > 3 else {}
-            
+            # Use tuple structure: (score, importance, audit_log)
             if m_id not in best_candidates or sim_score > best_candidates[m_id][0]:
-                best_candidates[m_id] = (sim_score, importance, audit_log)
+                best_candidates[m_id] = item[1:]
 
         memories = []
         for m_id, (sim_score, importance, audit_log) in best_candidates.items():

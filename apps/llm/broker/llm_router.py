@@ -147,26 +147,29 @@ class LLMRouter:
         # Mapping of model prefixes to providers
         if "gpt" in model_lower or "o1" in model_lower:
             return self.providers.get("openai")
-    def _get_provider_for_model(self, model: str) -> Optional[LLMProvider]:
-        """
-        Determine which provider to use for a given model.
-        """
-        model_lower = model.lower()
-
-        # Mapping of model prefixes to providers
-        if "gpt" in model_lower or "o1" in model_lower:
-            return self.providers.get("openai")
         elif "claude" in model_lower:
             return self.providers.get("anthropic")
         elif "gemini" in model_lower:
             return self.providers.get("gemini")
-        elif "deepseek" in model_lower and "local" not in model_lower:
+        elif (
+            "llama" in model_lower
+            or "mistral" in model_lower
+            or "local_deepseek" in model_lower
+            or "deepseek-r1" in model_lower
+            or "phi" in model_lower
+        ):
+            return self.providers.get("ollama")
+        elif "deepseek" in model_lower:
             return self.providers.get("deepseek")
+        elif "qwen" in model_lower:
+            return self.providers.get("qwen")
         elif "grok" in model_lower:
             return self.providers.get("grok")
-        
-        # All other models (qwen, llama, mistral, phi, local_*) use Ollama
-        return self.providers.get("ollama")
+
+        # Default to first available provider
+        if self.providers:
+            return next(iter(self.providers.values()))
+
         return None
 
     async def complete(self, request: LLMRequest, fallback: bool = True) -> LLMResponse:

@@ -1,4 +1,6 @@
-# RAE-agentic-memory - FULL NETWORK REPAIR
+# RAE-agentic-memory-agnostic-core
+# Docker Compose Configuration - LOCAL STABLE (Laptop Bridge)
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -13,9 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      rae-network:
-        aliases:
-          - rae-postgres
+      - rae-network
 
   redis:
     image: redis:7-alpine
@@ -26,9 +26,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      rae-network:
-        aliases:
-          - rae-redis
+      - rae-network
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -40,22 +38,7 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
-      rae-network:
-        aliases:
-          - rae-qdrant
-
-  ollama-dev:
-    image: ollama/ollama:latest
-    container_name: ollama-dev
-    restart: unless-stopped
-    ports:
-      - "11435:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      rae-network:
-        aliases:
-          - ollama-dev
+      - rae-network
 
   rae-api-dev:
     image: rae-memory:latest
@@ -75,72 +58,20 @@ services:
       - QDRANT_HOST=rae-qdrant
       - RAE_API_KEY=test-key
       - RAE_DB_MODE=ignore
-      - PYTHONPATH=/app:/app/rae_core
-      - OLLAMA_API_URL=http://ollama-dev:11434
     volumes:
-      - ./rae-core/rae_core:/app/rae_core
-      - ./archive/projects_nested/rae-core/rae_core:/app/rae_core_legacy
-      - ./rae_core/rae_core/models/contracts.py:/app/rae_core/models/contracts.py
+      - ./rae-core:/app/rae-core
       - ./apps:/app/apps
       - ./rae_adapters:/app/rae_adapters
       - ./alembic:/app/alembic
     networks:
-      rae-network:
-        aliases:
-          - rae-api-dev
-          - rae-api
-      dreamsoft-network:
-
-  rae-celery-worker-dev:
-    image: rae-memory:latest
-    container_name: rae-celery-worker-dev
-    command: bash -c "pip install --no-cache-dir mysql-connector-python && celery -A apps.memory_api.celery_app worker --loglevel=info"
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=rae
-      - POSTGRES_PASSWORD=rae_password
-      - POSTGRES_DB=rae
-      - POSTGRES_HOST=rae-postgres
-      - REDIS_URL=redis://rae-redis:6379/0
-      - CELERY_BROKER_URL=redis://rae-redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://rae-redis:6379/0
-      - QDRANT_HOST=rae-qdrant
-      - PYTHONPATH=/app:/app/rae_core
-    volumes:
-      - ./archive/projects_nested/rae-core/rae_core:/app/rae_core
-      - ./apps:/app/apps
-      - ./rae_adapters:/app/rae_adapters
-    networks:
       - rae-network
-    depends_on:
-      - redis
-      - postgres
-
-  rae-oracle-ui:
-    image: rae-oracle:latest
-    container_name: rae-oracle-ui
-    restart: unless-stopped
-    ports:
-      - "8506:8080"
-    volumes:
-      - ./rae_lite/ui/app.py:/app/main.py
-    environment:
-      - RAE_API_URL=http://smallai.printdisplay.pl/api
-    networks:
-      - rae-network
-    depends_on:
-      - rae-api-dev
 
 networks:
   rae-network:
-    name: rae-internal
+    name: rae-agentic-memory-agnostic-core_rae-network
     driver: bridge
-  dreamsoft-network:
-    name: dreamsoft_factory_default
-    external: true
 
 volumes:
   postgres_data:
   redis_data:
   qdrant_data:
-  ollama_data:

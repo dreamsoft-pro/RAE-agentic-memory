@@ -67,14 +67,18 @@ class ReflectionCoordinator:
         agent_id: str | None = None
     ) -> Dict[str, Any]:
         """
-        Runs reflections and persists result to the audit table if storage is available.
+        Runs reflections and persists result to BOTH the audit table 
+        and the primary searchable memory store (RAE-First Glue).
         """
         result = self.run_reflections(payload)
+        metadata = payload.get("metadata", {})
+        human_label = metadata.get("human_label", "Unnamed-Reflection")
         
         if self.storage:
             query_id = payload.get("query_id", str(uuid.uuid4()))
             fsi = result.get("l3_meta_field", {}).get("field_stability_index", 1.0)
             
+            # 1. Store the full raw audit (Technical/ISO log)
             await self.storage.store_reflection_audit(
                 query_id=query_id,
                 tenant_id=tenant_id,
@@ -84,7 +88,26 @@ class ReflectionCoordinator:
                 l1_report=result["l1_operational"],
                 l2_report=result["l2_structural"],
                 l3_report=result["l3_meta_field"],
-                metadata=payload.get("metadata")
+                metadata=metadata
+            )
+
+            # 2. Promote to SEARCHABLE memories (The Glue)
+            # We create a summary memory that represents the cognitive state of this event
+            insight_content = f"Reflection [{human_label}]: Decision={result['final_decision']}, FSI={fsi:.2f}"
+            
+            await self.storage.store_memory(
+                content=insight_content,
+                layer="reflective",
+                tenant_id=tenant_id,
+                agent_id=agent_id or "Reflection-Coordinator",
+                metadata={
+                    **metadata,
+                    "type": "reflection_summary",
+                    "human_label": human_label,
+                    "fsi_score": fsi,
+                    "decision": result["final_decision"]
+                },
+                importance=0.9
             )
             
         return result

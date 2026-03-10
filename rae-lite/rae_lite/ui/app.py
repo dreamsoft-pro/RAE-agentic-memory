@@ -22,13 +22,15 @@ class RaeLiteUI:
     def __init__(self):
         self.stats = {}
         self.results = []
+        self.procedural_instruction = ""
         self.status = "Idle"
         self.results_container = None
+        self.assistant_mode = True # Default to Assistant Mode for Order Entry
 
     async def fetch_stats(self):
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_URL}/stats")
+                response = await client.get(f"{API_URL}/statistics")
                 if response.status_code == 200:
                     self.stats = response.json()
                     ui.update()
@@ -39,21 +41,41 @@ class RaeLiteUI:
         if not query:
             return
 
-        self.status = "Searching..."
-        ui.notify(f"Searching for: {query}")
+        self.status = "Thinking..."
+        self.procedural_instruction = ""
+        ui.notify(f"Processing: {query}")
+        self.update_results_display()
+        
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{API_URL}/memories/search",
-                    params={"query": query, "limit": 10},
-                    timeout=30.0,
-                )
-                if response.status_code == 200:
-                    self.results = response.json()
-                    self.status = "Idle"
-                    self.update_results_display()
+                if self.assistant_mode:
+                    # SYSTEM 40.12: Procedural Oracle Call
+                    response = await client.post(
+                        f"{API_URL}/procedural/query",
+                        json={"query": query, "project": "default"},
+                        timeout=120.0,
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        self.procedural_instruction = data.get("instruction", "")
+                        self.results = data.get("results", [])
+                    else:
+                        ui.notify(f"Assistant error: {response.text}", type="negative")
                 else:
-                    ui.notify(f"Search failed: {response.text}", type="negative")
+                    # Standard Search
+                    response = await client.post(
+                        f"{API_URL}/memories/query",
+                        json={"query": query, "project": "default", "k": 10},
+                        timeout=30.0,
+                    )
+                    if response.status_code == 200:
+                        self.results = response.json().get("results", [])
+                        self.procedural_instruction = ""
+                    else:
+                        ui.notify(f"Search failed: {response.text}", type="negative")
+                
+                self.status = "Idle"
+                self.update_results_display()
         except Exception as e:
             ui.notify(f"Connection error: {e}", type="negative")
             self.status = "Idle"
@@ -177,7 +199,26 @@ class RaeLiteUI:
             
         self.results_container.clear()
         with self.results_container:
-            if not self.results:
+            if self.status == "Thinking...":
+                with ui.column().classes('w-full items-center py-12'):
+                    ui.spinner(size='lg')
+                    ui.label('RAE is analyzing procedures...').classes('text-gray-500 mt-4')
+                return
+
+            if self.procedural_instruction:
+                with ui.card().classes('w-full mb-8 bg-blue-50 border-blue-200 shadow-md'):
+                    with ui.row().classes('w-full items-center gap-2 mb-2'):
+                        ui.icon('assignment', color='primary').classes('text-lg')
+                        ui.label('Order Entry Assistant - Step-by-Step Instruction').classes('text-md font-bold text-blue-900')
+                    
+                    ui.markdown(self.procedural_instruction).classes('text-sm leading-relaxed')
+                    
+                    with ui.row().classes('w-full justify-end mt-4'):
+                        ui.button('Correct?', icon='thumb_up', on_click=lambda: ui.notify("Reflective feedback saved")).props('flat dense')
+                
+                ui.label('Based on following fragments:').classes('text-xs text-gray-400 uppercase font-bold mb-2 ml-2')
+
+            if not self.results and not self.procedural_instruction:
                 ui.label("No results found or search not performed yet.").classes('text-gray-500 italic')
                 return
 
@@ -212,33 +253,35 @@ class RaeLiteUI:
     def render(self):
         # Header
         with ui.header().classes('items-center justify-between bg-blue-900 text-white'):
-            ui.label('RAE-Lite Desktop').classes('text-xl font-bold')
-            ui.button(icon='refresh', on_click=self.fetch_stats).props('flat color=white')
+            with ui.row().classes('items-center gap-4'):
+                ui.label('Order Entry Oracle').classes('text-xl font-bold')
+                ui.badge('Powered by RAE', color='blue-7').classes('text-[10px]')
+            
+            with ui.row().classes('items-center gap-2'):
+                ui.label('Assistant Mode').classes('text-xs')
+                ui.switch(value=True).bind_value(self, 'assistant_mode').props('dark')
+                ui.button(icon='refresh', on_click=self.fetch_stats).props('flat color=white')
 
         # Sidebar / Left Panel: Upload
         with ui.left_drawer(value=True).classes('bg-gray-50 border-r'):
-            ui.label('Ingest Memories').classes('text-lg font-bold mb-4')
-            # Increased max_file_size to 20MB
-            ui.upload(on_upload=self.handle_upload, label='Drop files here', auto_upload=True, max_file_size=20_000_000).classes('w-full')
+            ui.label('Ingest Procedures').classes('text-lg font-bold mb-4')
+            ui.upload(on_upload=self.handle_upload, label='Upload OneNote PDF/TXT', auto_upload=True, max_file_size=20_000_000).classes('w-full')
             
             ui.separator().classes('my-4')
-            ui.button('Reflect Now', on_click=self.trigger_reflection, icon='lightbulb').props('outline color=primary').classes('w-full')
+            ui.button('Synthesize Knowledge', on_click=self.trigger_reflection, icon='auto_awesome').props('outline color=primary').classes('w-full')
 
             ui.separator().classes('my-6')
-            ui.label('Statistics').classes('text-md font-bold mb-2')
+            ui.label('System Health').classes('text-md font-bold mb-2')
             with ui.column().classes('gap-1'):
                 # Dynamic labels will be updated via binding or manual update
-                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Total Memories: {s.get('total_count', 0)}")
-                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Working Layer: {s.get('layer_counts', {}).get('working', 0)}")
-                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Episodic Layer: {s.get('layer_counts', {}).get('episodic', 0)}")
-                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Semantic Layer: {s.get('layer_counts', {}).get('semantic', 0)}")
-                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Reflective Layer: {s.get('layer_counts', {}).get('reflective', 0)}")
+                ui.label().bind_text_from(self, 'stats', backward=lambda s: f"Total Manifold: {s.get('total_count', 0)} nodes")
+                ui.label().bind_text_from(self, 'status', backward=lambda s: f"Status: {s}")
 
         # Main Content: Search
         with ui.column().classes('w-full max-w-4xl mx-auto p-8'):
             with ui.row().classes('w-full items-center gap-4'):
-                search_input = ui.input(label='Ask RAE anything...', placeholder='Type your query...').classes('flex-grow')
-                ui.button('Search', on_click=lambda: self.search(search_input.value)).props('elevated color=blue-9 rounded')
+                search_input = ui.input(label='How do I handle situation X in Y...', placeholder='Type your procedural question...').classes('flex-grow')
+                ui.button('Ask Oracle', on_click=lambda: self.search(search_input.value)).props('elevated color=blue-9 rounded')
 
             ui.separator().classes('my-8')
 

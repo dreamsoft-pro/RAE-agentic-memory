@@ -46,36 +46,37 @@ class PostgreSQLStorage(IMemoryStorage):
         
         async with pool.acquire() as conn:
             # 3. Federated UPSERT (Evidence Consolidation)
-            # We use jsonb_set to maintain a list of 'witnesses' (sources) in metadata
             sql = """
                 INSERT INTO memories (
-                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source, info_class, governance
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 ON CONFLICT (tenant_id, content_hash) DO UPDATE SET
                     importance = GREATEST(memories.importance, EXCLUDED.importance),
                     usage_count = memories.usage_count + 1,
                     last_accessed_at = now(),
                     source = memories.source || ', ' || EXCLUDED.source,
-                    metadata = memories.metadata || EXCLUDED.metadata || 
-                               jsonb_build_object('witness_count', (COALESCE((memories.metadata->>'witness_count')::int, 1) + 1))
+                    metadata = memories.metadata || EXCLUDED.metadata,
+                    governance = memories.governance || EXCLUDED.governance
                 RETURNING id
             """
             
-            m_id = uuid4()
+            m_id = kwargs.get("memory_id") or uuid4()
             row = await conn.fetchrow(
                 sql,
                 m_id,
                 content,
                 content_hash,
-                kwargs.get("layer"),
+                kwargs.get("layer", "episodic"),
                 tenant_id,
-                kwargs.get("agent_id"),
+                kwargs.get("agent_id", "default"),
                 kwargs.get("tags", []),
                 json.dumps(new_metadata),
                 kwargs.get("importance", 0.5),
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 kwargs.get("project"),
-                source
+                source,
+                kwargs.get("info_class", "internal"),
+                json.dumps(kwargs.get("governance", {}))
             )
             return row["id"]
 
@@ -190,12 +191,13 @@ class PostgreSQLStorage(IMemoryStorage):
         limit_idx = len(params) + 1
         params.append(limit)
 
-        # SYSTEM 46.1: Word-level fallback for better technical recall
+        # SYSTEM 46.1: Word-level fallback for better technical recall (including labels)
         words = [w for w in raw_query.replace("?", "").split() if len(w) > 3]
         word_conditions = []
         for i, w in enumerate(words):
             word_idx = len(params) + 1
-            word_conditions.append(f"content ILIKE ${word_idx}")
+            # Search both content and the human_label in metadata
+            word_conditions.append(f"(content ILIKE ${word_idx} OR metadata->>'human_label' ILIKE ${word_idx})")
             params.append(f"%{w}%")
         
         word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"

@@ -1,6 +1,6 @@
 """RAE-core configuration using pydantic-settings."""
 
-from typing import Any
+from typing import Any, List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,6 +49,9 @@ class RAESettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    # Network and CORS
+    ALLOWED_ORIGINS: List[str] = ["*"]
 
     # Memory layer sizes
     sensory_max_size: int = Field(

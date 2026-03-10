@@ -28,7 +28,6 @@ from apps.memory_api.observability import (
     setup_opentelemetry,
 )
 from apps.memory_api.routes import (
-    procedural,
     dashboard,
     evaluation,
     event_triggers,
@@ -229,7 +228,7 @@ async def rae_exception_handler(request: Request, exc: RAEError):
             tags=["incident", "error_audit", type(exc).__name__.lower()],
             metadata={"error_type": type(exc).__name__, "path": request.url.path}
         )
-    except Exception: pass # Prevent infinite loop if RAE is down
+    except: pass # Prevent infinite loop if RAE is down
 
     status_code = 400
     if isinstance(exc, ContractViolationError): status_code = 422
@@ -286,7 +285,6 @@ app.include_router(agent_v2.router)  # /v2/agent
 app.include_router(feedback_v2.router)  # /v2/feedback
 app.include_router(compliance_v2.router)  # /v2/compliance
 app.include_router(mesh_v2.router)  # /v2/mesh
-app.include_router(procedural.router) # /procedural
 
 # Helper Services (Migrated to V2 prefix)
 app.include_router(dashboard.router, prefix="/v2/dashboard", tags=["Dashboard"])
