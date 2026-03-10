@@ -38,19 +38,35 @@ python -m rae_lite.main
 
 ## 🔨 Building EXE (PyInstaller)
 
-To create a standalone `.exe` file:
+To create a standalone directory with all dependencies and the local LLM:
 
-1.  **Install Dev Dependencies**
+1.  **Install Dependencies**
     ```powershell
-    pip install ".[dev]"
+    pip install ".[dev]" huggingface_hub
     ```
 
-2.  **Build**
+2.  **Download Local LLM** (Required for bundling)
     ```powershell
-    pyinstaller --noconfirm --onefile --windowed --name "RAE-Lite" --icon "assets/icon.ico" --add-data "rae_lite;rae_lite" rae_lite/main.py
+    python ../scripts/download_llm.py
     ```
 
-    The output will be in the `dist/` folder.
+3.  **Build (ONEDIR Mode)**
+    ```powershell
+    pyinstaller --noconfirm rae-lite.spec
+    ```
+
+    The output will be in the `dist/RAE-Lite` folder. You can distribute this entire folder.
+
+## 🤖 Assistant Mode (Order Entry Oracle)
+
+The tool now includes a **Procedural Assistant Mode** that generates step-by-step instructions. 
+For the best experience, it is recommended to have **Ollama** installed and running on your Windows machine:
+
+1.  **Download Ollama:** [ollama.com](https://ollama.com)
+2.  **Pull the model:** `ollama pull llama3:8b` (or another model of your choice, configurable in `server.py`)
+3.  **Run Ollama:** Ensure the Ollama tray icon is visible.
+
+If Ollama is not available, the tool will use **Designed Math Fallback** to synthesize instructions from document fragments.
 
 ## 🛠️ Configuration
 

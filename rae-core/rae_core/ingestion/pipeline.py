@@ -13,7 +13,7 @@ from .interfaces import IngestChunk, ContentSignature, IngestAudit
 from .normalizer import IngestNormalizer
 from .detector import ContentSignatureDetector
 from .policy import IngestPolicySelector
-from .semantic_segmenter import SemanticRecursiveSegmenter
+from .segmenter import IngestSegmenter
 from .compressor import IngestCompressor
 
 logger = structlog.get_logger(__name__)
@@ -21,7 +21,6 @@ logger = structlog.get_logger(__name__)
 class UniversalIngestPipeline:
     """
     Orchestrates ingestion from raw text to structured, multi-vector memories.
-    Refined: Semantic Recursive Segmentation active (Zero-Drift).
     """
     
     def __init__(self, config_path: Optional[str] = None):
@@ -32,11 +31,7 @@ class UniversalIngestPipeline:
         self.normalizer = IngestNormalizer()
         self.detector = ContentSignatureDetector()
         self.policy_selector = IngestPolicySelector()
-        
-        # Use Advanced Semantic Segmenter instead of character cutter
-        self.segmenter = SemanticRecursiveSegmenter(
-            chunk_size=self.config.get("ingest_params", {}).get("target_chunk_size", 1000)
-        )
+        self.segmenter = IngestSegmenter(config=self.config) # Ingesting rules
         self.compressor = IngestCompressor()
 
     def _load_config(self, path: Optional[str]) -> Dict[str, Any]:

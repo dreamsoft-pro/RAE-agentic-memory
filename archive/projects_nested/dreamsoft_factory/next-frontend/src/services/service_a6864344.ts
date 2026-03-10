@@ -1,3 +1,0 @@
-It looks like the provided snippet is not in JavaScript or TypeScript and seems to be part of a build process or configuration file, possibly for an Angular project (based on `TypeScript` and `angular`) rather than Next.js. However, you've asked to convert legacy JS code to Next.js with TypeScript.
-
-To clarify and proceed, can you provide the actual JavaScript function or class that needs to be converted to a TypeScript class in Next.js? Also, could you please specify what data this function/class should handle and how it interacts with your API (`import api from '@/lib/api';`)?

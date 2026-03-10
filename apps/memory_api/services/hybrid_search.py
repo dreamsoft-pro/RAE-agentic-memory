@@ -475,13 +475,7 @@ class HybridSearchService:
 
         # Reconstruct ScoredMemoryRecords
         final_results = []
-        for item in fused_ranked[:top_k]:
-            # Robust unpacking for variable result formats
-            uuid_id = item[0]
-            rrf_score = item[1]
-            importance = item[2] if len(item) > 2 else 0.5
-            audit = item[3] if len(item) > 3 else {}
-            
+        for uuid_id, rrf_score, importance, audit in fused_ranked[:top_k]:
             str_id = str(uuid_id)
             if str_id in record_map:
                 rec = record_map[str_id]

@@ -1,2 +1,0 @@
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"experimental":{},"prompts":{"listChanged":false},"resources":{"subscribe":false,"listChanged":false},"tools":{"listChanged":false}},"serverInfo":{"name":"rae-memory","version":"1.0.0"}}}
-{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Found 1 relevant memories:\n\n1. [Score: 0.990]\n   Source: None\n   Content: Finalna weryfikacja z modelami Ollama 2026-01-14\n\n"}],"isError":false}}

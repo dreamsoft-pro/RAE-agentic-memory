@@ -1,2 +1,0 @@
-# authApp
-aplication to auth

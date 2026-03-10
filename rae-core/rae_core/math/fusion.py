@@ -1,95 +1,103 @@
-"""Result fusion strategies for RAE retrieval."""
+"""
+RAE Fusion Strategies (System 40.12 - Unified Tier Alignment).
+"""
 
-from typing import Any
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Tuple, Optional
 from uuid import UUID
+import math
+import structlog
 
-from .logic_gateway import LogicGateway
+logger = structlog.get_logger(__name__)
 
+class AbstractFusionStrategy(ABC):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+
+    @abstractmethod
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
+        pass
+
+class Legacy416Strategy(AbstractFusionStrategy):
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
+        k = self.config.get("strategies_config", {}).get("legacy_416", {}).get("k_factor", 1.0)
+        types = ["incident", "ticket", "metric", "log", "alert", "doc", "question", "bug"]
+        query_types = [t for t in types if t in query.lower() or (t + "s") in query.lower()]
+        
+        fused_scores = {}
+        for strategy, results in strategy_results.items():
+            if not results: continue
+            for rank, item in enumerate(results):
+                m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
+                if isinstance(m_id, str):
+                    try: m_id = UUID(m_id)
+                    except: pass
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + (1.0 / (rank + k))
+
+        processed = []
+        for m_id, rrf_score in fused_scores.items():
+            mem_obj = (memory_contents or {}).get(m_id, {})
+            content = mem_obj.get("content", "").lower()
+            res_id = str(m_id).lower()
+            
+            type_multiplier = 1.0
+            tier = 2
+            if query_types:
+                matches_type = any(t in res_id for t in query_types) or any(t in content for t in query_types)
+                if not matches_type:
+                    type_multiplier = 0.001
+                    tier = 3 # Trash Tier
+                else:
+                    type_multiplier = 2.0 # Entity Boost
+            
+            meta = mem_obj.get("metadata", {})
+            importance = float(meta.get("importance", 0.5) if isinstance(meta, dict) else 0.5)
+            processed.append((m_id, rrf_score * type_multiplier, importance, {"strategy": "Legacy416", "tier": tier, "type_penalty": tier == 3}))
+        
+        return sorted(processed, key=lambda x: (x[3]["tier"], -x[1]))
+
+class SiliconOracleStrategy(AbstractFusionStrategy):
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
+        divisor = self.config.get("strategies_config", {}).get("silicon_oracle", {}).get("rank_sharpening_divisor", 3.0)
+        types = ["incident", "ticket", "metric", "log", "alert", "doc", "question", "bug"]
+        query_types = [t for t in types if t in query.lower() or (t + "s") in query.lower()]
+        
+        fused_scores = {}
+        actual_weights = weights or {}
+        for strategy, results in strategy_results.items():
+            w = actual_weights.get(strategy, 1.0)
+            for rank, item in enumerate(results):
+                m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
+                if isinstance(m_id, str):
+                    try: m_id = UUID(m_id)
+                    except: pass
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + w * math.exp(-rank / divisor)
+
+        processed = []
+        for m_id, score in fused_scores.items():
+            mem_obj = (memory_contents or {}).get(m_id, {})
+            res_id = str(m_id).lower()
+            content = mem_obj.get("content", "").lower()
+            
+            type_multiplier, tier = 1.0, 2
+            if query_types:
+                matches_type = any(t in res_id for t in query_types) or any(t in content for t in query_types)
+                if not matches_type:
+                    type_multiplier, tier = 0.001, 3 # Trash Tier
+                else:
+                    type_multiplier = 2.0 # Entity Boost
+            
+            meta = mem_obj.get("metadata", {})
+            importance = float(meta.get("importance", 0.5) if isinstance(meta, dict) else 0.5)
+            processed.append((m_id, score * type_multiplier, importance, {"strategy": "SiliconOracle", "tier": tier, "type_penalty": tier == 3}))
+            
+        return sorted(processed, key=lambda x: (x[3]["tier"], -x[1]))
 
 class FusionStrategy:
-    """Base class for result fusion using LogicGateway."""
+    def __init__(self, config=None):
+        self.config = config or {}
+        from rae_core.math.logic_gateway import LogicGateway
+        self.gateway = LogicGateway(self.config)
 
-    def __init__(self, config: dict[str, Any] | None = None):
-        self.gateway = LogicGateway(config)
-
-    async def fuse(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float, float]]],
-        weights: dict[str, float] | None = None,
-        query: str | None = None,
-        config_override: dict[str, Any] | None = None,
-        memory_contents: dict[UUID, str] | None = None,
-        **kwargs: Any,
-    ) -> list[tuple[UUID, float, float]]:
-        """
-        Fuse results from multiple strategies using LogicGateway.
-
-        Args:
-            strategy_results: Map of strategy name -> list of (id, score, importance)
-            weights: Optional strategy weight overrides
-            query: The search query
-            config_override: Optional runtime config for LogicGateway
-            memory_contents: Optional map of memory ID -> content text
-            **kwargs: Additional arguments for LogicGateway (like profile)
-
-        Returns:
-            Fused list of (id, score, importance)
-        """
-        # LogicGateway currently expects (id, score) in its input
-        # and returns (id, score). We need to handle importance.
-
-        # 1. Prepare input for gateway (strip importance for now)
-        gateway_input = {
-            name: [(r[0], r[1]) for r in results]
-            for name, results in strategy_results.items()
-        }
-
-        # 2. Extract importance map for propagation
-        importance_map: dict[UUID, float] = {}
-        for results in strategy_results.values():
-            for m_id, _, imp in results:
-                if m_id not in importance_map or imp > importance_map[m_id]:
-                    importance_map[m_id] = imp
-
-        # 3. Fuse scores
-        fused_scores = await self.gateway.fuse(
-            strategy_results=gateway_input,
-            weights=weights,
-            query=query or "",
-            config_override=config_override,
-            memory_contents=memory_contents,
-            **kwargs,
-        )
-
-        # 4. Attach importance back
-        return [
-            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in fused_scores
-        ]
-
-
-class RRFFusion(FusionStrategy):
-    """Simple Reciprocal Rank Fusion."""
-
-    async def fuse(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float, float]]],
-        weights: dict[str, float] | None = None,
-        query: str | None = None,
-        config_override: dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> list[tuple[UUID, float, float]]:
-        # RRF logic: sum(1 / (k + rank))
-        k = 60
-        scores: dict[UUID, float] = {}
-        importance_map: dict[UUID, float] = {}
-
-        for results in strategy_results.values():
-            for rank, (m_id, _, imp) in enumerate(results, 1):
-                scores[m_id] = scores.get(m_id, 0.0) + (1.0 / (k + rank))
-                if m_id not in importance_map or imp > importance_map[m_id]:
-                    importance_map[m_id] = imp
-
-        sorted_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        return [
-            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in sorted_ids
-        ]
+    async def fuse(self, strategy_results=None, weights=None, query="", **kwargs):
+        return await self.gateway.fuse(strategy_results=strategy_results, weights=weights, query=query, **kwargs)

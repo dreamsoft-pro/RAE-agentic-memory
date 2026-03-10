@@ -1,1 +1,0 @@
-"""Configuration application for defining monitored applications and regions of interest."""

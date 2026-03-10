@@ -1,9 +1,0 @@
-[submodule "packages/rae-core"]
-	path = packages/rae-core
-	url = git@github.com:dreamsoft-pro/RAE-agentic-memory.git
-[submodule "packages/rae-phenix"]
-	path = packages/rae-phenix
-	url = https://github.com/dreamsoft-pro/RAE-Phenix.git
-[submodule "packages/rae-hive"]
-	path = packages/rae-hive
-	url = https://github.com/dreamsoft-pro/RAE-Hive

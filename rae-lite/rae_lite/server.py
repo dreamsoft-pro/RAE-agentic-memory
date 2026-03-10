@@ -80,11 +80,22 @@ rae_settings.working_max_size = 50
 rae_settings.vector_backend = "sqlite"
 rae_settings.vector_dimension = embedding_provider.get_dimension()
 
+# SYSTEM 40.11: Local LLM for Procedural Assistance
+from rae_core.llm.small_local import SmallLocalLLMProvider
+llm_model = os.getenv("RAE_LITE_LLM_MODEL", "llama3:8b")
+# Path to local LLM in onedir/bundle
+onnx_llm_path = str(project_root / "models" / "llm")
+llm_provider = SmallLocalLLMProvider(
+    onnx_model_path=onnx_llm_path,
+    model=llm_model
+)
+
 # Initialize RAE Engine
 engine = RAEEngine(
     memory_storage=memory_storage,
     vector_store=vector_store,
     embedding_provider=embedding_provider,
+    llm_provider=llm_provider,
     settings=rae_settings,
 )
 
@@ -196,6 +207,60 @@ async def query_memories(request: QueryMemoryRequest):
 
     except Exception as e:
         logger.error("query_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/procedural/query")
+async def query_procedural(request: QueryMemoryRequest):
+    """Query memories and generate a procedural step-by-step response."""
+    try:
+        # 1. Hybrid Search
+        results = await engine.search_memories(
+            query=request.query,
+            tenant_id="local",
+            project=request.project,
+            top_k=5,
+        )
+        
+        if not results:
+            return {"instruction": "Nie znaleziono odpowiednich procedur w pamici.", "sources": []}
+
+        # 2. Context Assembly
+        from rae_core.context.builder import ContextBuilder, ContextFormat
+        builder = ContextBuilder(max_tokens=2000, default_format=ContextFormat.DETAILED)
+        context_text, _ = builder.build_context(results, query=request.query)
+        
+        # 3. Procedural Generation
+        system_prompt = (
+            "Jesteś asystentem zespołu Order Entry. Twoim zadaniem jest przygotowanie "
+            "czytelnej instrukcji krok po kroku na podstawie dostarczonych fragmentów procedur. "
+            "Jeśli informacja jest niepełna, zaznacz to. Odpowiadaj po polsku."
+        )
+        
+        prompt = f"ZAPYTANIE: {request.query}\n\nKONTEKST PROCEDURALNY:\n{context_text}"
+        
+        instruction = await engine.generate_text(prompt=prompt, system_prompt=system_prompt)
+        
+        # Return full results for the UI to display as sources
+        formatted_sources = [
+            {
+                "id": str(r.get("id")),
+                "content": r.get("content"),
+                "score": r.get("math_score", 0.0),
+                "layer": r.get("layer", "unknown"),
+                "importance": r.get("importance", 0.0),
+                "tags": r.get("tags") or [],
+            }
+            for r in results
+        ]
+
+        return {
+            "instruction": instruction,
+            "results": formatted_sources
+        }
+
+    except Exception as e:
+        logger.error("procedural_query_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 

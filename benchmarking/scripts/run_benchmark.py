@@ -20,7 +20,7 @@ from rae_core.search.strategies.vector import VectorSearchStrategy
 from rae_adapters.postgres import PostgreSQLStorage
 from rae_adapters.qdrant import QdrantVectorStore
 from rae_core.embedding.native import NativeEmbeddingProvider
-from config import Settings
+from rae_core.config.settings import RAESettings as Settings
 
 logger = structlog.get_logger(__name__)
 
@@ -36,62 +36,94 @@ class RAEBenchmarkRunner:
     async def setup(self):
         import asyncpg
         from qdrant_client import AsyncQdrantClient
+        from rae_core.embedding.manager import EmbeddingManager
+        from rae_core.search.strategies.multi_vector import MultiVectorSearchStrategy
         
         db_url = os.getenv("DATABASE_URL", "postgresql://rae:rae_password@localhost/rae")
         self.pool = await asyncpg.create_pool(db_url.replace("+asyncpg", ""))
         
         q_client = AsyncQdrantClient(host=os.getenv("QDRANT_HOST", "localhost"), port=6333)
-        
         storage = PostgreSQLStorage(pool=self.pool)
         
-        model_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/model.onnx")
-        tokenizer_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/tokenizer.json")
-        embedding = NativeEmbeddingProvider(model_path=model_path, tokenizer_path=tokenizer_path)
+        # 1. Initialize Multiple Models (The Logos & Psyche pillars)
+        minilm_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/model.onnx")
+        minilm_tok = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/tokenizer.json")
+        minilm = NativeEmbeddingProvider(model_path=minilm_path, tokenizer_path=minilm_tok)
         
-        vector_store = QdrantVectorStore(client=q_client, embedding_dim=embedding.get_dimension(), vector_name="dense")
+        nomic_path = os.path.join(os.getcwd(), "models/nomic-embed-text-v1.5/model.onnx")
+        nomic_tok = os.path.join(os.getcwd(), "models/nomic-embed-text-v1.5/tokenizer.json")
+        nomic = NativeEmbeddingProvider(model_path=nomic_path, tokenizer_path=nomic_tok)
         
+        embedding_manager = EmbeddingManager(default_provider=minilm, default_model_name="dense")
+        embedding_manager.register_provider("nomic", nomic)
+        
+        # 2. Dynamic Qdrant Setup
+        vector_store = QdrantVectorStore(client=q_client, embedding_dim=384, vector_name="dense")
+        await vector_store.setup()
+        # Ensure nomic space exists
+        await vector_store.update_collection_schema({"nomic": 768})
+        
+        # 3. Hybrid Search with Multi-Vector support
         strategies = {
-            "vector": VectorSearchStrategy(vector_store=vector_store, embedding_provider=embedding),
-            "fulltext": FullTextStrategy(memory_storage=storage)
+            "fulltext": FullTextStrategy(memory_storage=storage),
+            "vector_dense": VectorSearchStrategy(vector_store=vector_store, embedding_provider=minilm, vector_name="dense"),
+            "vector_nomic": VectorSearchStrategy(vector_store=vector_store, embedding_provider=nomic, vector_name="nomic")
         }
         
-        search_engine = HybridSearchEngine(strategies=strategies, embedding_provider=embedding, memory_storage=storage)
-        
-        self.engine = RAEEngine(
-            memory_storage=storage, vector_store=vector_store, embedding_provider=embedding,
-            llm_provider=None, settings=Settings(), search_engine=search_engine
+        search_engine = HybridSearchEngine(
+            strategies=strategies, 
+            embedding_provider=embedding_manager, 
+            memory_storage=storage
         )
         
-        print(f"🚀 Silicon Oracle 300.9 (Turbo Batch) | Project: {self.agent_id}")
+        self.engine = RAEEngine(
+            memory_storage=storage, 
+            vector_store=vector_store, 
+            embedding_provider=embedding_manager,
+            llm_provider=None, 
+            settings=Settings(), 
+            search_engine=search_engine
+        )
+        
+        print(f"🚀 Silicon Oracle 300.10 (Multi-Vector) | Project: {self.agent_id}")
 
     async def run(self, no_wipe: bool = False):
         with open(self.dataset_path, "r") as f:
             data = yaml.safe_load(f)
 
         if not no_wipe:
-            # WIPE
-            print("🧹 Wiping persistent data for fresh run...")
+            # WIPE ONLY CURRENT TENANT (ISO Isolation)
+            print(f"🧹 Wiping data for tenant {self.tenant_id}...")
             async with self.pool.acquire() as conn:
-                await conn.execute("TRUNCATE memories CASCADE;")
+                await conn.execute("DELETE FROM memories WHERE tenant_id = $1;", self.tenant_id)
             
-            # OPTIMIZED BATCH INGESTION
-            print(f"📥 Ingesting {len(data['memories'])} memories (Batching 500)...")
-            batch_size = 500
-            for i in range(0, len(data["memories"]), batch_size):
-                batch = data["memories"][i:i + batch_size]
-                tasks = []
-                for mem in batch:
-                    # SYSTEM 300.11: Anchor Mapping for 100% accuracy
-                    content = mem.get("text") or mem.get("content", "")
-                    nonce = mem.get("metadata", {}).get("nonce", "")
-                    tasks.append(self.engine.store_memory(
-                        content=content, tenant_id=self.tenant_id, agent_id=self.agent_id,
-                        metadata={**mem.get("metadata", {}), "id": mem["id"], "anchor": nonce}, 
-                        layer=mem.get("layer", "episodic")
-                    ))
-                await asyncio.gather(*tasks)
-                if i % 5000 == 0:
-                    print(f"   Stored {i}/{len(data['memories'])}")
+            # OPTIMIZED BATCH INGESTION (Multi-Vector)
+            print(f"📥 Ingesting {len(data['memories'])} memories (Multi-Vector)...")
+            for mem in data["memories"]:
+                content = mem.get("text") or mem.get("content", "")
+                nonce = mem.get("metadata", {}).get("nonce", "")
+                
+                # 1. Store Metadata in Postgres first
+                m_id = await self.engine.store_memory(
+                    content=content, tenant_id=self.tenant_id, agent_id=self.agent_id,
+                    metadata={**mem.get("metadata", {}), "id": mem["id"], "anchor": nonce}, 
+                    layer=mem.get("layer", "episodic")
+                )
+                
+                # 2. Generate all embeddings
+                # We access the manager directly from the engine
+                all_embs = await self.engine.embedding_provider.generate_all_embeddings([content])
+                
+                # 3. Store all vectors in Qdrant
+                # all_embs is {model_name: [vector]}
+                embs_to_store = {name: embs[0] for name, embs in all_embs.items() if embs}
+                
+                await self.engine.vector_store.add_vector(
+                    memory_id=m_id,
+                    embedding=embs_to_store,
+                    tenant_id=self.tenant_id,
+                    layer=mem.get("layer", "episodic")
+                )
         else:
             print(f"♻️  Using persistent data in DB (Skipping Ingest)...")
 
@@ -155,10 +187,11 @@ async def main():
     parser.add_argument("--queries", type=int, default=50)
     parser.add_argument("--rerank", action="store_true")
     parser.add_argument("--no-wipe", action="store_true")
+    parser.add_argument("--tenant", type=str, default="00000000-0000-0000-0000-000000000000")
     args = parser.parse_args()
     
-    # Use a fixed, stable tenant ID for all benchmark operations to ensure data persistence
-    suite_tenant = "00000000-0000-0000-0000-000000000000"
+    # Use provided tenant or default
+    suite_tenant = UUID(args.tenant)
     print(f"🛡️ Suite Isolation Active | Tenant: {suite_tenant}")
     
     runner = RAEBenchmarkRunner(args.set, suite_tenant, queries=args.queries)

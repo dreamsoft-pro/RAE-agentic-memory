@@ -108,7 +108,6 @@ class QdrantVectorStore(IVectorStore):
 
             self._initialized = True
         except Exception as e:
-            raise
             logger.error(f"Failed to ensure Qdrant collection: {e}")
             # Do not set initialized to True if failed, so we retry
 
@@ -150,7 +149,6 @@ class QdrantVectorStore(IVectorStore):
 
             self._known_vectors.add(vector_name)
         except Exception as e:
-            raise
             logger.error(f"Failed to update vector config for {vector_name}: {e}")
 
     def _build_filter(
@@ -258,7 +256,6 @@ class QdrantVectorStore(IVectorStore):
             )
             return len(points)
         except Exception as e:
-            raise
             # Enhanced logging for debugging
             error_details = str(e)
             if hasattr(e, "content"):  # Qdrant client specific
@@ -298,7 +295,6 @@ class QdrantVectorStore(IVectorStore):
 
             return None
         except Exception as e:
-            raise
             logger.error(f"Qdrant get_vector failed: {e}")
             return None
 
@@ -339,7 +335,6 @@ class QdrantVectorStore(IVectorStore):
             )
             return True
         except Exception as e:
-            raise
             logger.error(f"Qdrant delete failed: {e}")
             return False
 
@@ -389,7 +384,6 @@ class QdrantVectorStore(IVectorStore):
 
             return output
         except Exception as e:
-            raise
             logger.error(f"Qdrant search failed: {e}")
             return []
 
@@ -421,7 +415,6 @@ class QdrantVectorStore(IVectorStore):
             )
             return result.count
         except Exception as e:
-            raise
             logger.error(f"Qdrant count failed: {e}")
             return 0
 
@@ -439,7 +432,6 @@ class QdrantVectorStore(IVectorStore):
             # Cannot easily get count of deleted items without extra query
             return 1  # Assume success
         except Exception as e:
-            raise
             logger.error(f"Qdrant delete_by_layer failed: {e}")
             return 0
 

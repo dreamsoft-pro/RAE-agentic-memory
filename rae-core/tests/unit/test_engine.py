@@ -118,12 +118,12 @@ async def test_search_memories(rae_engine, mock_search_engine, mock_memory_stora
     tenant_id = "test-tenant"
     query = "test query"
     mem_id = uuid4()
-    expected_results = [(mem_id, 0.9, 0.5, {})]
+    # RAE Engine expects 4-element tuples from search engine: (id, score, importance, audit)
+    expected_results = [(mem_id, 0.9, 0.5, {"strategy": "test"})]
     expected_memory = {"id": mem_id, "content": "found", "importance": 0.5}
 
     mock_search_engine.search.return_value = expected_results
-    mock_search_engine._unpack_candidate_with_audit.side_effect = lambda x: (x[0], x[1], x[2] if len(x) > 2 else 0.5, x[3] if len(x) > 3 else {})
-    mock_memory_storage.get_memory.return_value = expected_memory
+    mock_memory_storage.get_memory = AsyncMock(return_value=expected_memory)
 
     results = await rae_engine.search_memories(
         query=query,

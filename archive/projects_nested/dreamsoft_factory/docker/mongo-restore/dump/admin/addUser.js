@@ -1,1 +1,0 @@
-db.getSiblingDB('admin').createUser({user:'editorDb', pwd:'ed1t0rf69b54', roles:[{role:'readWrite',db:'editor_25'}]});

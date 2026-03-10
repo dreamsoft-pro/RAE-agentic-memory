@@ -81,6 +81,10 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
     ) -> bool:
         """Store a vector embedding in contiguous arena."""
         async with self._lock:
+            # Check if memory exists before storing vector
+            if memory_id not in self._memories:
+                return False
+
             # Normalize input to dict of vectors
             vectors: dict[str, list[float]] = {}
             if isinstance(embedding, list):
@@ -127,9 +131,6 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
                 # Ensure tenant_id is in metadata for security filtering
                 meta["tenant_id"] = tenant_id
                 self._vector_metadata[model_name][memory_id] = meta
-                
-                # Update tenant index
-                self._by_tenant[tenant_id].add(memory_id)
 
             return True
 
@@ -145,7 +146,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
         filters: dict[str, Any] | None = None,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using deterministic fixed-point arithmetic."""
         async with self._lock:
             model_name = kwargs.get("model_name", "default")
@@ -167,7 +168,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
             indices = self._vector_indices[model_name]
             metadatas = self._vector_metadata[model_name]
 
-            results: list[tuple[UUID, float, float]] = []
+            results: list[tuple[UUID, float]] = []
 
             # Bloom Filter Setup (The Scalpel)
             query_mask = 0
@@ -236,10 +237,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
                 if score_threshold is not None and score < score_threshold:
                     continue
 
-                # 4. Get Importance
-                importance = float(meta.get("importance", 0.5))
-
-                results.append((mem_id, score, importance))
+                results.append((mem_id, score))
 
             # Sort by score descending (Tie-Breaking by ID for determinism)
             # Python's sort is stable.
@@ -253,7 +251,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
         tenant_id: str,
         limit: int = 10,
         **kwargs: Any,
-    ) -> list[list[tuple[UUID, float, float]]]:
+    ) -> list[list[tuple[UUID, float]]]:
         """Search for multiple embeddings in batch."""
         results = []
         for emb in query_embeddings:
@@ -402,7 +400,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
     async def store_memory(self, **kwargs: Any) -> UUID:
         """Store a new memory."""
         async with self._lock:
-            memory_id = kwargs.get("id") or uuid4()
+            memory_id = uuid4()
             now = self._clock.now()
 
             content = kwargs.get("content", "")
@@ -413,9 +411,6 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
             metadata = kwargs.get("metadata") or {}
             embedding = kwargs.get("embedding")
             importance = kwargs.get("importance", 0.5)
-            # Ensure importance is also in metadata for filtering
-            if "importance" not in metadata:
-                metadata["importance"] = importance
             expires_at = kwargs.get("expires_at")
             memory_type = kwargs.get("memory_type", "text")
             strength = kwargs.get("strength", 1.0)
@@ -674,21 +669,14 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
     async def get_statistics(self) -> dict[str, Any]:
         """Get storage statistics."""
         async with self._lock:
-            # Count unique vectors across all models
-            all_vector_ids = set()
-            for model_idx in self._vector_indices.values():
-                all_vector_ids.update(model_idx.keys())
-
             return {
                 "total_memories": len(self._memories),
-                "total_vectors": len(all_vector_ids),
                 "tenants": len(self._by_tenant),
                 "agents": len(self._by_agent),
                 "layers": len(self._by_layer),
                 "unique_tags": len(self._by_tags),
                 "vector_models": list(self._vector_arenas.keys()),
-                "vector_arena_sizes_bytes": {k: len(v) for k, v in self._vector_arenas.items()},
-                "dimensions": list(self._vector_dims.values())
+                "vector_arena_sizes_bytes": {k: len(v) for k, v in self._vector_arenas.items()}
             }
 
     async def clear_all(self) -> int:
@@ -886,26 +874,17 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
                 if memory["tenant_id"] != tenant_id:
                     continue
 
-                # Apply filters (check both top-level and metadata)
+                # Apply filters
                 if filters:
                     match = True
                     for k, v in filters.items():
-                        # Check top-level then metadata
-                        actual_val = memory.get(k)
-                        if actual_val is None:
-                            actual_val = memory.get("metadata", {}).get(k)
-                            
-                        if actual_val != v:
+                        if memory.get(k) != v:
                             match = False
                             break
                     if not match:
                         continue
 
-                # Get metric (check both top-level and metadata)
                 val = memory.get(metric)
-                if val is None:
-                    val = memory.get("metadata", {}).get(metric)
-                    
                 if val is not None:
                     values.append(float(val))
 
@@ -946,15 +925,9 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
             if not memory or memory["tenant_id"] != tenant_id:
                 return 0.0
 
-            # Support System 87.0 metadata-centric importance
-            if "metadata" not in memory:
-                memory["metadata"] = {}
-                
-            current_imp = float(memory["metadata"].get("importance", 0.5))
-            new_imp = current_imp + delta
+            new_imp = float(memory.get("importance", 0.5)) + delta
             new_imp = max(0.0, min(1.0, new_imp))
-            
-            memory["metadata"]["importance"] = new_imp
+            memory["importance"] = new_imp
             memory["modified_at"] = self._clock.now()
             return new_imp
 
@@ -978,7 +951,7 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
             return count
 
     async def clear_tenant(self, tenant_id: str) -> int:
-        """Delete all memories and vectors for a tenant."""
+        """Delete all memories for a tenant."""
         async with self._lock:
             mids = list(self._by_tenant[tenant_id])
             for mid in mids:
@@ -987,14 +960,6 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
             # Clean up the tenant index key
             if tenant_id in self._by_tenant:
                 del self._by_tenant[tenant_id]
-            
-            # Clean up vectors for this tenant across all models
-            for model_name in list(self._vector_indices.keys()):
-                for mid in list(self._vector_indices[model_name].keys()):
-                    meta = self._vector_metadata[model_name].get(mid, {})
-                    if meta.get("tenant_id") == tenant_id:
-                        del self._vector_indices[model_name][mid]
-                        del self._vector_metadata[model_name][mid]
                 
             return len(mids)
 
