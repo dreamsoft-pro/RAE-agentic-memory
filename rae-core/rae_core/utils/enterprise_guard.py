@@ -4,49 +4,23 @@ import time
 import psutil
 import logging
 from functools import wraps
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from datetime import datetime
 
-# Import z naszego nowego mostka
 from rae_core.utils.memory_bridge import RAEMemoryBridge
 from rae_core.utils.context import RAEContextLocator
 
 class FatalEnterpriseError(Exception):
-    """Wyrzucany, gdy moduł łamie twardy kontrakt ISO 27000 lub Telemetrii."""
+    """Raised when an Enterprise Contract is violated."""
     pass
 
 class RAE_Enterprise_Foundation:
-    """Twardy kontrakt dla każdego modułu RAE-Suite."""
-    
     def __init__(self, module_name: str):
         self.module_name = module_name
         self.logger = logging.getLogger(f"RAE.Enterprise.{module_name}")
         self.bridge = RAEMemoryBridge(project_name=module_name)
-        self._enforce_iso27000_compliance()
-
-    def _enforce_iso27000_compliance(self):
-        """Weryfikuje środowisko startowe."""
-        # 1. Sprawdzenie izolacji (Nie powinieneś działać jako root, jeśli to nie jest absolutnie konieczne)
-        if hasattr(os, 'geteuid') and os.geteuid() == 0 and self.module_name not in ["rae-hive", "rae-quality"]:
-            self.logger.warning("ISO 27001 Violation: Process is running as root. This is a severe security risk.")
-            # W przyszłości tu będzie podnoszony wyjątek FatalEnterpriseError
-        
-        # 2. Sprawdzenie telemetrii
-        if not os.getenv("RAE_API_URL"):
-            raise FatalEnterpriseError(f"[{self.module_name}] RAE_API_URL missing. Telemetry and Audit cannot function.")
-            
-        # 3. Sprawdzenie tożsamości
-        tenant = RAEContextLocator.get_current_tenant_id()
-        if tenant == "UNKNOWN_TENANT" or tenant == "00000000-0000-0000-0000-000000000000":
-            self.logger.warning(f"[{self.module_name}] Running under Default Tenant. Strict auditing may fail.")
 
 def audited_operation(operation_name: str, impact_level: str = "medium"):
-    """
-    Dekorator (Twardy Kontrakt). Zmusza każdą funkcję do:
-    1. Zalogowania startu (Audit Trail).
-    2. Zmierzenia czasu i zasobów (Telemetry).
-    3. Zaraportowania wyniku do Pamięci.
-    """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(self, *args, **kwargs) -> Any:
@@ -60,57 +34,67 @@ def audited_operation(operation_name: str, impact_level: str = "medium"):
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
     def _execute_with_audit(self_instance, func, op_name, impact, *args, **kwargs):
-        # Sprawdzamy czy klasa korzysta z Enterprise Foundation
         if not hasattr(self_instance, 'enterprise_foundation'):
-            raise FatalEnterpriseError(f"Class {self_instance.__class__.__name__} must implement RAE_Enterprise_Foundation to use audited operations.")
+            raise FatalEnterpriseError(f"Class {self_instance.__class__.__name__} must implement RAE_Enterprise_Foundation.")
             
         foundation: RAE_Enterprise_Foundation = self_instance.enterprise_foundation
         
-        # Metryki startowe
+        # Wyciąganie informacji o modelu LLM z kwargs (jeśli agent go podał)
+        llm_model = kwargs.get("llm_model") or os.getenv("DEFAULT_LLM_MODEL", "unknown-model")
+        
         start_time = time.time()
         process = psutil.Process(os.getpid())
         mem_start = process.memory_info().rss
         
-        # Audit: Start
+        # Audit: Intent with Source Tracking
         audit_meta = {
             "operation": op_name,
+            "source_module": foundation.module_name,
+            "llm_model": llm_model,
             "impact": impact,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
             "status": "started",
-            "args": str(args), # Wymaga sanityzacji PII w przyszłości
+            "timestamp": datetime.utcnow().isoformat()
         }
         foundation.bridge.save_event(
-            content=f"Initiated: {op_name}",
-            human_label=f"Audit: {op_name}",
+            content=f"Operation {op_name} started by {foundation.module_name} using {llm_model}",
+            human_label=f"Audit: {foundation.module_name} -> {op_name}",
             metadata=audit_meta
         )
 
         try:
-            # Wykonanie
-            result = func(self_instance, *args, **kwargs)
+            # Tu właściwe wykonanie (Phoenix/Hive/Quality/Lab)
+            import asyncio
+            if asyncio.iscoroutinefunction(func):
+                # Jeśli to async, musimy użyć pętli zdarzeń (obsłużone w wrapperze wyżej)
+                result = func(self_instance, *args, **kwargs)
+            else:
+                result = func(self_instance, *args, **kwargs)
             status = "success"
             return result
         except Exception as e:
             status = "failed"
-            foundation.logger.error(f"Operation {op_name} failed: {e}")
+            foundation.bridge.save_event(
+                content=f"CRITICAL FAILURE in {op_name}: {str(e)}",
+                human_label=f"Alert: {op_name} Failed",
+                metadata={"status": "error", "error": str(e), "category": "security_alert"}
+            )
             raise e
         finally:
-            # Metryki końcowe
             duration = time.time() - start_time
-            mem_used = process.memory_info().rss - mem_start
+            mem_used = (process.memory_info().rss - mem_start) / 1024 / 1024 # MB
             
-            # Audit: Zakończenie + Telemetria
-            final_meta = {
-                "operation": op_name,
-                "status": status,
-                "duration_seconds": round(duration, 4),
-                "memory_delta_bytes": mem_used,
-                "category": "security_audit"
-            }
+            # Final Telemetry with LLM data
             foundation.bridge.save_event(
-                content=f"Completed: {op_name} with status {status}. Took {duration:.2f}s.",
+                content=f"Summary: {op_name} finished. Duration: {duration:.2f}s. Memory: {mem_used:.2f}MB.",
                 human_label=f"Telemetry: {op_name}",
-                metadata=final_meta
+                metadata={
+                    "operation": op_name,
+                    "source_module": foundation.module_name,
+                    "llm_model": llm_model,
+                    "duration_s": duration,
+                    "mem_delta_mb": mem_used,
+                    "category": "performance_metrics"
+                }
             )
             
     return decorator
