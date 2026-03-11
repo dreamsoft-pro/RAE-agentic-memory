@@ -1,37 +1,31 @@
-# 🎯 Plan "Mądrego Montażu" (Smart Assembly) - Dreamsoft Pro 2.0
-**Status:** Inicjalizacja Fazy 3 (Assembly & Validation)
-**Data:** 2026-03-02 (Sesja Wieczorna)
+# 📋 Plan Następnej Sesji: Operacja "Smart Assembly" (Dreamsoft Next.js)
 
-## 🏗️ 1. Konsolidacja Symboli (The Final Stitching) - PRIORYTET 1
-*   **Cel:** Połączyć 153 pliki `*.symbols_raw.json` (pobrane z Node 1) w ostateczne mapy `master_symbols.json`.
-*   **Zadanie:** Uruchomić `SymbolStitcher.py` na laptopie. Usunąć duplikaty, zunifikować nazewnictwo metod i typów.
+## 🎯 Cel Główny
+Poskładanie frontendu Next.js w spójną całość przy wykorzystaniu Grafu Wiedzy RAE na Node 1.
 
-## 🗺️ 2. Mapa Kolejności Montażu (Bottom-Up Strategy)
-*   **Cel:** Wyznaczyć kolejność uruchamiania serwisów na podstawie Grafu Zależności.
-*   **Zadanie:** Wyciągnąć z Node 1 (tabela `knowledge_graph_edges`) listę importów i wykonać sortowanie topologiczne. Najpierw serwisy "liście" (np. `TaxService`), na końcu Giganci (`CalcCtrl`).
+## 🛠️ Lista Zadań (Roadmap)
 
-## 🛠️ 3. Inteligentny Import-Fixer
-*   **Cel:** Naprawić "ślepe" importy w 760 plikach TSX.
-*   **Zadanie:** Automat musi zamienić `import { ... } from '@/lib/api'` na realne ścieżki do zmodernizowanych plików w `src/services/`.
+### 1. Faza Diagnostyczna (Deep Symbol Extraction)
+- [ ] **Naprawa Ingestu Symboli:** Zdiagnozować brak symboli dla `CalculationService` (sprawdzić klucze `methods`/`functions` w `symbols.json`).
+- [ ] **Re-Ingest Grafu:** Ponownie zasilić tenant `DREAMSOFT-FRONTEND-ASSEMBLY` kompletnymi danymi o 307 komponentach.
 
-## 🪞 4. Piaskownica Lustrzana (The Mirror Sandbox)
-*   **Cel:** Udowodnić parzystość zgodnie z ISO 42001.
-*   **Zadanie:** Konfiguracja `docker-compose` do równoległego uruchomienia:
-    *   Legacy (AngularJS): port 8081
-    *   Candidate (Next.js): port 3005
-*   **Validation:** Uruchomienie `UIRunner` (Playwright) do automatycznych testów porównawczych.
+### 2. Faza Mapowania Zależności
+- [ ] **Automatyczny Import-Fixer:** Wygenerować mapę brakujących importów w `src/services` na podstawie powiązań w grafie.
+- [ ] **Analiza "Martwego Kodu":** Usunąć nieużywane serwisy, które nie mają relacji w Grafie Wiedzy.
 
-## 🧪 5. Generator Testów Parzystości (Vitest Factory)
-*   **Cel:** Automatyczne testy jednostkowe dla 1278 serwisów.
-*   **Zadanie:** Dla każdej metody w `master_symbols.json` wygenerować test `vitest`, który sprawdza zgodność danych wejściowych/wyjściowych z oryginałem.
+### 3. Faza Montażu Core (The Brain)
+- [ ] **Integracja Kalkulacji:** Połączyć `CalculationController.ts` z `CalculationEngine.tsx`.
+- [ ] **Stitching Koszyka:** Podpiąć `CartService` pod `CartContext.tsx` i zwalidować komunikację z API (port 18000).
 
----
-**Materiały gotowe na laptopie:**
-- Fundament Next.js 14 (Zustand, React Query, Vitest).
-- 1278 serwisów TS w `src/services/`.
-- 760 plików TSX w `src/components/`.
-- 153 surowe pliki symboli w `src/components/`.
+### 4. Faza UX & Visual Mirroring
+- [ ] **Layout Integration:** Złożyć `RootLayout.tsx` (Header, Footer, Nav) zgodnie z Master Planem.
+- [ ] **CSS Calibration:** Przeniesienie rygorystyczne stylów z AngularJS do Tailwinda (Operacja Lustro).
 
-**Zadania działające w tle na Node 1:**
-- Kontynuacja ekstrakcji symboli ( scripts.js ).
-- Budowanie Grafu Zależności ( Turbo Mode ).
+### 5. Walidacja ISO
+- [ ] **E2E Traceability:** Test zamówienia z zapisem śladu w `ISO_AUDIT_GENEALOGY.jsonl`.
+- [ ] **Performance Check:** Pomiary szybkości na Node 1.
+
+## 📍 Infrastruktura (Node 1)
+- **Katalog:** `~/rae-v5` oraz `~/dreamsoft_factory/next-frontend`
+- **Tenant:** `6ad8b5a5-d61c-566d-98f9-8a131ab304a7` (DREAMSOFT-FRONTEND-ASSEMBLY)
+- **Database:** `postgresql://rae:rae_password@localhost:5432/rae`
