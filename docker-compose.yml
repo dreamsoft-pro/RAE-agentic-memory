@@ -1,7 +1,7 @@
 # RAE-Suite v4.5 - QUANTUM PRODUCTION STACK
 services:
   rae-postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: rae-postgres
     restart: unless-stopped
     environment:
