@@ -52,21 +52,19 @@ async def get_and_verify_tenant_id(
     tenant_id_str = x_tenant_id or query_tenant_id
 
     if not tenant_id_str:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="X-Tenant-Id header or 'tenant_id' query parameter is required",
-        )
-
-    try:
-        if tenant_id_str == settings.DEFAULT_TENANT_ALIAS:
-            tenant_uuid = UUID(settings.DEFAULT_TENANT_UUID)
-        else:
-            tenant_uuid = UUID(tenant_id_str)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tenant ID format: '{tenant_id_str}'. Must be a valid UUID or '{settings.DEFAULT_TENANT_ALIAS}'.",
-        )
+        # Fallback to default tenant for simplified agent tool access
+        tenant_uuid = UUID(settings.DEFAULT_TENANT_UUID)
+    else:
+        try:
+            if tenant_id_str == settings.DEFAULT_TENANT_ALIAS:
+                tenant_uuid = UUID(settings.DEFAULT_TENANT_UUID)
+            else:
+                tenant_uuid = UUID(tenant_id_str)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid tenant ID format: '{tenant_id_str}'. Must be a valid UUID or '{settings.DEFAULT_TENANT_ALIAS}'.",
+            )
 
     # Store the validated UUID version of tenant_id in request.state for convenience
     request.state.tenant_id = tenant_uuid

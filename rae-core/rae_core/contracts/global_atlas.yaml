@@ -1,0 +1,29 @@
+# RAE Global Contract Atlas v1.5
+# Hard Frames 2.0 - Anti-Hallucination & Full Traceability
+
+contracts:
+  - id: grounding_mandate
+    level: 3
+    type: epistemic
+    name: No-Hallucination Guard
+    description: All agent claims must be grounded in retrieved sources.
+    rules: [{min_grounding_score: 0.7, action: block_on_low_evidence}]
+
+  - id: audit_genealogy
+    level: 1
+    type: structural
+    name: Full Decision Traceability
+    description: Every decision must have a traceable path to sources and model ID.
+    rules: [{require_decision_chain: true, require_model_id: true}]
+
+  - id: hard_frame_boundary
+    level: 3
+    type: epistemic
+    name: Isolation Shield
+    description: Prevents data leakage between agent sessions.
+    rules: [{strict_session_isolation: true, block_anonymous_writes: true}]
+
+  - id: information_provenance
+    level: 3
+    type: epistemic
+    rules: [{require_source_metadata: true}]

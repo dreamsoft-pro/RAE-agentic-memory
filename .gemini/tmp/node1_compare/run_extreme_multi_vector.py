@@ -9,9 +9,7 @@ import argparse
 import asyncio
 import os
 import sys
-import json
 from pathlib import Path
-from uuid import UUID
 
 import asyncpg
 import yaml
@@ -22,9 +20,9 @@ from qdrant_client import models as q_models
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "rae-core"))
 
-from rae_core.embedding.native import NativeEmbeddingProvider
 from rae_adapters.postgres import PostgreSQLStorage
 from rae_adapters.qdrant import QdrantVectorStore
+from rae_core.embedding.native import NativeEmbeddingProvider
 from rae_core.engine import RAEEngine
 from rae_core.math.controller import MathLayerController
 
@@ -40,7 +38,7 @@ class UltimateSynergyRunner:
         self.tokenizer_path = "/app/models/minilm/tokenizer.json"
 
     async def setup(self):
-        print(f"🔌 Initializing Ultimate Synergy Core...")
+        print("🔌 Initializing Ultimate Synergy Core...")
         self.pool = await asyncpg.create_pool(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             database=os.getenv("POSTGRES_DB", "rae"),
@@ -72,9 +70,9 @@ class UltimateSynergyRunner:
             vector_name="dense",
         )
 
+        from rae_core.search.engine import HybridSearchEngine
         from rae_core.search.strategies.fulltext import FullTextStrategy
         from rae_core.search.strategies.vector import VectorSearchStrategy
-        from rae_core.search.engine import HybridSearchEngine
 
         self.math_ctrl = MathLayerController()
 
@@ -175,12 +173,12 @@ class UltimateSynergyRunner:
             if i % 20 == 0:
                 print(f"   ✅ Q {i}")
 
-        print(f"\n========================================\n")
+        print("\n========================================\n")
         print(f"FIRST-LOOK MRR (Math Only): {mrr_first_sum / total_queries:.4f}")
         print(
             f"FINAL SUCCESS RATE (With Szubar): {success_final / total_queries * 100:.2f}%"
         )
-        print(f"========================================\n")
+        print("========================================\n")
 
 
 async def main():

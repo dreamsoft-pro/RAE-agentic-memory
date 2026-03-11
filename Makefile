@@ -15,9 +15,9 @@ help:  ## Show this help message
 # QUICK START
 # ==============================================================================
 
-start:  ## Start all services with Docker Compose
+start:  ## Start all services with Universal GPU Detection
 	@echo "🚀 Starting RAE..."
-	docker compose up -d
+	./scripts/start_rae.sh up -d
 	@echo "✅ RAE is running!"
 	@echo "📖 API Documentation: http://localhost:8000/docs"
 	@echo "📊 Dashboard: http://localhost:8501"

@@ -52,7 +52,7 @@ async def example_basic_extraction():
     for memory in memories:
         await rae_request(
             "POST",
-            "/v1/memory/store",
+            "/v2/memory/store",
             json={
                 "content": memory,
                 "layer": "em",
@@ -67,7 +67,7 @@ async def example_basic_extraction():
     print("Extracting knowledge graph...")
     result = await rae_request(
         "POST",
-        "/v1/graph/extract",
+        "/v2/graph/extract",
         json={
             "project_id": PROJECT_ID,
             "limit": 50,
@@ -103,7 +103,7 @@ async def example_hybrid_search():
 
     result = await rae_request(
         "POST",
-        "/v1/memory/query",
+        "/v2/memory/query",
         json={
             "query_text": query,
             "k": 5,
@@ -142,7 +142,7 @@ async def example_advanced_graph_query():
 
     result = await rae_request(
         "POST",
-        "/v1/graph/query",
+        "/v2/graph/query",
         json={
             "query": "payment module dependencies and relationships",
             "project_id": PROJECT_ID,
@@ -177,7 +177,7 @@ async def example_graph_statistics():
     """
     print("=== Example 4: Graph Statistics ===\n")
 
-    stats = await rae_request("GET", f"/v1/graph/stats?project_id={PROJECT_ID}")
+    stats = await rae_request("GET", f"/v2/graph/stats?project_id={PROJECT_ID}")
 
     print(f"Project: {stats['project_id']}")
     print(f"Total nodes: {stats['total_nodes']}")
@@ -201,7 +201,7 @@ async def example_subgraph_exploration():
     print("=== Example 5: Subgraph Exploration ===\n")
 
     # First, get some nodes
-    stats = await rae_request("GET", f"/v1/graph/nodes?project_id={PROJECT_ID}&limit=3")
+    stats = await rae_request("GET", f"/v2/graph/nodes?project_id={PROJECT_ID}&limit=3")
 
     if stats:
         node_ids = [node["node_id"] for node in stats[:2]]
@@ -211,7 +211,7 @@ async def example_subgraph_exploration():
 
         result = await rae_request(
             "GET",
-            f"/v1/graph/subgraph?project_id={PROJECT_ID}&node_ids={node_ids_str}&depth=2",
+            f"/v2/graph/subgraph?project_id={PROJECT_ID}&node_ids={node_ids_str}&depth=2",
         )
 
         print(f"Nodes in subgraph: {result['statistics']['nodes_found']}")
@@ -239,7 +239,7 @@ async def example_hierarchical_reflection():
     print("Generating hierarchical reflection...")
     result = await rae_request(
         "POST",
-        "/v1/graph/reflection/hierarchical",
+        "/v2/graph/reflection/hierarchical",
         json={"project_id": PROJECT_ID, "bucket_size": 10, "max_episodes": 100},
     )
 
@@ -269,7 +269,7 @@ async def example_incremental_updates():
     for memory in new_memories:
         await rae_request(
             "POST",
-            "/v1/memory/store",
+            "/v2/memory/store",
             json={"content": memory, "layer": "em", "project": PROJECT_ID},
         )
 
@@ -277,7 +277,7 @@ async def example_incremental_updates():
     print("Updating knowledge graph with recent memories...")
     result = await rae_request(
         "POST",
-        "/v1/graph/extract",
+        "/v2/graph/extract",
         json={
             "project_id": PROJECT_ID,
             "limit": 10,  # Only process recent memories
@@ -306,7 +306,7 @@ async def example_ai_agent_integration():
     # Get rich context using hybrid search
     context_result = await rae_request(
         "POST",
-        "/v1/memory/query",
+        "/v2/memory/query",
         json={
             "query_text": user_question,
             "k": 5,
@@ -350,7 +350,7 @@ async def example_dependency_analysis():
 
     result = await rae_request(
         "POST",
-        "/v1/graph/query",
+        "/v2/graph/query",
         json={
             "query": f"{target_entity} dependencies and dependents",
             "project_id": PROJECT_ID,
@@ -398,7 +398,7 @@ async def example_confidence_filtering():
     for threshold in thresholds:
         result = await rae_request(
             "POST",
-            "/v1/graph/extract",
+            "/v2/graph/extract",
             json={
                 "project_id": PROJECT_ID,
                 "limit": 50,

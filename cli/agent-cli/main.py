@@ -58,7 +58,10 @@ def store(
     tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
     project: str = typer.Option(..., "--project", "-p", help="The project ID."),
     source: str = typer.Option("cli", help="The source of the memory."),
-    layer: str = typer.Option("semantic", help="The memory layer (e.g., 'episodic', 'semantic', 'reflective')."),
+    layer: str = typer.Option(
+        "semantic",
+        help="The memory layer (e.g., 'episodic', 'semantic', 'reflective').",
+    ),
 ):
     """Stores a new memory in the RAE."""
     session_id = _get_session_id()
@@ -75,7 +78,7 @@ def store(
         "project": project,
         "session_id": session_id,
     }
-    url = f"{_get_api_url()}/v1/memory/store"
+    url = f"{_get_api_url()}/v2/memory/store"
     try:
         r = requests.post(url, json=payload, headers=headers)
         r.raise_for_status()
@@ -100,7 +103,7 @@ def query(
         "X-Project-ID": project,
     }
     payload = {"query_text": query_text, "k": k}
-    url = f"{_get_api_url()}/v1/memory/query"
+    url = f"{_get_api_url()}/v2/memory/query"
     try:
         r = requests.post(url, json=payload, headers=headers)
         r.raise_for_status()
@@ -129,7 +132,7 @@ def ask(
         "prompt": prompt,
         "session_id": session_id,
     }
-    url = f"{_get_api_url()}/v1/agent/execute"
+    url = f"{_get_api_url()}/v2/agent/execute"
     try:
         r = requests.post(url, json=payload, headers=headers)
         r.raise_for_status()

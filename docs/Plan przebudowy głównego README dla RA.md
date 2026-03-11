@@ -75,7 +75,7 @@ README ma być „frontem” projektu – reszta szczegółów może być w /doc
 **Propozycja szkicu tekstu (do dopracowania przez AI):**
 
 > # RAE – Reflective Agentic-memory Engine  
-> *(czyt. „Rej”)* – 4-warstwowy silnik pamięci i decyzji dla agentów AI.
+> *(czyt. „Rej”)* – 4-warstwowy architektura pamięci i decyzji dla agentów AI.
 >
 > RAE daje agentom trwałą, strukturalną pamięć oraz matematyczną warstwę nad klasycznym RAG.  
 > Zaprojektowany do pracy lokalnej (on-premise, air-gapped) oraz w środowiskach przemysłowych i badawczych.
@@ -108,7 +108,7 @@ Wytyczne:
 
 Krótki opis:
 
-RAE jako „silnik pamięci i decyzji dla agentów AI”.
+RAE jako „architektura pamięci i decyzji dla agentów AI”.
 
 4 warstwy pamięci (bez wchodzenia głęboko w definicje).
 
@@ -122,7 +122,7 @@ md
 Skopiuj kod
 ## Co to jest RAE?
 
-RAE („Rej”) to silnik pamięci i decyzji dla agentów AI.  
+RAE („Rej”) to architektura pamięci i decyzji dla agentów AI.  
 Łączy 4-warstwową architekturę pamięci z 3-poziomową warstwą matematyczną, która steruje tym, jak wiedza jest zapisywana, wyszukiwana i wykorzystywana.
 
 Najważniejsze cechy:
@@ -237,7 +237,7 @@ Skopiuj kod
 ## Wybierz swoją ścieżkę
 
 - 👨‍💻 **Jesteś developerem?** – zobacz [Szybki start i integrację API](docs/paths/developer.md)
-- 💻 **Budujesz agentów / narzędzia?** – zobacz [RAE jako silnik pamięci dla agentów](docs/paths/programmer.md)
+- 💻 **Budujesz agentów / narzędzia?** – zobacz [RAE jako architektura pamięci dla agentów](docs/paths/programmer.md)
 - 🧪 **Jesteś naukowcem / badaczem?** – zobacz [Warstwę math, benchmarki i telemetrię](docs/paths/scientist.md)
 - 🏭 **Reprezentujesz przemysł / produkcję?** – zobacz [Zastosowania przemysłowe i ROI](docs/paths/industry.md)
 - 🏥 **Pracujesz w healthcare?** – zobacz [Bezpieczeństwo danych i wdrożenia on-premise](docs/paths/healthcare.md)
@@ -315,7 +315,7 @@ Firmy, instytucje i osoby prywatne mogą wykorzystywać RAE komercyjnie zgodnie 
 niezależnie od tego, czy współpracują bezpośrednio z autorami projektu, czy nie.
 
 Wokół otwartego core mogą powstawać **komercyjne usługi i rozszerzenia** (wdrożenia, wsparcie, integracje, narzędzia dodatkowe).  
-Sam silnik pamięci RAE-core pozostanie jednak projektem open-source, dostępnym dla wszystkich na tych samych zasadach.
+Sam architektura pamięci RAE-core pozostanie jednak projektem open-source, dostępnym dla wszystkich na tych samych zasadach.
 
 Chcesz współtworzyć RAE?
 - Zobacz [CONTRIBUTING.md](CONTRIBUTING.md)

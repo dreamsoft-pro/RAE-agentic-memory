@@ -1,88 +1,18 @@
-"""Full-text keyword search strategy."""
-
 from typing import Any
 from uuid import UUID
 
-from rae_core.interfaces.storage import IMemoryStorage
-from rae_core.search.strategies import SearchStrategy
+from ...interfaces.storage import IMemoryStorage
+from . import SearchStrategy
 
 
 class FullTextStrategy(SearchStrategy):
-    """Full-text keyword matching search.
-
-    Simple exact and partial keyword matching for fast retrieval.
-    Useful for tag-based and exact phrase searches.
-    """
+    """Full-text lexical search strategy."""
 
     def __init__(
-        self,
-        memory_storage: IMemoryStorage,
-        default_weight: float = 0.05,
-    ):
-        """Initialize full-text strategy.
-
-        Args:
-            memory_storage: Memory storage for content retrieval
-            default_weight: Default weight in hybrid search (0.0-1.0)
-        """
-        self.memory_storage = memory_storage
+        self, memory_storage: IMemoryStorage, default_weight: float = 1.0
+    ) -> None:
+        self.storage = memory_storage
         self.default_weight = default_weight
-
-    def _normalize(self, text: str) -> str:
-        """Normalize text for matching."""
-        return text.lower().strip()
-
-    def _compute_match_score(
-        self,
-        query: str,
-        content: str,
-        tags: list[str],
-    ) -> float:
-        """Compute match score based on keyword presence.
-
-        Args:
-            query: Search query
-            content: Memory content
-            tags: Memory tags
-
-        Returns:
-            Match score (0.0-1.0)
-        """
-        # Wildcard support
-        if query == "*":
-            return 1.0
-
-        query_norm = self._normalize(query)
-        content_norm = self._normalize(content)
-        tags_norm = [self._normalize(tag) for tag in tags]
-
-        score = 0.0
-
-        # Exact phrase match (highest score)
-        if query_norm in content_norm:
-            score += 1.0
-
-        # Tag exact match
-        if query_norm in tags_norm:
-            score += 0.8
-
-        # Word-level matches
-        query_words = set(query_norm.split())
-        content_words = set(content_norm.split())
-        tag_words = set(word for tag in tags_norm for word in tag.split())
-
-        # Calculate overlap
-        content_overlap = (
-            len(query_words & content_words) / len(query_words) if query_words else 0
-        )
-        tag_overlap = (
-            len(query_words & tag_words) / len(query_words) if query_words else 0
-        )
-
-        score += content_overlap * 0.6
-        score += tag_overlap * 0.4
-
-        return min(score, 1.0)
 
     async def search(
         self,
@@ -92,66 +22,39 @@ class FullTextStrategy(SearchStrategy):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
-        """Execute full-text search.
+    ) -> list[tuple[UUID, float, float]]:
+        agent_id = kwargs.get("agent_id") or (filters or {}).get("agent_id", "default")
+        # Default to None (search all layers) if not specified
+        layer = kwargs.get("layer") or (filters or {}).get("layer")
+        project_id = project or (filters or {}).get("project")
 
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters (layer, agent_id, tags)
-            limit: Maximum number of results
-            project: Optional project identifier
-
-        Returns:
-            List of (memory_id, match_score) tuples
-        """
-        # Extract filters
-        layer = filters.get("layer") if filters else None
-        agent_id = filters.get("agent_id") if filters else None
-        project = project or (filters.get("project") if filters else None)
-
-        # Execute search via storage adapter with FTS support
-        memories = await self.memory_storage.list_memories(
+        results = await self.storage.search_memories(
+            query=query,
             tenant_id=tenant_id,
+            limit=limit,
             agent_id=agent_id,
             layer=layer,
-            limit=limit,
-            project=project,
-            filters=filters,  # Pass filters down
-            query=query,  # Pass query for FTS ranking
+            project=project_id,
         )
 
-        if not memories:
-            return []
+        output: list[tuple[UUID, float, float]] = []
+        for r in results:
+            m_id_raw = r.get("id")
+            if isinstance(m_id_raw, str):
+                m_id = UUID(m_id_raw)
+            elif isinstance(m_id_raw, UUID):
+                m_id = m_id_raw
+            else:
+                continue
 
-        # Score each memory - Trust storage rank if available, else compute locally
-        results: list[tuple[UUID, float]] = []
-        for memory in memories:
-            memory_id = memory["id"]
-            if isinstance(memory_id, str):
-                memory_id = UUID(memory_id)
+            score = float(r.get("score", 0.0))
+            importance = float(r.get("importance", 0.0))
+            output.append((m_id, score, importance))
 
-            # Use rank from storage if available
-            score = memory.get("rank") or memory.get("score")
-
-            if score is None:
-                # Compute local match score as fallback
-                score = self._compute_match_score(
-                    query=query,
-                    content=memory.get("content", ""),
-                    tags=memory.get("tags", []),
-                )
-
-            score = float(score)
-            if score > 0:
-                results.append((memory_id, score))
-
-        return results
+        return output
 
     def get_strategy_name(self) -> str:
-        """Return strategy name."""
         return "fulltext"
 
     def get_strategy_weight(self) -> float:
-        """Return default weight for hybrid fusion."""
         return self.default_weight

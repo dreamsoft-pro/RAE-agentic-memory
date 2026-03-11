@@ -200,7 +200,7 @@ Takie rozdzielenie trybów refleksji:
      - możliwość łatwego podpinania kolejnych modeli do testów.
 
 3. **Daje jasną historię inżynieryjną**:
-   - RAE to przede wszystkim **silnik pamięci i refleksji strukturalnej**,
+   - RAE to przede wszystkim **architektura pamięci i refleksji strukturalnej**,
    - LLM to „warstwa komunikacyjna” i „opisowa”, **opCJOnalna** i w pełni pluggable.
 
 ---

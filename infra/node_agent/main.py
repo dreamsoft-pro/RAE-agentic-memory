@@ -171,7 +171,7 @@ class NodeAgent:
             async with httpx.AsyncClient() as client:
                 headers = {"X-API-Key": self.api_key}
                 resp = await client.get(
-                    f"{self.base_url}/v1/memory/{memory_id}", headers=headers
+                    f"{self.base_url}/v2/memory/{memory_id}", headers=headers
                 )
                 if resp.status_code == 200:
                     return resp.json().get("content")
@@ -186,7 +186,7 @@ class NodeAgent:
                 headers = {"X-API-Key": self.api_key}
                 payload = {"query": query, "k": 5}
                 resp = await client.post(
-                    f"{self.base_url}/v1/memory/query", json=payload, headers=headers
+                    f"{self.base_url}/v2/memory/query", json=payload, headers=headers
                 )
                 if resp.status_code == 200:
                     return resp.json().get("results", [])

@@ -1,71 +1,80 @@
-# RAE for Scientists & Researchers
+# RAE: Reflective Agentic-memory Architecture (Scientific Manifesto)
 
-*Current Version: 3.4.0 (Silicon Oracle)*
-*Historical Versions: [Nov 2025](../history/scientist_november_2025.md), [Dec 2025](../history/scientist_december_2025.md)*
+*System Version: 5.2.0 (Silicon Oracle)*  
+*Core Paradigm: Deterministic Agentic Information Processing*
 
-This document provides a technical deep-dive into RAE (Retrieval-Augmented Episodic) Agnostic Core architecture, mathematical foundations, and empirical results.
-
----
-
-## 🔬 Core Architecture: The Silicon Oracle
-
-RAE (Retrieval-Augmented Episodic) Agnostic Core is a multi-layered cognitive memory operating system for AI agents. It integrates mathematical determinism with evolutionary adaptation.
-
-### 1. The Four Memory Layers (The 4 Pillars)
-RAE categorizes every piece of information (Memory) according to its functional role:
-
-1.  **Episodic Memory (EM / em):** Raw stream of events and technical logs. temporal precision ($t$).
-2.  **Working Memory (WM / wm):** Current task context. The only layer for `RESTRICTED` data.
-3.  **Semantic Memory (SM / sm):** The Knowledge Graph (GraphRAG). Entities and relations.
-4.  **Reflective Memory (RM / rm):** Meta-memory. Stores Bandit weights and **Szubar Mode** failure mappings.
+This document formalizes the RAE (Reflective Agentic-memory Engine) as a modular cognitive architecture that bridges Information Theory, Graph Dynamics, and Quantum Field Theory (QFT) concepts into a production-ready engineering framework.
 
 ---
 
-## 📐 Mathematical Layers (The Math Core)
+## 🔬 1. Knowledge Classification (5-Layer Model)
+RAE enforces a strict taxonomy of information based on its lifecycle and sensitivity (aligned with ISO 42001/27001):
 
-RAE processes queries through a cascade of optimization filters:
-
-### L1: Heuristics & "Oracle Seed"
-*   **Theory:** Bayesian Prior. Static weight biasing based on query token density. Technical logs favor FTS; abstract queries favor Vectors.
-
-### L2: Fusion Strategy (RRF & Confidence)
-*   **Formula (Reciprocal Rank Fusion):**
-    $$RRFScore(d) = \sum_{r \in R} \frac{1}{k + r(d)}$$
-
-### L3: Multi-Armed Bandit (MAB) - Evolutionary Controller
-*   **Mechanism:** **Thompson Sampling**. RAE treats search configurations as "Arms".
-*   **Theory:** Dirichlet-Multinomial distribution. User/Agent feedback reinforces successful arms.
+1.  **Sensory (Input):** Raw perception stream, pre-processing stage.
+2.  **Working (Transient):** Active task state ($O(1)$). High volatility; restricted to `RESTRICTED` data isolation.
+3.  **Episodic (Temporal):** Chronological event stream $(e_t)$. Preserves temporal precision and sequential logic.
+4.  **Semantic (Relational):** Permanent Knowledge Graph $G(V, E)$. Abstracted entities and topological relations.
+5.  **Reflective (Meta):** Systemic self-knowledge. Stores performance metrics, strategy weights (MAB), and audit trails.
 
 ---
 
-## ⚡ Key Technical Innovations
+## 🧠 2. Memory Scales (Temporal Architecture)
+RAE mimics human memory by segregating data into four functional scales:
 
-### Szubar Mode: Autonomous Induction
-**Szubar Mode** is an emergency state triggered when MRR < threshold. It pulls nearest neighbors from the Knowledge Graph for low-confidence results.
-*   **Resonance Wave Theory:** $E = E_0 \cdot e^{-\lambda d}$. Szubar Mode amplifies this amplitude to find hidden logical connections.
-
-### Native ONNX: Agnostic Vector Layer
-RAE eliminates external API dependency using internal `onnxruntime`.
-*   **Models:** `nomic-embed-text-v1.5` (768d) and `all-MiniLM-L6-v2` (384d).
-*   **Math:** Multidimensional Cosine Similarity.
+*   **Short-term (Working Memory):** High-speed, TTL-indexed transient buffer.
+*   **Medium-term (Episodic Memory):** Vector-indexed manifold storing $e_t$ as high-dimensional embeddings.
+*   **Long-term (Semantic Memory):** Persistent sparse graph structure for ontological stability.
+*   **Reflective Memory:** The "System 2" supervisor managing cross-layer consistency.
 
 ---
 
-## 📊 Empirical Analysis & Benchmark Results (Jan 2026)
+## 📐 3. Mathematical Retrieval Tiers (The Pipeline)
+Memory retrieval is treated as a multi-stage optimization problem across three tiers:
 
-Testing the "Silicon Oracle" architecture at scale on a standard developer laptop.
+### Tier L1: Bayesian Heuristics (Prior Distribution)
+RAE estimates the prior probability $P(S|Q)$ using symbolic anchoring and token density. It biases weights between Full-Text Search (FTS) and Vector Space Search:
+$$W_{fts} = \frac{\sum \text{keywords}}{\text{total\_tokens}}, \quad W_{vec} = 1 - W_{fts}$$
 
-| Dataset Size | MRR (Hybrid) | Szubar Reflections | Strategy |
-| :--- | :--- | :--- | :--- |
-| **1k (Small)** | 1.0000 | 0 | Math-First |
-| **10k (Extreme)** | **1.0000** | 4 | **Native ONNX + Szubar** |
-### Core Research Areas
+### Tier L2: Logic Gateway (Reciprocal Rank Fusion)
+Divergent search results from multiple strategies are consolidated into a unified probabilistic ranking using **Reciprocal Rank Fusion (RRF)**:
+$$RRFScore(d) = \sum_{r \in R} \frac{1}{k + rank(d, r)}$$
+where $k$ is a smoothing constant (default $k=60$) and $rank(d, r)$ is the rank of document $d$ in strategy $r$.
 
-- **Evolutionary Strategy Selection**: How the Math Controller converges on optimal weights using Thompson Sampling.
-- **Distributed Memory Manifolds**: Studying memory propagation and resonance across a decentralized Mesh of nodes.
-- **Emergent Knowledge Graphs**: Measuring the quality of graph extraction from unstructured episodic streams.
+### Tier L3: Multi-Armed Bandit (Evolutionary Optimization)
+RAE employs **Thompson Sampling** on a Dirichlet-Multinomial distribution to optimize strategy selection. Strategies are treated as "Arms" in a MAB problem:
+$$\theta_i \sim \text{Beta}(\alpha_i + \text{successes}, \beta_i + \text{failures})$$
+The system maximizes Mean Reciprocal Rank (MRR) by reinforcing successful retrieval patterns.
 
-## 🔗 Related Resources
-- **[Benchmark Documentation](../benchmarking/README.md)** - Reproduce these results.
-- **[Math Metrics Guide](../architecture/MATH_LAYERS.md)** - Deep dive into scoring logic.
-- **[Security Contract](../contracts/RAE_AGENTIC_CONTRACT.md)** - Privacy and governance rules.
+---
+
+## ⚡ 4. Szubar Mode: Success from Failure
+**Szubar Mode** is an implementation of **Emergent Induction**. It is triggered when the standard pipeline yields high uncertainty (Search MISS).
+
+*   **Trigger:** $\max(Score) < \tau$ (Confidence Threshold).
+*   **Mechanism (Neighborhood Recruitment):** Instead of returning null, RAE performs an "Inductive Leap" using low-confidence candidates as seeds in the Semantic Graph:
+    $$V_{recruited} = \{v \in G \mid \text{dist}(v, v_{seed}) < \delta\}$$
+*   **Outcome:** Failure is used as a signal to shift the observation scale, recovering logical connections that vector similarity ($cos(\theta)$) alone would miss.
+
+---
+
+## 🌊 5. Semantic Resonance (Energy Propagation)
+RAE models concept relationships via **Heat Kernel Dynamics**. Energy (math_score) injected into "Direct Hit" nodes propagates through the graph edges:
+$$E_{target} = E_{source} \cdot w_{ij} \cdot \phi$$
+where $\phi$ is the resonance factor. The field state at time $t$ is described by the heat equation on the graph:
+$$\frac{\partial \mathbf{u}}{\partial t} = -L \mathbf{u}$$
+where $L$ is the graph Laplacian. This enables the discovery of "Hidden Context" through structural energy distribution.
+
+---
+
+## 🌌 6. Triple-Layer Reflection (QFT-Inspired)
+The reflection system treats the "Idea Field" as a dynamic manifold requiring renormalization for stability:
+
+1.  **L1 – Operational Reflection (Evidence Check):** Calculates the **Coverage Ratio (CR)**:
+    $$CR = \frac{|\text{Source} \cap \text{Answer}|}{|\text{Answer}|}$$
+    Responses with $CR < \theta$ are blocked to prevent hallucinations (*Hard Frames*).
+2.  **L2 – Structural Reflection (Retrieval Analysis):** Performs post-hoc analysis on failed strategies, generating `insight_candidates` to adjust `top_k` and `epsilon` parameters.
+3.  **L3 – Meta-Field Reflection (Renormalization):** Ensures scale-invariance. If macro-conclusions contradict micro-facts, the **Field Stability Index (FSI)** is penalized:
+    $$FSI = 1 - \frac{1}{N} \sum | \text{Conclusion}_{macro} - \text{Fact}_{micro} |$$
+
+---
+*RAE transforms LLM uncertainty into a deterministic, auditable data structure, targeting MRR 1.0 convergence across all industrial scales.*

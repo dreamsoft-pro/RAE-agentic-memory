@@ -26,10 +26,13 @@ class TestDegradationStability:
             mock_resp = mock_post.return_value
             mock_resp.status_code = 403
             mock_resp.json.return_value = {"error": "Unknown intent"}
-            
+
             # Explicitly mock raise_for_status to simulate requests library behavior
             import requests
-            mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError("403 Forbidden")
+
+            mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError(
+                "403 Forbidden"
+            )
 
             # Agent tries to call non-existent function
             response = confused_agent_client.ask("nuclear_launch", target="mars")

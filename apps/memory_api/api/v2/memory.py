@@ -24,21 +24,22 @@ tracer = get_tracer(__name__)
 
 # Request/Response models
 class StoreMemoryRequestV2(BaseModel):
-    """Store memory request for v2 API."""
+    """Store memory request for v2 API - Extreme Compatibility Mode."""
 
-    content: str = Field(..., min_length=1, max_length=8192)
-    source: str = Field(default="api", max_length=255)
-    project: str = Field(..., min_length=1, max_length=255)
-    importance: float = Field(default=0.5, ge=0.0, le=1.0)
-    tags: list[str] = Field(default_factory=list)
-    layer: str | None = Field(
-        default=None, pattern="^(sensory|working|longterm|reflective)$"
-    )
-    # Phase 1: Canonical fields
-    session_id: str | None = Field(None, description="Session identifier")
-    memory_type: str | None = Field(None, description="Memory type (text, code, etc.)")
-    ttl: int | None = Field(None, gt=0, description="Time to live in seconds")
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    content: str
+    source: str | None = "api"
+    project: str | None = "default"
+    importance: float | None = 0.5
+    tags: list[str] | None = None
+    layer: str | None = "episodic"
+    session_id: str | None = None
+    memory_type: str | None = "text"
+    ttl: int | None = None
+    metadata: dict[str, Any] | None = None
+    agent_id: str | None = "default"
+    info_class: str | None = "internal"
+    human_label: str | None = None
+    governance: dict[str, Any] | None = None
 
 
 class StoreMemoryResponseV2(BaseModel):
@@ -63,9 +64,11 @@ class MemoryResult(BaseModel):
 
     id: str
     content: str
+    human_label: Optional[str] = None
     score: float
     layer: str
     importance: float
+    timestamp: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -119,6 +122,7 @@ async def store_memory(
                 memory_type=request.memory_type,
                 ttl=request.ttl,
                 metadata=request.metadata,
+                human_label=request.human_label,
             )
             return StoreMemoryResponseV2(memory_id=memory_id)
         except Exception as e:
@@ -149,18 +153,29 @@ async def query_memories(
                 filters=request.filters,
             )
 
-            results = [
-                MemoryResult(
-                    id=res.memory_id,
-                    content=res.content,
-                    score=res.score,
-                    layer=getattr(res, "layer", "semantic"),
-                    importance=getattr(res, "importance", 0.5),
-                    tags=getattr(res, "tags", []),
-                    metadata=getattr(res, "metadata", {}),
+            results = []
+            for res in response.results:
+                # Handle timestamp from engine results
+                ts = res.metadata.get("created_at") if hasattr(res, "metadata") else None
+                if not ts and hasattr(res, "timestamp"):
+                    ts = res.timestamp
+                
+                if hasattr(ts, "isoformat"):
+                    ts = ts.isoformat()
+
+                results.append(
+                    MemoryResult(
+                        id=res.memory_id,
+                        content=res.content,
+                        human_label=getattr(res, "human_label", None),
+                        score=res.score,
+                        layer=getattr(res, "layer", "semantic"),
+                        importance=getattr(res, "importance", 0.5),
+                        timestamp=ts,
+                        tags=getattr(res, "tags", []),
+                        metadata=getattr(res, "metadata", {}),
+                    )
                 )
-                for res in response.results
-            ]
 
             if results:
                 await rae_service.update_memory_access_batch(
@@ -179,6 +194,7 @@ async def list_memories(
     offset: int = Query(0, ge=0),
     project: Optional[str] = None,
     layer: Optional[str] = None,
+    sort: Optional[str] = Query(None, description="Sort field and direction, e.g. 'created_at:desc'"),
     tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -192,24 +208,101 @@ async def list_memories(
             layer=layer,
         )
 
-        results = [
-            MemoryResult(
-                id=m.get("id") if isinstance(m.get("id"), str) else str(m.get("id")),
-                content=m.get("content", ""),
-                score=1.0,
-                layer=m.get("layer", "semantic"),
-                importance=m.get("importance", 0.5),
-                tags=m.get("tags", []),
-                metadata=m.get("metadata", {}),
+        # Apply manual sort if needed (since underlying storage might not support it yet)
+        if sort:
+            try:
+                field, direction = sort.split(":")
+                reverse = direction.lower() == "desc"
+                # Map 'created_at' to 'timestamp' or use the field as is
+                sort_field = "created_at" if field == "created_at" else field
+                memories.sort(
+                    key=lambda x: x.get(sort_field) or "", reverse=reverse
+                )
+            except Exception as e:
+                logger.warning("manual_sort_failed", error=str(e), sort=sort)
+
+        results = []
+        for m in memories:
+            metadata_val = m.get("metadata", {})
+            if isinstance(metadata_val, str):
+                try:
+                    import json
+
+                    metadata_val = json.loads(metadata_val)
+                except Exception:
+                    metadata_val = {}
+
+            # Handle created_at formatting
+            ts = m.get("created_at")
+            if hasattr(ts, "isoformat"):
+                ts = ts.isoformat()
+
+            results.append(
+                MemoryResult(
+                    id=(
+                        m.get("id")
+                        if isinstance(m.get("id"), str)
+                        else str(m.get("id"))
+                    ),
+                    content=m.get("content", ""),
+                    score=1.0,
+                    layer=m.get("layer", "semantic"),
+                    importance=m.get("importance", 0.5),
+                    timestamp=ts,
+                    tags=m.get("tags", []),
+                    metadata=metadata_val,
+                )
             )
-            for m in memories
-        ]
 
         return ListMemoryResponseV2(
             results=results, total=len(results), limit=limit, offset=offset
         )
     except Exception as e:
         logger.error("list_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{memory_id}", response_model=MemoryResult)
+async def get_memory(
+    memory_id: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Retrieve a single memory by ID."""
+    try:
+        memory = await rae_service.get_memory(memory_id, str(tenant_id))
+        if not memory:
+            raise HTTPException(status_code=404, detail="Memory not found")
+
+        # Handle stringified metadata from database
+        metadata_val = memory.get("metadata", {})
+        if isinstance(metadata_val, str):
+            try:
+                import json
+
+                metadata_val = json.loads(metadata_val)
+            except Exception:
+                metadata_val = {}
+
+        # Handle timestamp
+        ts = memory.get("created_at")
+        if hasattr(ts, "isoformat"):
+            ts = ts.isoformat()
+
+        return MemoryResult(
+            id=str(memory.get("id")),
+            content=memory.get("content", ""),
+            score=1.0,
+            layer=memory.get("layer", "semantic"),
+            importance=memory.get("importance", 0.5),
+            timestamp=ts,
+            tags=memory.get("tags", []),
+            metadata=metadata_val,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_memory_failed", memory_id=memory_id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 

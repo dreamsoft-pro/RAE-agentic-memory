@@ -89,12 +89,18 @@ class RAECoreService:
 
         # New: Reflection Engine
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+        from rae_core.reflection.layers.coordinator import ReflectionCoordinator
 
         self.reflection_engine = ReflectionEngineV2(self)
+        self.reflection_coordinator = ReflectionCoordinator(
+            mode=settings.RAE_PROFILE if settings.RAE_PROFILE in ["standard", "advanced"] else "standard",
+            enforce_hard_frames=True,
+            storage=self.postgres_adapter
+        )
 
-        # New: RAERuntime for RAE-First flow
+        # New: RAERuntime for RAE-First flow (Use Engine for implicit capture policy enforcement)
         self.runtime = RAERuntime(
-            self.postgres_adapter, None
+            cast(Any, self.engine), None
         )  # Agent set per execution
 
         self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
@@ -211,11 +217,13 @@ class RAECoreService:
 
         # Storage
         if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
+            self.postgres_adapter = cast(
+                IMemoryStorage, PostgreSQLStorage(pool=postgres_pool)
+            )
         else:
             from rae_adapters.memory import InMemoryStorage
 
-            self.postgres_adapter = InMemoryStorage()
+            self.postgres_adapter = cast(IMemoryStorage, InMemoryStorage())
 
         # Vector
         if qdrant_client and not ignore_db:
@@ -224,7 +232,7 @@ class RAECoreService:
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name,
+                vector_name=self.embedding_provider.default_model_name or "dense",
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
@@ -261,8 +269,21 @@ class RAECoreService:
             ),
             "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
+
+        # SYSTEM 40.15: Optional Graph Store for Lite Mode
+        graph_repo = None
+        if postgres_pool:
+            try:
+                graph_repo = self.enhanced_graph_repo
+            except Exception as e:
+                logger.warning("graph_repo_init_skipped", reason=str(e))
+
         search_engine = HybridSearchEngine(
-            strategies=search_strategies, reranker=reranker
+            strategies=search_strategies,
+            embedding_provider=self.embedding_provider,
+            memory_storage=self.postgres_adapter,
+            reranker=reranker,
+            graph_store=graph_repo,
         )
 
         self.engine = RAEEngine(
@@ -285,22 +306,18 @@ class RAECoreService:
     def _create_reranker(self, settings: Any) -> Optional[IReranker]:
         """Create configured reranker instance."""
         from rae_core.search.engine import EmeraldReranker
-        from rae_core.search.rerankers.api import APIReranker
-        from rae_core.search.rerankers.mcp import MCPreranker
+        from rae_core.search.rerankers.api import ApiReranker
+        from rae_core.search.rerankers.mcp import McpReranker
 
         if settings.RAE_RERANKER_BACKEND == "emerald":
             return EmeraldReranker(self.embedding_provider, self.postgres_adapter)
         if settings.RAE_RERANKER_BACKEND == "api" and settings.RAE_RERANKER_API_URL:
-            return APIReranker(
+            return ApiReranker(
                 api_url=settings.RAE_RERANKER_API_URL,
                 api_key=settings.RAE_RERANKER_API_KEY,
             )
         if settings.RAE_RERANKER_BACKEND == "mcp":
-            mcp_client = getattr(self, "mcp_client", None)
-            if mcp_client:
-                return MCPreranker(
-                    client=mcp_client, tool_name=settings.RAE_RERANKER_MCP_TOOL
-                )
+            return McpReranker()
         return None
 
     async def execute_action(
@@ -396,7 +413,15 @@ class RAECoreService:
                                     f"- {content} (Reason: {trace})\n"
                                 )
 
-                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
+                system_prompt = (
+                    "YOU ARE A RAE HIVE AGENT. YOU OPERATE WITHIN AN AGNOSTIC, DETERMINISTIC ENGINE.\n"
+                    "CORE MANDATES:\n"
+                    "1. MODEL AGNOSTIC: Do not assume specific LLM or embedding library (e.g. use standard Python, avoid sklearn/torch unless specified).\n"
+                    "2. ARCHITECTURAL PURITY: Follow RABO ontology and System 93 specs.\n"
+                    "3. NO BLOAT: Favor algorithmic elegance (O(log n)) over heavy libraries.\n\n"
+                    f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\n"
+                    f"Task: {rae_input.content}"
+                )
 
                 # 2. Generate response using LLM or DESIGNED MATH (Fallback)
                 try:
@@ -462,59 +487,24 @@ class RAECoreService:
         # Initialize Runtime with the transient agent
         self.runtime.agent = TransientAgent(self)
 
-        # Create input with context
-        rae_input = RAEInput(
-            request_id=uuid4(),
-            tenant_id=str(tenant_id),
-            content=prompt,
-            context={
-                "project": project
-                or agent_id,  # Fallback to agent_id if project not provided
-                "session_id": session_id,
-                "agent_id": agent_id,
-            },
+        # 4. Context Resolution (ISO 27000 Isolation)
+        project_canonical = self._resolve_project_context(project)
+        agent_canonical = agent_id or "default"
+
+        # Execute through RAERuntime (Enforces Hard Frames & Implicit Capture)
+        return await self.runtime.process(
+            RAEInput(
+                content=prompt,
+                tenant_id=str(tenant_id),
+                request_id=uuid4(),
+                context={
+                    "agent_id": agent_canonical,
+                    "project": project_canonical,
+                    "session_id": session_id or "default-session",
+                    "metadata": metadata or {},
+                },
+            )
         )
-
-        # Execute through runtime
-        action = await self.runtime.process(rae_input)
-
-        # 3. SIDE EFFECT: Automatic Reflection Cycle
-        # Trigger reflection if the action has important signals
-        if action.signals:
-            try:
-                from apps.memory_api.models.reflection_v2_models import (
-                    OutcomeType,
-                    ReflectionContext,
-                )
-
-                refl_ctx = ReflectionContext(
-                    tenant_id=str(tenant_id),
-                    project_id=agent_id,
-                    outcome=OutcomeType.SUCCESS,
-                    task_goal=prompt,
-                    events=[],  # interaction history would go here
-                    session_id=(
-                        UUID(session_id)
-                        if session_id and len(session_id) == 36
-                        else None
-                    ),
-                )
-                refl_result = await self.reflection_engine.generate_reflection(refl_ctx)
-                await self.reflection_engine.store_reflection(
-                    refl_result, str(tenant_id), agent_id
-                )
-                logger.info("automated_reflection_stored", project=agent_id)
-            except Exception as e:
-                logger.warning("automated_reflection_failed", error=str(e))
-
-        logger.info(
-            "action_executed_via_runtime",
-            tenant_id=str(tenant_id),
-            agent_id=agent_id,
-            action_type=action.type,
-        )
-
-        return action
 
     async def ainit(self):
         """Perform asynchronous initialization of adapters."""
@@ -644,6 +634,22 @@ class RAECoreService:
 
         return tags
 
+    def _resolve_project_context(self, project: Optional[str]) -> str:
+        """
+        Intelligently resolve project name from context.
+        Hierarchy: explicit > env(RAE_PROJECT) > env(PROJECT_NAME) > default.
+        """
+        import os
+
+        if project and project != "default":
+            return project
+
+        env_project = os.getenv("RAE_PROJECT") or os.getenv("PROJECT_NAME")
+        if env_project:
+            return env_project
+
+        return "default"
+
     async def store_memory(
         self,
         tenant_id: str,
@@ -661,6 +667,7 @@ class RAECoreService:
         governance: Optional[dict] = None,
         metadata: Optional[dict] = None,
         agent_id: Optional[str] = None,
+        human_label: Optional[str] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -674,7 +681,68 @@ class RAECoreService:
         if governance:
             tags = self._detect_agentic_patterns(governance, tags)
 
-        project_canonical = project or "default"
+        # SYSTEM 93.1: Hard Frames 2.0 Contract Enforcement
+        if "agent_decision" in tags or "operation_result" in tags or layer == "working":
+            try:
+                import json
+                payload = {}
+                if content.strip().startswith("{") and content.strip().endswith("}"):
+                    try: payload = json.loads(content)
+                    except: payload = {"analysis": content}
+                else: payload = {"analysis": content}
+                
+                # SYSTEM 93.3: Hallucination Prevention Context
+                # Inject actual source content for L1 Grounding verification
+                source_memories = await self.engine.search_memories(
+                    query=content, tenant_id=tenant_id, top_k=5
+                )
+                payload["retrieved_sources_content"] = [m["content"] for m in source_memories]
+
+                payload.update({
+                    "retrieved_sources": [str(m["id"]) for m in source_memories],
+                    "decision": metadata.get("decision", "proceed"),
+                    "confidence": metadata.get("confidence", 0.5),
+                    "metadata": {**metadata, "trace_id": str(session_id or "audit-000")}
+                })
+
+                # SYSTEM 93.4: Full Decision Provenance
+                # We link the decision to the specific memories that influenced it
+                validation_results = await self.reflection_coordinator.run_reflections(payload)
+                
+                # PERMANENT AUDIT TRAIL
+                audit_content = (
+                    f"DECISION AUDIT: {name}\n"
+                    f"Decision: {payload['decision']}\n"
+                    f"Confidence: {payload['confidence']}\n"
+                    f"Reasoning: {payload['analysis'][:500]}\n"
+                    f"Evidence IDs: {payload['retrieved_sources']}\n"
+                    f"Validation: {validation_results['final_decision']}"
+                )
+                
+                await self.engine.store_memory(
+                    tenant_id=tenant_id,
+                    agent_id="oracle_auditor",
+                    content=audit_content,
+                    layer="reflective",
+                    tags=["decision_provenance", "audit_log"],
+                    metadata={
+                        "target_id": mid,
+                        "evidence_ids": payload["retrieved_sources"],
+                        "validation_full": validation_results
+                    }
+                )
+
+                if validation_results.get("final_decision") == "blocked":
+                    from rae_core.exceptions.base import ContractViolationError
+                    raise ContractViolationError(f"Decision Blocked by Oracle: {validation_results['block_reasons']}")
+                
+                metadata["audit_verified"] = True
+                metadata["provenance_link"] = payload["retrieved_sources"]
+            except SecurityPolicyViolationError: raise
+            except Exception as e: logger.warning("audit_failed", error=str(e))
+
+        # 3. Context Resolution (Best Practice: Avoid 'default' pollution)
+        project_canonical = self._resolve_project_context(project)
         agent_canonical = agent_id or "default"
         metadata = metadata or {}
 
@@ -690,6 +758,7 @@ class RAECoreService:
             importance=importance or 0.5,
             tags=tags,
             metadata=metadata,
+            human_label=human_label,
             project=project_canonical,
             session_id=session_id,
             memory_type=memory_type or "text",
@@ -758,11 +827,13 @@ class RAECoreService:
         filters: Optional[Dict[str, Any]] = None,
         limit: int = 100,
         offset: int = 0,
+        agent_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List memories for a specific layer and project (agent)."""
         return await self.postgres_adapter.list_memories(
             tenant_id=tenant_id,
-            agent_id=project,
+            agent_id=agent_id,
+            project=project,
             layer=layer,
             tags=tags,
             filters=filters,
@@ -932,12 +1003,13 @@ class RAECoreService:
             logger.debug("using_szubar_weights_for_query")
 
         # 2. Execute Engine search
+        target_layer = (layers[0] if layers else None) or (filters or {}).get("layer")
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id="default",  # Broad attribution for general queries
+            agent_id="default",  # Explicitly use default agent
             project=project,  # Strict context
-            layer=layers[0] if layers else None,
+            layer=target_layer,
             top_k=k,
             filters=filters,
             custom_weights=weights,
@@ -958,16 +1030,21 @@ class RAECoreService:
                 except Exception:
                     metadata_val = {}
 
+            # SYSTEM 40.16: Non-negative Score Enforcement
+            raw_score = (
+                res.get("math_score")
+                if res.get("math_score") is not None
+                else res.get("search_score", 0.0)
+            )
+            # Ensure score is at least 0.0 for Pydantic validation
+            safe_score = max(0.0, float(raw_score))
+
             results_list.append(
                 SearchResult(
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
-                    # Use math_score if available (from MathLayer), fallback to search_score (RRF)
-                    score=(
-                        res.get("math_score")
-                        if res.get("math_score") is not None
-                        else res.get("search_score", 0.0)
-                    ),
+                    human_label=res.get("human_label"),
+                    score=safe_score,
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
                 )

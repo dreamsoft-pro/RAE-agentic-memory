@@ -1,0 +1,73 @@
+
+import { inject, injectable } from "inversify";
+import axios from 'axios';
+import { IAddressRepository } from "./IAddressRepository";
+import { ILogger } from "../common/interfaces/ILogger";
+
+@injectable()
+export class AddressService {
+    private addressRepo: IAddressRepository;
+    private logger: ILogger;
+
+    constructor(@inject(IAddressRepository) addressRepo: IAddressRepository, @inject(ILogger) logger: ILogger) {
+        this.addressRepo = addressRepo;
+        this.logger = logger;
+    }
+
+    public async getAddresses(userId: string): Promise<string[]> {
+        try {
+            const addresses = await this.addressRepo.getAddressesByUserId(userId);
+            return addresses.map(addr => addr.street + ', ' + addr.city + ', ' + addr.country);
+        } catch (error) {
+            this.logger.error(`Failed to retrieve addresses for user ${userId}: ${error}`);
+            throw error;
+        }
+    }
+
+    public async addAddress(userId: string, street: string, city: string, country: string): Promise<void> {
+        try {
+            await this.addressRepo.createAddress({ userId, street, city, country });
+        } catch (error) {
+            this.logger.error(`Failed to create address for user ${userId}: ${error}`);
+            throw error;
+        }
+    }
+
+    public async updateAddress(userId: string, addrId: string, updates: { street?: string; city?: string; country?: string }): Promise<void> {
+        try {
+            await this.addressRepo.updateAddress(addrId, updates);
+        } catch (error) {
+            this.logger.error(`Failed to update address ${addrId} for user ${userId}: ${error}`);
+            throw error;
+        }
+    }
+
+    public async deleteAddress(userId: string, addrId: string): Promise<void> {
+        try {
+            await this.addressRepo.deleteAddress(addrId);
+        } catch (error) {
+            this.logger.error(`Failed to delete address ${addrId} for user ${userId}: ${error}`);
+            throw error;
+        }
+    }
+
+    public async getFullAddressDetails(userId: string, addrId: string): Promise<string> {
+        try {
+            const details = await this.addressRepo.getAddressById(addrId);
+            return `${details.street}, ${details.city}, ${details.country}`;
+        } catch (error) {
+            this.logger.error(`Failed to retrieve full address details for user ${userId}: ${error}`);
+            throw error;
+        }
+    }
+
+    public async getAddressesByCity(city: string): Promise<string[]> {
+        try {
+            const addresses = await this.addressRepo.getAddressesByCity(city);
+            return addresses.map(addr => addr.street + ', ' + addr.city + ', ' + addr.country);
+        } catch (error) {
+            this.logger.error(`Failed to retrieve addresses by city ${city}: ${error}`);
+            throw error;
+        }
+    }
+}

@@ -1,0 +1,59 @@
+﻿🔒 Jak zrobić kontrakty jak Hard Frames
+Myślisz w dobrą stronę.
+Kontrakt powinien być:
+    1. Strukturalny (schema)
+    2. Walidowany runtime
+    3. Niewyłączalny
+    4. Logowany
+    5. Wersjonowany
+
+🧱 Poziom 1 – JSON Schema jako minimum
+Każda odpowiedź agenta musi przejść przez:
+{
+  "type": "object",
+  "required": ["analysis", "decision", "confidence"],
+  "properties": {
+    "analysis": {"type": "string"},
+    "decision": {"type": "string"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+  }
+}
+Jeśli nie przejdzie walidacji → odrzucasz.
+To już jest twardy kontrakt.
+
+🧠 Poziom 2 – Kontrakt semantyczny
+Nie tylko „czy pole istnieje”, ale:
+    • Czy confidence > próg?
+    • Czy decyzja jest zgodna z allowed_actions?
+    • Czy analysis nie jest puste?
+    • Czy źródła są wskazane?
+To jest warstwa logiki.
+
+🧨 Poziom 3 – Kontrakt epistemiczny (to już Twoja liga)
+Np.:
+    • Jeśli brak danych wejściowych → decyzja musi być „insufficient_data”
+    • Jeśli model zgłasza pewność > 0.9 → musi mieć źródło
+    • Jeśli sprzeczność między warstwami → blokada
+To jest Hard Frames 2.0.
+
+🧩 Jak bym to zrobił w RAE
+Zamiast:
+contracts/
+  agent_reflection.md
+zrób:
+contracts/
+  reflection.schema.json
+  reflection.rules.php
+  reflection.version.json
+I pipeline:
+Agent output
+   ↓
+Schema validation
+   ↓
+Semantic validation
+   ↓
+Epistemic validation
+   ↓
+Accepted / Rejected
+Nie ma obejścia.
+

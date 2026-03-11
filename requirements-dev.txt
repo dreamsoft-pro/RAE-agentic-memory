@@ -26,3 +26,4 @@ locust
 # ML dependencies for benchmarks and tests
 pytest-benchmark
 asyncpg
+mysql-connector-python

@@ -11,9 +11,9 @@ Features:
 - Graceful degradation if Redis unavailable
 
 Rate Limits (per tenant):
-- POST /v1/memories/create: 30/minute
-- POST /v1/search/hybrid: 60/minute
-- POST /v1/ml/generate: 20/minute
+- POST /v2/memories/create: 30/minute
+- POST /v2/search/hybrid: 60/minute
+- POST /v2/ml/generate: 20/minute
 - GET endpoints: 100/minute (general)
 - POST endpoints: 50/minute (general)
 
@@ -197,11 +197,11 @@ def get_rate_limit_for_endpoint(path: str, method: str) -> str:
 
     This allows dynamic rate limit configuration based on endpoint.
     """
-    if "/v1/memories/create" in path:
+    if "/v2/memories/create" in path:
         return RATE_LIMITS["memory_create"]
-    elif "/v1/search/hybrid" in path:
+    elif "/v2/search/hybrid" in path:
         return RATE_LIMITS["search_hybrid"]
-    elif "/v1/ml/" in path:
+    elif "/v2/ml/" in path:
         return RATE_LIMITS["ml_generate"]
     elif method == "GET":
         return RATE_LIMITS["get_general"]

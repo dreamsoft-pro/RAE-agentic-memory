@@ -1,7 +1,7 @@
 """Search models for RAE-core hybrid search."""
 
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -76,7 +76,8 @@ class SearchResult(BaseModel):
 
     memory_id: str = Field(description="UUID of the memory")
     content: str = Field(description="Memory content")
-    score: float = Field(description="Relevance score", ge=0.0, le=1.0)
+    human_label: Optional[str] = Field(None, description="Human-readable label")
+    score: float = Field(description="Relevance score")
     strategy_used: SearchStrategy = Field(
         description="Which strategy produced this result"
     )

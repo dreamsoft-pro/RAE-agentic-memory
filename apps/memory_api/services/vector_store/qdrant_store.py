@@ -73,16 +73,26 @@ class QdrantStore(MemoryVectorStore):
             exists = any(c.name == collection_name for c in collections)
 
             if not exists:
+                logger.info(f"Creating agnostic collection: {collection_name}")
                 self.qdrant_client.create_collection(
                     collection_name=collection_name,
                     vectors_config={
                         "dense": models.VectorParams(
-                            size=dimension, distance=models.Distance.COSINE
+                            size=384, distance=models.Distance.COSINE
+                        ),
+                        "default": models.VectorParams(
+                            size=384, distance=models.Distance.COSINE
                         ),
                         "openai": models.VectorParams(
                             size=1536, distance=models.Distance.COSINE
                         ),
+                        "litellm": models.VectorParams(
+                            size=1536, distance=models.Distance.COSINE
+                        ),
                         "ollama": models.VectorParams(
+                            size=768, distance=models.Distance.COSINE
+                        ),
+                        "nomic": models.VectorParams(
                             size=768, distance=models.Distance.COSINE
                         ),
                     },
@@ -116,15 +126,45 @@ class QdrantStore(MemoryVectorStore):
             await self.ainit()
         return await asyncio.to_thread(self._sync_upsert, memories, embeddings)
 
+    def _ensure_vector_config(self, vector_name: str, size: int):
+        """Dynamically updates the Qdrant collection to support a new vector space."""
+        collection_name = "memories"
+        try:
+            col_info = self.qdrant_client.get_collection(collection_name)
+            current_vectors = col_info.config.params.vectors
+            
+            # If current_vectors is a single VectorParams, we need to migrate to named vectors
+            # (Though RAE usually starts with named vectors)
+            if not isinstance(current_vectors, dict) or vector_name not in current_vectors:
+                logger.info(f"Dynamically adding vector space: {vector_name} ({size}d)")
+                self.qdrant_client.update_collection(
+                    collection_name=collection_name,
+                    vectors_config={
+                        vector_name: models.VectorParams(
+                            size=size, distance=models.Distance.COSINE
+                        )
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Failed to update vector config for {vector_name}: {e}")
+
     def _sync_upsert(self, memories: List[MemoryRecord], embeddings: List[Any]):
         points_to_upsert = []
         for memory, embedding in zip(memories, embeddings):
             sparse_vector = self._get_sparse_vector(memory.content)
+            vector_payload = {"text": sparse_vector}
+            
             if isinstance(embedding, dict):
-                vector_payload = embedding
-                vector_payload["text"] = sparse_vector
+                # Multiple named vectors provided
+                for v_name, v_vec in embedding.items():
+                    if v_vec:
+                        self._ensure_vector_config(v_name, len(v_vec))
+                        vector_payload[v_name] = v_vec
             else:
-                vector_payload = {"dense": embedding, "text": sparse_vector}
+                # Single vector (backward compatibility)
+                v_name = "dense"
+                self._ensure_vector_config(v_name, len(embedding))
+                vector_payload[v_name] = embedding
 
             points_to_upsert.append(
                 models.PointStruct(

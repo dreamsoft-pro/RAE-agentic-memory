@@ -152,7 +152,7 @@ To podejście uniemożliwia konflikt — polityki są selektywne i włączane ko
 🛡 Jak to utrzymać bez psucia architektury?
 ✔ Zasada 1 – „RAE nie jest systemem medycznym ani rządowym”
 
-To silnik pamięci i reasoning, nie EMR/CRM/BOK.
+To architektura pamięci i reasoning, nie EMR/CRM/BOK.
 
 To oznacza:
 

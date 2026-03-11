@@ -107,8 +107,8 @@ echo ""
 echo "Testing API endpoints..."
 
 # Test store memory
-echo -n "  Testing POST /v1/memory/store... "
-STORE_RESPONSE=$(curl -s -X POST ${API_URL}/v1/memory/store \
+echo -n "  Testing POST /v2/memory/store... "
+STORE_RESPONSE=$(curl -s -X POST ${API_URL}/v2/memory/store \
     -H "Content-Type: application/json" \
     -H "X-Tenant-Id: ${TENANT_ID}" \
     -H "X-API-Key: secret" \
@@ -127,8 +127,8 @@ else
 fi
 
 # Test query memory
-echo -n "  Testing POST /v1/memory/query... "
-QUERY_RESPONSE=$(curl -s -X POST ${API_URL}/v1/memory/query \
+echo -n "  Testing POST /v2/memory/query... "
+QUERY_RESPONSE=$(curl -s -X POST ${API_URL}/v2/memory/query \
     -H "Content-Type: application/json" \
     -H "X-Tenant-Id: ${TENANT_ID}" \
     -H "X-API-Key: secret" \

@@ -2,6 +2,21 @@
 
 > **For AI Agents:** Read this file at the start of every session to locate test commands, profiles, and MCP configurations.
 
+## 🚀 Universal Startup (Recommended)
+Use the new universal launcher which automatically detects GPU/CPU and configures the environment.
+
+```bash
+make start
+```
+
+This script (`scripts/start_rae.sh`):
+1.  Detects NVIDIA GPU & Docker Runtime.
+2.  Selects `docker-compose.gpu.yml` if available (CUDA 12 support).
+3.  Falls back to CPU mode otherwise.
+4.  Sets safe default network configs (`host.docker.internal`).
+
+**Auto-Healing:** The Qdrant adapter now automatically detects vector dimension mismatches (e.g. switching from 384d to 768d) and adds necessary vector configurations dynamically. No manual collection deletion required.
+
 ## 🐍 Environment & Python
 - **Virtual Env Python:** `./.venv/bin/python`
 - **Pytest:** `./.venv/bin/pytest`
@@ -95,4 +110,11 @@ For **RAE-First** communication in `hotreload` mode:
 | **Szubar Mode: 0 results on failures** | ID Mismatch or SQL parameters. | Ensure `tenant_id`, `project`, and `agent_id` are separate. Check positional SQL args ($1, $2...). |
 | **Slow Test Loop** | Coverage checks enabled by default. | Use `-x` (fail fast) and `--no-cov` to speed up iteration. |
 | **Lumina (Node 1) Unreachable** | Service crash or SSH timeout. | SSH in and restart: `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose restart rae-api-dev"` |
+
+
+## Silicon Oracle Commands (System 86.0+)
+- Run 10k Unique Benchmark: 
+  ssh operator@100.68.166.117 "cd ~/rae-node-agent/ && export PYTHONPATH=$PYTHONPATH:. && .venv/bin/python3 benchmarking/scripts/run_benchmark.py --set benchmarking/sets/industrial_10k.yaml --queries 20 --rerank"
+- Sync to Node 1:
+  rsync -avzc --exclude '.env' --exclude '.venv*' --exclude '__pycache__' --exclude '.git' --exclude 'models/' ./ operator@100.68.166.117:~/rae-node-agent/
 

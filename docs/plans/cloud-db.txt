@@ -1,0 +1,32 @@
+﻿DB_MASTER_HOST: maxscale-rwsplit.maxscale.svc.cluster.local DB_MASTER_USER: dp_user
+DB_MASTER_DATABASE: dp DB_MASTER_PASSWORD: be091eb0189MSQLR DB_SETTINGS_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local DB_SETTINGS_DATABASE: vprojekt
+DB_SETTINGS_USER: vprojekt_select
+DB_SETTINGS_PASSWORD: A88d1QWf7e94ef7N
+DB_DEVELOPER_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_DEVELOPER_USER: dp_developer
+DB_DEVELOPER_PASSWORD: '@r10WiST#dev'
+DB_ADMIN_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_ADMIN_USER: user_vprojekt
+DB_ADMIN_DATABASE: vprojekt
+DB_ADMIN_PASSWORD: aPPLYNBNN45HuFMr
+DB_PRINT_HOUSE_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_MASTER_HOST: maxscale-rwsplit.maxscale.svc.cluster.local
+DB_MASTER_USER: v_pieknydruk
+DB_MASTER_DATABASE: dp
+DB_MASTER_PASSWORD: 5c99bd7a69
+DB_SETTINGS_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_SETTINGS_DATABASE: vprojekt
+DB_SETTINGS_USER: v_pieknydruk
+DB_SETTINGS_PASSWORD: 5c99bd7a69
+DB_DEVELOPER_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_DEVELOPER_USER: v_pieknydruk
+DB_DEVELOPER_PASSWORD: 5c99bd7a69
+DB_ADMIN_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+DB_ADMIN_USER: v_pieknydruk
+DB_ADMIN_DATABASE: vprojekt
+DB_ADMIN_PASSWORD: 5c99bd7a69
+DB_PRINT_HOUSE_HOST:  maxscale-rwsplit.maxscale.svc.cluster.local
+PRINTING_HOUSE_DB_NAME: 25piekny_druk
+PRINTING_HOUSE_DB_USER: v_pieknydruk
+PRINTING_HOUSE_DB_PASSWORD: 5c99bd7a69
+PRINTING_HOUSE_ID: 25

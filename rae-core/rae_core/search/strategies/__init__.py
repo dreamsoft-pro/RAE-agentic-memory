@@ -17,8 +17,8 @@ class SearchStrategy(ABC):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
-        """Execute search and return (memory_id, score) tuples.
+    ) -> list[tuple[UUID, float, float]]:
+        """Execute search and return (memory_id, score, importance) tuples.
 
         Args:
             query: Search query string
@@ -28,7 +28,7 @@ class SearchStrategy(ABC):
             project: Optional project identifier
 
         Returns:
-            List of (memory_id, score) tuples sorted by score descending
+            List of (memory_id, score, importance) tuples sorted by score descending
         """
         pass  # pragma: no cover
 

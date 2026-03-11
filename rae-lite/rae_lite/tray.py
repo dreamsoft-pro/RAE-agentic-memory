@@ -77,17 +77,20 @@ class RAETrayApp:
         icon.stop()
         # Server thread will be stopped by main.py
 
+    def open_gui(self, icon, item):
+        """Open RAE Desktop GUI."""
+        url = "http://127.0.0.1:8080"
+        webbrowser.open(url)
+        logger.info("gui_opened", url=url)
+
     def run(self):
         """Run the system tray icon."""
         self.running = True
 
         # Create menu
         menu = Menu(
-            MenuItem(
-                "Open Dashboard",
-                self.open_dashboard,
-                default=True,
-            ),
+            MenuItem("Open RAE Desktop", self.open_gui),
+            MenuItem("Open API Docs", self.open_dashboard),
             Menu.SEPARATOR,
             MenuItem("Open Data Folder", self.open_data_folder),
             MenuItem("About", self.show_about),

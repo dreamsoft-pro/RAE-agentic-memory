@@ -3,7 +3,7 @@ Streszczenie
 
 Współczesne systemy oparte na dużych modelach językowych (LLM) zaczynają pełnić rolę agentów wykonujących złożone zadania: od programowania, przez planowanie eksperymentów badawczych, po wsparcie procesów administracyjnych i przemysłowych. Pomimo rosnącej liczby narzędzi typu RAG (Retrieval-Augmented Generation) i prostych „pamięci” opartych na wektorowych bazach danych, dominującym problemem pozostaje brak prawdziwej, długoterminowej pamięci: agent po przepełnieniu kontekstu zapomina wcześniejsze decyzje, nie jest w stanie stabilnie działać przez tygodnie lub miesiące, a koszty rosną przez wielokrotne podawanie tych samych informacji.
 
-W pracy przedstawiam RAE – Reflective Agentic-memory Engine: otwarty, produkcyjny silnik pamięci zaprojektowany tak, aby nadać agentom LLM pamięć przypominającą ludzką – warstwową, trwałą i refleksyjną. Rdzeniem RAE jest:
+W pracy przedstawiam RAE – Reflective Agentic-memory Engine: otwarty, produkcyjny architektura pamięci zaprojektowany tak, aby nadać agentom LLM pamięć przypominającą ludzką – warstwową, trwałą i refleksyjną. Rdzeniem RAE jest:
 
 czterowarstwowa architektura pamięci: pamięć epizodyczna, robocza, semantyczna oraz refleksyjna (długoterminowa warstwa wniosków),
 
@@ -241,7 +241,7 @@ Wyróżniam cztery poziomy (M0–M3).
 
 5.1. M0 – pamięć jako proces decyzyjny Markowa (MDP)
 
-Na najniższym poziomie RAE modeluje silnik pamięci jako proces decyzyjny Markowa:
+Na najniższym poziomie RAE modeluje architektura pamięci jako proces decyzyjny Markowa:
 
 𝑀
 =
@@ -815,7 +815,7 @@ refleksja wyciąga wnioski: np. „ta kombinacja parametrów często prowadzi do
 
 RAE może tu służyć jako:
 
-silnik pamięci dla agentów monitorujących produkcję,
+architektura pamięci dla agentów monitorujących produkcję,
 
 podstawa do raportów i rekomendacji dla inżynierów,
 
@@ -841,7 +841,7 @@ wspierać konsystencję decyzji w ramach jednej jednostki.
 
 10. Ograniczenia i kierunki dalszych prac
 
-RAE jest zaprojektowany i zaimplementowany jako silnik pamięci do zastosowań praktycznych, z warstwą matematyczną gotową do badań. Jednocześnie:
+RAE jest zaprojektowany i zaimplementowany jako architektura pamięci do zastosowań praktycznych, z warstwą matematyczną gotową do badań. Jednocześnie:
 
 obecnie brakuje rozbudowanej sekcji wyników eksperymentalnych porównujących RAE z innymi podejściami na standardowych benchmarkach,
 

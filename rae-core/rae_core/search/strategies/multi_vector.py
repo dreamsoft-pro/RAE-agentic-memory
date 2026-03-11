@@ -1,37 +1,20 @@
-"""Multi-vector search strategy using Rank Reciprocal Fusion."""
-
-import asyncio
 from typing import Any
 from uuid import UUID
 
-from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_core.interfaces.vector import IVectorStore
-from rae_core.math.fusion import RRFFusion
-from rae_core.search.strategies import SearchStrategy
+from ...interfaces.embedding import IEmbeddingProvider
+from ...interfaces.vector import IVectorStore
+from . import SearchStrategy
 
 
 class MultiVectorSearchStrategy(SearchStrategy):
-    """
-    Search strategy that fuses results from multiple vector spaces.
-
-    This strategy allows searching across embeddings from different models
-    (e.g., OpenAI text-embedding-3-small and Ollama mxbai-embed-large)
-    simultaneously, robustly handling different dimensions.
-    """
+    """Hybrid search strategy using multiple vector spaces."""
 
     def __init__(
         self,
         strategies: list[tuple[IVectorStore, IEmbeddingProvider, str]],
         default_weight: float = 0.5,
-    ):
-        """
-        Initialize multi-vector search strategy.
-
-        Args:
-            strategies: List of (vector_store, embedding_provider, layer_name) tuples.
-            default_weight: Default weight for this strategy in hybrid search.
-        """
-        self.strategies = strategies
+    ) -> None:
+        self.strategies_list = strategies
         self.default_weight = default_weight
 
     async def search(
@@ -42,73 +25,44 @@ class MultiVectorSearchStrategy(SearchStrategy):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
-        """
-        Execute search across all vector stores and fuse results.
-
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters
-            limit: Maximum number of results
-
-        Returns:
-            List of (memory_id, rrf_score) tuples
-        """
-        tasks = []
-        for store, provider, layer in self.strategies:
-            tasks.append(
-                self._execute_single_search(
-                    store,
-                    provider,
-                    query,
-                    tenant_id,
-                    filters,
-                    limit * 2,  # Fetch more for fusion
-                )
-            )
-
-        # Run searches in parallel
-        results_list = await asyncio.gather(*tasks)
-
-        # Fuse results using RRF
-        strategy_results = {f"v{i}": results for i, results in enumerate(results_list)}
-        weights = {f"v{i}": 1.0 for i in range(len(results_list))}
-
-        fusion = RRFFusion()
-        fused_results = fusion.fuse(strategy_results, weights)
-
-        return fused_results[:limit]
-
-    async def _execute_single_search(
-        self,
-        store: IVectorStore,
-        provider: IEmbeddingProvider,
-        query: str,
-        tenant_id: str,
-        filters: dict[str, Any] | None,
-        limit: int,
-    ) -> list[tuple[UUID, float]]:
-        """Execute a single vector search."""
-        try:
-            query_embedding = await provider.embed_text(query)
-
-            # Extract basic filters
-            layer = filters.get("layer") if filters else None
-            score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
-
-            return await store.search_similar(
-                query_embedding=query_embedding,
-                tenant_id=tenant_id,
-                layer=layer,
-                limit=limit,
-                score_threshold=score_threshold,
-            )
-        except Exception as e:
-            # Log error but don't fail the whole search
-            # TODO: Add logging
-            print(f"Vector search failed for provider: {e}")
+    ) -> list[tuple[UUID, float, float]]:
+        """Search across all registered vector spaces and fuse results."""
+        if not self.strategies_list:
             return []
+
+        # Gather results from all providers
+        all_results: dict[str, list[tuple[UUID, float, float]]] = {}
+
+        for store, embedder, name in self.strategies_list:
+            try:
+                query_embedding = await embedder.embed_text(
+                    query, task_type="search_query"
+                )
+                results = await store.search_similar(
+                    query_embedding=query_embedding,
+                    tenant_id=tenant_id,
+                    limit=limit,
+                    vector_name=name,
+                    **kwargs,
+                )
+                all_results[name] = [(r[0], r[1], 0.0) for r in results]
+            except Exception:
+                continue
+
+        if not all_results:
+            return []
+
+        # Simple Exponential Rank Sharpening for multi-vector
+        import math
+        fused_scores: dict[UUID, float] = {}
+        for strategy_res in all_results.values():
+            for rank, (m_id, _, _) in enumerate(strategy_res):
+                # Using the same constant as System 37.0 for consistency
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + math.exp(-rank / 3.0)
+
+        # Sort and return
+        final = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)[:limit]
+        return [(m_id, score, 0.0) for m_id, score in final]
 
     def get_strategy_name(self) -> str:
         return "multi_vector_fusion"

@@ -61,20 +61,33 @@ def api_client():
             def delete(self, url, **kwargs):
                 return self.client.delete(url, **kwargs)
 
-        return RemoteClient(api_url)
+        yield RemoteClient(api_url)
 
     else:
         print("🏠 Running E2E tests against LOCAL app (TestClient)")
         from apps.memory_api.main import app
+        from unittest.mock import AsyncMock
 
-        client = TestClient(app)
-        client.headers.update(
-            {
-                "X-Tenant-ID": "00000000-0000-0000-0000-000000000000",
-                "Authorization": "Bearer dev-key",
-            }
-        )
-        return client
+        with TestClient(app) as client:
+            # SYSTEM 40.19: Mock LLM to avoid hangs
+            if hasattr(app.state, "rae_core_service"):
+                # Mock the generate_text method on the engine
+                app.state.rae_core_service.engine.generate_text = AsyncMock(
+                    return_value="E2E Mocked Response"
+                )
+                # Mock the generate method on the provider if it exists
+                if app.state.rae_core_service.engine.llm_provider:
+                    app.state.rae_core_service.engine.llm_provider.generate = AsyncMock(
+                        return_value=AsyncMock(text="E2E Mocked Provider Response")
+                    )
+
+            client.headers.update(
+                {
+                    "X-Tenant-ID": "00000000-0000-0000-0000-000000000000",
+                    "Authorization": "Bearer dev-key",
+                }
+            )
+            yield client
 
 
 @pytest.mark.smoke
@@ -128,11 +141,10 @@ class TestAPIErrorHandling:
     def test_missing_tenant_header(self, api_client):
         """Test that missing params returns 422."""
         # Note: Tenant header is handled by middleware, might be default in TestClient
-        # So we test missing body params instead
+        # So we test missing body params instead (missing 'content' which is required)
         response = api_client.post(
             "/v2/memories/",
-            json={"content": "No Project"},
-            # Missing project
+            json={},  # Empty body, missing 'content'
         )
         assert response.status_code == 422
 

@@ -35,7 +35,7 @@ def main():
         "tags": ["audit-target", "hybrid-search"],
     }
     try:
-        memory = post_request(f"{API_BASE}/v1/memory/store", mem_data)
+        memory = post_request(f"{API_BASE}/v2/memory/store", mem_data)
         mem_id = memory["id"]
         print(f"✅ Memory stored! ID: {mem_id}")
 

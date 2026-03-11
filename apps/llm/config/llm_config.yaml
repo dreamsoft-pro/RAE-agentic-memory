@@ -27,14 +27,14 @@ models:
 
   - id: local_llama3
     provider: ollama
-    model_name: llama3
+    model_name: qwen2.5:14b
     enabled: true
     roles: [low_cost, offline]
     cost_weight: 0.0
 
   - id: local_deepseek_coder
     provider: ollama
-    model_name: deepseek-coder:1.3b
+    model_name: deepseek-coder-v2:16b
     enabled: true
     roles: [general, reflection, coding, low_cost]
     cost_weight: 0.0

@@ -3,6 +3,7 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
+import structlog
 from typing import Any, cast
 from uuid import UUID
 
@@ -14,6 +15,8 @@ except ImportError:  # pragma: no cover
     AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
 from rae_core.interfaces.vector import IVectorStore
+
+logger = structlog.get_logger(__name__)
 
 
 class QdrantVectorStore(IVectorStore):
@@ -95,30 +98,97 @@ class QdrantVectorStore(IVectorStore):
 
         self._initialized = False
 
+    async def setup(self, force_reset: bool = False) -> None:
+        """Provision Qdrant infrastructure.
+        
+        Args:
+            force_reset: If True, deletes and recreates the collection.
+        """
+        if force_reset:
+            try:
+                await self.client.delete_collection(self.collection_name)
+                logger.info("infrastructure_reset_success", collection=self.collection_name)
+            except Exception:
+                pass
+
+        await self._ensure_collection()
+
     async def _ensure_collection(self) -> None:
         """Ensure collection exists with proper schema."""
         if self._initialized:
             return
 
         try:
-            await self.client.get_collection(self.collection_name)
+            collection_info = await self.client.get_collection(self.collection_name)
+            # Log current configuration
+            vectors_config = collection_info.config.params.vectors
+            logger.info("collection_exists", collection=self.collection_name, vectors=list(vectors_config.keys()) if isinstance(vectors_config, dict) else "single")
         except Exception:
-            # Collection doesn't exist, create it
-            from qdrant_client.models import SparseVectorParams
+            # Collection doesn't exist, create it with Dynamic Multi-Vector schema
+            from qdrant_client.models import VectorParams, SparseVectorParams
 
-            await self.client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config={
-                    "dense": VectorParams(
-                        size=self.embedding_dim,
-                        distance=self.distance,
-                    )
-                },
-                # Default configuration for hybrid search (dense + sparse)
-                sparse_vectors_config={"text": SparseVectorParams()},
-            )
+            try:
+                # Default configuration if none provided
+                # We use the embedding_dim passed to constructor for the default 'dense' vector
+                v_config = {
+                    self.vector_name: VectorParams(size=self.embedding_dim, distance=self.distance)
+                }
+                
+                # Special case: if we are in System 41.0 mode, we might want to pre-provision others
+                # But better to let the user define it via a setup call or similar.
+                # For now, we'll keep it flexible.
+                
+                await self.client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=v_config,
+                    sparse_vectors_config={"text": SparseVectorParams()},
+                )
+                logger.info("collection_created_dynamic", collection=self.collection_name, primary_vector=self.vector_name, dim=self.embedding_dim)
+            except Exception as e:
+                if "already exists" in str(e):
+                    logger.info("collection_created_parallel", collection=self.collection_name)
+                else:
+                    logger.error("collection_creation_failed", error=str(e))
 
         self._initialized = True
+
+    async def update_collection_schema(self, vectors_config: dict[str, Any]) -> None:
+        """
+        Dynamically add new vector spaces to existing collection.
+        Note: size and distance cannot be changed for existing vectors.
+        """
+        from qdrant_client.models import VectorParams
+        
+        try:
+            collection_info = await self.client.get_collection(self.collection_name)
+            existing_vectors = collection_info.config.params.vectors
+            if not isinstance(existing_vectors, dict):
+                # If it's a single vector, we might need to convert it to named vectors
+                # but Qdrant doesn't support this easily without recreation.
+                logger.warn("collection_not_named_vectors", collection=self.collection_name)
+                return
+
+            for name, params in vectors_config.items():
+                if name in existing_vectors:
+                    logger.info("vector_space_exists", vector=name)
+                    continue
+
+                if isinstance(params, int):
+                    v_params = VectorParams(size=params, distance=self.distance)
+                else:
+                    v_params = params
+                
+                # To add NEW vectors to existing collection, we use update_collection 
+                # but only with the NEW fields in vectors_config.
+                await self.client.update_collection(
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        name: v_params
+                    }
+                )
+                logger.info("collection_schema_updated", vector=name)
+        except Exception as e:
+            logger.error("schema_update_failed", error=str(e))
 
     async def add_vector(
         self,
@@ -223,7 +293,7 @@ class QdrantVectorStore(IVectorStore):
             if isinstance(embedding, dict):
                 vector_data = embedding
             else:
-                vector_data = {"dense": embedding}
+                vector_data = {self.vector_name: embedding}
 
             points.append(
                 PointStruct(id=str(memory_id), vector=vector_data, payload=payload)
@@ -267,41 +337,39 @@ class QdrantVectorStore(IVectorStore):
         """
         await self._ensure_collection()
 
+        from qdrant_client.models import FieldCondition, MatchValue
+        
         # Build filter - mandatory tenant_id
-        must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
+        must_conditions = [
+            FieldCondition(key="tenant_id", match=MatchValue(value=str(tenant_id)))
+        ]
 
-        # Add agent_id filter if provided (namespace isolation)
-        if agent_id:
-            must_conditions.append({"key": "agent_id", "match": {"value": agent_id}})
+        # Support extracting core filters from the filters dict if not provided directly
+        effective_agent_id = agent_id or (filters.get("agent_id") if filters else None)
+        effective_session_id = session_id or (filters.get("session_id") if filters else None)
+        effective_layer = layer or (filters.get("layer") if filters else None)
 
-        # Add session_id filter if provided (namespace isolation)
-        if session_id:
+        if effective_agent_id:
             must_conditions.append(
-                {"key": "session_id", "match": {"value": session_id}}
+                FieldCondition(key="agent_id", match=MatchValue(value=str(effective_agent_id)))
             )
 
-        if layer:
-            must_conditions.append({"key": "layer", "match": {"value": layer}})
+        if effective_session_id:
+            must_conditions.append(
+                FieldCondition(key="session_id", match=MatchValue(value=str(effective_session_id)))
+            )
+
+        if effective_layer:
+            must_conditions.append(
+                FieldCondition(key="layer", match=MatchValue(value=str(effective_layer)))
+            )
 
         # Apply generic metadata filters
         if filters:
             for key, value in filters.items():
-                # Skip reserved keys already handled
-                if key in [
-                    "tenant_id",
-                    "agent_id",
-                    "session_id",
-                    "layer",
-                    "score_threshold",
-                ]:
+                if key in ["tenant_id", "agent_id", "session_id", "layer", "score_threshold"]:
                     continue
-
-                # Handle list values (match any) vs scalar values
                 if isinstance(value, list):
-                    # Qdrant 'match' doesn't support list directly for 'any' in simple syntax
-                    # We need 'should' condition or multiple 'match' if checking for inclusion
-                    # Assuming basic scalar match for now to keep it safe,
-                    # or 'match': {'any': value} if qdrant client supports it (it usually does for keyword fields)
                     must_conditions.append({"key": key, "match": {"any": value}})
                 else:
                     must_conditions.append({"key": key, "match": {"value": value}})
@@ -311,20 +379,33 @@ class QdrantVectorStore(IVectorStore):
         try:
             from qdrant_client.models import NamedVector
 
-            results = await self.client.search(
+            # Handle Dynamic Vector Names (Agnostic Multi-Vector)
+            target_vector_name = kwargs.get("vector_name", self.vector_name)
+
+            # System 300.5: Atomic Async/Sync handling
+            result_or_coro = self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=self.vector_name, vector=query_embedding),
+                query=query_embedding,
+                using=target_vector_name,
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold,
             )
+            
+            try:
+                # Most robust way: just try to await it
+                results = await result_or_coro
+            except TypeError:
+                # If not awaitable, it's already the result
+                results = result_or_coro
 
             return [
-                (UUID(result.payload["memory_id"]), result.score)
-                for result in results
-                if result.payload and "memory_id" in result.payload
+                (UUID(result.id) if isinstance(result.id, str) else UUID(result.payload["memory_id"]), result.score)
+                for result in results.points
+                if (result.payload and "memory_id" in result.payload) or isinstance(result.id, str)
             ]
-        except Exception:
+        except Exception as e:
+            logger.error("qdrant_search_failed", error=str(e), vector_name=target_vector_name)
             return []
 
     async def get_vector(

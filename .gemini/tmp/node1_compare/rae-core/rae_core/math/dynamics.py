@@ -126,6 +126,7 @@ def calculate_recency_score(
             f"Future timestamp detected: time_ref={time_ref.isoformat()}, now={now.isoformat()}. "
             f"Returning perfect recency score (1.0).",
             UserWarning,
+            stacklevel=2,
         )
         return 1.0, 0.0, 0.0
 

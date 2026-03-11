@@ -36,12 +36,12 @@ class RAEClient:
             return False
 
     async def get_tenants(self) -> List[Dict[str, str]]:
-        """Fetch available tenants from /v1/system/tenants."""
+        """Fetch available tenants from /v2/system/tenants."""
         try:
             async with httpx.AsyncClient(
                 headers=self.headers, timeout=self.timeout
             ) as client:
-                resp = await client.get(f"{self.api_url}/v1/system/tenants")
+                resp = await client.get(f"{self.api_url}/v2/system/tenants")
                 if resp.status_code == 200:
                     return resp.json()
                 return []
@@ -50,12 +50,12 @@ class RAEClient:
             return []
 
     async def get_projects(self) -> List[str]:
-        """Fetch available projects from /v1/system/projects."""
+        """Fetch available projects from /v2/system/projects."""
         try:
             async with httpx.AsyncClient(
                 headers=self.headers, timeout=self.timeout
             ) as client:
-                resp = await client.get(f"{self.api_url}/v1/system/projects")
+                resp = await client.get(f"{self.api_url}/v2/system/projects")
                 if resp.status_code == 200:
                     data = resp.json()
                     # Endpoint returns List[str]
