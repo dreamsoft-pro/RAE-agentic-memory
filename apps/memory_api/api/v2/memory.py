@@ -38,6 +38,7 @@ class StoreMemoryRequestV2(BaseModel):
     metadata: dict[str, Any] | None = None
     agent_id: str | None = "default"
     info_class: str | None = "internal"
+    human_label: str | None = None
     governance: dict[str, Any] | None = None
 
 
@@ -63,6 +64,7 @@ class MemoryResult(BaseModel):
 
     id: str
     content: str
+    human_label: Optional[str] = None
     score: float
     layer: str
     importance: float
@@ -120,6 +122,7 @@ async def store_memory(
                 memory_type=request.memory_type,
                 ttl=request.ttl,
                 metadata=request.metadata,
+                human_label=request.human_label,
             )
             return StoreMemoryResponseV2(memory_id=memory_id)
         except Exception as e:
@@ -164,6 +167,7 @@ async def query_memories(
                     MemoryResult(
                         id=res.memory_id,
                         content=res.content,
+                        human_label=getattr(res, "human_label", None),
                         score=res.score,
                         layer=getattr(res, "layer", "semantic"),
                         importance=getattr(res, "importance", 0.5),

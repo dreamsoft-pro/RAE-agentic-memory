@@ -13,16 +13,20 @@ class RAEMemoryBridge:
         self.project = project_name or RAEContextLocator.get_project_name()
         self.logger = logging.getLogger(f"RAE.Bridge.{self.project}")
 
-    def save_event(self, content: str, human_label: str, metadata: dict = None):
+    def save_event(self, content: str, human_label: str = None, metadata: dict = None):
         if self.tenant_id == "UNKNOWN_TENANT":
             self.logger.warning("⚠️ Cannot save memory: Unknown Tenant Context")
             return False
 
         url = f"{self.api_url}/v2/memories"
+        
+        # Intelligent fallback for human_label
+        final_label = human_label or f"Log from {self.project}"
+        
         payload = {
             "content": content,
             "project": self.project,
-            "human_label": human_label,
+            "human_label": final_label,
             "metadata": metadata or {},
             "importance": 0.5
         }
