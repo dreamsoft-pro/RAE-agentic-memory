@@ -34,7 +34,7 @@ Zbudowanie stabilnego, nowoczesnego frontendu Next.js 14 od podstaw, wykorzystuj
 - [ ] Odtworzyć widoki historii zamówień, faktur i reklamacji dla zalogowanego użytkownika.
 - [ ] Zintegrować logowanie Social (Google, Apple) z uniwersalnym JWT.
 
-## 📍 Infrastruktura
+## 📍 Infrastruktura (MANDATORY HUB: NODE 1)
 - **Środowisko:** Node 1 (`100.68.166.117`)
 - **Katalog Główny:** `~/dreamsoft_factory/next-frontend`
 - **Asystent Kognitywny:** Graf Wiedzy RAE (tenant: `DREAMSOFT-FRONTEND-ASSEMBLY`) działający w głównej bazie `rae-postgres` na Node 1.
