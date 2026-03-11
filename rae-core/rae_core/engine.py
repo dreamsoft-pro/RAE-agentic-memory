@@ -446,6 +446,11 @@ class RAEEngine:
             chunk_kwargs["content"] = chunk.content
             chunk_kwargs["metadata"] = kwargs.get("metadata", {}).copy()
             chunk_kwargs["metadata"].update(chunk.metadata)
+            
+            # Preserve human_label in chunks
+            if "human_label" in kwargs:
+                chunk_kwargs["human_label"] = kwargs["human_label"]
+                
             chunk_kwargs["metadata"].update({
                 "parent_id": parent_id,
                 "chunk_index": i,
@@ -464,6 +469,10 @@ class RAEEngine:
                 chunk_kwargs["importance"] = 0.0
                 chunk_kwargs["tags"] = chunk_kwargs.get("tags", []) + ["operational", "non_retrievable"]
             
+            # Carry over human_label from kwargs to chunk_kwargs
+            if "human_label" in kwargs:
+                chunk_kwargs["human_label"] = kwargs["human_label"]
+
             m_id = await self.memory_storage.store_memory(**chunk_kwargs)
             
             # SYSTEM 369.4: Knowledge Graph Structural Ingest (The Glue)
@@ -538,6 +547,10 @@ class RAEEngine:
         vector_meta = kwargs.copy()
         if "content" in vector_meta:
             del vector_meta["content"]
+        
+        # Ensure human_label is in vector metadata
+        if "human_label" in kwargs:
+            vector_meta["human_label"] = kwargs["human_label"]
 
         await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=vector_meta)
 

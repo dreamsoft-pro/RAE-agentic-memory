@@ -46,6 +46,9 @@ def audited_operation(operation_name: str, impact_level: str = "medium"):
         process = psutil.Process(os.getpid())
         mem_start = process.memory_info().rss
         
+        # Intelligent Labeling: Tworzymy czytelną etykietę jeśli nie podano
+        op_label = f"[{foundation.module_name.upper()}] Operation: {op_name.replace('_', ' ').title()}"
+        
         # Audit: Intent with Source Tracking
         audit_meta = {
             "operation": op_name,
@@ -57,15 +60,14 @@ def audited_operation(operation_name: str, impact_level: str = "medium"):
         }
         foundation.bridge.save_event(
             content=f"Operation {op_name} started by {foundation.module_name} using {llm_model}",
-            human_label=f"Audit: {foundation.module_name} -> {op_name}",
+            human_label=f"{op_label} (START)",
             metadata=audit_meta
         )
 
         try:
-            # Tu właściwe wykonanie (Phoenix/Hive/Quality/Lab)
+            # Tu właściwe wykonanie
             import asyncio
             if asyncio.iscoroutinefunction(func):
-                # Jeśli to async, musimy użyć pętli zdarzeń (obsłużone w wrapperze wyżej)
                 result = func(self_instance, *args, **kwargs)
             else:
                 result = func(self_instance, *args, **kwargs)
@@ -75,18 +77,18 @@ def audited_operation(operation_name: str, impact_level: str = "medium"):
             status = "failed"
             foundation.bridge.save_event(
                 content=f"CRITICAL FAILURE in {op_name}: {str(e)}",
-                human_label=f"Alert: {op_name} Failed",
+                human_label=f"{op_label} (ALERT: FAILED)",
                 metadata={"status": "error", "error": str(e), "category": "security_alert"}
             )
             raise e
         finally:
             duration = time.time() - start_time
-            mem_used = (process.memory_info().rss - mem_start) / 1024 / 1024 # MB
+            mem_used = (psutil.Process(os.getpid()).memory_info().rss - mem_start) / 1024 / 1024
             
             # Final Telemetry with LLM data
             foundation.bridge.save_event(
                 content=f"Summary: {op_name} finished. Duration: {duration:.2f}s. Memory: {mem_used:.2f}MB.",
-                human_label=f"Telemetry: {op_name}",
+                human_label=f"{op_label} (TELEMETRY: SUCCESS)",
                 metadata={
                     "operation": op_name,
                     "source_module": foundation.module_name,
