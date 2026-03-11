@@ -1,25 +1,23 @@
-"""Base exceptions for RAE-core."""
-
+"""
+RAE Base Exceptions - Core Standard
+"""
 
 class RAEError(Exception):
-    """Base exception for all RAE-core errors."""
-
+    """Base exception for all RAE errors"""
     pass
 
-
-class StorageError(RAEError):
-    """Exception raised for errors in storage adapters."""
-
+class ContractViolationError(RAEError):
+    """Raised when a Hard Frame 2.1 contract is violated"""
     pass
 
-
-class ValidationError(RAEError):
-    """Exception raised for validation failures."""
-
+class InfrastructureError(RAEError):
+    """Raised when infrastructure (Postgres, Qdrant, Ollama) fails"""
     pass
-
 
 class SecurityPolicyViolationError(RAEError):
-    """Exception raised when a security policy is violated (ISO 27000)."""
+    """Raised when security boundaries are breached"""
+    pass
 
+class MemoryError(RAEError):
+    """Raised when memory operations fail"""
     pass

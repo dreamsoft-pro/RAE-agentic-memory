@@ -1,8 +1,6 @@
-# RAE-agentic-memory-agnostic-core
-# Docker Compose Configuration - LOCAL STABLE (Laptop Bridge)
-
+# RAE-Suite v4.5 - QUANTUM PRODUCTION STACK
 services:
-  postgres:
+  rae-postgres:
     image: postgres:15-alpine
     container_name: rae-postgres
     restart: unless-stopped
@@ -10,42 +8,53 @@ services:
       POSTGRES_USER: rae
       POSTGRES_PASSWORD: rae_password
       POSTGRES_DB: rae
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - rae-agentic-memory_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rae"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - rae-network
+      - rae-internal
 
-  redis:
+  rae-redis:
     image: redis:7-alpine
     container_name: rae-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
-      - redis_data:/data
+      - rae-agentic-memory_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - rae-network
+      - rae-internal
 
-  qdrant:
+  rae-qdrant:
     image: qdrant/qdrant:latest
     container_name: rae-qdrant
     restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
     volumes:
-      - qdrant_data:/qdrant/storage
+      - rae-agentic-memory_qdrant_data:/qdrant/storage
     networks:
-      - rae-network
+      - rae-internal
+
+  ollama-dev:
+    image: ollama/ollama:latest
+    container_name: ollama-dev
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - rae-internal
 
   rae-api-dev:
     image: rae-memory:latest
     container_name: rae-api-dev
-    build:
-      context: .
-      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "8001:8000"
@@ -57,21 +66,78 @@ services:
       - REDIS_URL=redis://rae-redis:6379/0
       - QDRANT_HOST=rae-qdrant
       - RAE_API_KEY=test-key
-      - RAE_DB_MODE=ignore
+      - PYTHONPATH=/app:/app/rae_core
+      - OLLAMA_API_URL=http://ollama-dev:11434
     volumes:
-      - ./rae-core:/app/rae-core
+      - ./rae-core/rae_core:/app/rae_core
       - ./apps:/app/apps
       - ./rae_adapters:/app/rae_adapters
       - ./alembic:/app/alembic
+      # NOWOŚĆ: Montowanie Twoich modeli ONNX
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
-      - rae-network
+      - rae-internal
+    depends_on:
+      rae-postgres:
+        condition: service_healthy
+      rae-redis:
+        condition: service_healthy
+      ollama-dev:
+        condition: service_started
+
+  rae-worker:
+    image: rae-memory:latest
+    container_name: rae-worker
+    command: celery -A apps.memory_api.celery_app worker --loglevel=info
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app:/app/rae_core
+      - POSTGRES_HOST=rae-postgres
+      - REDIS_URL=redis://rae-redis:6379/0
+      - CELERY_BROKER_URL=redis://rae-redis:6379/0
+      - OLLAMA_API_URL=http://ollama-dev:11434
+    volumes:
+      - ./rae-core/rae_core:/app/rae_core
+      - ./apps:/app/apps
+      - ./rae_adapters:/app/rae_adapters
+      - ./models:/app/models # Worker również potrzebuje modeli do refleksji
+    networks:
+      - rae-internal
+    depends_on:
+      rae-api-dev:
+        condition: service_healthy
+
+  rae-oracle-ui:
+    image: rae-oracle:latest
+    container_name: rae-oracle-ui
+    restart: unless-stopped
+    ports:
+      - "8506:8080"
+    volumes:
+      - ./rae-lite/rae_lite/ui/app.py:/app/main.py
+    environment:
+      - RAE_API_URL=http://rae-api-dev:8000
+    networks:
+      - rae-internal
+    depends_on:
+      rae-api-dev:
+        condition: service_healthy
 
 networks:
-  rae-network:
-    name: rae-agentic-memory-agnostic-core_rae-network
+  rae-internal:
+    name: rae-internal
     driver: bridge
 
 volumes:
-  postgres_data:
-  redis_data:
-  qdrant_data:
+  rae-agentic-memory_postgres_data:
+    external: true
+  rae-agentic-memory_redis_data:
+    external: true
+  rae-agentic-memory_qdrant_data:
+    external: true
+  ollama_data:
