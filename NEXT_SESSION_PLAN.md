@@ -1,31 +1,40 @@
-# 📋 Plan Następnej Sesji: Operacja "Smart Assembly" (Dreamsoft Next.js)
+# 📋 Plan Następnej Sesji: Operacja "Strangler Fig" (Dreamsoft Next.js)
 
 ## 🎯 Cel Główny
-Poskładanie frontendu Next.js w spójną całość przy wykorzystaniu Grafu Wiedzy RAE na Node 1.
+Zbudowanie stabilnego, nowoczesnego frontendu Next.js 14 od podstaw, wykorzystując stary kod AngularJS jako "Złotą Wyrocznię" i Graf Wiedzy RAE jako mapę drogową. Odrzucamy automatycznie wygenerowany, błędny kod na rzecz rygorystycznego, ręcznego przepisywania moduł po module z zachowaniem zasady "Zero Errors Policy" w TypeScript.
 
-## 🛠️ Lista Zadań (Roadmap)
+## 🛠️ Lista Zadań (Roadmap - 6 Faz)
 
-### 1. Faza Diagnostyczna (Deep Symbol Extraction)
-- [ ] **Naprawa Ingestu Symboli:** Zdiagnozować brak symboli dla `CalculationService` (sprawdzić klucze `methods`/`functions` w `symbols.json`).
-- [ ] **Re-Ingest Grafu:** Ponownie zasilić tenant `DREAMSOFT-FRONTEND-ASSEMBLY` kompletnymi danymi o 307 komponentach.
+### Faza 1: Oczyszczenie Przedpola (Tabula Rasa)
+- [ ] Skasować wszystkie 400+ błędnych plików w `next-frontend/src/services` na Node 1.
+- [ ] Upewnić się, że struktura Next.js buduje się bez żadnych błędów kompilacji (`npx tsc --noEmit`).
+- [ ] Pozostawić tylko poprawne szkielety (App Router, Tailwind, Zustand, `Header.tsx`, `Footer.tsx`).
 
-### 2. Faza Mapowania Zależności
-- [ ] **Automatyczny Import-Fixer:** Wygenerować mapę brakujących importów w `src/services` na podstawie powiązań w grafie.
-- [ ] **Analiza "Martwego Kodu":** Usunąć nieużywane serwisy, które nie mają relacji w Grafie Wiedzy.
+### Faza 2: Fundament Komunikacyjny (The Bridge)
+- [ ] Zbudować centralny `ApiClient.ts` (na bazie Axios).
+- [ ] Zaimplementować globalną obsługę błędów, CORS oraz wstrzykiwanie nowego uniwersalnego paszportu JWT do nagłówków.
+- [ ] Odtworzyć i przetestować endpointy logowania (`AuthService`).
 
-### 3. Faza Montażu Core (The Brain)
-- [ ] **Integracja Kalkulacji:** Połączyć `CalculationController.ts` z `CalculationEngine.tsx`.
-- [ ] **Stitching Koszyka:** Podpiąć `CartService` pod `CartContext.tsx` i zwalidować komunikację z API (port 18000).
+### Faza 3: Drzewo Treści (Katalog i Statyka)
+- [ ] Odtworzyć logikę struktury: *Kategoria -> Podkategoria -> Grupa -> Produkt* z użyciem Server Components (SEO-friendly).
+- [ ] Zaimplementować `DpCategoryService` z wykorzystaniem React Query do cachowania.
+- [ ] Przenieść logikę stron statycznych i bloga (`StaticContentService`, `NewsService`).
 
-### 4. Faza UX & Visual Mirroring
-- [ ] **Layout Integration:** Złożyć `RootLayout.tsx` (Header, Footer, Nav) zgodnie z Master Planem.
-- [ ] **CSS Calibration:** Przeniesienie rygorystyczne stylów z AngularJS do Tailwinda (Operacja Lustro).
+### Faza 4: Złote Serce (Silnik Kalkulacyjny i Konfigurator)
+- [ ] Odtworzyć UI konfiguratora produktu (wymiary, nakłady, papiery) i zarządzać jego stanem lokalnie (lub przez `Zustand`).
+- [ ] Zbudować komunikację z API PHP dla wyliczeń cenowych ("Backend for Frontend").
+- [ ] Połączyć konfigurator z globalnym koszykiem (`cartStore.ts`).
 
-### 5. Walidacja ISO
-- [ ] **E2E Traceability:** Test zamówienia z zapisem śladu w `ISO_AUDIT_GENEALOGY.jsonl`.
-- [ ] **Performance Check:** Pomiary szybkości na Node 1.
+### Faza 5: Koszyk i Przepływ Zamówienia (Checkout)
+- [ ] Zaimplementować `CartService` i `DeliveryService` w nowej architekturze.
+- [ ] Zbudować przepływ Checkout: formularze adresowe, wybór kuriera, wybór płatności.
+- [ ] Zintegrować walidację zamówienia z API.
 
-## 📍 Infrastruktura (Node 1)
-- **Katalog:** `~/rae-v5` oraz `~/dreamsoft_factory/next-frontend`
-- **Tenant:** `6ad8b5a5-d61c-566d-98f9-8a131ab304a7` (DREAMSOFT-FRONTEND-ASSEMBLY)
-- **Database:** `postgresql://rae:rae_password@localhost:5432/rae`
+### Faza 6: Panel Klienta (Client Zone)
+- [ ] Odtworzyć widoki historii zamówień, faktur i reklamacji dla zalogowanego użytkownika.
+- [ ] Zintegrować logowanie Social (Google, Apple) z uniwersalnym JWT.
+
+## 📍 Infrastruktura
+- **Środowisko:** Node 1 (`100.68.166.117`)
+- **Katalog Główny:** `~/dreamsoft_factory/next-frontend`
+- **Asystent Kognitywny:** Graf Wiedzy RAE (tenant: `DREAMSOFT-FRONTEND-ASSEMBLY`) działający w głównej bazie `rae-postgres` na Node 1.
