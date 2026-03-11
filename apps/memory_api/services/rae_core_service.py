@@ -232,7 +232,7 @@ class RAECoreService:
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name,
+                vector_name=self.embedding_provider.default_model_name or "dense",
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore

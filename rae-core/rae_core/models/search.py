@@ -76,7 +76,7 @@ class SearchResult(BaseModel):
 
     memory_id: str = Field(description="UUID of the memory")
     content: str = Field(description="Memory content")
-    score: float = Field(description="Relevance score", ge=0.0, le=1.0)
+    score: float = Field(description="Relevance score")
     strategy_used: SearchStrategy = Field(
         description="Which strategy produced this result"
     )
