@@ -4,7 +4,7 @@ Przeczytaj repozytorium https://github.com/dreamsoft-pro/RAE-agentic-memory i za
 
 teraz do rzeczy:
 
-Pracuję nad projektem RAE-agentic-memory (silnik pamięci dla agentów: 4 warstwy pamięci + warstwa matematyczna, local-first). Repozytorium: https://github.com/dreamsoft-pro/RAE-agentic-memory
+Pracuję nad projektem RAE-agentic-memory (architektura pamięci dla agentów: 4 warstwy pamięci + warstwa matematyczna, local-first). Repozytorium: https://github.com/dreamsoft-pro/RAE-agentic-memory
 
 Główny cel: Chcę wydzielić z tego projektu RAE-core – czysty, niezależny rdzeń biblioteki Pythona, który:
 

@@ -65,8 +65,9 @@ def make_request(url, method="GET", data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
-    
+
     import platform
+
     hostname = platform.node()
     is_local_machine = hostname == "grzegorz-lesniowski-N550JK"
 
@@ -76,13 +77,15 @@ def get_active_url():
         ("Local Dev", DEFAULT_URL),
         ("Local Lite", LITE_URL),
     ]
-    
+
     # Reorder based on preference
     if is_local_machine:
         print(f"   Detected Local Machine ({hostname}). Prioritizing Local Nodes.")
         # Move Local to front
-        nodes = [n for n in nodes if "Local" in n[0]] + [n for n in nodes if "Local" not in n[0]]
-    
+        nodes = [n for n in nodes if "Local" in n[0]] + [
+            n for n in nodes if "Local" not in n[0]
+        ]
+
     for name, url in nodes:
         print(f"   Target: {url} ({name}) ... ", end="", flush=True)
         code, _ = make_request(f"{url}/health", timeout=2)
@@ -92,7 +95,9 @@ def get_active_url():
         print("OFFLINE ❌")
 
     print("\n[!] NO NODES AVAILABLE.")
-    if not is_local_machine: # Only suggest waking Lumina if we aren't prioritizing local
+    if (
+        not is_local_machine
+    ):  # Only suggest waking Lumina if we aren't prioritizing local
         print("    Lumina seems down. Execute manual wake procedure:")
         print("    $ ./scripts/wake_lumina.sh")
     return None
@@ -111,7 +116,7 @@ def fetch_black_box_context(base_url):
     }
 
     code, data = make_request(
-        f"{base_url}/v2/memories/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload, timeout=60
     )
 
     if code == 200:
@@ -135,7 +140,7 @@ def fetch_black_box_context(base_url):
     query_payload["query"] = "Strategic protocols, critical stability rules"
 
     code, data = make_request(
-        f"{base_url}/v2/memories/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload, timeout=60
     )
 
     if code == 200:

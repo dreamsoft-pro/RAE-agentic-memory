@@ -267,7 +267,9 @@ class TestCachingFunctions:
 
     def test_get_cached_memories(self, mock_client):
         """Test cached memories function"""
-        memories = get_cached_memories(mock_client, layers=("episodic", "working"), days_back=7)
+        memories = get_cached_memories(
+            mock_client, layers=("episodic", "working"), days_back=7
+        )
 
         assert isinstance(memories, list)
         mock_client.get_memories.assert_called_once()

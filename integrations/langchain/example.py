@@ -72,7 +72,7 @@ Question: {question}
     try:
         with httpx.Client() as client:
             client.post(
-                f"{RAE_API_URL}/v1/memory/store",
+                f"{RAE_API_URL}/v2/memory/store",
                 json=store_payload,
                 headers={"X-API-Key": RAE_API_KEY, "X-Tenant-Id": RAE_TENANT_ID},
             ).raise_for_status()

@@ -83,8 +83,8 @@ def compute_memory_score(
         weights.alpha * similarity + weights.beta * importance + weights.gamma * recency
     )
 
-    # Clamp result to [0, 1]
-    final_score = max(0.0, min(1.0, final_score))
+    # NO CLAMPING (System 23.0) - Allow high-resolution reranker scores to propagate
+    # final_score = max(0.0, min(1.0, final_score))
 
     return MemoryScoreResult(
         final_score=float(final_score),
@@ -378,3 +378,32 @@ def compute_reasoning_score_with_coherence(
         1.0 - coherence_weight
     ) * base_score + coherence_weight * coherence_reward
     return max(0.0, min(1.0, combined))
+
+
+class PolicyRouter:
+    """
+    Adaptive RAG Router (System 23.0).
+    Decides between Fast Path (Math-Only) and Deep Path (Neural Scalpel).
+    """
+
+    def __init__(self, confidence_threshold: float = 0.85):
+        self.confidence_threshold = confidence_threshold
+
+    def should_use_deep_path(self, fast_path_results: list[Any]) -> bool:
+        """
+        Trigger Deep Path if Fast Path results are weak or non-existent.
+        """
+        if not fast_path_results:
+            return True
+
+        # Extract score from SearchResult or tuple
+        top_item = fast_path_results[0]
+        score = 0.0
+        if hasattr(top_item, "score"):
+            score = top_item.score
+        elif isinstance(top_item, tuple):
+            score = top_item[1]
+        elif isinstance(top_item, dict):
+            score = top_item.get("score") or top_item.get("final_score") or 0.0
+
+        return score < self.confidence_threshold

@@ -53,7 +53,7 @@ from .services.temporal_graph import TemporalGraphService
 # ==========================================
 
 
-def get_db_pool(request: Request) -> asyncpg.Pool:
+def get_db_pool(request: Request) -> asyncpg.Pool | None:
     """
     Get the database connection pool from application state.
 
@@ -61,9 +61,9 @@ def get_db_pool(request: Request) -> asyncpg.Pool:
         request: FastAPI request object
 
     Returns:
-        AsyncPG connection pool
+        AsyncPG connection pool or None if not initialized
     """
-    return request.app.state.pool
+    return getattr(request.app.state, "pool", None)
 
 
 # ==========================================

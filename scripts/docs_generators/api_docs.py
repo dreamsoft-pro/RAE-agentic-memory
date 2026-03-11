@@ -48,7 +48,7 @@ def generate_api_docs():
 
 ## Core Memory Endpoints
 
-### POST /v1/memories/create
+### POST /v2/memories/create
 Create a new memory entry.
 
 **Request Body:**
@@ -61,26 +61,26 @@ Create a new memory entry.
 }}
 ```
 
-### POST /v1/memory/query
+### POST /v2/memory/query
 Query memories with hybrid search.
 
-### POST /v1/memory/reflection
+### POST /v2/memory/reflection
 Generate reflection from memories.
 
 ## GraphRAG Endpoints
 
-### POST /v1/graph/entities
+### POST /v2/graph/entities
 Extract entities from text.
 
-### GET /v1/graph/traverse
+### GET /v2/graph/traverse
 Traverse knowledge graph.
 
 ## Enterprise Endpoints
 
-### POST /v1/triggers/create
+### POST /v2/triggers/create
 Create event trigger rule.
 
-### GET /v1/cost/usage
+### GET /v2/cost/usage
 Get cost tracking data.
 
 ---

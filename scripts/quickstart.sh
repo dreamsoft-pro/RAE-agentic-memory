@@ -211,7 +211,7 @@ else
     echo -e "   http://localhost:8000/health"
     echo ""
     echo -e "📝 ${BLUE}Example cURL command:${NC}"
-    echo -e '   curl -X POST http://localhost:8000/v1/memories \\'
+    echo -e '   curl -X POST http://localhost:8000/v2/memories \\'
     echo -e '     -H "Content-Type: application/json" \\'
     echo -e '     -d '"'"'{"content": "Hello RAE!", "tenant_id": "demo", "project": "quickstart"}'"'"
     echo ""

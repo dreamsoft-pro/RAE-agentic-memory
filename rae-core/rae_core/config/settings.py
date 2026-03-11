@@ -1,6 +1,6 @@
 """RAE-core configuration using pydantic-settings."""
 
-from typing import Any
+from typing import Any, List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,6 +49,9 @@ class RAESettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    # Network and CORS
+    ALLOWED_ORIGINS: List[str] = ["*"]
 
     # Memory layer sizes
     sensory_max_size: int = Field(
@@ -218,6 +221,11 @@ class RAESettings(BaseSettings):
     vector_backend: str = Field(
         default="qdrant",
         description="Vector database backend (qdrant, pgvector)",
+    )
+    vector_dimension: int = Field(
+        default=384,
+        ge=1,
+        description="Dimension of embedding vectors",
     )
 
     def get_layer_config(self, layer: str) -> dict[str, Any]:

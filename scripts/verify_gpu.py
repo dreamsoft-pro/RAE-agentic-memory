@@ -9,9 +9,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "rae-core"))
 
 from rae_core.embedding.native import NativeEmbeddingProvider
 
+
 async def verify():
     print("🔍 Verifying GPU Support...")
-    
+
     # Mock config flow
     use_gpu = os.getenv("RAE_USE_GPU", "false").lower() == "true"
     print(f"⚙️  RAE_USE_GPU={use_gpu}")
@@ -24,16 +25,14 @@ async def verify():
         model_path = "models/all-MiniLM-L6-v2/model.onnx"
 
     if not os.path.exists(model_path):
-         print("❌ No ONNX model found. Cannot verify.")
-         return
+        print("❌ No ONNX model found. Cannot verify.")
+        return
 
     tokenizer_path = model_path.replace("model.onnx", "tokenizer.json")
-    
+
     try:
         provider = NativeEmbeddingProvider(
-            model_path=model_path,
-            tokenizer_path=tokenizer_path,
-            use_gpu=use_gpu
+            model_path=model_path, tokenizer_path=tokenizer_path, use_gpu=use_gpu
         )
     except Exception as e:
         print(f"❌ Initialization failed: {e}")
@@ -41,10 +40,10 @@ async def verify():
 
     providers = provider.session.get_providers()
     print(f"✅ Available Providers: {providers}")
-    
-    active_providers = provider.session.get_provider_options().keys()
+
+    provider.session.get_provider_options().keys()
     # Note: get_provider_options returns dict of options for active providers
-    
+
     if use_gpu:
         if "CUDAExecutionProvider" in providers:
             print("🎉 CUDA IS ACTIVE!")
@@ -52,6 +51,7 @@ async def verify():
             print("⚠️  CUDA requested but NOT active. (Missing libs?)")
     else:
         print("ℹ️  CPU Mode (Expected).")
+
 
 if __name__ == "__main__":
     asyncio.run(verify())

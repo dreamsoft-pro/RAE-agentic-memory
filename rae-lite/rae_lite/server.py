@@ -4,58 +4,98 @@ RAE-Lite Local HTTP Server.
 FastAPI server running locally for RAE-Lite.
 """
 
+import os
+import sys
+from pathlib import Path
+
 import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from rae_adapters.sqlite import (
+from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
     SQLiteStorage,
     SQLiteVectorStore,
 )
 from rae_core.config.settings import RAESettings
+from rae_core.embedding.native import NativeEmbeddingProvider
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 
+# SYSTEM 22.3: Production-ready embedding logic for RAE-Lite
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    project_root = Path(sys._MEIPASS)
+else:
+    # Running in a normal Python environment
+    project_root = Path(os.environ.get("PROJECT_ROOT", os.getcwd()))
 
-# Simple Mock Embedding Provider for RAE-Lite Smoke Test
-class LocalEmbeddingProvider(IEmbeddingProvider):
-    def __init__(self):
-        self.dimension = 384
+model_dir = project_root / "models" / "nomic-embed-text-v1.5"
+model_path = model_dir / "model.onnx"
+tokenizer_path = model_dir / "tokenizer.json"
 
-    async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
-        # Return deterministic mock vector based on text length
-        val = (len(text) % 100) / 100.0
-        return [val] * self.dimension
+if model_path.exists() and tokenizer_path.exists():
+    logger.info("using_native_embeddings", path=str(model_path))
+    embedding_provider = NativeEmbeddingProvider(
+        model_path=model_path,
+        tokenizer_path=tokenizer_path,
+        model_name="nomic-embed-text-v1.5",
+    )
+else:
+    logger.warning("native_models_missing_using_mock", path=str(model_path))
 
-    async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
-        return [await self.embed_text(t, task_type) for t in texts]
+    class LocalEmbeddingProvider(IEmbeddingProvider):
+        def __init__(self):
+            self.dimension = 384
 
-    def get_dimension(self) -> int:
-        return self.dimension
+        async def embed_text(
+            self, text: str, task_type: str = "search_document"
+        ) -> list[float]:
+            val = (len(text) % 100) / 100.0
+            return [val] * self.dimension
 
+        async def embed_batch(
+            self, texts: list[str], task_type: str = "search_document"
+        ) -> list[list[float]]:
+            return [await self.embed_text(t, task_type) for t in texts]
+
+        def get_dimension(self) -> int:
+            return self.dimension
+
+    embedding_provider = LocalEmbeddingProvider()
 
 # Initialize SQLite adapters
 memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
 graph_store = SQLiteGraphStore(str(settings.graph_db_path))
-embedding_provider = LocalEmbeddingProvider()
 
 # Configure RAE Core Settings
 rae_settings = RAESettings()
 rae_settings.sensory_max_size = 50
 rae_settings.working_max_size = 50
-rae_settings.vector_backend = "sqlite"  # Important for RAE-Lite
+rae_settings.vector_backend = "sqlite"
+rae_settings.vector_dimension = embedding_provider.get_dimension()
+
+# SYSTEM 40.11: Local LLM for Procedural Assistance
+from rae_core.llm.small_local import SmallLocalLLMProvider
+llm_model = os.getenv("RAE_LITE_LLM_MODEL", "llama3:8b")
+# Path to local LLM in onedir/bundle
+onnx_llm_path = str(project_root / "models" / "llm")
+llm_provider = SmallLocalLLMProvider(
+    onnx_model_path=onnx_llm_path,
+    model=llm_model
+)
 
 # Initialize RAE Engine
 engine = RAEEngine(
     memory_storage=memory_storage,
     vector_store=vector_store,
     embedding_provider=embedding_provider,
+    llm_provider=llm_provider,
     settings=rae_settings,
 )
 
@@ -118,6 +158,7 @@ async def store_memory(request: StoreMemoryRequest):
     """Store a memory."""
     try:
         # Store in engine (which handles both volatile and persistent layers)
+        # Explicitly set layer to 'episodic' for uploaded files
         memory_id = await engine.store_memory(
             content=request.content,
             source=request.source,
@@ -126,6 +167,7 @@ async def store_memory(request: StoreMemoryRequest):
             tenant_id="local",
             agent_id="rae-lite-user",
             project=request.project,
+            layer="episodic",
         )
 
         return {"memory_id": str(memory_id), "status": "stored"}
@@ -139,31 +181,86 @@ async def store_memory(request: StoreMemoryRequest):
 async def query_memories(request: QueryMemoryRequest):
     """Query memories."""
     try:
-        response = await engine.query_memory(
+        results = await engine.search_memories(
             query=request.query,
-            k=request.k,
-            filters={"project": request.project},
-            search_layers=request.layers,
+            tenant_id="local",
+            project=request.project,
+            top_k=request.k,
+            layer=request.layers[0] if request.layers else None,
         )
 
         return {
             "results": [
                 {
-                    "id": r.id,
-                    "content": r.content,
-                    "score": r.score,
-                    "layer": r.layer,
-                    "importance": r.importance,
-                    "tags": r.tags or [],
+                    "id": str(r.get("id")),
+                    "content": r.get("content"),
+                    "score": r.get("math_score", r.get("search_score", 0.0)),
+                    "layer": r.get("layer", "unknown"),
+                    "importance": r.get("importance", 0.0),
+                    "tags": r.get("tags") or [],
                 }
-                for r in response.results
+                for r in results
             ],
-            "total": len(response.results),
-            "synthesized_context": response.synthesized_context,
+            "total": len(results),
+            "synthesized_context": "",
         }
 
     except Exception as e:
         logger.error("query_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/procedural/query")
+async def query_procedural(request: QueryMemoryRequest):
+    """Query memories and generate a procedural step-by-step response."""
+    try:
+        # 1. Hybrid Search
+        results = await engine.search_memories(
+            query=request.query,
+            tenant_id="local",
+            project=request.project,
+            top_k=5,
+        )
+        
+        if not results:
+            return {"instruction": "Nie znaleziono odpowiednich procedur w pamici.", "sources": []}
+
+        # 2. Context Assembly
+        from rae_core.context.builder import ContextBuilder, ContextFormat
+        builder = ContextBuilder(max_tokens=2000, default_format=ContextFormat.DETAILED)
+        context_text, _ = builder.build_context(results, query=request.query)
+        
+        # 3. Procedural Generation
+        system_prompt = (
+            "Jesteś asystentem zespołu Order Entry. Twoim zadaniem jest przygotowanie "
+            "czytelnej instrukcji krok po kroku na podstawie dostarczonych fragmentów procedur. "
+            "Jeśli informacja jest niepełna, zaznacz to. Odpowiadaj po polsku."
+        )
+        
+        prompt = f"ZAPYTANIE: {request.query}\n\nKONTEKST PROCEDURALNY:\n{context_text}"
+        
+        instruction = await engine.generate_text(prompt=prompt, system_prompt=system_prompt)
+        
+        # Return full results for the UI to display as sources
+        formatted_sources = [
+            {
+                "id": str(r.get("id")),
+                "content": r.get("content"),
+                "score": r.get("math_score", 0.0),
+                "layer": r.get("layer", "unknown"),
+                "importance": r.get("importance", 0.0),
+                "tags": r.get("tags") or [],
+            }
+            for r in results
+        ]
+
+        return {
+            "instruction": instruction,
+            "results": formatted_sources
+        }
+
+    except Exception as e:
+        logger.error("procedural_query_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 

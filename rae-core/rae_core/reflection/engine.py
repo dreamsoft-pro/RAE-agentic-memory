@@ -34,12 +34,14 @@ class ReflectionEngine:
         self,
         memory_storage: IMemoryStorage,
         llm_provider: ILLMProvider | None = None,
+        reflection_mode: str = "standard",
     ):
         """Initialize reflection engine.
 
         Args:
             memory_storage: Memory storage for persistence
             llm_provider: Optional LLM provider for intelligent reflection
+            reflection_mode: "minimal", "standard" or "advanced"
         """
         self.memory_storage = memory_storage
         self.llm_provider = llm_provider
@@ -47,7 +49,11 @@ class ReflectionEngine:
         # Initialize components
         self.actor = Actor(memory_storage, llm_provider)
         self.evaluator = Evaluator(memory_storage)
-        self.reflector = Reflector(memory_storage, llm_provider)
+        self.reflector = Reflector(
+            memory_storage, 
+            llm_provider, 
+            reflection_mode=reflection_mode
+        )
 
     async def run_reflection_cycle(
         self,
@@ -194,6 +200,37 @@ class ReflectionEngine:
             action_result["evaluation"] = evaluation
 
         return action_result
+
+    async def evaluate_answer_draft(
+        self,
+        query_id: str,
+        retrieved_sources: list[Any],
+        answer_draft: str,
+        tenant_id: str,
+        agent_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Evaluates an answer draft using the 3-Layer Reflection Architecture.
+        
+        Args:
+            query_id: Identifier of the query.
+            retrieved_sources: Sources fetched to construct the answer.
+            answer_draft: The LLM generated response to be audited.
+            tenant_id: Tenant identifier for storage.
+            agent_id: Optional agent identifier.
+            metadata: Contextual data.
+
+        Returns:
+            Dict containing L1, L2, L3 analysis and final decision.
+        """
+        return await self.reflector.evaluate_answer_draft(
+            query_id=query_id,
+            retrieved_sources=retrieved_sources,
+            answer_draft=answer_draft,
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            metadata=metadata
+        )
 
     async def evaluate_memory_quality(
         self,

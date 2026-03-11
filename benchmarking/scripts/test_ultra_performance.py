@@ -28,7 +28,7 @@ async def test_accuracy():
             start_time = time.time()
             try:
                 await client.post(
-                    f"{RAE_API_URL}/v1/memory/query",
+                    f"{RAE_API_URL}/v2/memory/query",
                     json={"query_text": query_text, "k": 10},
                     headers={"X-Tenant-Id": TENANT_ID},
                 )

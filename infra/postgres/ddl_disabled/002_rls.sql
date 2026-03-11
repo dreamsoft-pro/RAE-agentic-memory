@@ -1,9 +1,3 @@
-ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
--- Legacy tables no longer exist in current schema
--- ALTER TABLE episodic_memories ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE semantic_memories ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE procedural_memories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tenant_isolation_memories ON memories
-  USING (tenant_id = current_setting('app.current_tenant_id', true))
-  WITH CHECK (tenant_id = current_setting('app.current_tenant_id', true));
+version https://git-lfs.github.com/spec/v1
+oid sha256:9079c76d2c2068ec454ee0c2c9e24c4ba33cfc00303a9cf9b989e4bd48451c40
+size 478

@@ -279,19 +279,19 @@ class PIIScrubber:
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
 RAE_API_KEY = os.getenv("RAE_API_KEY", "dev-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "default-project")
-RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "default-tenant")
+RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
 
-# Memory layer mapping: MCP human-friendly names -> RAE API codes
+# Memory layer mapping: MCP human-friendly names -> RAE API V2 canonical names
 LAYER_MAPPING = {
-    "episodic": "em",  # Episodic Memory
-    "working": "stm",  # Short-Term Memory (working context)
-    "semantic": "ltm",  # Long-Term Memory (semantic knowledge)
-    "ltm": "ltm",  # Long-Term Memory (direct)
-    "reflective": "rm",  # Reflective Memory
-    # Also support direct API codes
-    "em": "em",
-    "stm": "stm",
-    "rm": "rm",
+    "episodic": "longterm",
+    "working": "working",
+    "semantic": "longterm",
+    "ltm": "longterm",
+    "longterm": "longterm",
+    "reflective": "reflective",
+    "rm": "reflective",
+    "em": "longterm",
+    "stm": "working",
 }
 
 # Initialize MCP Server
@@ -318,13 +318,13 @@ class RAEMemoryClient:
             "X-Tenant-Id": tenant_id,
             "Content-Type": "application/json",
         }
-        self.base_url = f"{api_url}/v1"
+        self.base_url = f"{api_url}/v2"
 
     async def store_memory(
         self,
         content: str,
         source: str,
-        layer: str = "em",
+        layer: str = "longterm",
         tags: Optional[List[str]] = None,
         project: str = RAE_PROJECT_ID,
         importance: float = 0.5,
@@ -350,7 +350,7 @@ class RAEMemoryClient:
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        f"{self.base_url}/memory/store",
+                        f"{self.base_url}/memories/",
                         json=payload,
                         headers=self.headers,
                         timeout=30.0,
@@ -358,7 +358,7 @@ class RAEMemoryClient:
                     response.raise_for_status()
                     result = response.json()
 
-                    memory_id = result.get("id")
+                    memory_id = result.get("memory_id")
                     span.set_attribute("memory.id", memory_id)
 
                     logger.info(
@@ -402,7 +402,7 @@ class RAEMemoryClient:
             span.set_attribute("search.project", project or RAE_PROJECT_ID)
 
             payload = {
-                "query_text": query,
+                "query": query,
                 "k": top_k,
                 "project": project or RAE_PROJECT_ID,
                 "filters": filters or {},
@@ -411,7 +411,7 @@ class RAEMemoryClient:
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        f"{self.base_url}/memory/query",
+                        f"{self.base_url}/memories/query",
                         json=payload,
                         headers=self.headers,
                         timeout=30.0,
@@ -499,7 +499,7 @@ class RAEMemoryClient:
             query="coding guidelines project conventions best practices",
             top_k=10,
             project=project,
-            filters={"layer": "semantic"},
+            filters={"layer": "longterm"},
         )
 
     # ISO/IEC 42001 Compliance Methods
@@ -528,7 +528,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/v1/compliance/approvals",
+                    f"{self.api_url}/v2/compliance/approvals",
                     json=payload,
                     headers=self.headers,
                     timeout=30.0,
@@ -545,7 +545,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/approvals/{request_id}",
+                    f"{self.api_url}/v2/compliance/approvals/{request_id}",
                     headers=self.headers,
                     timeout=30.0,
                 )
@@ -561,7 +561,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/circuit-breakers",
+                    f"{self.api_url}/v2/compliance/circuit-breakers",
                     headers=self.headers,
                     timeout=30.0,
                 )
@@ -581,7 +581,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/policies",
+                    f"{self.api_url}/v2/compliance/policies",
                     params=params,
                     headers=self.headers,
                     timeout=30.0,
@@ -736,6 +736,10 @@ async def handle_list_tools() -> list[types.Tool]:
                         "default": 0.5,
                         "description": "Importance score (0.0=low, 0.5=medium, 1.0=critical)",
                     },
+                    "project": {
+                        "type": "string",
+                        "description": "Project identifier (e.g., 'rae-core', 'website')",
+                    },
                 },
                 "required": ["content", "source"],
             },
@@ -760,6 +764,10 @@ async def handle_list_tools() -> list[types.Tool]:
                         "description": "Number of results to return (1-20)",
                         "minimum": 1,
                         "maximum": 20,
+                    },
+                    "project": {
+                        "type": "string",
+                        "description": "Project filter (defaults to current project)",
                     },
                 },
                 "required": ["query"],
@@ -931,10 +939,11 @@ async def handle_call_tool(
             source = arguments.get("source")
             tags = arguments.get("tags", [])
             layer_input = arguments.get("layer", "episodic")
-            importance = arguments.get("importance", 0.5)  # default medium importance
+            importance = arguments.get("importance", 0.5)
+            project = arguments.get("project", RAE_PROJECT_ID)
 
             # Map human-friendly layer name to API code
-            layer = LAYER_MAPPING.get(layer_input, "em")  # default to episodic (em)
+            layer = LAYER_MAPPING.get(layer_input, "longterm")
 
             # Validate
             if not content:
@@ -953,9 +962,10 @@ async def handle_call_tool(
                 layer=layer,
                 tags=tags,
                 importance=importance,
+                project=project,
             )
 
-            memory_id = result.get("id", "unknown")
+            memory_id = result.get("memory_id", "unknown")
 
             return [
                 types.TextContent(
@@ -963,7 +973,8 @@ async def handle_call_tool(
                     text=(
                         f"✓ Memory stored successfully\n"
                         f"ID: {memory_id}\n"
-                        f"Layer: {layer_input}\n"
+                        f"Layer: {layer_input} ({layer})\n"
+                        f"Project: {project}\n"
                         f"Tags: {', '.join(tags) if tags else 'none'}"
                     ),
                 )
@@ -973,6 +984,7 @@ async def handle_call_tool(
             # Extract arguments
             query = arguments.get("query")
             top_k = arguments.get("top_k", 5)
+            project = arguments.get("project", RAE_PROJECT_ID)
 
             # Validate
             if not query:
@@ -981,7 +993,9 @@ async def handle_call_tool(
                 ]
 
             # Search memory
-            results = await rae_client.search_memory(query=query, top_k=top_k)
+            results = await rae_client.search_memory(
+                query=query, top_k=top_k, project=project
+            )
 
             if not results:
                 return [
@@ -1037,7 +1051,7 @@ async def handle_call_tool(
             formatted += f"Found {len(results)} related items:\n\n"
 
             for i, mem in enumerate(results, 1):
-                timestamp = mem.get("timestamp", "unknown")
+                timestamp = mem.get("created_at", "unknown")
                 content = mem.get("content", "")
 
                 formatted += f"{i}. [{timestamp}]\n"
@@ -1375,7 +1389,7 @@ async def handle_get_prompt(name: str, arguments: dict) -> types.GetPromptResult
             else:
                 content = "RECENT PROJECT CONTEXT:\n\n"
                 for mem in recent:
-                    timestamp = mem.get("timestamp", "unknown")
+                    timestamp = mem.get("created_at", "unknown")
                     text = mem.get("content", "")
                     content += f"[{timestamp}] {text}\n\n"
 

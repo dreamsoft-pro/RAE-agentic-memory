@@ -117,11 +117,11 @@ class RAEAPIClient:
             "metadata": metadata or {},
         }
 
-        return await self.client.post("/v1/memories", json_data=data)
+        return await self.client.post("/v2/memories", json_data=data)
 
     async def get_memory(self, memory_id: UUID) -> Dict[str, Any]:
         """Get memory by ID."""
-        return await self.client.get(f"/v1/memories/{memory_id}")
+        return await self.client.get(f"/v2/memories/{memory_id}")
 
     async def search_memories(
         self,
@@ -154,7 +154,7 @@ class RAEAPIClient:
         if filters:
             params.update(filters)
 
-        return await self.client.get("/v1/memories/search", params=params)
+        return await self.client.get("/v2/memories/search", params=params)
 
     # ========================================================================
     # Reflection Operations
@@ -193,11 +193,11 @@ class RAEAPIClient:
         if cluster_id:
             data["cluster_id"] = cluster_id
 
-        return await self.client.post("/v1/reflections/generate", json_data=data)
+        return await self.client.post("/v2/reflections/generate", json_data=data)
 
     async def get_reflection(self, reflection_id: UUID) -> Dict[str, Any]:
         """Get reflection by ID."""
-        return await self.client.get(f"/v1/reflections/{reflection_id}")
+        return await self.client.get(f"/v2/reflections/{reflection_id}")
 
     async def list_reflections(
         self,
@@ -212,7 +212,7 @@ class RAEAPIClient:
             "limit": limit,
         }
 
-        return await self.client.get("/v1/reflections", params=params)
+        return await self.client.get("/v2/reflections", params=params)
 
     # ========================================================================
     # Semantic Memory Operations
@@ -241,7 +241,7 @@ class RAEAPIClient:
             "memory_id": str(memory_id),
         }
 
-        return await self.client.post("/v1/semantic/extract", json_data=data)
+        return await self.client.post("/v2/semantic/extract", json_data=data)
 
     async def semantic_search(
         self,
@@ -269,7 +269,7 @@ class RAEAPIClient:
             "k": k,
         }
 
-        return await self.client.post("/v1/semantic/search", json_data=data)
+        return await self.client.post("/v2/semantic/search", json_data=data)
 
     # ========================================================================
     # Graph Operations
@@ -287,7 +287,7 @@ class RAEAPIClient:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        This method calls POST /v1/graph/nodes which was never implemented.
+        This method calls POST /v2/graph/nodes which was never implemented.
 
         RAE uses GraphRAG for knowledge graph management, which automatically
         extracts entities and relationships from memories.
@@ -300,7 +300,7 @@ class RAEAPIClient:
         See docs/graphrag_guide.md for details.
         """
         raise NotImplementedError(
-            "POST /v1/graph/nodes endpoint does not exist. "
+            "POST /v2/graph/nodes endpoint does not exist. "
             "Use extract_knowledge_graph() for automatic graph construction, "
             "or get_graph_nodes() to read existing nodes. "
             "See docs/graphrag_guide.md for GraphRAG usage."
@@ -319,7 +319,7 @@ class RAEAPIClient:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        This method calls POST /v1/graph/edges which was never implemented.
+        This method calls POST /v2/graph/edges which was never implemented.
 
         RAE uses GraphRAG for knowledge graph management, which automatically
         extracts relationships from memories.
@@ -332,7 +332,7 @@ class RAEAPIClient:
         See docs/graphrag_guide.md for details.
         """
         raise NotImplementedError(
-            "POST /v1/graph/edges endpoint does not exist. "
+            "POST /v2/graph/edges endpoint does not exist. "
             "Use extract_knowledge_graph() for automatic graph construction, "
             "or get_graph_edges() to read existing edges. "
             "See docs/graphrag_guide.md for GraphRAG usage."
@@ -349,7 +349,7 @@ class RAEAPIClient:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        This method calls POST /v1/graph/traverse which was never implemented.
+        This method calls POST /v2/graph/traverse which was never implemented.
 
         RAE uses GraphRAG for knowledge graph traversal integrated with
         semantic search.
@@ -361,7 +361,7 @@ class RAEAPIClient:
         See docs/graphrag_guide.md for details.
         """
         raise NotImplementedError(
-            "POST /v1/graph/traverse endpoint does not exist. "
+            "POST /v2/graph/traverse endpoint does not exist. "
             "Use query_graph() for hybrid search with graph traversal, "
             "or get_subgraph() to extract subgraphs. "
             "See docs/graphrag_guide.md for GraphRAG usage."
@@ -403,7 +403,7 @@ class RAEAPIClient:
             "enable_reranking": enable_reranking,
         }
 
-        return await self.client.post("/v1/search/hybrid", json_data=data)
+        return await self.client.post("/v2/search/hybrid", json_data=data)
 
     async def analyze_query(
         self, query: str, context: Optional[List[str]] = None
@@ -420,7 +420,7 @@ class RAEAPIClient:
         """
         data = {"query": query, "context": context or []}
 
-        return await self.client.post("/v1/search/analyze", json_data=data)
+        return await self.client.post("/v2/search/analyze", json_data=data)
 
     # ========================================================================
     # Evaluation Operations
@@ -443,7 +443,7 @@ class RAEAPIClient:
             "metrics_to_compute": metrics or ["mrr", "ndcg", "precision", "recall"],
         }
 
-        return await self.client.post("/v1/evaluation/search", json_data=data)
+        return await self.client.post("/v2/evaluation/search", json_data=data)
 
     async def detect_drift(
         self,
@@ -468,7 +468,7 @@ class RAEAPIClient:
             "current_end": current_end.isoformat(),
         }
 
-        return await self.client.post("/v1/evaluation/drift/detect", json_data=data)
+        return await self.client.post("/v2/evaluation/drift/detect", json_data=data)
 
     # ========================================================================
     # Event Trigger Operations
@@ -499,7 +499,7 @@ class RAEAPIClient:
             "created_by": created_by,
         }
 
-        return await self.client.post("/v1/triggers/create", json_data=data)
+        return await self.client.post("/v2/triggers/create", json_data=data)
 
     async def emit_event(
         self,
@@ -518,7 +518,7 @@ class RAEAPIClient:
             "tags": tags or [],
         }
 
-        return await self.client.post("/v1/triggers/events/emit", json_data=data)
+        return await self.client.post("/v2/triggers/events/emit", json_data=data)
 
     async def list_triggers(
         self,
@@ -533,7 +533,7 @@ class RAEAPIClient:
             "limit": limit,
         }
 
-        return await self.client.get("/v1/triggers/list", params=params)
+        return await self.client.get("/v2/triggers/list", params=params)
 
     # ========================================================================
     # Dashboard Operations
@@ -552,7 +552,7 @@ class RAEAPIClient:
             "period": period,
         }
 
-        return await self.client.post("/v1/dashboard/metrics", json_data=data)
+        return await self.client.post("/v2/dashboard/metrics", json_data=data)
 
     async def get_visualization(
         self,
@@ -569,7 +569,7 @@ class RAEAPIClient:
             **kwargs,
         }
 
-        return await self.client.post("/v1/dashboard/visualizations", json_data=data)
+        return await self.client.post("/v2/dashboard/visualizations", json_data=data)
 
     async def get_system_health(
         self,
@@ -584,7 +584,7 @@ class RAEAPIClient:
             "include_sub_components": include_sub_components,
         }
 
-        return await self.client.post("/v1/dashboard/health", json_data=data)
+        return await self.client.post("/v2/dashboard/health", json_data=data)
 
     # ========================================================================
     # Client Management

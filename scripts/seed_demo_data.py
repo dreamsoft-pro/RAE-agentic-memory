@@ -195,7 +195,7 @@ PHOENIX_MEMORIES = [
         "importance": 0.8,
     },
     {
-        "content": "API versioning policy: Use URL path versioning (/v1/, /v2/). Maintain backward compatibility for at least 2 versions. Deprecation notice period: 6 months. Breaking changes require major version bump. Document all changes in CHANGELOG.md.",
+        "content": "API versioning policy: Use URL path versioning (/v2/, /v2/). Maintain backward compatibility for at least 2 versions. Deprecation notice period: 6 months. Breaking changes require major version bump. Document all changes in CHANGELOG.md.",
         "layer": "ltm",
         "tags": ["api", "versioning", "policy", "compatibility"],
         "source": "api-guidelines",
@@ -677,7 +677,7 @@ def create_memory(
         headers = {"X-Tenant-Id": tenant_id, "X-User-Id": "admin"}
 
         response = client.post(
-            f"{RAE_API_URL}/v1/memory/store",
+            f"{RAE_API_URL}/v2/memory/store",
             json=payload,
             headers=headers,
             timeout=10.0,
@@ -767,9 +767,9 @@ def print_usage_tips(scenarios: List[str]):
     print("\n💡 Explore the data:")
     print("   1. Dashboard: http://localhost:8501")
     print("   2. API Docs: http://localhost:8000/docs")
-    print("   3. Query API: POST http://localhost:8000/v1/memory/query")
-    print("   4. Graph extraction: http://localhost:8000/v1/graph/extract")
-    print("   5. ISO/IEC 42001: http://localhost:8000/v1/compliance/...")
+    print("   3. Query API: POST http://localhost:8000/v2/memory/query")
+    print("   4. Graph extraction: http://localhost:8000/v2/graph/extract")
+    print("   5. ISO/IEC 42001: http://localhost:8000/v2/compliance/...")
     print()
 
 

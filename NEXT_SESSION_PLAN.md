@@ -1,40 +1,40 @@
-# NEXT SESSION PLAN: GPU Acceleration & External Integration (v3.5.0-dev)
+# 📋 Plan Następnej Sesji: Operacja "Strangler Fig" (Dreamsoft Next.js)
 
-## 🎯 Strategic Goals
-1.  **Hardware Acceleration**: Enable CUDA support for Native ONNX in the `standard` (Full) profile.
-2.  **External Connectivity**: Implement API and MCP backends for Embeddings and Reranking.
-3.  **Config Consolidation**: Move all hardcoded engine parameters to `config/math_controller.yaml`.
+## 🎯 Cel Główny
+Zbudowanie stabilnego, nowoczesnego frontendu Next.js 14 od podstaw, wykorzystując stary kod AngularJS jako "Złotą Wyrocznię" i Graf Wiedzy RAE jako mapę drogową. Odrzucamy automatycznie wygenerowany, błędny kod na rzecz rygorystycznego, ręcznego przepisywania moduł po module z zachowaniem zasady "Zero Errors Policy" w TypeScript.
 
----
+## 🛠️ Lista Zadań (Roadmap - 6 Faz)
 
-## 🛠️ Task Breakdown
+### Faza 1: Oczyszczenie Przedpola (Tabula Rasa)
+- [ ] Skasować wszystkie 400+ błędnych plików w `next-frontend/src/services` na Node 1.
+- [ ] Upewnić się, że struktura Next.js buduje się bez żadnych błędów kompilacji (`npx tsc --noEmit`).
+- [ ] Pozostawić tylko poprawne szkielety (App Router, Tailwind, Zustand, `Header.tsx`, `Footer.tsx`).
 
-### 1. CUDA & GPU Support (Standard Profile)
-- **Library Upgrade**: Switch from `onnxruntime` to `onnxruntime-gpu` in `requirements.txt` for the Full image.
-- **Provider Logic**: Update `NativeEmbeddingProvider` to detect CUDA and automatically select `CUDAExecutionProvider` if `RAE_USE_GPU=True`.
-- **Docker Integration**: Update `docker-compose.yml` to include `deploy.resources.reservations.devices` for NVIDIA GPU access.
+### Faza 2: Fundament Komunikacyjny (The Bridge)
+- [ ] Zbudować centralny `ApiClient.ts` (na bazie Axios).
+- [ ] Zaimplementować globalną obsługę błędów, CORS oraz wstrzykiwanie nowego uniwersalnego paszportu JWT do nagłówków.
+- [ ] Odtworzyć i przetestować endpointy logowania (`AuthService`).
 
-### 2. External Embedding & Reranking (API/MCP)
-- **Backend Expansion**: Extend `RAE_EMBEDDING_BACKEND` to support `api` (OpenAI/LiteLLM compatible) and `mcp` (Model Context Protocol tool calls).
-- **Reranking Plugability**: Refactor `HybridSearchEngine` to allow `external_reranker` via MCP tools or remote API endpoints.
-- **Protocol Discovery**: Implement automatic tool discovery for MCP-based embedding providers.
+### Faza 3: Drzewo Treści (Katalog i Statyka)
+- [ ] Odtworzyć logikę struktury: *Kategoria -> Podkategoria -> Grupa -> Produkt* z użyciem Server Components (SEO-friendly).
+- [ ] Zaimplementować `DpCategoryService` z wykorzystaniem React Query do cachowania.
+- [ ] Przenieść logikę stron statycznych i bloga (`StaticContentService`, `NewsService`).
 
-### 3. Configuration Externalization
-- **Engine Parameters**: Move `limit=100` (candidate window), `resonance_threshold`, and `szubar_induction_energy` from `engine.py` to `config/math_controller.yaml`.
-- **Environment Toggles**: Add `.env` flags for:
-    - `RAE_USE_GPU`: (bool) Enable/disable CUDA.
-    - `RAE_RERANKER_BACKEND`: (`local`, `api`, `mcp`).
-    - `RAE_MCP_EMBEDDING_TOOL`: Tool name for MCP embeddings.
+### Faza 4: Złote Serce (Silnik Kalkulacyjny i Konfigurator)
+- [ ] Odtworzyć UI konfiguratora produktu (wymiary, nakłady, papiery) i zarządzać jego stanem lokalnie (lub przez `Zustand`).
+- [ ] Zbudować komunikację z API PHP dla wyliczeń cenowych ("Backend for Frontend").
+- [ ] Połączyć konfigurator z globalnym koszykiem (`cartStore.ts`).
 
----
+### Faza 5: Koszyk i Przepływ Zamówienia (Checkout)
+- [ ] Zaimplementować `CartService` i `DeliveryService` w nowej architekturze.
+- [ ] Zbudować przepływ Checkout: formularze adresowe, wybór kuriera, wybór płatności.
+- [ ] Zintegrować walidację zamówienia z API.
 
-## 🚀 Initialization Commands
-`python3 scripts/bootstrap_session.py`
-`docker compose --profile dev up -d`
+### Faza 6: Panel Klienta (Client Zone)
+- [ ] Odtworzyć widoki historii zamówień, faktur i reklamacji dla zalogowanego użytkownika.
+- [ ] Zintegrować logowanie Social (Google, Apple) z uniwersalnym JWT.
 
----
-
-## 📝 Memory Snapshot (RAE-RM)
-- Current State: **System 3.4 (Silicon Oracle)** stable at 100k mems (MRR 0.85).
-- Constraint: Maintain **Zero Warning Policy** and **RAE-First** communication.
-- Focus: Transition from "Local-Only" to **"Hardware-Optimized & Mesh-Connected"**.
+## 📍 Infrastruktura
+- **Środowisko:** Node 1 (`100.68.166.117`)
+- **Katalog Główny:** `~/dreamsoft_factory/next-frontend`
+- **Asystent Kognitywny:** Graf Wiedzy RAE (tenant: `DREAMSOFT-FRONTEND-ASSEMBLY`) działający w głównej bazie `rae-postgres` na Node 1.

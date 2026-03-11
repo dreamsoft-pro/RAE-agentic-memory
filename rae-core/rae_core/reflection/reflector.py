@@ -9,27 +9,71 @@ from uuid import UUID
 
 from rae_core.interfaces.llm import ILLMProvider
 from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.reflection.layers import ReflectionCoordinator
 
 
 class Reflector:
     """Reflector component that generates meta-cognitive insights.
 
     Implements the "Reflect" phase of the Actor-Evaluator-Reflector pattern.
+    Now enriched with 3-Layer QFT-inspired Structural Reflection.
     """
 
     def __init__(
         self,
         memory_storage: IMemoryStorage,
         llm_provider: ILLMProvider | None = None,
+        reflection_mode: str = "standard",
     ):
         """Initialize Reflector.
 
         Args:
             memory_storage: Memory storage for retrieval
             llm_provider: Optional LLM for intelligent reflection
+            reflection_mode: "minimal", "standard" or "advanced"
         """
         self.memory_storage = memory_storage
         self.llm_provider = llm_provider
+        self.coordinator = ReflectionCoordinator(
+            mode=reflection_mode, 
+            enforce_hard_frames=True,
+            storage=memory_storage
+        )
+
+    async def evaluate_answer_draft(
+        self,
+        query_id: str,
+        retrieved_sources: list[Any],
+        answer_draft: str,
+        tenant_id: str,
+        agent_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Evaluates an answer draft using the 3-Layer Reflection Architecture.
+
+        Args:
+            query_id: Identifier of the query.
+            retrieved_sources: Sources fetched to construct the answer.
+            answer_draft: The LLM generated response to be audited.
+            tenant_id: Tenant identifier for storage.
+            agent_id: Optional agent identifier.
+            metadata: Contextual data.
+
+        Returns:
+            Dict containing L1, L2, L3 analysis and final decision (block/pass).
+        """
+        payload = {
+            "query_id": query_id,
+            "retrieved_sources": retrieved_sources,
+            "answer_draft": answer_draft,
+            "metadata": metadata or {}
+        }
+        
+        return await self.coordinator.run_and_store_reflections(
+            payload=payload,
+            tenant_id=tenant_id,
+            agent_id=agent_id
+        )
 
     async def generate_reflection(
         self,

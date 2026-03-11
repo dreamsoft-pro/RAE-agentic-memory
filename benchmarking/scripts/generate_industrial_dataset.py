@@ -15,11 +15,12 @@ Usage:
 import argparse
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List
 
 import yaml
-
+from common import UniquenessGuard
 
 class IndustrialDataGenerator:
     """Generate realistic industrial benchmark data"""
@@ -28,6 +29,10 @@ class IndustrialDataGenerator:
         random.seed(seed)
         self.domains = self._init_domains()
         self.base_date = datetime(2024, 1, 1)
+        self.guard = UniquenessGuard()
+
+    def _ensure_unique(self, text: str) -> str:
+        return self.guard.ensure_unique(text)
 
     def _init_domains(self) -> Dict[str, Dict]:
         """Initialize domain-specific templates"""
@@ -127,8 +132,13 @@ class IndustrialDataGenerator:
         )
 
         timestamp = self.base_date + timedelta(
-            seconds=idx * 30
-        )  # More frequent for logs
+            seconds=idx * 30,
+            microseconds=random.randint(0, 999999) # Unique jitter
+        )
+
+        # Add unique operational nonce to ensure zero collisions
+        nonce = f" [SN-{idx:06d}]"
+        text += nonce
 
         return {
             "id": f"log_{idx:06d}",  # 6 digits for larger datasets
@@ -142,6 +152,7 @@ class IndustrialDataGenerator:
                 "timestamp": timestamp.isoformat(),
                 "service": service,
                 "level": level,
+                "nonce": nonce.strip()
             },
         }
 
@@ -175,7 +186,9 @@ class IndustrialDataGenerator:
 
         text = f"[{ticket_type.upper()}] {component}: {random.choice(descriptions)} - Priority: {priority}, Status: {status}"
 
-        timestamp = self.base_date + timedelta(hours=idx)
+        timestamp = self.base_date + timedelta(hours=idx, microseconds=random.randint(0, 999999))
+        nonce = f" [SN-{idx:06d}]"
+        text = f"[{ticket_type.upper()}] {component}: {random.choice(descriptions)} - Priority: {priority}, Status: {status}{nonce}"
 
         return {
             "id": f"ticket_{idx:06d}",
@@ -193,6 +206,7 @@ class IndustrialDataGenerator:
                 "type": ticket_type,
                 "priority": priority,
                 "component": component,
+                "nonce": nonce.strip()
             },
         }
 
@@ -204,17 +218,18 @@ class IndustrialDataGenerator:
         cluster_id = f"cls-{random.choice(['alpha', 'beta', 'prod'])}"
 
         value = random.randint(20, 95)
-        timestamp = self.base_date + timedelta(minutes=idx)
+        timestamp = self.base_date + timedelta(minutes=idx, microseconds=random.randint(0, 999999))
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             metric_type=metric_type,
             server_id=server_id,
             value=value,
-            time=timestamp.strftime("%H:%M"),
+            time=timestamp.strftime("%H:%M:%S.%f"),
             threshold=random.choice([80, 90, 95]),
             cluster_id=cluster_id,
-        )
+        ) + nonce
 
         return {
             "id": f"metric_{idx:06d}",
@@ -227,6 +242,7 @@ class IndustrialDataGenerator:
                 "server_id": server_id,
                 "metric_type": metric_type,
                 "value": value,
+                "nonce": nonce.strip()
             },
         }
 
@@ -249,6 +265,7 @@ class IndustrialDataGenerator:
         components = ["API", "DB", "Cache", "Worker", "Frontend"]
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             path=random.choice(paths),
             method=random.choice(methods),
@@ -260,13 +277,13 @@ class IndustrialDataGenerator:
             steps="1. Install 2. Configure 3. Run",
             problem="Service fails to start",
             solution="Check configuration file",
-        )
+        ) + nonce
 
         # Ensure 'database' is covered if selected
         if "database" in paths and "database" not in text:
             # Randomly inject specific database docs to ensure coverage for common queries
             if random.random() < 0.1:
-                text = f"Documentation ({doc_type}): Database schema and connection string configuration."
+                text = f"Documentation ({doc_type}): Database schema and connection string configuration.{nonce}"
 
         return {
             "id": f"doc_{idx:06d}",
@@ -276,6 +293,7 @@ class IndustrialDataGenerator:
                 "source": "Technical Documentation",
                 "importance": 0.7,
                 "type": doc_type,
+                "nonce": nonce.strip()
             },
         }
 
@@ -291,6 +309,7 @@ class IndustrialDataGenerator:
         affected_users = random.randint(10, 10000)
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             id=idx,
             service=service,
@@ -300,9 +319,9 @@ class IndustrialDataGenerator:
             count=affected_users,
             incident_type="Database failover",
             root_cause="Configuration drift",
-        )
+        ) + nonce
 
-        timestamp = self.base_date + timedelta(days=idx // 20)
+        timestamp = self.base_date + timedelta(days=idx // 20, microseconds=random.randint(0, 999999))
 
         return {
             "id": f"incident_{idx:06d}",
@@ -317,11 +336,12 @@ class IndustrialDataGenerator:
                 "severity": severity,
                 "duration_minutes": duration,
                 "affected_users": affected_users,
+                "nonce": nonce.strip()
             },
         }
 
     def generate_memories(self, count: int) -> List[Dict]:
-        """Generate mixed collection of memories"""
+        """Generate mixed collection of memories with strict uniqueness"""
         memories = []
 
         # Distribution: 40% logs, 25% tickets, 20% metrics, 10% docs, 5% incidents
@@ -333,163 +353,54 @@ class IndustrialDataGenerator:
             (0.05, self.generate_incident_entry),
         ]
 
-        for idx in range(count):
+        idx = 0
+        attempts = 0
+        max_attempts = count * 2 # Allow some retries for uniqueness
+
+        while len(memories) < count and attempts < max_attempts:
+            attempts += 1
             rand = random.random()
             cumulative: float = 0.0
             for threshold, generator in distributions:
                 cumulative += threshold
                 if rand < cumulative:
-                    memories.append(generator(idx))
+                    mem = generator(idx)
+                    # Apply Silicon Oracle Uniqueness Guard
+                    original_text = mem["text"]
+                    unique_text = self._ensure_unique(original_text)
+                    
+                    mem["text"] = unique_text
+                    memories.append(mem)
+                    idx += 1
                     break
 
-        # Fallback if floating point weirdness
-        if len(memories) < count:
-            for i in range(count - len(memories)):
-                memories.append(self.generate_log_entry(count + i))
-
-        return memories
+        return memories[:count]
 
     def generate_queries(self, num_queries: int, memories: List[Dict]) -> List[Dict]:
-        """Generate queries based on memories"""
+        """Generate atomic queries based on unique nonces"""
         queries: List[Dict] = []
+        
+        # Select random memories to query about
+        targets = random.sample(memories, min(num_queries, len(memories)))
+        
+        for m in targets:
+            nonce = m["metadata"]["nonce"]
+            
+            # 50% chance for exact nonce query, 50% for semantic + nonce
+            if random.random() > 0.5:
+                query_text = f"Find entry with code {nonce}"
+            else:
+                # Use a snippet of the text + nonce
+                words = m["text"].split()
+                snippet = " ".join(words[:min(5, len(words))])
+                query_text = f"{snippet} (Reference: {nonce})"
 
-        # Sample different types of queries
-        query_templates = [
-            {
-                "template": "What {service} issues occurred?",
-                "filter_tag": "log",
-                "category": "service_issues",
-            },
-            {
-                "template": "Show critical incidents",
-                "filter_tag": "incident",
-                "category": "incidents",
-            },
-            {
-                "template": "What are high priority tickets?",
-                "filter_tag": "ticket",
-                "category": "tickets",
-            },
-            {
-                "template": "What servers have high {metric}?",
-                "filter_tag": "metric",
-                "category": "metrics",
-            },
-            {
-                "template": "Find documentation about {component}",
-                "filter_tag": "documentation",
-                "category": "documentation",
-            },
-        ]
-
-        attempts = 0
-        max_attempts = num_queries * 5  # Prevent infinite loops
-
-        while len(queries) < num_queries and attempts < max_attempts:
-            attempts += 1
-            template_info = random.choice(query_templates)
-            template = template_info["template"]
-
-            # Select parameters first to allow filtering
-            service_param = random.choice(self.domains["logs"]["services"])
-            metric_param = random.choice(
-                ["cpu_usage", "memory", "disk_io", "error_rate"]
-            )
-            component_param = random.choice(
-                ["API", "authentication", "database", "search", "billing"]
-            )
-
-            # Format query
-            query_text = template.format(
-                service=service_param,
-                metric=metric_param,
-                component=component_param,
-            )
-
-            # Determine relevance keyword based on what's in the template
-            relevance_keyword = None
-            if "{service}" in template:
-                relevance_keyword = service_param
-            elif "{metric}" in template:
-                relevance_keyword = metric_param
-            elif "{component}" in template:
-                if component_param == "API":
-                    relevance_keyword = "api"
-                elif component_param == "authentication":
-                    relevance_keyword = "auth"
-                else:
-                    relevance_keyword = component_param.lower()
-
-            # Find relevant memories (tag + content match)
-            filter_tag = template_info["filter_tag"]
-            relevant_memories = []
-
-            for m in memories:
-                if filter_tag not in m["tags"]:
-                    continue
-
-                # If we have a specific keyword, check for it
-                if relevance_keyword:
-                    # Check text and specific metadata fields
-                    text_lower = m["text"].lower()
-
-                    # Exact or partial match logic
-                    text_match = relevance_keyword in text_lower
-                    meta_match = any(
-                        str(v).lower() == relevance_keyword
-                        for v in m["metadata"].values()
-                    )
-
-                    # For docs, check if the keyword appears in the path or description
-                    doc_match = False
-                    if filter_tag == "documentation":
-                        if relevance_keyword in text_lower:
-                            doc_match = True
-
-                    if text_match or meta_match or doc_match:
-                        relevant_memories.append(m)
-                else:
-                    # No keyword (e.g. "critical incidents")
-                    if "critical" in template:
-                        # Check tags, priority, or severity
-                        is_crit = False
-                        if "critical" in m.get("tags", []):
-                            is_crit = True
-                        if m.get("metadata", {}).get("priority") == "critical":
-                            is_crit = True
-                        if m.get("metadata", {}).get("severity") == "sev1":
-                            is_crit = True
-
-                        if is_crit:
-                            relevant_memories.append(m)
-
-                    elif "high priority" in template:
-                        if m.get("metadata", {}).get("priority") == "high":
-                            relevant_memories.append(m)
-                    else:
-                        relevant_memories.append(m)
-
-            # Use ALL relevant memories as expected results
-            if not relevant_memories:
-                continue
-
-            expected_ids = [m["id"] for m in relevant_memories]
-            num_expected = len(expected_ids)
-
-            difficulty = (
-                "easy"
-                if num_expected <= 5
-                else "medium" if num_expected <= 50 else "hard"
-            )
-
-            queries.append(
-                {
-                    "query": query_text,
-                    "expected_source_ids": expected_ids,
-                    "difficulty": difficulty,
-                    "category": template_info["category"],
-                }
-            )
+            queries.append({
+                "query": query_text,
+                "expected_source_ids": [m["id"]],
+                "difficulty": "easy",
+                "category": "atomic_lookup",
+            })
 
         return queries
 

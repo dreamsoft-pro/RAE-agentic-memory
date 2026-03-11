@@ -1,10 +1,12 @@
-"""Tests for Semantic Resonance Engine."""
+"""Tests for Semantic Resonance Engine (System 40.0)."""
 
+from typing import List, Dict, Any, Tuple
 from rae_core.math.resonance import SemanticResonanceEngine
 
 
 def test_semantic_resonance_boost():
-    engine = SemanticResonanceEngine(resonance_factor=0.5)
+    # Silicon Oracle: Resonance factor is derived if not provided
+    engine = SemanticResonanceEngine(h_sys=10.0)
 
     # Initial results: A is a direct match, B is not (low score)
     initial_results = [
@@ -19,14 +21,15 @@ def test_semantic_resonance_boost():
 
     mem_B = next(r for r in resonated if r["id"] == "mem_B")
 
-    # B should have a significantly higher math_score now
+    # B should have a significantly higher math_score now due to energy transfer from A
     assert mem_B["math_score"] > 0.1
     assert "resonance_metadata" in mem_B
-    assert mem_B["resonance_metadata"]["boost"] > 0
+    assert mem_B["resonance_metadata"]["energy"] > 0
 
 
 def test_resonance_waves_multi_hop():
-    engine = SemanticResonanceEngine(resonance_factor=0.5, iterations=2)
+    # Testing iterations (multi-hop)
+    engine = SemanticResonanceEngine(h_sys=10.0, iterations=2)
 
     id_a = "mem_A"
     id_b = "mem_B"
@@ -48,7 +51,7 @@ def test_resonance_waves_multi_hop():
 
 
 def test_resonance_energy_map_includes_neighbors():
-    engine = SemanticResonanceEngine(resonance_factor=0.5, iterations=1)
+    engine = SemanticResonanceEngine(h_sys=10.0)
 
     id_a = "mem_A"
     id_c = "mem_C"  # Not in initial results
@@ -61,3 +64,22 @@ def test_resonance_energy_map_includes_neighbors():
     # Energy map must contain Doc C even if it wasn't in initial results
     assert id_c in energy
     assert energy[id_c] > 0.0
+
+
+def test_silicon_oracle_sharpening_hard_lock():
+    # Proven retrieval (Symbolic Hard-Lock) should result in massive score
+    engine = SemanticResonanceEngine(h_sys=10.0)
+    
+    query = "incident_0042_critical" # Contains symbols and anchors
+    results = [
+        {"id": "mem_1", "score": 0.5, "content": "Some random text about logs"},
+        {"id": "mem_2", "score": 0.6, "content": "incident_0042_critical detected in server"},
+    ]
+    
+    sharpened = engine.sharpen(query, results)
+    
+    # mem_2 should be Tier 0 (Hard-Lock)
+    assert sharpened[0]["id"] == "mem_2"
+    assert sharpened[0]["audit"]["tier"] == 0
+    # Score should be massive (Silicon Oracle Proof)
+    assert sharpened[0]["score"] > 1e10 

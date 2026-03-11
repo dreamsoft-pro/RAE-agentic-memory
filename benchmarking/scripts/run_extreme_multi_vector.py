@@ -10,11 +10,14 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 import asyncpg
 import yaml
 from qdrant_client import AsyncQdrantClient
 from qdrant_client import models as q_models
+
+from rae_core.interfaces.storage import IMemoryStorage
 
 # Paths setup
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -79,11 +82,10 @@ class UltimateSynergyRunner:
         search_engine = HybridSearchEngine(
             strategies={
                 "vector": VectorSearchStrategy(self.vector_store, self.provider),
-                "fulltext": FullTextStrategy(self.storage),
+                "fulltext": FullTextStrategy(cast(IMemoryStorage, self.storage)),
             },
-            math_controller=self.math_ctrl,
             embedding_provider=self.provider,
-            memory_storage=self.storage,
+            memory_storage=cast(IMemoryStorage, self.storage),
         )
 
         self.engine = RAEEngine(

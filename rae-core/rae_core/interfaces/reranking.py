@@ -11,17 +11,17 @@ class IReranker(Protocol):
     async def rerank(
         self,
         query: str,
-        candidates: list[tuple[UUID, float]],
+        candidates: list[tuple[UUID, float, float]],
         tenant_id: str,
         limit: int = 10,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]:
         """
         Re-rank candidate memories.
 
         Args:
             query: The search query.
-            candidates: List of (memory_id, score) tuples.
+            candidates: List of (memory_id, score, importance) tuples.
             tenant_id: Tenant context.
             limit: Number of results to return.
         """

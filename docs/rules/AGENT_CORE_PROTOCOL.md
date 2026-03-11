@@ -3,30 +3,6 @@
 > **SINGLE SOURCE OF TRUTH** for all AI Agents (Gemini, Claude, etc.) working on RAE.
 > **MANDATORY**: Read this before every session.
 
-## 0. CRITICAL MANDATES (RAE-FIRST v2.1) - READ FIRST
-**These rules are NON-NEGOTIABLE. Violation = Session Termination.**
-
-### 🚫 1. Zero Side-Channels (Communication Contract)
-- **RAE is the Only Broker**: You share state ONLY via RAE. Do not "hold" information in this chat.
-- **Action**: Every significant discovery, decision, or state change MUST be saved to RAE immediately (`save_memory`).
-- **Context**: Before acting, query RAE. Do not guess. Do not assume.
-
-### 🐳 2. Container-First (Infrastructure Contract)
-- **No Host Execution**: NEVER run tests/benchmarks on the host if a container exists.
-- **Command**: Use `docker compose exec rae-api pytest ...` instead of local `pytest`.
-- **Reason**: Reproducibility. Your local environment is irrelevant.
-
-### 🧠 3. RAE-SZUBAR MODE (Cognitive Contract)
-- **Think > Generate**: Do not spam code. Plan first.
-- **Failure-First Memory**: Check RAE for past failures before trying a "new" fix.
-- **Pressure Regulation**: If you are confused, STOP. Query RAE. Do not hallucinate.
-
-### 🔒 4. ISO Security (Data Contract)
-- **Classification**: `RESTRICTED` data NEVER leaves the Working Memory layer without encryption.
-- **Reflective Extraction**: Use the Reflective Layer to extract *patterns* from private data, never the raw data itself.
-
----
-
 ## 1. CORE MANDATES
 
 - **Async-First**: **ALWAYS** use asynchronous connections and operations wherever possible to ensure high performance and non-blocking I/O.
@@ -70,7 +46,6 @@ Different branches = Different testing levels.
 ### Phase 1: Feature Branch (`feature/*`)
 - **Goal**: Speed & Focus.
 - **Command**: `pytest --no-cov path/to/new_test.py`
-- **Fast Loop**: Use `make test-fast` to stop on first error, then `make test-fix` to verify only the fixed tests.
 - **Rule**: Test **ONLY** your new code. Do NOT run full suite.
 
 ### Phase 2: Develop Branch (`develop`)
@@ -78,7 +53,6 @@ Different branches = Different testing levels.
 - **Command**: `make lint` and `make test-lite` (or `test-core`)
 - **CRITICAL RULE**: **MANDATORY** before **EVERY** push to `develop`. You **MUST** run both commands locally. 
 - **ENFORCEMENT**: Never push to `develop` if there are any linting errors or test failures. Fix ALL issues locally first.
-- **Fail Fast**: If any test fails, stop immediately and fix the issue before continuing. This applies to all testing workflows.
 
 ### Phase 3: Main/Release
 - **Goal**: Production Guarantee.
@@ -159,33 +133,28 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - **Opportunistic Availability**: External nodes are **NOT** permanent resources. Check status via `ControlPlaneService`.
 - **Graceful Fallback**: If a node is unavailable, fallback to local or cloud providers.
 
-## 11. DEPLOYMENT & CI PROTOCOL (DevOps V2 - Zero Drift)
+## 11. DEPLOYMENT & CI PROTOCOL (DevOps V2)
 
 **Mandatory Workflow for Code Changes**:
 
-1. **Pre-Push Sequence (The "Golden Command")**:
-   - Run: `make pre-push`
-   - **What this does**:
-     1. Formats code (Black/Isort/Ruff).
-     2. **Generates Documentation & Metrics** (Crucial! Prevents CI from creating "fix" commits that drift history).
-     3. Lints strictly.
-     4. Runs Unit Tests.
-   - **If Failed**: Fix issues and repeat.
+1. **Pre-Commit Check**:
+   - `make lint` (Ensure 0 warnings)
+   - `make test-lite` (Or `make test-core` for core changes)
+   - Do NOT push if red.
 
-2. **Commit Generated Artifacts**:
-   - `make pre-push` will likely modify files like `CHANGELOG.md` or `docs/metrics/`.
-   - **MANDATORY**: Add these changes to your commit (or create a new one: `chore: update docs`).
-   - *Example*: `git add . && git commit --amend --no-edit` (if amending) or `git commit -m "chore: auto-update docs"`.
+2. **Push**:
+   - Push to `develop` (or feature branch).
 
-3. **Push**:
-   - `git push origin develop` (or feature branch).
-   - Because you already generated the docs, the CI "Auto-Update" job will see 0 changes and skip its commit. **History stays clean.**
-
-4. **Post-Commit Verification**:
+3. **Post-Commit Verification**:
    - Run: `gh run list --branch develop --limit 1`
    - **Requirement**: Monitor status until `success`.
+   - **If Failed**:
+     - Run: `gh run view <run_id> --log-failed`
+     - Analyze logs.
+     - Fix locally -> Pre-Commit -> Push again.
+     - **REPEAT UNTIL GREEN**.
 
-5. **Sandbox Strategy**:
+4. **Sandbox Strategy**:
    - **Dev**: Port 8000 (`docker-compose.yml` + `dev.yml`). Hot Reload.
    - **Lite Sandbox**: Port 8010 (`docker-compose.test-sandbox.yml`). Integration Tests.
    - **Full Sandbox**: Port 8020 (`docker-compose.sandbox-full.yml`). Full Stack verification.
@@ -197,39 +166,3 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - Benchmarks verified against baseline.
 - PR ready for review.
 - CI Workflow Green.
-
-## 13. SECURITY & COMPLIANCE PROTOCOL (ISO 42001/27001)
-
-- **Mandatory Compliance Checks**:
-  - Every new feature MUST pass `make test-compliance`.
-  - Every security-related change MUST pass `make security-check`.
-  - Do NOT merge code with High/Medium security vulnerabilities (unless explicitly approved and documented with `# nosec`).
-
-- **Feature Requirements**:
-  - **Human Approval**: Any high-risk operation MUST implement `HumanApprovalService`.
-  - **Audit Logs**: Critical state changes MUST be logged via `AuditService`.
-  - **Data Isolation**: New tables MUST include `tenant_id` and have RLS policies.
-
-- Zero Errors / Zero Drift:
-  - Maintain 0 failures in test-compliance.
-  - Do not introduce regressions in ISO 42001 coverage (currently 100% for key services).
-
-## 14. ANTI-LOOPING & STABILITY PROTOCOL
-
-### 14.1 Agent (CLI) Self-Correction Rule
-- **The "Rule of Three"**: If a specific command or operation fails **3 times** in a row with the same error, the Agent **MUST** stop the loop.
-- **Action on Failure**:
-    1. Stop the current retry chain.
-    2. Read the underlying source code or configuration files related to the error.
-    3. Perform a root-cause analysis (RCA).
-    4. Propose a code-based fix instead of a configuration-based retry.
-- **No Infinite Retries**: Blindly repeating `docker restart` or `curl` commands without changing the state is forbidden.
-
-### 14.2 System (RAE Self-Improvement) Stability Rule
-- **Weight Guardrails**: Any automated tuning of mathematical weights (e.g., alpha, beta, gamma) MUST adhere to:
-    - **Sum Constraint**: Weights must always sum to **1.0**.
-    - **Boundary Limits**: Each weight must be within range `[0.05, 0.85]` to prevent complete loss of a signal (e.g., ignoring recency entirely).
-- **Update Frequency**: Automated updates to tenant configuration MUST be throttled (max once per 10 feedback events or a fixed time interval).
-- **Oscillation Detection**: If a weight change is reversed by the next tuning cycle (A -> B -> A), the system MUST halt automated tuning for that tenant and request HITL (Human-in-the-loop) review.
-- **Baseline Fallback**: Always maintain a "Golden Baseline" configuration. If performance (MRR/HitRate) drops by >15% after tuning, revert to baseline immediately.
-

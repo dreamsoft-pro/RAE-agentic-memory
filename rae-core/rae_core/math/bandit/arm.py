@@ -22,6 +22,7 @@ class Arm:
         level: Math level (L1, L2, or L3)
         strategy: Strategy within that level
         arm_id: Unique identifier (auto-generated)
+        config: Dictionary storing arm-specific parameters (weights, resonance, etc.)
 
         # Global statistics (all contexts)
         pulls: Total number of times this arm was selected
@@ -43,6 +44,7 @@ class Arm:
     level: MathLevel
     strategy: str
     arm_id: str = field(default="")
+    config: dict = field(default_factory=dict)
 
     # Global statistics
     pulls: int = 0
@@ -180,6 +182,7 @@ class Arm:
             "arm_id": self.arm_id,
             "level": self.level.value,
             "strategy": self.strategy,
+            "config": self.config,
             "pulls": self.pulls,
             "total_reward": self.total_reward,
             "mean_reward": self.mean_reward(),
@@ -201,6 +204,7 @@ class Arm:
             level=level,
             strategy=data["strategy"],
             arm_id=data.get("arm_id", ""),
+            config=data.get("config", {}),
             pulls=data.get("pulls", 0),
             total_reward=data.get("total_reward", 0.0),
             context_pulls=data.get("context_pulls", {}),

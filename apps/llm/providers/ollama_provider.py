@@ -83,8 +83,13 @@ class OllamaProvider:
         try:
             system, prompt = self._convert_messages(request)
 
+            # Clean model name (strip litellm-style prefixes)
+            model_name = request.model
+            if model_name.startswith("ollama/"):
+                model_name = model_name.replace("ollama/", "", 1)
+
             payload: Dict[str, Any] = {
-                "model": request.model,
+                "model": model_name,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
@@ -158,8 +163,13 @@ class OllamaProvider:
         try:
             system, prompt = self._convert_messages(request)
 
+            # Clean model name (strip litellm-style prefixes)
+            model_name = request.model
+            if model_name.startswith("ollama/"):
+                model_name = model_name.replace("ollama/", "", 1)
+
             payload: Dict[str, Any] = {
-                "model": request.model,
+                "model": model_name,
                 "prompt": prompt,
                 "stream": True,
                 "options": {
