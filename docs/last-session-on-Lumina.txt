@@ -86,7 +86,7 @@
 ✦ Weryfikuję ponownie status llm_provider.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzen… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzen… │
 │                                                                                                                                                                                      │
 │ {"status":"healthy","version":"2.9.0","services":{"postgres":{"status":"UP"},"redis":{"status":"UP"},"qdrant":{"status":"UP","collections_count":0},"llm_provider":null}}            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -108,7 +108,7 @@
   Ollamy na hoście, aby nasłuchiwała na wszystkich interfejsach (0.0.0.0).
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "systemctl status ollama" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie statusu se… │
+│ ✓  Shell ssh operator@100.68.166.117 "systemctl status ollama" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie statusu se… │
 │                                                                                                                                                                                      │
 │ ● ollama.service - Ollama Service                                                                                                                                                    │
 │      Loaded: loaded (/usr/lib/systemd/system/ollama.service; enabled; preset: disabled)                                                                                              │
@@ -191,7 +191,7 @@
 │       - ollama_data:/root/.ollama                                                                                                                                                    │
 │     restart: unless-stopped                                                                                                                                                          │
 │     networks:                                                                                                                                                                        │
-│       - rae-network) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docker-compose.yml. No edits made. The exact text in old_string was not found. Ensure       │
+│       - rae-network) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docker-compose.yml. No edits made. The exact text in old_string was not found. Ensure       │
 │ you're not escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                                                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Próbowałem podmienić zbyt duży blok tekstu naraz. Zrobię to w mniejszych krokach.
@@ -454,7 +454,7 @@
 ✦ Modele są gotowe. Ponownie sprawdzam status zdrowia.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Ponowne s… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Ponowne s… │
 │                                                                                                                                                                                      │
 │ {"status":"healthy","version":"2.9.0","services":{"postgres":{"status":"UP"},"redis":{"status":"UP"},"qdrant":{"status":"UP","collections_count":0},"llm_provider":null}}            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -462,7 +462,7 @@
   rae-api-dev.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev env | grep RAE_LLM" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Spr… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev env | grep RAE_LLM" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Spr… │
 │                                                                                                                                                                                      │
 │ RAE_LLM_MODEL_DEFAULT=local_deepseek_coder                                                                                                                                           │
 │ RAE_LLM_BACKEND=ollama                                                                                                                                                               │
@@ -470,14 +470,14 @@
 ✦ Konfiguracja wygląda poprawnie. Być może muszę zrestartować rae-api-dev teraz, gdy Ollama jest już gotowa i posiada odpowiednie modele.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker restart rae-api-dev" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Restart kontenera r… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker restart rae-api-dev" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Restart kontenera r… │
 │                                                                                                                                                                                      │
 │ rae-api-dev                                                                                                                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Czekam chwilę i sprawdzam status zdrowia ponownie.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "sleep 5 && curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core]… │
+│ ✓  Shell ssh operator@100.68.166.117 "sleep 5 && curl -s http://localhost:8001/health" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory]… │
 │                                                                                                                                                                                      │
 │ {"status":"healthy","version":"2.9.0","services":{"postgres":{"status":"UP"},"redis":{"status":"UP"},"qdrant":{"status":"UP","collections_count":0},"llm_provider":null}}            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -560,7 +560,7 @@
   RAE_DB_MODE=migrate, coś poszło nie tak. Muszę ręcznie wymusić aktualizację schematu bazy danych.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev alembic upgrade head" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (U… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev alembic upgrade head" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (U… │
 │                                                                                                                                                                                      │
 │ %(levelname)-5.5s [%(name)s] %(message)s                                                                                                                                             │
 │ %(levelname)-5.5s [%(name)s] %(message)s                                                                                                                                             │
@@ -678,7 +678,7 @@
   zgłasza błąd z powodu istniejącej kolumny embedding, baza jest co najmniej na tym poziomie. Sprawdzę listę wszystkich dostępnych migracji, aby wybrać właściwy punkt startowy.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev alembic history" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawd… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev alembic history" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawd… │
 │                                                                                                                                                                                      │
 │ 20260105_phase6 -> 20260117_sbb2 (head), Phase 2: Smart Black Box extension                                                                                                          │
 │ 20260105_phase5 -> 20260105_phase6, Phase 6: Cleanup dead columns                                                                                                                    │
@@ -805,7 +805,7 @@
   uwzględniony.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell cat apps/memory_api/requirements.txt apps/memory_api/requirements-base.txt [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (S… │
+│ ✓  Shell cat apps/memory_api/requirements.txt apps/memory_api/requirements-base.txt [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (S… │
 │                                                                                                                                                                                      │
 │ # RAE Memory API - Main Requirements File                                                                                                                                            │
 │ #                                                                                                                                                                                    │
@@ -939,7 +939,7 @@
   Screenwatcher na porcie 8502.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s -I http://localhost:8502" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie d… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s -I http://localhost:8502" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie d… │
 │                                                                                                                                                                                      │
 │ HTTP/1.1 200 OK                                                                                                                                                                      │
 │ Server: TornadoServer/6.5.4                                                                                                                                                          │
@@ -1385,14 +1385,14 @@
   Sprawdzę teraz lokalnie całkowitą liczbę testów, aby wiedzieć dokładnie, co musimy jeszcze zweryfikować na Node1.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell pytest --collect-only | grep "collected" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Zliczenie wszystkich dostępnych tes… │
+│ ✓  Shell pytest --collect-only | grep "collected" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Zliczenie wszystkich dostępnych tes… │
 │                                                                                                                                                                                      │
 │ bash: line 1: pytest: command not found                                                                                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Użyję ścieżki z wirtualnego środowiska.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell .venv/bin/python -m pytest --collect-only | grep "collected" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Zliczenie testó… │
+│ ✓  Shell .venv/bin/python -m pytest --collect-only | grep "collected" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Zliczenie testó… │
 │                                                                                                                                                                                      │
 │ collecting ... collected 1275 items / 6 skipped                                                                                                                                      │
 │ ======================== 1275 tests collected in 27.51s ========================                                                                                                     │
@@ -1405,7 +1405,7 @@
   Uruchamiam teraz pełną suitę na Node1, aby upewnić się, że całe 1275 testów przechodzi pomyślnie.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev python -m pytest ." [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Uru… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev python -m pytest ." [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Uru… │
 │                                                                                                                                                                                      │
 │ ... first 119 lines hidden ...                                                                                                                                                       │
 │   /app/apps/memory_api/tests/core/test_state.py:302: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for │
@@ -1848,7 +1848,7 @@
 ✦ Muszę sprawdzić poprawną ścieżkę do zestawów benchmarków wewnątrz kontenera.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev ls -R benchmarking/sets" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core]… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev ls -R benchmarking/sets" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory]… │
 │                                                                                                                                                                                      │
 │ benchmarking/sets:                                                                                                                                                                   │
 │ academic_extended.yaml                                                                                                                                                               │
@@ -2323,7 +2323,7 @@
   Najpierw sprawdzę zawartość katalogu benchmarking/, aby zlokalizować testy z serii "nine-five".
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ls -F benchmarking/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Szukanie benchmarków specjalistycznych w katalogu benchm… │
+│ ✓  Shell ls -F benchmarking/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Szukanie benchmarków specjalistycznych w katalogu benchm… │
 │                                                                                                                                                                                      │
 │ BENCHMARK_REPORT_TEMPLATE.md  IMPLEMENTATION_SUMMARY.md  nine_five_benchmarks/  README_2HOUR_SESSION.md      run_30min_session.sh*  telemetry.py                                     │
 │ BENCHMARK_SESSION_PLAN.md     IMPROVEMENT_PLAN.md        performance/           README.md                    run_full_session.sh*   test_all_benchmarks.sh*                          │
@@ -2333,7 +2333,7 @@
 ✦ Widzę katalog nine_five_benchmarks/. Sprawdzę jego zawartość oraz katalog scripts/, aby dowiedzieć się, jak je uruchomić.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ls -F benchmarking/nine_five_benchmarks/ benchmarking/scripts/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie z… │
+│ ✓  Shell ls -F benchmarking/nine_five_benchmarks/ benchmarking/scripts/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie z… │
 │                                                                                                                                                                                      │
 │ benchmarking/nine_five_benchmarks/:                                                                                                                                                  │
 │ grdt_benchmark.py  __init__.py  lect_benchmark.py  mmit_benchmark.py  mpeb_benchmark.py  orb_benchmark.py  __pycache__/  README.md  rst_benchmark.py  runner.py                      │
@@ -2357,7 +2357,7 @@
   Sprawdzę, czy w benchmarking/ jest skrypt, który uruchamia całą "dziewiątkę".
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell cat benchmarking/README.md | grep "nine" -A 10 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Szukanie instrukcji uruchamia… │
+│ ✓  Shell cat benchmarking/README.md | grep "nine" -A 10 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Szukanie instrukcji uruchamia… │
 │                                                                                                                                                                                      │
 │ | **[LECT](./nine_five_benchmarks/README.md#1-lect---long-term-episodic-consistency-test)** | Long-term Episodic Consistency | ~5min | `consistency_score` | Temporal Testing |      │
 │ Verifies if events stored at different times remain logically consistent. |                                                                                                          │
@@ -3078,7 +3078,7 @@
   Sprawdzę teraz status repozytorium, aby upewnić się, czy nie ma żadnych plików tymczasowych lub poprawek, które pominąłem.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git status && git diff HEAD [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie statusu git i ewentualnych niezatwie… │
+│ ✓  Shell git status && git diff HEAD [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie statusu git i ewentualnych niezatwie… │
 │                                                                                                                                                                                      │
 │ On branch develop                                                                                                                                                                    │
 │ Your branch is ahead of 'origin/develop' by 2 commits.                                                                                                                               │
@@ -3139,7 +3139,7 @@
   specyfikacji.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell grep -r "Phase 4" docs/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Szukanie specyfikacji Fazy 4 w dokumentacji.)         │
+│ ✓  Shell grep -r "Phase 4" docs/ [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Szukanie specyfikacji Fazy 4 w dokumentacji.)         │
 │                                                                                                                                                                                      │
 │ docs/RAE_PHASE1_COMPLETION_PLAN.md:### Phase 4: Browser Extension (Weeks 11-12, Optional)                                                                                            │
 │ docs/ORCHESTRATOR_REFACTOR_PLAN.md:### Phase 4: Configuration System                                                                                                                 │
@@ -3236,7 +3236,7 @@
   Najpierw sprawdzę strukturę tabeli tenants, aby zobaczyć, czy mamy gdzie zapisać te wagi.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "psql -U rae_user -d rae_memory -c '\d tenants'" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] … │
+│ ✓  Shell ssh operator@100.68.166.117 "psql -U rae_user -d rae_memory -c '\d tenants'" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] … │
 │                                                                                                                                                                                      │
 │ bash: line 1: psql: command not found                                                                                                                                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -3250,7 +3250,7 @@
 ✦ Sprawdzę nazwy kontenerów na Node1.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker ps" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Lista kontenerów na Node1.)           │
+│ ✓  Shell ssh operator@100.68.166.117 "docker ps" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Lista kontenerów na Node1.)           │
 │                                                                                                                                                                                      │
 │ CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS                    PORTS                                                             │
 │ NAMES                                                                                                                                                                                │
@@ -3296,7 +3296,7 @@
 ✦ Sprawdzę plik .env na Node1, aby poznać poprawne dane do bazy.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "cat ~/rae-node-agent/.env | grep POSTGRES" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Pobr… │
+│ ✓  Shell ssh operator@100.68.166.117 "cat ~/rae-node-agent/.env | grep POSTGRES" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Pobr… │
 │                                                                                                                                                                                      │
 │ POSTGRES_HOST=postgres                                                                                                                                                               │
 │ POSTGRES_DB=rae                                                                                                                                                                      │
@@ -3365,14 +3365,14 @@
   Zacznę od utworzenia nowej migracji dla tabeli feedbacku. Dzięki temu będziemy mieli dane do nauki.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell python3 -m alembic revision -m "create_memory_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Tworzenie nowe… │
+│ ✓  Shell python3 -m alembic revision -m "create_memory_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Tworzenie nowe… │
 │                                                                                                                                                                                      │
 │ /usr/bin/python3: No module named alembic.__main__; 'alembic' is a package and cannot be directly executed                                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Użyję alembic bezpośrednio.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ -  Shell alembic revision -m "create_memory_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Tworzenie nowej migracji … │
+│ -  Shell alembic revision -m "create_memory_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Tworzenie nowej migracji … │
 │                                                                                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
@@ -3388,7 +3388,7 @@
   Sprawdzam status lokalnego serwera RAE.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell curl -s http://localhost:8001/health [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Weryfikacja dostępności lokalnego serwi… │
+│ ✓  Shell curl -s http://localhost:8001/health [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Weryfikacja dostępności lokalnego serwi… │
 │                                                                                                                                                                                      │
 │ {"status":"healthy","version":"2.9.0","services":{"postgres":{"status":"UP"},"redis":{"status":"UP"},"qdrant":{"status":"UP","collections_count":1},"llm_provider":null}}            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -3454,14 +3454,14 @@
   Ale najpierw, zgodnie z Twoją sugestią o łatwości – użyję `bootstrap_session.py`, aby zobaczyć, czy on sam podpowie mi coś więcej o "Self-improvement".
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell python scripts/bootstrap_session.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Uruchomienie skryptu bootstrapowego sesj… │
+│ ✓  Shell python scripts/bootstrap_session.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Uruchomienie skryptu bootstrapowego sesj… │
 │                                                                                                                                                                                      │
 │ bash: line 1: python: command not found                                                                                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Muszę użyć python3 lub pełnej ścieżki do venv.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ./.venv/bin/python scripts/bootstrap_session.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Uruchomienie skryptu bootstr… │
+│ ✓  Shell ./.venv/bin/python scripts/bootstrap_session.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Uruchomienie skryptu bootstr… │
 │                                                                                                                                                                                      │
 │ 🔌 RAE-First Session Bootstrap Initiated...                                                                                                                                          │
 │ {                                                                                                                                                                                    │
@@ -3530,9 +3530,9 @@
   Najpierw utworzę nową migrację dla tabeli feedbacku.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ./.venv/bin/alembic revision -m "phase4_create_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Utworzenie mi… │
+│ ✓  Shell ./.venv/bin/alembic revision -m "phase4_create_feedback_table" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Utworzenie mi… │
 │                                                                                                                                                                                      │
-│   Generating /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/alembic/versions/a8e446ca7f97_phase4_create_feedback_table.py ...  done                                │
+│   Generating /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/alembic/versions/a8e446ca7f97_phase4_create_feedback_table.py ...  done                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Uzupełniam migrację o definicję tabeli memory_feedback. Będzie ona przechowywać query, memory_id, score oraz aktualne wagi (abyśmy wiedzieli, na jakich ustawieniach feedback został
   dany).
@@ -4214,7 +4214,7 @@
 ✦ Nadal ignored_or_failed. Muszę sprawdzić logi na Node1, aby zobaczyć dokładny błąd w rae-api-dev.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie … │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie … │
 │                                                                                                                                                                                      │
 │ {"event": "API key not found for deepseek (env: DEEPSEEK_API_KEY)"}                                                                                                                  │
 │ {"event": "API key not found for qwen (env: QWEN_API_KEY)"}                                                                                                                          │
@@ -4274,7 +4274,7 @@
 ✦ Nadal ignored_or_failed. Sprawdzę logi jeszcze raz.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Ponowne spra… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Ponowne spra… │
 │                                                                                                                                                                                      │
 │ {"event": "API key not found for deepseek (env: DEEPSEEK_API_KEY)"}                                                                                                                  │
 │ {"event": "API key not found for qwen (env: QWEN_API_KEY)"}                                                                                                                          │
@@ -4337,7 +4337,7 @@
 ✦ Nadal ten sam błąd. Sprawdzę logi jeszcze raz, to nieprawdopodobne.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie … │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie … │
 │                                                                                                                                                                                      │
 │ {"event": "API key not found for deepseek (env: DEEPSEEK_API_KEY)"}                                                                                                                  │
 │ {"event": "API key not found for qwen (env: QWEN_API_KEY)"}                                                                                                                          │
@@ -4441,7 +4441,7 @@
   Jeśli zwraca False, to wpada w except. Sprawdzam logi jeszcze raz, aby zobaczyć feedback_persistence_failed.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Szukanie błę… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Szukanie błę… │
 │                                                                                                                                                                                      │
 │ {"event": "API key not found for deepseek (env: DEEPSEEK_API_KEY)"}                                                                                                                  │
 │ {"event": "API key not found for qwen (env: QWEN_API_KEY)"}                                                                                                                          │
@@ -4619,7 +4619,7 @@
 ✦ Sprawdzę logi po restarcie.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Ostatnie spr… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Ostatnie spr… │
 │                                                                                                                                                                                      │
 │ {"event": "API key not found for gemini (env: GEMINI_API_KEY)"}                                                                                                                      │
 │ {"event": "Initialized provider: ollama"}                                                                                                                                            │
@@ -5023,11 +5023,11 @@
 ✦ Oraz include_router:
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ x  Edit {"instruction":"Include the tuning router in the FastAPI application routes.","file_path":"/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api… │
+│ x  Edit {"instruction":"Include the tuning router in the FastAPI application routes.","file_path":"/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api… │
 │                                                                                                                                                                                      │
 │ Failed to edit, 0 occurrences found for old_string (app.include_router(sync.router, prefix="/v1")                                                                                    │
 │ app.include_router(nodes.router, prefix="/v1")). Original old_string was (app.include_router(sync.router, prefix="/v1")                                                              │
-│ app.include_router(nodes.router, prefix="/v1")) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/main.py. No edits made. The exact text in        │
+│ app.include_router(nodes.router, prefix="/v1")) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/main.py. No edits made. The exact text in        │
 │ old_string was not found. Ensure you're not escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Mój błąd, sprawdzę dokładną treść main.py wokół sekcji routerów.
@@ -5146,7 +5146,7 @@
   Sprawdźmy, jak model zinterpretował dane i jakie nowe wagi zaproponował.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Analiza wyni… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker logs rae-api-dev --tail 20" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Analiza wyni… │
 │                                                                                                                                                                                      │
 │ {"event": "HTTP Request: GET http://qdrant:6333/collections \"HTTP/1.1 200 OK\""}                                                                                                    │
 │ {"event": "overall_health_check_successful", "level": "info", "logger": "apps.memory_api.observability.health_checks", "timestamp": "2026-01-18T00:13:55.146978Z"}                   │
@@ -5209,7 +5209,7 @@
   Sprawdzam status i przygotowuję paczkę zmian.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git status && git add . && git status [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Przygotowanie zmian Fazy 4 do commita.) │
+│ ✓  Shell git status && git add . && git status [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Przygotowanie zmian Fazy 4 do commita.) │
 │                                                                                                                                                                                      │
 │ On branch develop                                                                                                                                                                    │
 │ Your branch is ahead of 'origin/develop' by 4 commits.                                                                                                                               │
@@ -5510,7 +5510,7 @@
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ x  ReadFile {"file_path":"rae_adapters/sqlite.py"}                                                                                                                                   │
 │                                                                                                                                                                                      │
-│ File not found: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae_adapters/sqlite.py                                                                              │
+│ File not found: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae_adapters/sqlite.py                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Sprawdzę listę plików w rae_adapters/.
 
@@ -5700,7 +5700,7 @@
 │             rows = await conn.fetch(sql, tenant_id, uuids)                                                                                                                           │
 │             # Map UUID nodes back to strings for compatibility with the math layer                                                                                                   │
 │             return [(str(row['source_node_id']), str(row['target_node_id']), float(row['weight'])) for row in rows]) in                                                              │
-│ /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae_adapters/postgres.py. No edits made. The exact text in old_string was not found. Ensure you're not escaping     │
+│ /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae_adapters/postgres.py. No edits made. The exact text in old_string was not found. Ensure you're not escaping     │
 │ content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                                                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Aha, zapomniałem, że w PostgreSQLStorage (plik rae_adapters/postgres.py) tej metody jeszcze w ogóle nie ma. Muszę ją po prostu dopisać na końcu klasy.
@@ -5729,7 +5729,7 @@
 │         return results). Original old_string was (        for row in rows:                                                                                                           │
 │             results.append(dict(row))                                                                                                                                                │
 │                                                                                                                                                                                      │
-│         return results) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae_adapters/postgres.py. No edits made. The exact text in old_string was not found.     │
+│         return results) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae_adapters/postgres.py. No edits made. The exact text in old_string was not found.     │
 │ Ensure you're not escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                                                         │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Poddaję się z dopisywaniem do Postgresa przez replace bez widzenia końca pliku. Skupię się na RAE-Lite, co było celem requestu.
@@ -5888,7 +5888,7 @@
 │                                                                                                                                                                                      │
 │ Test session starts (platform: linux, Python 3.12.3, pytest 9.0.2, pytest-sugar 1.1.1)                                                                                               │
 │ benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)     │
-│ rootdir: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae-core                                                                                                   │
+│ rootdir: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae-core                                                                                                   │
 │ configfile: pyproject.toml                                                                                                                                                           │
 │ plugins: html-4.1.1, asyncio-1.3.0, mock-3.15.1, metadata-3.1.1, locust-2.43.1, sugar-1.1.1, json-report-1.5.0, anyio-4.12.1, cov-7.0.0, timeout-2.4.0, benchmark-5.2.3,             │
 │ testmon-2.2.0, picked-0.5.1, xdist-3.8.0                                                                                                                                             │
@@ -5935,7 +5935,7 @@
 │                                                                                                                                                                                      │
 │ Test session starts (platform: linux, Python 3.12.3, pytest 9.0.2, pytest-sugar 1.1.1)                                                                                               │
 │ benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)     │
-│ rootdir: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae-core                                                                                                   │
+│ rootdir: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae-core                                                                                                   │
 │ configfile: pyproject.toml                                                                                                                                                           │
 │ plugins: html-4.1.1, asyncio-1.3.0, mock-3.15.1, metadata-3.1.1, locust-2.43.1, sugar-1.1.1, json-report-1.5.0, anyio-4.12.1, cov-7.0.0, timeout-2.4.0, benchmark-5.2.3,             │
 │ testmon-2.2.0, picked-0.5.1, xdist-3.8.0                                                                                                                                             │
@@ -7193,7 +7193,7 @@
 ✦ Sprawdzę ścieżkę do venv na Node1.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "ls -d ~/rae-node-agent/*/ | grep venv" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Szukanie… │
+│ ✓  Shell ssh operator@100.68.166.117 "ls -d ~/rae-node-agent/*/ | grep venv" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Szukanie… │
 │                                                                                                                                                                                      │
 │ /home/operator/rae-node-agent/venv/                                                                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -7984,7 +7984,7 @@
   Najpierw sprawdzę aktualną konfigurację serwisu embeddingów, aby móc go wyłączyć.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev env | grep LLM" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdz… │
+│ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-api-dev env | grep LLM" [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdz… │
 │                                                                                                                                                                                      │
 │ RAE_LLM_BACKEND=ollama                                                                                                                                                               │
 │ RAE_LLM_MODEL_DEFAULT=local_deepseek_coder                                                                                                                                           │
@@ -8298,7 +8298,7 @@
 ✦ Metoda run w LECTBenchmark prawdopodobnie nie ma argumentów. Sprawdzę bezpośrednio w pliku.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell grep -A 5 "async def run" benchmarking/nine_five_benchmarks/lect_benchmark.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core]… │
+│ ✓  Shell grep -A 5 "async def run" benchmarking/nine_five_benchmarks/lect_benchmark.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory]… │
 │                                                                                                                                                                                      │
 │ Command exited with code: 1                                                                                                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -8422,7 +8422,7 @@
 ✦ Ah, nazwa klasy to pewnie nie NineFiveRunner. Sprawdzę nagłówek klasy w runner.py.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell grep "class " benchmarking/nine_five_benchmarks/runner.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie nazw k… │
+│ ✓  Shell grep "class " benchmarking/nine_five_benchmarks/runner.py [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie nazw k… │
 │                                                                                                                                                                                      │
 │ class NineFiveResults:                                                                                                                                                               │
 │ class NineFiveBenchmarkRunner:                                                                                                                                                       │
@@ -8521,7 +8521,7 @@
 
 > dane są zsynchronizowane? z moim komputerem i czy sa na github?
 
-✦ Tak, wszystkie zmiany są zapisane na Twoim komputerze w katalogu /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core. Każda operacja write_file i replace, którą
+✦ Tak, wszystkie zmiany są zapisane na Twoim komputerze w katalogu /home/grzegorz-lesniowski/cloud/RAE-agentic-memory. Każda operacja write_file i replace, którą
   wykonałem, fizycznie zmodyfikowała pliki na Twoim dysku.
 
   Jeśli chodzi o GitHub:
@@ -8531,7 +8531,7 @@
   Sprawdzę teraz status repozytorium, aby upewnić się, że wszystko jest gotowe.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git status && git log -n 5 --oneline [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie statusu git i ostatnich com… │
+│ ✓  Shell git status && git log -n 5 --oneline [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie statusu git i ostatnich com… │
 │                                                                                                                                                                                      │
 │ On branch develop                                                                                                                                                                    │
 │ Your branch is ahead of 'origin/develop' by 8 commits.                                                                                                                               │
@@ -8593,7 +8593,7 @@
   Zgodnie z moimi zasadami, wykonam git pull --rebase, aby utrzymać czystą historię Twoich dzisiejszych commitów.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git pull --rebase origin develop && git push origin develop [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Pobranie zmian z… │
+│ ✓  Shell git pull --rebase origin develop && git push origin develop [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Pobranie zmian z… │
 │                                                                                                                                                                                      │
 │ remote: Enumerating objects: 30, done.                                                                                                                                               │
 │ remote: Counting objects: 100% (30/30), done.                                                                                                                                        │
@@ -8653,7 +8653,7 @@
   Dodaję zadanie okresowe w apps/memory_api/tasks/background_tasks.py.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ x  Edit {"file_path":"/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/tasks/background_tasks.py","old_string":"@celery_app.task(name=\"tasks.memor… │
+│ x  Edit {"file_path":"/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/tasks/background_tasks.py","old_string":"@celery_app.task(name=\"tasks.memor… │
 │                                                                                                                                                                                      │
 │ Failed to edit, 0 occurrences found for old_string (@celery_app.task(name="tasks.memory_maintenance")                                                                                │
 │ def background_memory_maintenance():                                                                                                                                                 │
@@ -8663,7 +8663,7 @@
 │ def background_memory_maintenance():                                                                                                                                                 │
 │     """Run periodic memory maintenance tasks."""                                                                                                                                     │
 │     # Placeholder for maintenance logic                                                                                                                                              │
-│     return {"status": "completed"}) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/tasks/background_tasks.py. No edits made. The exact text in  │
+│     return {"status": "completed"}) in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/tasks/background_tasks.py. No edits made. The exact text in  │
 │ old_string was not found. Ensure you're not escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Sprawdzę zawartość apps/memory_api/tasks/background_tasks.py.
@@ -9015,7 +9015,7 @@
   Najpierw sprawdzę status aktualnie działających procesów na GitHubie.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell gh run list --branch develop --limit 1 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Sprawdzenie statusu ostatniego workfl… │
+│ ✓  Shell gh run list --branch develop --limit 1 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Sprawdzenie statusu ostatniego workfl… │
 │                                                                                                                                                                                      │
 │ error connecting to api.github.com                                                                                                                                                   │
 │ check your internet connection or https://githubstatus.com                                                                                                                           │
@@ -9029,7 +9029,7 @@
   Spróbuję jeszcze raz sprawdzić, czy mam dostęp do gh po krótkiej przerwie.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell gh run list --branch develop --limit 5 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Ponowna próba połączenia z GitHub API… │
+│ ✓  Shell gh run list --branch develop --limit 5 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Ponowna próba połączenia z GitHub API… │
 │                                                                                                                                                                                      │
 │ STATUS  TITLE                                                                   WORKFLOW  BRANCH   EVENT  ID           ELAPSED  AGE                                                  │
 │ X       feat(automation): implement automated Bayesian tuning and search audi…  CI        develop  push   21103555516  3m33s    about 3 minutes ago                                  │
@@ -9044,7 +9044,7 @@
   Sprawdzam logi tego konkretnego biegu, aby zidentyfikować przyczynę.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell gh run view 21103555516 --log [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Pobranie logów z ostatniego nieudanego workflo… │
+│ ✓  Shell gh run view 21103555516 --log [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Pobranie logów z ostatniego nieudanego workflo… │
 │                                                                                                                                                                                      │
 │ ...ge      2026-01-18T00:59:22.5947968Z             "id": 1088095844,                                                                                                                │
 │ Docker Build    Build Docker image      2026-01-18T00:59:22.5948175Z             "is_template": false,                                                                               │

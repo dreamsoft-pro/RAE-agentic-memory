@@ -112,21 +112,7 @@ services:
       rae-api-dev:
         condition: service_healthy
 
-  rae-oracle-ui:
-    image: rae-oracle:latest
-    container_name: rae-oracle-ui
-    restart: unless-stopped
-    ports:
-      - "8506:8080"
-    volumes:
-      - ./rae-lite/rae_lite/ui/app.py:/app/main.py
-    environment:
-      - RAE_API_URL=http://rae-api-dev:8000
-    networks:
-      - rae-internal
-    depends_on:
-      rae-api-dev:
-        condition: service_healthy
+# rae-oracle-ui disabled (image missing)
 
 networks:
   rae-internal:

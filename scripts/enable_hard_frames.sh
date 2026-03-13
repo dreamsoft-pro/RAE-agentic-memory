@@ -13,7 +13,7 @@ else
 fi
 
 # 2. Restart API with new security context
-docker compose -p rae-agentic-memory-agnostic-core up -d rae-api-dev
+docker compose -p rae-agentic-memory up -d rae-api-dev
 
 # 3. Verify via Status API
 echo "--- Verification ---"

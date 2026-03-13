@@ -11,7 +11,7 @@ def bootstrap():
     print('📍 Factory Version: v2.2 (Orchestrated by RAE-Feniks)')
     print('📍 Observability: OpenTelemetry + Jaeger (OFFLINE)')
     print('📍 Security Mode: HARD FRAMES Active')
-    print('📍 Output Dir (TS): /mnt/extra_storage/RAE-agentic-memory-agnostic-core/apps/memory_api/services/')
+    print('📍 Output Dir (TS): /mnt/extra_storage/RAE-agentic-memory/apps/memory_api/services/')
     print('📍 Final Session Progress: 1424 files fully modernized')
     print('----------------------------------------\n')
 
