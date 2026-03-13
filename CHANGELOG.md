@@ -37,3 +37,30 @@
 ### 📚 Documentation
 - **zenodo**: update metadata for v3.6.0 and add CITATION.cff
 - add cluster sync scripts and update agent documentation
+
+## [2026-02-20] - Industrial Analytics Attempt 1 (Heuristic)
+### Challenges:
+- Model hallucinations regarding machine counts.
+- Brittle hardcoded filters.
+### Pivot:
+- Implementing Agentic Text-to-SQL for dynamic data exploration.
+
+## [2026-03-02] - Industrial Analytics Attempt 2 (Text-to-SQL & Sanity Check)
+### Accomplished:
+- Implemented **Agentic Text-to-SQL**: Model now generates dynamic parameters (date, machine) instead of relying on brittle heuristic filters.
+- **SQL Sanity Guard**: Added hard capping in SQL (value < 450 m2/h) to physically block OCR hallucinations.
+- **Improved Grounding**: Enforced 2026 as the default year to prevent '2021' hallucinations.
+### Challenges Identified:
+- **Calculation Drift**: Simple SQL averages mismatch Grafana metrics because they ignore process 'nuances' (downtime vs work time, hash-based status).
+- **Tooling Mismatch**: RAE needs the exact 'WITH RealtimeStatus' logic from Grafana to provide consistent business answers.
+### Next Step:
+- Synchronize  with Grafana's CTE-based SQL logic (Common Table Expressions) for Net Performance and Downtime calculation.
+
+## [2026-03-02] - Model Selector and UI Overhaul
+### Features Added:
+- **Model Selector**: Added a dropdown in the Oracle UI to switch between models (Qwen 2.5 3B, Llama 3 8B, etc.).
+- **API Model Support**: The `/procedural/query` endpoint now accepts a `model` parameter to route requests to specific LLM backends.
+- **UI Refresh**: Modernized the Oracle UI with better layout, iconography, and OEE-specific labels.
+### Technical Improvements:
+- Stabilized volume mapping for UI code persistence.
+- Implemented robust error handling for model switching on CPU (increased timeouts).

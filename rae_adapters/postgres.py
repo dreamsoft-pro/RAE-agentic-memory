@@ -8,54 +8,6 @@ import asyncpg
 from rae_core.interfaces.storage import IMemoryStorage
 
 
-class PostgreSQLGraphStore:
-    """PostgreSQL implementation of Knowledge Graph storage."""
-    def __init__(self, pool: asyncpg.Pool):
-        self.pool = pool
-
-    async def add_node(self, tenant_id: UUID, project_id: str, node_id: str, label: str, properties: dict = None):
-        sql = """
-            INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (tenant_id, project_id, node_id) DO UPDATE SET
-                label = EXCLUDED.label,
-                properties = knowledge_graph_nodes.properties || EXCLUDED.properties,
-                updated_at = now()
-        """
-        async with self.pool.acquire() as conn:
-            await conn.execute(sql, tenant_id, project_id, node_id, label, json.dumps(properties or {}))
-
-    async def add_edge(self, tenant_id: UUID, project_id: str, source_node_id: str, target_node_id: str, label: str, properties: dict = None):
-        # We need the internal UUIDs of the nodes
-        sql_get_ids = "SELECT id, node_id FROM knowledge_graph_nodes WHERE tenant_id = $1 AND node_id IN ($2, $3)"
-        async with self.pool.acquire() as conn:
-            rows = await conn.fetch(sql_get_ids, tenant_id, source_node_id, target_node_id)
-            id_map = {r["node_id"]: r["id"] for r in rows}
-            
-            if source_node_id not in id_map or target_node_id not in id_map:
-                return # Nodes must exist first
-                
-            sql_edge = """
-                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (tenant_id, project_id, source_node_id, target_node_id, relation) DO NOTHING
-            """
-            await conn.execute(sql_edge, tenant_id, project_id, id_map[source_node_id], id_map[target_node_id], label, json.dumps(properties or {}))
-
-    async def get_neighbors(self, tenant_id: UUID, node_id: str) -> list[str]:
-        """Returns list of node_ids connected to the given node."""
-        sql = """
-            SELECT n2.node_id 
-            FROM knowledge_graph_nodes n1
-            JOIN knowledge_graph_edges e ON e.source_node_id = n1.id OR e.target_node_id = n1.id
-            JOIN knowledge_graph_nodes n2 ON (n2.id = e.source_node_id OR n2.id = e.target_node_id) AND n2.id != n1.id
-            WHERE n1.tenant_id = $1 AND n1.node_id = $2
-        """
-        async with self.pool.acquire() as conn:
-            rows = await conn.fetch(sql, tenant_id, node_id)
-            return [r["node_id"] for r in rows]
-
-
 class PostgreSQLStorage(IMemoryStorage):
     def __init__(
         self,
@@ -94,41 +46,36 @@ class PostgreSQLStorage(IMemoryStorage):
         
         async with pool.acquire() as conn:
             # 3. Federated UPSERT (Evidence Consolidation)
+            # We use jsonb_set to maintain a list of 'witnesses' (sources) in metadata
             sql = """
                 INSERT INTO memories (
-                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source, info_class, governance, human_label
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 ON CONFLICT (tenant_id, content_hash) DO UPDATE SET
                     importance = GREATEST(memories.importance, EXCLUDED.importance),
                     usage_count = memories.usage_count + 1,
                     last_accessed_at = now(),
                     source = memories.source || ', ' || EXCLUDED.source,
-                    metadata = memories.metadata || EXCLUDED.metadata,
-                    governance = memories.governance || EXCLUDED.governance,
-                    human_label = COALESCE(EXCLUDED.human_label, memories.human_label)
+                    metadata = memories.metadata || EXCLUDED.metadata || 
+                               jsonb_build_object('witness_count', (COALESCE((memories.metadata->>'witness_count')::int, 1) + 1))
                 RETURNING id
             """
             
-            m_id = kwargs.get("memory_id") or uuid4()
-            human_label = kwargs.get("human_label") or new_metadata.get("human_label")
-            
+            m_id = uuid4()
             row = await conn.fetchrow(
                 sql,
                 m_id,
                 content,
                 content_hash,
-                kwargs.get("layer", "episodic"),
+                kwargs.get("layer"),
                 tenant_id,
-                kwargs.get("agent_id", "default"),
+                kwargs.get("agent_id"),
                 kwargs.get("tags", []),
                 json.dumps(new_metadata),
                 kwargs.get("importance", 0.5),
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 kwargs.get("project"),
-                source,
-                kwargs.get("info_class", "internal"),
-                json.dumps(kwargs.get("governance", {})),
-                human_label
+                source
             )
             return row["id"]
 
@@ -243,13 +190,12 @@ class PostgreSQLStorage(IMemoryStorage):
         limit_idx = len(params) + 1
         params.append(limit)
 
-        # SYSTEM 46.1: Word-level fallback for better technical recall (including labels)
+        # SYSTEM 46.1: Word-level fallback for better technical recall
         words = [w for w in raw_query.replace("?", "").split() if len(w) > 3]
         word_conditions = []
         for i, w in enumerate(words):
             word_idx = len(params) + 1
-            # Search both content and the dedicated human_label column
-            word_conditions.append(f"(content ILIKE ${word_idx} OR human_label ILIKE ${word_idx})")
+            word_conditions.append(f"content ILIKE ${word_idx}")
             params.append(f"%{w}%")
         
         word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"

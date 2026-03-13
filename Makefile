@@ -412,7 +412,7 @@ shell-postgres:  ## Open shell in Postgres container
 secure-shell:  ## [HARD FRAMES] Open Developer Shell inside Secure Container (No Internet, Code Access, Kernel Access)
 	@echo "🛡️  Entering HARD FRAMES Environment..."
 	@docker compose -f docker-compose.secure.yml up -d --build rae-agent-secure
-	@docker exec -it rae-agentic-memory-rae-agent-secure-1 /bin/bash
+	@docker exec -it rae-agentic-memory-agnostic-core-rae-agent-secure-1 /bin/bash
 	@echo "👋 Exited Secure Shell."
 
 # ==============================================================================

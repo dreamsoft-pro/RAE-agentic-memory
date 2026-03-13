@@ -124,26 +124,20 @@ class QdrantVectorStore(IVectorStore):
             vectors_config = collection_info.config.params.vectors
             logger.info("collection_exists", collection=self.collection_name, vectors=list(vectors_config.keys()) if isinstance(vectors_config, dict) else "single")
         except Exception:
-            # Collection doesn't exist, create it with Dynamic Multi-Vector schema
+            # Collection doesn't exist, create it with System 41.0 Multi-Vector schema
             from qdrant_client.models import VectorParams, SparseVectorParams
 
             try:
-                # Default configuration if none provided
-                # We use the embedding_dim passed to constructor for the default 'dense' vector
-                v_config = {
-                    self.vector_name: VectorParams(size=self.embedding_dim, distance=self.distance)
-                }
-                
-                # Special case: if we are in System 41.0 mode, we might want to pre-provision others
-                # But better to let the user define it via a setup call or similar.
-                # For now, we'll keep it flexible.
-                
+                # We pre-provision both MiniLM (384) and Nomic (768) dimensions to be agnostic
                 await self.client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=v_config,
+                    vectors_config={
+                        "dense": VectorParams(size=384, distance=self.distance),
+                        "nomic": VectorParams(size=768, distance=self.distance),
+                    },
                     sparse_vectors_config={"text": SparseVectorParams()},
                 )
-                logger.info("collection_created_dynamic", collection=self.collection_name, primary_vector=self.vector_name, dim=self.embedding_dim)
+                logger.info("collection_created_multi_vector", collection=self.collection_name)
             except Exception as e:
                 if "already exists" in str(e):
                     logger.info("collection_created_parallel", collection=self.collection_name)
@@ -151,44 +145,6 @@ class QdrantVectorStore(IVectorStore):
                     logger.error("collection_creation_failed", error=str(e))
 
         self._initialized = True
-
-    async def update_collection_schema(self, vectors_config: dict[str, Any]) -> None:
-        """
-        Dynamically add new vector spaces to existing collection.
-        Note: size and distance cannot be changed for existing vectors.
-        """
-        from qdrant_client.models import VectorParams
-        
-        try:
-            collection_info = await self.client.get_collection(self.collection_name)
-            existing_vectors = collection_info.config.params.vectors
-            if not isinstance(existing_vectors, dict):
-                # If it's a single vector, we might need to convert it to named vectors
-                # but Qdrant doesn't support this easily without recreation.
-                logger.warn("collection_not_named_vectors", collection=self.collection_name)
-                return
-
-            for name, params in vectors_config.items():
-                if name in existing_vectors:
-                    logger.info("vector_space_exists", vector=name)
-                    continue
-
-                if isinstance(params, int):
-                    v_params = VectorParams(size=params, distance=self.distance)
-                else:
-                    v_params = params
-                
-                # To add NEW vectors to existing collection, we use update_collection 
-                # but only with the NEW fields in vectors_config.
-                await self.client.update_collection(
-                    collection_name=self.collection_name,
-                    vectors_config={
-                        name: v_params
-                    }
-                )
-                logger.info("collection_schema_updated", vector=name)
-        except Exception as e:
-            logger.error("schema_update_failed", error=str(e))
 
     async def add_vector(
         self,
@@ -337,12 +293,8 @@ class QdrantVectorStore(IVectorStore):
         """
         await self._ensure_collection()
 
-        from qdrant_client.models import FieldCondition, MatchValue
-        
         # Build filter - mandatory tenant_id
-        must_conditions = [
-            FieldCondition(key="tenant_id", match=MatchValue(value=str(tenant_id)))
-        ]
+        must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
 
         # Support extracting core filters from the filters dict if not provided directly
         effective_agent_id = agent_id or (filters.get("agent_id") if filters else None)
@@ -350,19 +302,13 @@ class QdrantVectorStore(IVectorStore):
         effective_layer = layer or (filters.get("layer") if filters else None)
 
         if effective_agent_id:
-            must_conditions.append(
-                FieldCondition(key="agent_id", match=MatchValue(value=str(effective_agent_id)))
-            )
+            must_conditions.append({"key": "agent_id", "match": {"value": effective_agent_id}})
 
         if effective_session_id:
-            must_conditions.append(
-                FieldCondition(key="session_id", match=MatchValue(value=str(effective_session_id)))
-            )
+            must_conditions.append({"key": "session_id", "match": {"value": effective_session_id}})
 
         if effective_layer:
-            must_conditions.append(
-                FieldCondition(key="layer", match=MatchValue(value=str(effective_layer)))
-            )
+            must_conditions.append({"key": "layer", "match": {"value": effective_layer}})
 
         # Apply generic metadata filters
         if filters:

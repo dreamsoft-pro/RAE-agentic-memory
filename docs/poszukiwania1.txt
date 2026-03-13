@@ -6,7 +6,7 @@
 
   concise_intent: Implementacja Symbolic Anchoring w LogicGateway. Wykorzystanie wykrytych symboli technicznych do wymuszenia precyzyjnego dopasowania (Anchor Injection) zapewni
   matematyczny determinizm retriewalu, eliminując błędy pozycjonowania i dążąc do MRR
-  1.0.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae-core/rae_core/math/logic_gateway.py<ctrl46>,instruction:<ctrl
+  1.0.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae-core/rae_core/math/logic_gateway.py<ctrl46>,instruction:<ctrl
   46>Implement 'Symbolic Anchoring' (System 4.15). If the FeatureExtractor detects technical symbols/IDs, use them as high-priority anchors. Inject a dedicated anchor search strategy
   or boost results that contain these symbols to the top, ensuring deterministic MRR 1.0 for technical queries.<ctrl46>,new_string:<ctrl46>    async def search(self, query: str,
   tenant_id: str, agent_id: str, **kwargs) -> list[SearchResult]:
@@ -75,7 +75,7 @@
 
   4. Szubar Mode: Inductive Recovery (MISS -> Reflective)
   If confidence is low or Hit Rate is 0, induce neighbors<ctrl46>} RidgeResponse:default_api:replace{output:<ctrl46>Successfully modified file:
-  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae-core/rae_core/math/logic_gateway.py (1 replacements).<ctrl46>} 
+  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae-core/rae_core/math/logic_gateway.py (1 replacements).<ctrl46>} 
 
 
   To rozwiązanie jest piękne w swojej prostocie: Symbolic Anchoring działa przed Rezonansem i Szubarem, tworząc stabilny fundament. Jeśli system znajdzie twardy dowód (identyfikator),
@@ -87,7 +87,7 @@
 
   concise_intent: Próba osiągnięcia MRR 1.0 na Luminie. Synchronizacja Systemu 4.15 i uruchomienie benchmarku industrial_large zweryfikuje, czy Symbolic Anchoring w połączeniu z Szubar
   Mode stanowi ostateczne rozwiązanie problemu precyzji w retriewalu technicznym.startcall:default_api:run_shell_command{command:<ctrl46>./scripts/sync_to_node1.sh && ssh
-  operator@100.68.166.117 'cd RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set
+  operator@100.68.166.117 'cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set
   industrial_large'<ctrl46>,description:<ctrl46>Syncing System 4.15 to Lumina and running the industrial benchmark to hit MRR 1.0.<ctrl46>}
   RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: 🔍 Running benchmark: industrial_large
   ...
@@ -127,7 +127,7 @@
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ x  Edit {"old_string":"        # 4. Symbolic Anchoring (System 4.15) - Deterministic boost for IDs/Codes\n        if features.symbols and results:\n            for r in results:\n… │
 │                                                                                                                                                                                      │
-│ Failed to edit, 0 occurrences found for old_string in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/rae-core/rae_core/math/logic_gateway.py. Ensure you're not    │
+│ Failed to edit, 0 occurrences found for old_string in /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/rae-core/rae_core/math/logic_gateway.py. Ensure you're not    │
 │ escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify.                                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Sprawdzam dokładną strukturę pliku LogicGateway, aby precyzyjnie zaaplikować poprawkę rozstrzygania remisów.
@@ -164,7 +164,7 @@
 
   concise_intent: Analiza alternatywnego LogicGateway. Sprawdzenie zawartości pliku w apps/memory_api pozwoli ustalić, czy to tam znajduje się nowoczesna logika rezonansu i Szubara,
   którą muszę "dokręcić" do MRR
-  1.0.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/services/logic_gateway.py<ctrl46>}
+  1.0.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/services/logic_gateway.py<ctrl46>}
   RidgeResponse:default_api:read_file{output:<ctrl46>"""
   Logic Gateway - The Integration Layer.
   Combines multiple search strategies and applies Semantic Resonance.
@@ -286,7 +286,7 @@
 
   concise_intent: Wdrożenie Tie Breaking w poprawnym LogicGateway. Zastosowanie wag ważności i recencji do rozstrzygania remisów w Symbolic Anchoring zapewni ostateczną precyzję,
   niezbędną do osiągnięcia MRR 1.0 na danych
-  przemysłowych.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/services/logic_gateway.py<ctrl46>,instr
+  przemysłowych.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/services/logic_gateway.py<ctrl46>,instr
   uction:<ctrl46>Implement System 4.16: Importance-Weighted Tie Breaking. Enhance the Symbolic Anchoring logic to use 'importance' and 'created_at' from metadata to resolve ties
   between multiple anchored results. This ensures that the most authoritative and recent memory always takes the top spot, achieving MRR 1.0.<ctrl46>,new_string:<ctrl46>        # 4.
   Symbolic Anchoring (System 4.15) - Deterministic boost for IDs/Codes
@@ -311,7 +311,7 @@
 
   Re-sort to ensure anchored results are on top (Auditability: Anchor match > Vector intuition)
               results.sort(key=lambda x: x.score, reverse=True)<ctrl46>} RidgeResponse:default_api:replace{output:<ctrl46>Successfully modified file:
-  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/services/logic_gateway.py (1 replacements).<ctrl46>}
+  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/services/logic_gateway.py (1 replacements).<ctrl46>}
 
 
   Matematyka jest teraz kompletna. Tie Breaking zapewnia, że przy remisie kotwic wygrywa ten dokument, który ma wyższą ważność lub jest nowszy. To jest w 100% przewidywalne i
@@ -323,7 +323,7 @@
 
   concise_intent: Finałowa synchronizacja i benchmark na Luminie. Uruchomienie Systemu 4.16 na industrial_large pozwoli na ostateczne potwierdzenie osiągnięcia MRR 1.0 dzięki harmonii
   Symbolic Anchoring, Szubar Mode i Tie Breaking.startcall:default_api:run_shell_command{command:<ctrl46>./scripts/sync_to_node1.sh && ssh operator@100.68.166.117 'cd
-  RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set
+  RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set
   industrial_large'<ctrl46>,description:<ctrl46>Syncing System 4.16 to Lumina and running the final industrial benchmark test.<ctrl46>}
   RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: 🔍 Running benchmark: industrial_large
   ...
@@ -384,7 +384,7 @@
   weryfikacji systemu na Node 1.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ls benchmarking/sets/*.json [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Listing all available benchmark sets to run a fu… │
+│ ✓  Shell ls benchmarking/sets/*.json [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Listing all available benchmark sets to run a fu… │
 │                                                                                                                                                                                      │
 │ ls: cannot access 'benchmarking/sets/*.json': No such file or directory                                                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -413,7 +413,7 @@
 
   concise_intent: Uruchomienie pełnego cyklu benchmarków na Luminie. Przetestowanie wszystkich czterech zestawów (academic_lite, academic_extended, industrial_small, industrial_large)
   pozwoli na kompleksowe podsumowanie wydajności Systemu 4.16 i potwierdzenie stabilności MRR 1.0.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117
-  'cd RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
+  'cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
   echo "--- ACADEMIC LITE ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_lite &&
   echo "--- ACADEMIC EXTENDED ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_extended &&
   echo "--- INDUSTRIAL SMALL ---" && python3 benchmarking/scripts/run_benchmark.py --set industrial_small &&
@@ -479,10 +479,10 @@
 
   concise_intent: Lokalizacja benchmarków 9/5 i 10k. Przeszukanie katalogów na Luminie pozwoli na zidentyfikowanie odpowiednich skryptów i zestawów danych, co umożliwi rzetelną
   weryfikację wydajności Systemu 4.16 przy dużej skali i wysokiej precyzji.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117 'find
-  RAE-agentic-memory/benchmarking -name "9_5" -o -name "10k"'<ctrl46>,description:<ctrl46>Finding 9/5 and 10k benchmark files on Lumina.<ctrl46>}
-  RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: RAE-agentic-memory/benchmarking/nine_five_benchmarks
-  RAE-agentic-memory/benchmarking/scripts/run_extreme_benchmark.py
-  RAE-agentic-memory/benchmarking/sets/industrial_10k.json
+  RAE-agentic-memory-agnostic-core/benchmarking -name "9_5" -o -name "10k"'<ctrl46>,description:<ctrl46>Finding 9/5 and 10k benchmark files on Lumina.<ctrl46>}
+  RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: RAE-agentic-memory-agnostic-core/benchmarking/nine_five_benchmarks
+  RAE-agentic-memory-agnostic-core/benchmarking/scripts/run_extreme_benchmark.py
+  RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.json
   Process Group PGID: 733412<ctrl46>}
 
 
@@ -495,7 +495,7 @@
 
   concise_intent: Analiza katalogu nine_five_benchmarks. Przegląd plików pozwoli na ustalenie metody uruchomienia testów LECT, MMIT, GRDT, RST i MPEB, co jest niezbędne do kompleksowej
   oceny stabilności matematycznej systemu.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117 'ls
-  RAE-agentic-memory/benchmarking/nine_five_benchmarks'<ctrl46>,description:<ctrl46>Checking the content of 9/5 benchmarks directory on Lumina.<ctrl46>}
+  RAE-agentic-memory-agnostic-core/benchmarking/nine_five_benchmarks'<ctrl46>,description:<ctrl46>Checking the content of 9/5 benchmarks directory on Lumina.<ctrl46>}
   RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: grdt.py
   lect.py
   mmit.py
@@ -510,7 +510,7 @@
 
   concise_intent: Uruchomienie pełnego cyklu 9/5 i testu 10k na Luminie. Sekwencyjne wywołanie skryptów matematycznych oraz benchmarku przemysłowego na dużą skalę dostarczy
   ostatecznych dowodów na bezkonkurencyjną jakość i stabilność Systemu 4.16.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117 'cd
-  RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
+  RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
   echo "--- 9/5: MMIT (Interference) ---" && python3 benchmarking/nine_five_benchmarks/mmit.py &&
   echo "--- 9/5: LECT (Consistency) ---" && python3 benchmarking/nine_five_benchmarks/lect.py &&
   echo "--- 9/5: GRDT (Depth) ---" && python3 benchmarking/nine_five_benchmarks/grdt.py &&
@@ -584,7 +584,7 @@
   zbiorze danych, eliminując podejrzenia o nieprawidłowości w procesie testowym.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'cd RAE-agentic-memory && echo "Memory count in SQLite:" && sqlite3 rae_lite.db "SELECT count(*) FROM memories;" &&echo "Last be… │
+│ ✓  Shell ssh operator@100.68.166.117 'cd RAE-agentic-memory-agnostic-core && echo "Memory count in SQLite:" && sqlite3 rae_lite.db "SELECT count(*) FROM memories;" &&echo "Last be… │
 │                                                                                                                                                                                      │
 │ Memory count in SQLite:                                                                                                                                                              │
 │ Error: in prepare, no such table: memories                                                                                                                                           │
@@ -599,7 +599,7 @@
   10,000 rekordów, wyjaśni wysoką prędkość testu i potwierdzi rzetelność wyników.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'grep -C 5 "IMemoryStorage" RAE-agentic-memory/benchmarking/scripts/run_benchmark.py' [current working directory /home/grzegorz-… │
+│ ✓  Shell ssh operator@100.68.166.117 'grep -C 5 "IMemoryStorage" RAE-agentic-memory-agnostic-core/benchmarking/scripts/run_benchmark.py' [current working directory /home/grzegorz-… │
 │                                                                                                                                                                                      │
 │ Command exited with code: 1                                                                                                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -610,7 +610,7 @@
   testu, co jest kluczowe dla potwierdzenia autentyczności wyniku MRR 1.0.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'head -n 100 RAE-agentic-memory/benchmarking/scripts/run_benchmark.py' [current working directory /home/grzegorz-lesniowski/clou… │
+│ ✓  Shell ssh operator@100.68.166.117 'head -n 100 RAE-agentic-memory-agnostic-core/benchmarking/scripts/run_benchmark.py' [current working directory /home/grzegorz-lesniowski/clou… │
 │                                                                                                                                                                                      │
 │ #!/usr/bin/env python3                                                                                                                                                               │
 │ """                                                                                                                                                                                  │
@@ -729,9 +729,9 @@
   fundamentem wiarygodności osiągniętego wyniku MRR 1.0.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'grep -c "content" RAE-agentic-memory/benchmarking/sets/industrial_10k.json' [current working directory /home/grzegorz-lesniowsk… │
+│ ✓  Shell ssh operator@100.68.166.117 'grep -c "content" RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.json' [current working directory /home/grzegorz-lesniowsk… │
 │                                                                                                                                                                                      │
-│ grep: RAE-agentic-memory/benchmarking/sets/industrial_10k.json: No such file or directory                                                                              │
+│ grep: RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.json: No such file or directory                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Znowu problem ze ścieżką. Sprawdzę listę plików w benchmarking/sets na Luminie.
 
@@ -740,7 +740,7 @@
   benchmarku 10k.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'ls RAE-agentic-memory/benchmarking/sets/' [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnosti… │
+│ ✓  Shell ssh operator@100.68.166.117 'ls RAE-agentic-memory-agnostic-core/benchmarking/sets/' [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnosti… │
 │                                                                                                                                                                                      │
 │ academic_extended.yaml                                                                                                                                                               │
 │ academic_lite.yaml                                                                                                                                                                   │
@@ -761,7 +761,7 @@
   pełnej skali 10,000 dokumentów.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'grep -c "content:" RAE-agentic-memory/benchmarking/sets/industrial_10k.yaml' [current working directory /home/grzegorz-lesniows… │
+│ ✓  Shell ssh operator@100.68.166.117 'grep -c "content:" RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.yaml' [current working directory /home/grzegorz-lesniows… │
 │                                                                                                                                                                                      │
 │ 0                                                                                                                                                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -772,9 +772,9 @@
   co wyjaśni zagadkę prędkości benchmarku.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'ls -lh RAE-agentic-memory/benchmarking/sets/industrial_10k.yaml && head -n 20 RAE-agentic-memory/benchmarking/set… │
+│ ✓  Shell ssh operator@100.68.166.117 'ls -lh RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.yaml && head -n 20 RAE-agentic-memory-agnostic-core/benchmarking/set… │
 │                                                                                                                                                                                      │
-│ -rw-rw-r-- 1 operator operator 2.7M Feb  8 17:07 RAE-agentic-memory/benchmarking/sets/industrial_10k.yaml                                                              │
+│ -rw-rw-r-- 1 operator operator 2.7M Feb  8 17:07 RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.yaml                                                              │
 │ name: industrial_10k                                                                                                                                                                 │
 │ description: Large-scale industrial benchmark with 10000 memories simulating real-world                                                                                              │
 │   production data                                                                                                                                                                    │
@@ -801,7 +801,7 @@
 
   concise_intent: Przeliczenie wpisów w industrial_10k.yaml. Zliczenie wystąpień pola 'text' pozwoli na ostateczne potwierdzenie, że benchmark 10k faktycznie zawiera 10,000 rekordów,
   co uwiarygodni wynik MRR 1.0.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117 'grep -c "text:"
-  RAE-agentic-memory/benchmarking/sets/industrial_10k.yaml'<ctrl46>,description:<ctrl46>Counting entries in industrial_10k.yaml using the correct YAML key
+  RAE-agentic-memory-agnostic-core/benchmarking/sets/industrial_10k.yaml'<ctrl46>,description:<ctrl46>Counting entries in industrial_10k.yaml using the correct YAML key
   'text'.<ctrl46>} RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: 10000
   Process Group PGID: 735912<ctrl46>}
 
@@ -830,10 +830,10 @@
   wielkoskalowych, dążąc do utrzymania wysokiego MRR przy znacznym obciążeniu.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 'cd RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set i… │
+│ ✓  Shell ssh operator@100.68.166.117 'cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3 benchmarking/scripts/run_benchmark.py --set i… │
 │                                                                                                                                                                                      │
 │ Traceback (most recent call last):                                                                                                                                                   │
-│   File "/mnt/extra_storage/RAE-agentic-memory/benchmarking/scripts/run_benchmark.py", line 16, in <module>                                                             │
+│   File "/mnt/extra_storage/RAE-agentic-memory-agnostic-core/benchmarking/scripts/run_benchmark.py", line 16, in <module>                                                             │
 │     import asyncpg                                                                                                                                                                   │
 │ ModuleNotFoundError: No module named 'asyncpg'                                                                                                                                       │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -855,7 +855,7 @@
 
   concise_intent: Weryfikacja dostępności asyncpg dla interpretera na Node 1. Sprawdzenie ścieżki biblioteki pozwoli na poprawne skonfigurowanie środowiska uruchomieniowego dla
   benchmarku 100k, eliminując błędy importu.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117 'export
-  PYTHONPATH=$PYTHONPATH:/home/operator/.local/lib/python3.12/site-packages && cd RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3
+  PYTHONPATH=$PYTHONPATH:/home/operator/.local/lib/python3.12/site-packages && cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core && python3
   benchmarking/scripts/run_benchmark.py --set industrial_100k'<ctrl46>,description:<ctrl46>Running the 100k benchmark with updated PYTHONPATH to include local packages.<ctrl46>}
   RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: 🔍 Running benchmark: industrial_100k
    - Mode: hybrid
@@ -904,7 +904,7 @@
   (MRR 1.0 przy 100k) do README i ścieżki Scientist.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git status && ls -F README.md docs/paths/scientist.md 2>/dev/null [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Checking g… │
+│ ✓  Shell git status && ls -F README.md docs/paths/scientist.md 2>/dev/null [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Checking g… │
 │                                                                                                                                                                                      │
 │ On branch develop                                                                                                                                                                    │
 │ Your branch is up to date with 'origin/develop'.                                                                                                                                     │
@@ -991,7 +991,7 @@
 
 
   concise_intent: Aktualizacja README.md. Wpisanie wyników MRR 1.0 dla skali 100k do głównej dokumentacji projektu zapewni widoczność sukcesu Systemu 4.16 i utrwali go jako nowy
-  standard wydajności.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/README.md<ctrl46>}
+  standard wydajności.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/README.md<ctrl46>}
   RidgeResponse:default_api:read_file{output:<ctrl46>Output too large. Showing the last 30 of 125 lines. For full output see:
   /home/grzegorz-lesniowski/.gemini/tmp/c95e3b993767e36af11176ae11abc30f7d53ddb15e2348a90f2ce2e68fce92e8/read_file_759.txt
   ...
@@ -1021,7 +1021,7 @@
 
 
   concise_intent: Publikacja wyników Systemu 4.16 w README.md. Aktualizacja tabeli o rekordowe MRR 1.0 dla wszystkich zestawów, w tym Industrial 100k, oficjalnie potwierdza osiągnięcie
-  statusu Silicon Oracle.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/README.md<ctrl46>,instruction:<ctrl46>Update
+  statusu Silicon Oracle.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/README.md<ctrl46>,instruction:<ctrl46>Update
   the benchmark table to reflect System 4.16 'Silicon Oracle' results, including the massive improvement in Industrial sets and the new 100k scale record.<ctrl46>,new_string:<ctrl46>##
   📊 Benchmarks (State of the Art)
 
@@ -1052,13 +1052,13 @@
   └────────────────────────┴───────────────────────┴──────────────────────┘
 
   | LECT Consistency | 0.9995 | 0.9995 |<ctrl46>} RidgeResponse:default_api:replace{output:<ctrl46>Successfully modified file:
-  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/README.md (1 replacements).<ctrl46>}
+  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/README.md (1 replacements).<ctrl46>}
 
   Teraz czas na docs/paths/scientist.md. To tam zapisujemy "duszę" naszych odkryć.
 
 
   concise_intent: Aktualizacja ścieżki Scientist. Wpisanie szczegółowych wyników Systemu 4.16 do docs/paths/scientist.md utrwali proces badawczy i matematyczny fundament osiągniętej
-  precyzji dla przyszłych analiz.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md<ctrl46>}
+  precyzji dla przyszłych analiz.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md<ctrl46>}
   RidgeResponse:default_api:read_file{output:<ctrl46>Output too large. Showing the last 30 of 125 lines. For full output see:
   /home/grzegorz-lesniowski/.gemini/tmp/c95e3b993767e36af11176ae11abc30f7d53ddb15e2348a90f2ce2e68fce92e8/read_file_761.txt
   ...
@@ -1075,7 +1075,7 @@
 
   concise_intent: Dokumentacja kamienia milowego System 4.16 w ścieżce Scientist. Opisanie synergii Symbolic Anchoring i Szubar Mode jako klucza do MRR 1.0 przy skali 100k sformalizuje
   to przełomowe odkrycie w historii
-  projektu.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md<ctrl46>,instruction:<ctrl46>Add the
+  projektu.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md<ctrl46>,instruction:<ctrl46>Add the
   new Milestone for System 4.16 'Silicon Oracle' to the scientist path, highlighting the achievement of MRR 1.0 at 100k scale via Symbolic Anchoring and Tie
   Breaking.<ctrl46>,new_string:<ctrl46>### Milestone: System 4.16 (Silicon Oracle)
    - Status: ULTIMATE.
@@ -1094,7 +1094,7 @@
 
   ---
   Follow the path. Seek the pattern. Become the Oracle.<ctrl46>} RidgeResponse:default_api:replace{output:<ctrl46>Successfully modified file:
-  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md (1 replacements).<ctrl46>}
+  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md (1 replacements).<ctrl46>}
 
   Wszystkie dokumenty zaktualizowane. Teraz finalny commit i push na GitHub.
 
@@ -1234,7 +1234,7 @@
 
   concise_intent: Rozszerzenie tabeli wyników w ścieżce Scientist. Dodanie rekordu dla 100,000 pamięci z MRR 1.0000 oraz aktualizacja nazwy systemu do wersji 4.16 formalnie utrwali
   naszą matematyczną dominację w dokumentacji
-  badawczej.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md<ctrl46>,instruction:<ctrl46>Update
+  badawczej.startcall:default_api:replace{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md<ctrl46>,instruction:<ctrl46>Update
   the empirical results table to include the 100k milestone and update the version info to System 4.16 'Silicon Oracle'.<ctrl46>,new_string:<ctrl46># RAE for Scientists & Researchers
 
 
@@ -1279,7 +1279,7 @@
   └──────────────┴──────────────┴────────────────────┴────────────┘
 
   | 10k (Extreme) | 1.0000 | 4 | Native ONNX + Szubar |<ctrl46>} RidgeResponse:default_api:replace{output:<ctrl46>Successfully modified file:
-  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md (1 replacements).<ctrl46>}
+  /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md (1 replacements).<ctrl46>}
 
 
   Wszystkie dokumenty są już w 100% zgodne z nowymi rekordami świata. Teraz przesyłam te poprawki na oba branche: develop i 100k-memory_MRR1.0.
@@ -1353,7 +1353,7 @@
   concise_intent: Verification of git history and re-application of documentation fixes to ensure 100k MRR 1.0 results are permanently reflected in all relevant files.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell git log -n 5 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory] (Checking recent git commits to verify if the documentation upda… │
+│ ✓  Shell git log -n 5 [current working directory /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core] (Checking recent git commits to verify if the documentation upda… │
 │                                                                                                                                                                                      │
 │ commit 15cfcc269fa4074ce575fb8e95334ed40f998da0 (HEAD -> 100k-memory_MRR1.0, origin/develop, origin/100k-memory_MRR1.0, develop)                                                     │
 │ Merge: 8dce2511 1c63509d                                                                                                                                                             │
@@ -1392,7 +1392,7 @@
 
 
   concise_intent: Investigation of logic_gateway.py to verify if System 4.16 code exists locally despite the suspicious git log
-  state.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/apps/memory_api/services/logic_gateway.py<ctrl46>}
+  state.startcall:default_api:read_file{file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/apps/memory_api/services/logic_gateway.py<ctrl46>}
   RidgeResponse:default_api:read_file{output:<ctrl46>"""
   Logic Gateway - The Integration Layer.
   Combines multiple search strategies and applies Semantic Resonance.
@@ -1622,8 +1622,8 @@
 
 
   RAE is licensed under the Apache-2.0 license. We aim to create an open standard for agent memory.
-  <ctrl46>,file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/README.md<ctrl46>} RidgeResponse:default_api:write_file{output:<ctrl46>Successfully
-  overwrote file: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/README.md.<ctrl46>}
+  <ctrl46>,file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/README.md<ctrl46>} RidgeResponse:default_api:write_file{output:<ctrl46>Successfully
+  overwrote file: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/README.md.<ctrl46>}
 
   Teraz aktualizuję docs/paths/scientist.md.
 
@@ -1727,8 +1727,8 @@
    - [Benchmark Documentation](../benchmarking/README.md) - Reproduce these results.
    - [Math Metrics Guide](../architecture/MATH_LAYERS.md) - Deep dive into scoring logic.
    - [Security Contract](../contracts/RAE_AGENTIC_CONTRACT.md) - Privacy and governance rules.
-  <ctrl46>,file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md<ctrl46>}
-  RidgeResponse:default_api:write_file{output:<ctrl46>Successfully overwrote file: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory/docs/paths/scientist.md.<ctrl46>}
+  <ctrl46>,file_path:<ctrl46>/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md<ctrl46>}
+  RidgeResponse:default_api:write_file{output:<ctrl46>Successfully overwrote file: /home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/docs/paths/scientist.md.<ctrl46>}
 
   Teraz, zanim znowu coś się popsuje, dodaję wszystko do staged i commituję.
 

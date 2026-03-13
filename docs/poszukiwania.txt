@@ -8,7 +8,7 @@
 
   concise_intent: Uruchomienie pełnego cyklu benchmarków na Luminie. Przetestowanie wszystkich czterech zestawów (academic_lite, academic_extended, industrial_small, industrial_large)
   pozwoli na kompleksowe podsumowanie wydajności Systemu 4.16 i potwierdzenie stabilności MRR 1.0.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117
-  'cd RAE-agentic-memory && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
+  'cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
   echo "--- ACADEMIC LITE ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_lite &&
   echo "--- ACADEMIC EXTENDED ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_extended &&
   echo "--- INDUSTRIAL SMALL ---" && python3 benchmarking/scripts/run_benchmark.py --set industrial_small &&

@@ -232,7 +232,7 @@ class RAECoreService:
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name or "dense",
+                vector_name=self.embedding_provider.default_model_name,
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
@@ -667,7 +667,6 @@ class RAECoreService:
         governance: Optional[dict] = None,
         metadata: Optional[dict] = None,
         agent_id: Optional[str] = None,
-        human_label: Optional[str] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -758,7 +757,6 @@ class RAECoreService:
             importance=importance or 0.5,
             tags=tags,
             metadata=metadata,
-            human_label=human_label,
             project=project_canonical,
             session_id=session_id,
             memory_type=memory_type or "text",
@@ -1043,7 +1041,6 @@ class RAECoreService:
                 SearchResult(
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
-                    human_label=res.get("human_label"),
                     score=safe_score,
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
