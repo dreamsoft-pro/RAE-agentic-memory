@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Rule Block Editor</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">Conditions (AND)</div>
+                <div class="card-body">
+                    <div id="conditions-container">
+                        <!-- Rows will be added here -->
+                    </div>
+                    <button class="btn btn-outline-secondary mt-2" onclick="addConditionRow()">+ Add Condition</button>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">Actions</div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label>Action Type</label>
+                        <select class="form-select" id="action-type">
+                            <option value="log">Log</option>
+                            <option value="notification">Notification</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Message</label>
+                        <input type="text" class="form-control" id="action-message" placeholder="Alert message">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary mt-3" onclick="saveRule()">Save Rule</button>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm bg-light">
+                <div class="card-header">JSON Logic Preview</div>
+                <div class="card-body">
+                    <pre id="json-preview">{}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addConditionRow() {
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2 condition-row';
+        div.innerHTML = `
+            <select class="form-select field-select">
+                <option value="metrics.speed">Speed</option>
+                <option value="metrics.temp">Temperature</option>
+                <option value="metrics.pressure">Pressure</option>
+                <option value="status">Status</option>
+            </select>
+            <select class="form-select op-select">
+                <option value=">">></option>
+                <option value="<"><</option>
+                <option value="==">==</option>
+                <option value="!=">!=</option>
+            </select>
+            <input type="text" class="form-control val-input" placeholder="Value">
+            <button class="btn btn-danger" onclick="this.parentElement.remove(); updatePreview()">x</button>
+        `;
+        document.getElementById('conditions-container').appendChild(div);
+        
+        // Add listeners for preview
+        div.querySelectorAll('input, select').forEach(el => el.addEventListener('change', updatePreview));
+    }
+
+    function buildJsonLogic() {
+        const rows = document.querySelectorAll('.condition-row');
+        const conditions = [];
+        
+        rows.forEach(row => {
+            const field = row.querySelector('.field-select').value;
+            const op = row.querySelector('.op-select').value;
+            let val = row.querySelector('.val-input').value;
+            
+            // Try parse number
+            if (!isNaN(val) && val !== '') val = Number(val);
+            
+            conditions.push({ [op]: [ { "var": field }, val ] });
+        });
+        
+        if (conditions.length === 0) return {};
+        if (conditions.length === 1) return conditions[0];
+        return { "and": conditions };
+    }
+
+    function updatePreview() {
+        const logic = buildJsonLogic();
+        document.getElementById('json-preview').innerText = JSON.stringify(logic, null, 2);
+    }
+
+    function saveRule() {
+        const logic = buildJsonLogic();
+        const actionType = document.getElementById('action-type').value;
+        const msg = document.getElementById('action-message').value;
+        
+        const payload = {
+            name: "New Rule " + new Date().toLocaleTimeString(),
+            description: "Created via Block Editor",
+            logic: logic,
+            actions: [
+                { type: actionType, message: msg, level: "WARNING" }
+            ],
+            is_active: true
+        };
+
+        fetch('/api/rules/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.id) alert('Rule Saved!');
+            else alert('Error: ' + JSON.stringify(data));
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Init
+    addConditionRow();
+</script>
+{% endblock %}

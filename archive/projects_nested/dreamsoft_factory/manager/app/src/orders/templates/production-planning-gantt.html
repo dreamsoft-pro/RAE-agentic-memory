@@ -1,0 +1,276 @@
+<style>
+    /* indicator styles */
+    .overdue-indicator {
+        width: 24px;
+        margin-top: 5px;
+        height: 24px;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        border-radius: 17px;
+        color: white;
+        background: rgb(255, 60, 60);
+        line-height: 25px;
+        text-align: center;
+        font-size: 24px;
+    }
+
+    /* tasks styles */
+    .notEstimated {
+        border: 2px solid #e9ac98;
+        color: #e9ac98;
+        background: #e9ac98;
+    }
+
+    .notEstimated .gantt_task_progress {
+        background: #db2536;
+    }
+
+    .departmentColor {
+        border: 2px solid #3e794b;
+        color: #3e794b;
+        background: #3e794b;
+    }
+
+    .departmentColor .gantt_task_progress {
+        background: #2e6139;
+    }
+
+    .deviceColor {
+        border: 2px solid #5b9c69;
+        color: #5b9c69;
+        background: #5b9c69;
+    }
+
+    .deviceColor .gantt_task_progress {
+        background: #3e794b;
+    }
+
+
+    /*timeline styles*/
+    .gantt_task_cell {
+        background-color: #f9dfdf;
+    }
+
+    .gantt_task_cell.work_hour {
+        background-color: white;
+    }
+
+    .taskMoved .gantt_task_cell.no_work_hour,
+    .gantt_task_cell.week_end,
+    .gantt_task_cell.no_work_hour {
+        background-color: #f9dfdf;
+    }
+
+    /* cells styles */
+    .notEstimatedRow.gantt_row_task {
+        background-color: #ffd1b1;
+    }
+
+    .isHighlighted .gantt_cell,
+    .odd.isHighlighted .gantt_cell,
+    .isHighlighted .gantt_task_cell,
+    .odd.isHighlighted .gantt_task_cell {
+        background-color: #ff5e5e;
+    }
+
+    .taskMoved.gantt_row_task {
+        background-color: #f9fb8e;
+    }
+
+    .departmentRow .gantt_cell,
+    .odd.departmentRow .gantt_cell,
+    .departmentRow .gantt_task_cell,
+    .odd.departmentRow .gantt_task_cell {
+        background-color: #b2e0bc;
+    }
+
+    .deviceRow .gantt_cell,
+    .odd.deviceRow .gantt_cell,
+    .deviceRow .gantt_task_cell,
+    .odd.deviceRow .gantt_task_cell {
+        background-color: #c7e6ce;
+    }
+
+
+    /* others styles */
+
+    .gantt_selected .gantt_cell,
+    .gantt_selected .gantt_task_cell {
+        background-color: #F8EC9C !important;
+    }
+
+    /*legend style*/
+    .legendContainer {
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .legendContainer .box {
+        padding: 5px 20px;
+        width: 30%;
+    }
+
+    @media (max-width: 1200px) {
+        .legendContainer .box {
+            width: 50%;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .legendContainer .box {
+            width: 100%;
+        }
+    }
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="form-body">
+            <div class="portlet light">
+                <div class="portlet-title">
+                    <div class="caption">
+                        {{ 'production_planning_gantt' | translate }}<br>
+                    </div>
+                    <div class="tools" style="text-align: right;">
+                        <!--<well class="btn-sm">
+                            {{ 'number_of_departments' | translate }}: <span class="badge">{{ planningData.totalItems
+                                }}</span>
+                        </well>
+                        <select ng-model="showDepartment"
+                            ng-options="department.ID as department.name for (key, department) in departments"
+                            ng-change="setDepartment(showDepartment)"></select>-->
+                        <!--<select class="btn-default input-sm" ng-model="showRows"
+                            ng-change="planningData.setRows(showRows)"
+                            ng-options="each for (null, each) in [10,25,50,100]"></select>-->
+                        <button ng-click="planningData.clearCache()" class="btn btn-primary btn-sm">
+                            <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+                        </button>
+                        <button button-faq-accordion="productionPath.schedule-gantt"></button>
+
+                        <a class="btn btn-primary btn-sm" style="height: auto;" ui-sref="production-planning">
+                            <i class="fa fa-list"></i> {{ 'change_to_table_view' | translate }}
+                        </a>
+                        <a class="btn btn-primary btn-sm" style="height: auto;"
+                            ui-sref="production-planning-machines-gantt">
+                            <i class="fa fa-print"></i> {{ 'change_to_only_machines_view' | translate }}
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="overflowContainer">
+
+                        <h2>{{ 'planning' | translate }}</h2>
+                        <hr>
+                        <h4>{{ 'chart_legend' | translate }}</h4>
+                        <div class="legendContainer">
+                            <div class="box">
+                                <i class='fa fa-user'></i> - {{ 'device_with_one_operator' | translate }}<br>
+                                <i class='fa fa-users'></i> - {{ 'device_with_many_operators' | translate }}
+                            </div>
+                            <div class="box">
+                                <i class='fa fa-cog'></i> - {{ 'device_with_one_operation' | translate }}<br>
+                                <i class='fa fa-cogs'></i> - {{ 'device_with_many_operations' | translate }}
+                            </div>
+                            <div class="box">
+                                <i class='fa fa-circle'></i> - {{ 'operation_not_started' | translate }}<br>
+                                <i class='fa fa-play-circle'></i> - {{ 'operation_ongoing' | translate }}<br>
+                                <i class='fa fa-pause-circle'></i> - {{ 'operation_paused' | translate }}
+                            </div>
+                            <div class="box">
+                                <i class='fa fa-square'></i> - {{ 'one_side_process_type' | translate }}<br>
+                                <i class='fa fa-clone'></i> - {{ 'two_side_process_type' | translate }}
+                            </div>
+                        </div>
+                        <div class="legendContainer">
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #b2e0bc;">
+                                </div> - {{ 'department_group' | translate }}
+                            </div>
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #c7e6ce;">
+                                </div> - {{ 'device_group' | translate }}
+                            </div>
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #ffd1b1;">
+                                </div> - {{ 'task_with_not_estimated_time' | translate }}
+                            </div>
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #f9dfdf;">
+                                </div> - {{ 'machine_day_off' | translate }}
+                            </div>
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #ff5e5e;">
+                                </div> - {{ 'highlight_color_of_search_task' | translate }}
+                            </div>
+                            <div class="box">
+                                <div
+                                    style="display: inline-block; width: 15px; height: 15px; background-color: #f9fb8e;">
+                                </div> - {{ 'task_moved_due_to_machine_day_off' | translate }}
+                            </div>
+                        </div>
+                        <div>
+                            <hr>
+                            <label class="control-label">{{ 'search_for_operation' | translate }}</label><br>
+                            <input ng-model="searchOrderID" type="text" class="form-control"
+                                placeholder="{{ 'search_for_operation_result' | translate }}"
+                                ng-change="changeOrderID();"><br>
+                            <hr>
+                        </div>
+                        <a class="btn btn-primary btn-sm" style="height: auto;" ng-click="toggleGanttFullscreen();">
+                            <i class="fa fa-expand"></i> {{ 'toggle_full_screen' | translate }}
+                        </a>
+                        <a class="btn btn-primary btn-sm" style="height: auto;" ng-click="autoScheduleTasks();">
+                            <i class="fa fa-magic"></i> {{ 'auto_schedule_tasks_to_selected_operation' | translate }}
+                        </a>
+                        <br>
+                        {{ 'chancge_scale' | translate }}<br>
+                        <form class="gantt_control">
+                            <input type="radio" id="scale00" class="gantt_radio" ng-checked="defaultZoom == 'minute'"
+                                name="scale" value="minute" onClick="gantt.ext.zoom.setLevel('minute');">
+                            <label for="scale00">Minuta</label>
+
+                            <input type="radio" id="scale0" class="gantt_radio" ng-checked="defaultZoom == 'hour'"
+                                name="scale" selectevalue="hour" onClick="gantt.ext.zoom.setLevel('hour');">
+                            <label for="scale0">Godzina</label>
+
+                            <input type="radio" id="scale1" class="gantt_radio" ng-checked="defaultZoom == 'day'"
+                                name="scale" value="day" onClick="gantt.ext.zoom.setLevel('day');">
+                            <label for="scale1">Dzień</label>
+
+                            <input type="radio" id="scale2" class="gantt_radio" ng-checked="defaultZoom == 'week'"
+                                name="scale" value="week" onClick="gantt.ext.zoom.setLevel('week');">
+                            <label for="scale2">Tydzień</label>
+
+                            <input type="radio" id="scale3" class="gantt_radio" ng-checked="defaultZoom == 'month'"
+                                name="scale" value="month" onClick="gantt.ext.zoom.setLevel('month');">
+                            <label for="scale3">Miesiąc</label>
+
+                            <input type="radio" id="scale4" class="gantt_radio" ng-checked="defaultZoom == 'quarter'"
+                                name="scale" value="quarter" onClick="gantt.ext.zoom.setLevel('quarter');">
+                            <label for="scale4">Kwartał</label>
+                        </form>
+                        <div id="gantt_here" style='width:100%; height: 60vh; max-height: 70vh;'>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="fixedPositionSave" ng-show="changesMade">
+                    <button class="btn btn-success" ng-click="saveChanges()">
+                        {{ 'save_changes' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-click="cancelChanges()">
+                        {{ 'cancel' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>

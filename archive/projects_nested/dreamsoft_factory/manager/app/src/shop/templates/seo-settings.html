@@ -1,0 +1,46 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-cogs"></i> {{ 'seo_settings' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="shop.seoSettings"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <form class="form-horizontal" role="form" ng-submit="save()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'id_for_google_analytics' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-model="form.gaIdCode.value" type="text"
+                                       placeholder="{{ 'id_for_google_analytics' | translate }}" class="form-control" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'save' | translate }}</button>
+                                <button ng-click="reset()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="shop.seoSettings" ></div>
+    </div>
+</div>

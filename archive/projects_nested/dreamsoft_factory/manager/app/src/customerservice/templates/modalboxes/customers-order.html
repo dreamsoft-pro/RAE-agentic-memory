@@ -1,0 +1,156 @@
+<div class="modal-header btn-success">
+	<h3 class="modal-title">a summary of the customer’s order</h3>
+</div>
+	<div class="modal-body">
+		<div class="row">
+	<div class="col-md-12">
+		<div class="portlet light">
+			<div class="portlet-title">
+	<!-- 			<div class="caption">
+					<i class="fa-archive"></i> {{  }}
+				</div> -->
+				<!-- <div class="tools">
+		          <well class="btn-sm">{{ 'number_of_rows' | translate }}: <span class="badge">{{ cartsCtrl.totalItems }}</span> </well>
+		          <select ng-model="showRows" class="btn-default input-sm" ng-change="cartsCtrl.setRows(showRows)" ng-options="each for (null, each) in [10,25,50,100]" ></select>
+		          <button ng-click="cartsCtrl.clearCache()" class="btn btn-primary btn-sm">
+		            <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+		          </button>
+		          <button button-faq-accordion="orders.carts"></button>
+		        </div> -->
+			</div>
+			<div class="portlet-body">
+				<div class="wrapper1">
+					<div class="div1"></div>
+				</div>
+				<div class="row">
+					<div class="col-md-4">
+					<form class="form-horizontal">
+
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">ID</label>
+										<div class="col-md-9 pb-9">
+										<input type="email" class="form-control modal-notificationinput" placeholder="1">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'email' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="office@digitalprint.pro">
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'client' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="Grzegorz Leśniowski">
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'company' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="V-project sp z o.o.">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'address' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="32-085 Modlnica ul. Kwiatowa 9">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'nip' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="PL5130242951">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 modal-control-label">{{ 'country' | translate }}</label>
+										<div class="col-md-9 pb-9">
+											<input type="text" class="form-control modal-notificationinput" placeholder="Poland">
+										</div>
+									</div>
+
+					</form>
+				</div>
+
+				<div class="col-md-8">
+					<div class="table-responsive">
+								<table class="modal-table">
+										 <thead>
+												<tr>
+													 <th>{{ 'interval' | translate }}</th>
+													 <th>{{ 'value' | translate }}</th>
+													 <th>{{ 'no_of_orders' | translate }}</th>
+													 <th style="width:110px;">{{ 'the_average_value_of_the_contract' | translate }}</th>
+													 <th style="width:100px;">{{ 'number_of_reclamations' | translate }} </th>
+													 <th style="width:100px;">{{ 'late_payment' | translate }}</th>
+												</tr>
+										 </thead>
+
+										 <tbody>
+												<tr>
+													 <td>{{ 'summary' | translate }}</td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+												</tr>
+												<tr>
+													 <td>{{ 'week' | translate }}</td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+												</tr>
+												<tr>
+													 <td>{{ 'month' | translate }}</td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+												</tr>
+												<tr>
+													 <td>{{ 'quarter' | translate }}</td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+												</tr>
+												<tr>
+													 <td>{{ 'year' | translate }}</td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+													 <td><input class="form-control modal-input-1" type="text" placeholder=""></td>
+												</tr>
+										 </tbody>
+
+										</table>
+						</div>
+						<div class="col-md-8 list-order-user">
+							<p>{{ 'go_to_the_users_list_of_orders_User' | translate }} <span class="total-purchase">{{ 'total_purchases:' | translate }}</span> 6985,41 zł<span class="badge-2">32</span><span class="badge-1">3</span></p>
+						</div>
+						<div class="col-md-4">
+							<button class="btn btn-sm btn-default btn-ash pull-right">{{ 'go_to_the_users_list' | translate }}</button>
+						</div>
+
+				</div>
+
+				</div>
+
+
+
+			</div>
+		</div>
+	</div>
+</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+	</div>

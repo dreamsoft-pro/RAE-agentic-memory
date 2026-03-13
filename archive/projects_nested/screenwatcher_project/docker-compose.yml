@@ -1,0 +1,127 @@
+services:
+  web:
+    restart: always
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    # command is now handled by Dockerfile CMD + ENTRYPOINT
+    volumes:
+      - .:/app
+    ports:
+      - "9000:8000"
+    environment:
+      - DJANGO_DEBUG=1
+      - USE_MYSQL=true
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    restart: always
+    image: mariadb:10.11
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=screenwatcher
+      - MYSQL_USER=screenwatcher
+      - MYSQL_PASSWORD=password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    restart: always
+    image: redis:6-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery:
+    restart: always
+    build: .
+    command: celery -A screenwatcher_project worker -l info
+    volumes:
+      - .:/app
+    environment:
+      - USE_MYSQL=true
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A screenwatcher_project status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mcp:
+    restart: always
+    build: .
+    command: python manage.py run_mcp_server --transport=sse --host=0.0.0.0 --port=8001
+    volumes:
+      - .:/app
+    ports:
+      - "9001:8001"
+    environment:
+      - DJANGO_DEBUG=1
+      - USE_MYSQL=true
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_URL=redis://redis:6379/1
+      - ALLOWED_HOSTS=*
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8001)); s.close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: screenwatcher-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Security & Embedding
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SECURITY_COOKIE_SAMESITE=none
+      # Auth (Temporary Anonymous access for smooth dev testing)
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      # Disable Login form for anonymous
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+  grafana_data:

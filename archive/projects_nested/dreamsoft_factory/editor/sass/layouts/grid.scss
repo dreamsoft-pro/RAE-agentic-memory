@@ -1,0 +1,33 @@
+.grid-container {
+  display: grid;
+  gap: .25rem;
+  width: 100%;
+
+  &.hidden {
+    display: none;
+  }
+
+  &.two-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &.three-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  &.four-columns {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  &.six-columns {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  &:not(.three-columns, .two-columns) div span, &:not(.three-columns, .two-columns) div button {
+    display: none;
+  }
+
+  &.padding {
+    padding: .5rem;
+  }
+}

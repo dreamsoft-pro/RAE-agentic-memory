@@ -1,0 +1,30 @@
+# RAE-SUITE BEHAVIORAL CONTRACT: SCREENWATCHER v3
+id: screenwatcher_v3_arch
+tenant_uuid: 66435998-b1d9-5521-9481-55a9fd10e014
+priority: CRITICAL
+
+# ARCHITECTURAL CONSTRAINTS
+enforce:
+  django_structure:
+    apps_core_priority: LEADING
+    x_frame_options: SAMEORIGIN
+  api_routing:
+    primary_channel: "Django Proxy at /admin/help/query/"
+    timeout_limit: 120s
+  machine_parsing:
+    m03_hosonsoft: "regex:Capacit[^\d]*(\d+\.\d+)m2/h"
+
+# KNOWLEDGE GROUNDING
+grounding:
+  master_blueprint: "apps/core/documentation.py"
+  memory_tenant: "screenwatcher"
+
+# MODEL ROLES
+models:
+  local_qwen: "Configuration Analysis & UI Help"
+  local_llama: "OEE Calculation & Complex Queries"
+
+# AUDIT POLICY
+audit:
+  hard_frames: 2.1
+  zero_warning_policy: ENABLED

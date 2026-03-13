@@ -1,0 +1,21 @@
+{
+  "memory_drift_index": {
+    "value": -1.1920928955078125e-07,
+    "metadata": {
+      "memories_t0": 45,
+      "memories_t1": 45,
+      "time_delta_seconds": 0.98563
+    }
+  },
+  "structural_drift": {
+    "value": 0.0,
+    "metadata": {
+      "edges_t0": 0,
+      "edges_t1": 0,
+      "edges_added": 0,
+      "edges_removed": 0,
+      "edges_preserved": 0,
+      "jaccard_similarity": 1.0
+    }
+  }
+}

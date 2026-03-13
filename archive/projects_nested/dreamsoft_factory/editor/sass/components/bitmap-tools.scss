@@ -1,0 +1,160 @@
+@use './../shared' as *;
+
+.selected-item-tools-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  height: calc(100% - 3.5rem);
+  position: relative;
+
+  .tools-buttons-container {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    justify-content: center;
+
+    .selected-item-tool-button {
+      background-color: $white;
+      box-shadow: $md-shadow;
+      border-radius: $border-sm-radius;
+      padding: .5rem;
+      font-family: EditorIcons3;
+      font-size: 2.5rem;
+      color: $gray-700;
+      width: 2.5rem;
+      aspect-ratio: 1 / 1;
+
+      &.active {
+        background-color: $gray-700;
+        color: $white;
+      }
+
+      &.image-frame::before {
+        content: "\201C";
+      }
+
+      &.under-image-frame::before {
+        content: "\2013";
+      }
+
+      &.image-shadow::before {
+        content: "\002C";
+      }
+
+      &.image-masks::before {
+        content: "\006B";
+      }
+
+      &.image-effects::before {
+        content: "\006D";
+      }
+    }
+  }
+
+  .selected-item-tool-content-container {
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    width: 100%;
+    gap: 1rem;
+    background-color: $white;
+    border-radius: $border-sm-radius;
+    border: 1px solid $gray-300;
+    padding: .5rem;
+  }
+}
+
+.editor-bitmap-tools-box {
+  position: absolute;
+  z-index: 10000;
+
+  .editor-bitmap-tools {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+
+    .bitmap-tool-button {
+      background-color: $gray-300;
+      width: 2.5rem;
+      aspect-ratio: 1 / 1;
+      transition: all $transition-short ease-in-out;
+      position: relative;
+      border-radius: $border-sm-radius;
+      padding-top: .5rem !important;
+
+      &:not(.remove):hover {
+        filter: brightness($hover-brightness);
+      }
+
+      &::before, &::after {
+        font-family: EditorIcons3;
+        color: $gray-700;
+      }
+
+      &:not(.layer-up, .layer-down)::before, &.layer-down::after, &.layer-up::after {
+        font-size: 2.5rem !important;
+      }
+
+      &:not(.layer-up, .layer-down)::after, &.layer-down::before, &.layer-up::before {
+        font-size: 1.5rem !important;
+      }
+
+      &.layer-up, &.layer-down {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      &.layer-up::before {
+        content: "\0064";
+        place-self: end;
+      }
+
+      &.layer-up::after {
+        content: "\0026";
+        place-self: start;
+      }
+
+      &.layer-down::before {
+        content: "\0064";
+        place-self: end;
+      }
+
+      &.layer-down::after {
+        content: "\0025";
+        place-self: start;
+      }
+
+      //those classes below should be moved to the positioning tool
+      &.image-to-page::before {
+        content: "\007C";
+      }
+
+      &.image-to-center::before {
+        content: "\2020";
+      }
+
+      &.remove {
+        background-color: $gray-600 !important;
+
+        &:hover {
+          background-color: $red !important;
+        }
+      }
+
+      &.remove::before {
+        content: "\0069";
+        color: $white !important;
+      }
+
+      &.lock {
+      }
+
+      &.lock::before {
+        content: "\2014";
+      }
+    }
+  }
+}

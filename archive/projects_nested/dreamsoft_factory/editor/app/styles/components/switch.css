@@ -1,0 +1,77 @@
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.switch.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+    margin: 10px;
+}
+
+.switch.toggle-switch .toggle-input {
+    display: none;
+}
+
+.switch.toggle-switch .toggle-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3rem;
+    height: 1.5rem;
+    background-color: var(--gray-500);
+    border-radius: var(--border-lg-radius);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.switch.toggle-switch .toggle-label::before {
+    content: "";
+    position: absolute;
+    width: 1.2rem;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    left: .2rem;
+    background-color: var(--white);
+    box-shadow: var(--md-shadow);
+    transition: transform 0.3s;
+}
+
+.switch.toggle-switch .toggle-input:checked + .toggle-label {
+    background-color: var(--green);
+}
+
+.switch.toggle-switch .toggle-input:checked + .toggle-label::before {
+    transform: translate(.9rem, -50%);
+}
+
+/* Light theme */
+.switch.toggle-switch.light .toggle-label {
+    background-color: #BEBEBE;
+}
+
+.switch.toggle-switch.light .toggle-input:checked + .toggle-label {
+    background-color: #9B9B9B;
+}
+
+.switch.toggle-switch.light .toggle-input:checked + .toggle-label::before {
+    transform: translateX(6px);
+}
+
+/* Dark theme */
+/*.toggle-switch.dark .toggle-label {*/
+/*    background-color: #4B4B4B;*/
+/*}*/
+
+/*.toggle-switch.dark .toggle-input:checked + .toggle-label {*/
+/*    background-color: #717171;*/
+/*}*/
+
+/*.toggle-switch.dark .toggle-input:checked + .toggle-label::before {*/
+/*    transform: translateX(16px);*/
+/*}*/

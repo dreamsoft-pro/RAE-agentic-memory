@@ -1,0 +1,327 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'edit' | translate }}: {{oryg.name}}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+    <div class="modal-body">
+
+        <div class="form-body">
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.name" type="text" class="form-control"
+                           placeholder="{{ 'name' | translate }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'lang_name' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-repeat="lang in languages" ng-show="nameLang == lang.code" ng-model="form.langs[lang.code].name" type="text" class="form-control" placeholder="{{lang.code}}" >
+                    <select class="form-control" ng-init="nameLang = currentLang.code" ng-model="nameLang" ng-options="each.code as each.name for (key, each) in languages"></select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'admin_description' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.adminName" type="text" class="form-control"
+                           placeholder="{{'admin_description' | translate }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {{ 'unit' | translate }}</label>
+                <div class="col-md-9">
+                    <select class="form-control" ng-model="form.unit" ng-change="changeUnit();"
+                            ng-options="each.ID as each.unit for (key, each) in unitsList"></select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-9">
+                    <div class="checkbox-list">
+                        <label>
+                            <div class="checker"><span
+                                    ng-class="{checked: form.custom}"><input
+                                    ng-model="form.custom" type="checkbox"></span>
+                            </div>
+                            {{ 'custom_format' | translate }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'change_step' | translate }} {{ 'width' | translate }} </label>
+                <div class="col-md-9">
+                    <input ng-model="form.widthStep"  type="text" class="form-control"
+                           placeholder="1" >
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'change_step' | translate }}  {{ 'height' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.heightStep"  type="text" class="form-control"
+                           placeholder="1" >
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'change_step' | translate }} {{ 'depth' | translate }} </label>
+                <div class="col-md-9">
+                    <input ng-model="form.depthStep"  type="text" class="form-control"
+                           placeholder="1">
+                </div>
+            </div>
+            <div class="form-group" ng-if="!form.custom">
+                <label class="col-md-3 control-label">{{'gross_width' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.width" ng-change="syncSize(form, 'width')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!form.custom">
+                <label class="col-md-3 control-label">{{'gross_height' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.height" ng-change="syncSize(form, 'height')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!form.custom">
+                <label class="col-md-3 control-label">{{'depth' | translate }} </label>
+                <div class="col-md-9">
+                    <input ng-model="form.depth" ng-change="syncSize(form, 'depth')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+            </div>
+			
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'slope' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slope" ng-change="syncSize(form, 'slope')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>			
+
+            <div class="form-group" ng-if="!form.custom">
+                <label class="col-md-3 control-label">{{'net_width' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.netWidth" ng-change="syncSize(form, 'netWidth')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!form.custom">
+                <label class="col-md-3 control-label">{{'net_height' | translate}} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.netHeight" ng-change="syncSize(form, 'netHeight')" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'minimum' | translate }} {{ 'width' | translate }} {{ 'gross' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.minWidth" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'minimum' | translate }} {{ 'height' | translate }} {{ 'gross' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.minHeight" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'minimum' | translate }} {{ 'depth' | translate }} {{ 'gross' | translate }} </label>
+                <div class="col-md-9">
+                    <input ng-model="form.minDepth" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'maximum' | translate }} {{ 'width' | translate }} {{ 'gross' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.maxWidth" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'maximum' | translate }} {{ 'height' | translate }} {{ 'gross' | translate }} *</label>
+                <div class="col-md-9">
+                    <input ng-model="form.maxHeight" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" required>
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label">{{ 'maximum' | translate }} {{ 'depth' | translate }} {{ 'gross' | translate }} </label>
+                <div class="col-md-9">
+                    <input ng-model="form.maxDepth" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+            </div>
+            <div class="form-group" ng-if="!!form.custom">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-9">
+                    <div class="checkbox-list">
+                        <label>
+                            <div class="checker"><span
+                                    ng-class="{checked: form.interchangeability}"><input
+                                    ng-model="form.interchangeability"
+                                    type="checkbox"></span></div>
+                            {{ 'interchangeability_of_dimensions' | translate }}</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_right' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalLeft" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_left' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalRight" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_top' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalTop" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_bottom' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalBottom" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_front' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalFront" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'slope_external_back' | translate
+                    }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.slopeExternalBack" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-9">
+                    <div class="checkbox-list">
+                        <label>
+                            <div class="checker"><span
+                                    ng-class="{checked: form.addRidgeThickness}"><input
+                                    ng-model="form.addRidgeThickness" type="checkbox" ng-true-value="1" ng-false-value="0"></span>
+                            </div>
+                            {{ 'add_ridge_thickness' | translate }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'binding_type' | translate }}</label>
+                <div class="col-md-9">
+                    <div ng-repeat="binding in bindingTypes">
+                        <label ng-class="{'active': form.binding == binding}">
+                            <input ng-model="form.binding"
+                                   type="radio"
+                                   value="{{binding}}">
+                            {{ binding + '_binding' | translate }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+										
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'wingtip_front' | translate }}</label>
+                <div class="col-md-3">
+                    <input ng-model="form.wingtipFront" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+                <label class="col-md-1 control-label">min:</label>
+                <div class="col-md-3">
+                    <input ng-model="form.wingtipFrontMin" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'wingtip_back' | translate }}</label>
+                <div class="col-md-3">
+                    <input ng-model="form.wingtipBack" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+                <label class="col-md-1 control-label">min:</label>
+                <div class="col-md-3">
+                    <input ng-model="form.wingtipBackMin" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}" >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{'maximum_total_gross_width' | translate }}</label>
+                <div class="col-md-6">
+                    <input ng-model="form.maximumTotalGrossWidth" type="text" class="form-control"
+                           placeholder="{{ form.unit == 1 ? 'mm' : 'cm' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {{ 'number_rows_for_printing_labels' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.rows" type="text" class="form-control"
+                           placeholder="{{ 'number_of_rows' | translate }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-9">
+                    <div class="checkbox-list">
+                        <label>
+                            <div class="checker">
+                                <span ng-class="{checked: form.active}">
+                                    <input ng-model="form.active" type="checkbox" />
+                                </span>
+                            </div>
+                            {{ 'active' | translate }}</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+        <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+    </div>
+
+</form>

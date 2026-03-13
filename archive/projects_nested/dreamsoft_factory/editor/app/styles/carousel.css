@@ -1,0 +1,532 @@
+/* W karuzeli na obecnym motywie nie widze takich klas ale moga byc uzywane poza karuzela */
+.repeatable.yes::before {
+    font-family: EditorIcons;
+    content: '\0072';
+    font-size: 18pt;
+}
+
+.repeatable:not(.photoAlbumPageMulti) {
+    background: none repeat scroll 0 0 blue;
+    height: 20px;
+    position: absolute;
+    top: 45px;
+    width: 20px;
+}
+
+.repeatable.no {
+    background: rgb(0, 209, 204);
+    border: 1px solid white;
+    line-height: 14pt;
+    padding-left: 2px;
+}
+
+.repeatable.yes {
+    background: rgb(12, 93, 89);
+    border: 1px solid white;
+    line-height: 14pt;
+    padding-left: 2px;
+}
+
+.repeatable.no::before {
+    content: "\0072";
+    font-family: EditorIcons;
+    font-size: 19pt;
+}
+
+.repeatable.yes::before {
+    content: "\0072";
+    font-family: EditorIcons;
+    font-size: 19pt;
+}
+
+#carouselBox {
+    display: flex;
+}
+#carouselBox .scrollButton {
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    position: relative;
+    width: 50px;
+    transition: transform 0.2s ease 0s;
+}
+#carouselBox .scrollButton::before {
+    color: #565656;
+    display: block;
+    font-size: 164px;
+    left: -15px;
+    position: absolute;
+    font-family: editorIcons;
+    top: 8px;
+    line-height: 100px;
+    transform: scale(0.9);
+    transition: transform 0.2s ease 0s;
+}
+#carouselBox .scrollButton:hover {
+    transform: scale(0.9);
+}
+#carouselBox .actionButton {
+    background: #565656;
+    cursor: pointer;
+    height: 53px;
+    overflow: hidden;
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+#carouselBox .actionButton .actionButtonDesc {
+    color: #fff;
+    font-weight: 300;
+    margin-top: 2rem;
+    font-size: 0.8rem;
+}
+#carouselBox div#viewsListUser {
+    height: 110px;
+    display: flex;
+    position: absolute;
+    background-color: #f8f8f8;
+    z-index: 200;
+    bottom: 1px;
+    left: 20rem;
+    padding-left: 0px !important;
+    overflow: visible !important;
+    right: 0px;
+    padding-left: 0;
+}
+#carouselBox div#viewsListUser #mainViewsButtons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+#carouselBox div#viewsListUser #mainViewsButtons #addPageButton::before {
+    color: #fff;
+    content: "r";
+    display: block;
+    font-family: "EditorIcons";
+    font-size: 50px;
+    line-height: 50px;
+    bottom: 0.5rem;
+    position: absolute;
+}
+#carouselBox div#viewsListUser #mainViewsButtons #addPageButton::after {
+    color: #fff;
+    content: "C";
+    font-family: "EditorIcons";
+    font-size: 2.5rem;
+    left: 5rem;
+    bottom: 1.5rem;
+    position: absolute;
+}
+#carouselBox div#viewsListUser #mainViewsButtons #allPagesPopUpButton::before {
+    color: #fff;
+    content: "B";
+    font-family: "EditorIcons";
+    position: absolute;
+    font-size: 50px;
+    line-height: 50px;
+    bottom: 0.5rem;
+}
+#carouselBox div#viewsListUser #scrollViewsLeft::before {
+    content: "³";
+}
+#carouselBox div#viewsListUser #scrollViewsRight::before {
+    content: "²";
+}
+#carouselBox div#viewsListUser .viewsListContent {
+    position: relative;
+    float: left;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView {
+    display: inline-block;
+    border: 1px #565656 solid;
+    border-radius: 0.25rem;
+    height: 93px;
+    margin-right: 10px;
+    padding: 8px 12px 6px 6px;
+    position: relative;
+    background: none;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView .product-title {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    background: #f8f8f8;
+    color: #565656;
+    padding: 0 20px;
+    transform: translate(-50%, 0);
+    overflow: visible;
+    font-weight: 500;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti {
+    transition: transform 0.1s;
+    background-image: url(style.css);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border: #565656 solid;
+    color: #ffffff;
+    display: block;
+    height: 70px !important;
+    list-style: outside none none;
+    width: 114px;
+    position: relative;
+    background-color: #dcdcdc;
+    float: left;
+    overflow: hidden;
+    cursor: pointer;
+    margin-top: 3px;
+    margin-left: 0;
+    border-radius: 0;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti .viewRemover {
+    transition: background-color 0.2s;
+    top: 2px;
+    left: 2px;
+    background-color: #565656;
+    line-height: 22px;
+    height: 22px;
+    color: #ffffff;
+    border-radius: 5px;
+    width: 22px;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti .viewRemover::before {
+    content: "i";
+    font-family: "EditorIcons";
+    font-size: 24px;
+    font-weight: normal;
+    line-height: 22px;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti .viewRemover:hover {
+    background-color: rgba(255, 0, 0, 0.5);
+    transition: background-color 0.2s;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti .pagesCounter {
+    background: #565656 none repeat scroll 0 0;
+    border: 1px #ffffff solid;
+    color: #ffffff;
+    border-radius: 10px;
+    bottom: 3px;
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    height: 15px;
+    line-height: 13px;
+    position: absolute;
+    right: 5px;
+    text-align: center;
+    width: 40px;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti.current {
+    border: 4px #3FA535 solid;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti:hover {
+    transform: scale(0.95);
+    transition: transform 0.1s, border-color 0.3s, border-width 0.3s;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.photoAlbumPageMulti:first-child {
+    margin-left: -26px !important;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.addPage {
+    display: block;
+    float: left;
+    width: 10px;
+    height: 72px;
+    margin-top: 2px;
+    margin-left: 5px;
+    margin-right: 5px;
+    background: transparent;
+    transition: width 0.5s, font-size 0.5s, background 0.5s;
+    font-size: 0;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.addPage:hover {
+    width: 50px;
+    cursor: pointer;
+    border: 1px solid #ffffff;
+    font-size: 30px;
+    background: #565656;
+}
+#carouselBox div#viewsListUser .viewsListContent ul.viewsListUser li.complexView li.addPage:hover::before {
+    content: "+";
+    display: block;
+    width: 100%;
+    text-align: center;
+    line-height: 69px;
+    color: #fff;
+}
+#carouselBox #pagesListUser {
+    display: inline-block;
+    background-color: #f8f8f8;
+    height: 110px;
+    left: 20rem;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    z-index: 100;
+}
+#carouselBox #pagesListUser #topPagesListUser {
+    position: absolute;
+    width: 100%;
+    height: 0;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher {
+    background-color: #f8f8f8;
+    width: 100%;
+    height: 30px;
+    position: absolute;
+    top: -30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers {
+    width: fit-content;
+    height: 100%;
+    text-align: center;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .prevPage {
+    background: #E5E5E5 none repeat scroll 0 0;
+    display: block;
+    float: left;
+    width: 32px;
+    color: #565656;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    margin-top: 1px;
+    border-radius: 5px 0 0 5px;
+    height: 28px;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .prevPage::before {
+    content: "<";
+    font-family: -webkit-body;
+    font-size: 17pt;
+    line-height: 29px;
+    font-weight: 500;
+    position: absolute;
+    display: block;
+    width: 100%;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .currentPageInfo {
+    background: #E5E5E5 none repeat scroll 0 0;
+    float: left;
+    display: block;
+    height: 28px;
+    color: #565656;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 1px;
+    position: relative;
+    line-height: 28px;
+    font-size: 20px;
+    font-weight: 500;
+    border-left: solid 1px #CCCCCC;
+    padding: 0 2rem;
+    min-width: 100px;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .pagesInfo {
+    display: block;
+    position: relative;
+    float: left;
+    height: 28px;
+    background-color: #E5E5E5;
+    border-left: 1px solid #CCCCCC;
+    margin-top: 1px;
+    color: #565656;
+    font-size: 16px;
+    line-height: 28px;
+    padding: 0 2rem;
+    min-width: 125px;
+    font-weight: 400;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .nextPage {
+    background: #E5E5E5 none repeat scroll 0 0;
+    display: -webkit-box;
+    height: 28px;
+    width: 32px;
+    color: #565656;
+    text-align: center;
+    border-width: 0px 0px 0px 1px;
+    cursor: pointer;
+    display: block;
+    margin-top: 1px;
+    position: relative;
+    border-radius: 0 5px 5px 0;
+    float: left;
+    border-left: 1px solid #CCCCCC;
+}
+#carouselBox #pagesListUser #topPagesListUser .currentPagesSwitcher .pagesControllers .nextPage::before {
+    content: ">";
+    font-family: -webkit-body;
+    font-size: 17pt;
+    line-height: 29px;
+    font-weight: 500;
+    position: absolute;
+    display: block;
+    width: 100%;
+}
+#carouselBox #pagesListUser #topPagesListUser .pagesListHeader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 30px;
+    width: 200px;
+    background-color: #E5E5E5;
+    color: #565656;
+    top: -30px;
+    border-radius: 0px 10px 0px 0px;
+    text-align: center;
+    line-height: 31px;
+    cursor: pointer;
+}
+#carouselBox #pagesListUser #topPagesListUser .pagesListHeader.active::after {
+    transform: rotate(180deg);
+}
+#carouselBox #pagesListUser #topPagesListUser .pagesListHeader::before {
+    content: "Strony motywu";
+    font-size: 1rem;
+    line-height: 1rem;
+    text-transform: uppercase;
+    font-weight: 400;
+    cursor: pointer;
+}
+#carouselBox #pagesListUser #topPagesListUser .pagesListHeader::after {
+    font-family: "EditorIcons3";
+    text-transform: lowercase;
+    content: "‘";
+    color: #565656;
+    font-size: 2.5rem;
+    position: absolute;
+    left: 11rem;
+    transition: transform 0.3s ease;
+    margin-top: 3px;
+}
+#carouselBox #pagesListUser #topPagesListUser .viewsListLabel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 30px;
+    width: 200px;
+    color: #565656;
+    background-color: #E5E5E5;
+    top: -60px;
+    border-radius: 10px 0px 0px 0px;
+    text-align: center;
+    line-height: 31px;
+    left: calc(100% - 200px);
+    cursor: pointer;
+}
+#carouselBox #pagesListUser #topPagesListUser .viewsListLabel.active::after {
+    transform: rotate(180deg);
+}
+#carouselBox #pagesListUser #topPagesListUser .viewsListLabel::before {
+    content: "Widok stron";
+    font-size: 1rem;
+    line-height: 1rem;
+    text-transform: uppercase;
+    font-weight: 400;
+    cursor: pointer;
+    position: absolute;
+}
+#carouselBox #pagesListUser #topPagesListUser .viewsListLabel::after {
+    font-family: "EditorIcons3";
+    text-transform: lowercase;
+    position: absolute;
+    content: "‘";
+    color: #565656;
+    font-size: 2.5rem;
+    right: 11rem;
+    transition: transform 0.3s ease;
+    margin-top: 3px;
+}
+#carouselBox #pagesListUser #bottomPagesListUser {
+    display: flex;
+    height: 110px;
+}
+#carouselBox #pagesListUser #bottomPagesListUser #pageListButtons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+#carouselBox #pagesListUser #bottomPagesListUser #pageListButtons #applyPageButton::before {
+    color: #fff;
+    content: "”";
+    font-family: "EditorIcons3";
+    display: block;
+    font-size: 50px;
+    line-height: 50px;
+    bottom: 0.5rem;
+    position: absolute;
+}
+#carouselBox #pagesListUser #bottomPagesListUser #pageListButtons #applyAllPagesButton::before {
+    content: "•";
+    font-family: "EditorIcons3";
+    color: #fff;
+    position: absolute;
+    font-size: 50px;
+    line-height: 50px;
+    bottom: 0.5rem;
+}
+#carouselBox #pagesListUser #bottomPagesListUser .pagesListContent {
+    left: 150px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    height: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 0 32px;
+}
+#carouselBox #pagesListUser #bottomPagesListUser .pagesListContent .userThemePage {
+    background-image: url(style.css);
+    transition: transform 0.1s;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border: 3px #565656 solid;
+    color: #565656;
+    flex: 0 0 auto;
+    height: 90px !important;
+    list-style: outside none none;
+    width: 114px;
+    position: relative;
+    background-color: #dcdcdc;
+    float: left;
+    overflow: hidden;
+    cursor: pointer;
+}
+#carouselBox #pagesListUser #bottomPagesListUser .pagesListContent .userThemePage .title {
+    background: #D4D4D4 none repeat scroll 0 0;
+    bottom: 0;
+    font-size: 12px;
+    padding: 0 10px;
+    position: absolute;
+    text-align: center;
+    color: #000000;
+    width: 100%;
+}
+#carouselBox #pagesListUser #bottomPagesListUser .pagesListContent .userThemePage.selected {
+    border: 4px #3FA535 solid;
+}
+#carouselBox #pagesListUser #bottomPagesListUser .pagesListContent .vacancy, #carouselBox #pagesListUser #bottomPagesListUser .pagesListContent .noVacancy {
+    display: block;
+}
+#carouselBox #pagesListUser #bottomPagesListUser #scrollThemesLeft::before {
+    content: "³";
+}
+#carouselBox #pagesListUser #bottomPagesListUser #scrollThemesRight::before {
+    content: "²";
+}

@@ -1,0 +1,13 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="cols-xs-12">
+            <ul class="nav nav-tabs nav-justified">
+                <li ng-repeat="item in menu" ng-class="{active: $state.current.name.includes('-'+item)}">
+                    <a ui-sref="printshop-configOptionSettings-{{item}}">
+                        {{_.snakeCase(item) | translate}}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

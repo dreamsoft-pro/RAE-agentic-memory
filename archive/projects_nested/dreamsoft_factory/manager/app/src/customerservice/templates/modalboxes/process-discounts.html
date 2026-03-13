@@ -1,0 +1,107 @@
+<div class="modal-header btn-success">
+    <h3 class="modal-title">{{ discountGroup.langs[currentLang.code].name }}</h3>
+</div>
+<div class="modal-body process-discount">
+    <div class="row">
+        <div class="col-md-12">
+
+
+            <div ng-repeat="processDiscount in processDiscounts">
+
+                <ul class="list-group">
+                    <li class="list-group-item" ng-repeat="prices in processDiscount">
+
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <td>
+                                    <span ng-if="prices.attribute.type == 1">
+                                        {{ 'pricelist' | translate }}
+                                    </span>
+                                    <span ng-if="prices.attribute.type == 2">
+                                        {{ 'print_type' | translate }}
+                                    </span>
+                                    <span ng-if="prices.attribute.type == 3">
+                                        {{ 'workspace' | translate }}
+                                    </span>
+                                </td>
+                                <td>{{ 'attribute' | translate }}</td>
+                                <td>{{ 'option' | translate }}</td>
+                                <td>{{ 'link' | translate }}</td>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>
+                                     <span ng-if="prices.attribute.type == 1">
+                                         <span ng-init="prices.priceList.controllerID = prices.priceList.priceListID"></span>
+                                        {{ 'number' | translate }}: {{ prices.priceList.priceListID }}<br>
+                                        {{ prices.priceList.priceListName }}
+                                    </span>
+                                    <span ng-if="prices.attribute.type == 2">
+                                        <span ng-init="prices.priceList.controllerID = prices.printType.printTypeID"></span>
+                                        {{ 'number' | translate }}: {{ prices.printType.printTypeID }}<br>
+                                        {{ prices.printType.printTypeName }}
+                                    </span>
+                                    <span ng-if="prices.attribute.type == 3">
+                                        <span ng-init="prices.priceList.controllerID = prices.workSpace.workSpaceID"></span>
+                                        {{ 'number' | translate }}: {{ prices.workSpace.workSpaceID }}<br>
+                                        {{ prices.workSpace.workSpaceName }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ 'number' | translate }}: {{ prices.attribute.ID }}<br>
+                                    {{ prices.attribute.name }} ({{ prices.attribute.langs[currentLang.code].name }})
+                                </td>
+                                <td>
+                                    {{ 'number' | translate }}: {{ prices.option.ID }}<br>
+                                    {{ prices.option.name }} ({{ prices.option.langs[currentLang.code].name }})
+                                </td>
+                                <td>
+                                    <a ui-sref="printshop-configOptionSettings-edit({attrID: prices.attribute.ID, optID: prices.option.ID, controllerId: prices.priceList.controllerID, discountGroupId: discountGroup.ID})" target="_blank"
+                                       data-toggle="tooltip" tooltip="{{ 'go_to_option_settings' | translate }}"
+                                       class="btn blue-hoki btn-xs">
+                                        <span class="glyphicon glyphicon-cog"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <div ng-repeat="priceType in prices.priceTypes">
+
+                            <span>Cennik: <b>{{ priceType.priceTypeName }}</b></span>
+
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <td>{{ 'amount' | translate }}</td>
+                                    <td>{{ 'price' | translate }}</td>
+                                    <td>{{ 'expense' | translate }}</td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat="value in priceType.values">
+                                    <td>{{ value.amount }}</td>
+                                    <td>{{ value.value }}</td>
+                                    <td>{{ value.expense }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                        <div class="process-discount-line"></div>
+
+                    </li>
+                </ul>
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

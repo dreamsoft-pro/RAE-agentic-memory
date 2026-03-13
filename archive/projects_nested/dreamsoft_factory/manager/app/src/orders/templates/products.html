@@ -1,0 +1,188 @@
+<div class="row product-list">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-basket-loaded"></i> {{ 'products' | translate }}
+                </div>
+                <div class="info-box">
+                    <span class="bold">{{ 'production_mode' | translate }}:</span>
+                    <ul class="list-unstyled">
+                        <li ng-repeat="realisationTime in realisationTimes">
+                            <span style="background-color: {{ realisationTime.color }};" class="rectangle"></span> {{ realisationTime.names[currentLang.code] }}
+                        </li>
+                    </ul>
+                </div>
+                <div class="tools">
+                    <well class="btn-sm">
+                        {{ 'number_of_rows' | translate }}: <span class="badge">{{ dpProducts.totalItems }}</span>
+                    </well>
+                    <select class="btn-default input-sm" ng-model="showRows" ng-change="ordersCtrl.setRows(showRows)" ng-options="each for (null, each) in [10,25,50,100]"></select>
+                    <button ng-click="ordersCtrl.clearCache()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+                    </button>
+                    <button button-faq-accordion="orders.products"></button>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <div class="wrapper1">
+                    <div class="div1"></div>
+                </div>
+
+                <div class="overflowContainer">
+                    <table class="table">
+                        <thead>
+                            <tr role="row" class="heading">
+                                <th style="width:5%;">#</th>
+                                <th style="width:10%;">{{ 'user' | translate }}</th>
+                                <th style="width:5%;">{{ 'order_id' | translate }}</th>
+                                <th style="width:35%;">{{ 'product' | translate }}</th>
+                                <th style="width:10%;">{{ 'operation' | translate }}</th>
+                                <th style="width:10%;">{{ 'date' | translate }}</th>
+                                <th style="width:5%;">{{ 'volume' | translate }}</th>
+                                <th style="width:5%;">{{ 'realization' | translate }}</th>
+                                <th style="width:5%;">{{ 'actions' | translate }}</th>
+                            </tr>
+                            <tr role="row" class="filter heading">
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="ID" ng-model="dpProducts.params.ID">
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'user_id' | translate }}" ng-model="dpProducts.params.userID">
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'cart_id' | translate }}" ng-model="dpProducts.params.orderID">
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'product' | translate }}" ng-model="dpProducts.params.name">
+                                </td>
+                                <td></td>
+                                <td>
+                                    <div ng-model="dpProducts.params.dateFrom" ng-change="setParams()" dp-datepicker></div>
+                                    <div ng-model="dpProducts.params.dateTo" ng-change="setParams()" dp-datepicker></div>
+                                </td>
+                                <td>
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'from' | translate }}" ng-model="dpProducts.params.volumeFrom">
+                                    <input ng-change="setParams()" type="text" class="form-control form-filter input-sm" placeholder="{{ 'to' | translate }}" ng-model="dpProducts.params.volumeTo">
+                                </td>
+                                <td>
+                                    <div ng-model="dpProducts.params.realizationDateFrom" ng-change="setParams()" dp-datepicker></div>
+                                    <div ng-model="dpProducts.params.realizationDateTo" ng-change="setParams()" dp-datepicker></div>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="product-row" ng-repeat="product in dpProducts.items">
+                                <td style="border-left:10px solid {{ _.findWhere(realisationTimes, {ID: product.realizationTimeID}).color }};">
+                                    <button class="btn btn-default btn-xs" ng-click="getProductCard(product)" tooltip="{{ 'product_card' | translate}} {{ product.ID }}">
+                                    <i class="fa fa-file-text-o"></i> {{ product.ID }}
+                                </button>
+                                </td>
+                                <td>
+                                    <!--{{ product.userID }}
+                                    <button ng-click="showUserAddress(product)" class="btn btn-default" type="button">
+                                        {{ 'user_data' | translate}}
+                                    </button>-->
+                                    <a ui-sref="customerservice-userlist({userID: product.userID})" title="{{ 'go_to' | translate }} -  {{ 'user' | translate }}:{{ product.userID }}">
+                                        <b>{{ product.userID }}</b>
+                                    </a>
+                                    <br>
+                                    <span ng-if="product.defaultAddress.apertment">{{ product.defaultAddress.companyName }}</span><br> {{ product.defaultAddress.name }} {{ product.defaultAddress.lastname }}<br />
+                                    <br /> {{ product.defaultAddress.zipcode }} {{ product.defaultAddress.city }}<br /> {{ product.defaultAddress.street }} {{ product.defaultAddress.house }}<span ng-if="product.defaultAddress.apertment">/{{ product.defaultAddress.apartment }}</span>
+                                    <br> +{{ product.defaultAddress.areaCode }} {{ product.defaultAddress.telephone }}
+                                </td>
+                                <td>
+                                    <button ui-sref="orders-orders({orderID: product.orderID })" tooltip="{{ 'go_to_order' | translate }}" class="btn blue-hoki btn-xs">
+                                    <i class="fa fa-shopping-cart"></i>  {{ product.orderNumber }}
+                                </button>
+                                </td>
+                                <td>
+                                    {{ product.name }}
+                                    <div class="marginBottomNo">
+                                        <div ng-repeat="subProducts in product.products">
+                                            <b>{{ subProducts.typeName }}</b>
+                                            <br> {{ subProducts.formatName }}
+                                            <b>
+                                            {{ subProducts.formatWidth }} x {{ subProducts.formatHeight }}
+                                            {{ subProducts.formatUnit == 2 ? 'cm' : 'mm' }}
+                                        </b>
+                                            <br>
+                                            <div>
+                                                {{ 'pages' | translate }}: <b>{{ subProducts.pages }}</b>
+                                            </div>
+                                            <div ng-repeat="attr in subProducts.attributes">
+                                                <span ng-if="!attr.emptyChoice">{{ attr.attrName }}: {{ attr.optName }}</span>
+                                            </div>
+                                            <div ng-repeat="specialAttribute in subProducts.specialAttributes">
+                                                <span>{{ specialAttribute.name }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div ng-repeat="subProducts in product.products">
+                                        <div class="production-box" ng-if="subProducts.ongoings">
+                                            <span class="text-center">
+                                            {{ subProducts.ongoings.currentStage }}-{{ subProducts.ongoings.count }}
+                                        </span>
+                                            <br>
+                                            <div class="production-time-line">
+                                                <div class="time-line">
+
+                                                    <div class="events-wrapper">
+                                                        <div class="events">
+                                                            <ul>
+                                                                <li class="one-event" ng-repeat="ongoing in subProducts.ongoings.list" style="width: {{ ongoing.widthPercent }}%;">
+                                                                    <span style="width: {{ ongoing.widthPercent }}%;" class="event-label" ng-if="!(subProducts.ongoings.count == ongoing.order)"></span>
+                                                                    <span class="event-pointer" ng-if="!(subProducts.ongoings.count == ongoing.order)" ng-class="{'fill-pointer': ongoing.inProgress}">
+                                                            </span>
+                                                                    <span class="event-pointer-last" ng-if="subProducts.ongoings.count == ongoing.order" ng-class="{'fill-pointer': ongoing.inProgress}">
+                                                            </span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <br> {{ subProducts.ongoings.currentOperation }}
+                                            <a class="text-center" tooltip="{{ 'show_details' | translate }}" ui-sref="products-procudtion-details({productID: subProducts.ID})">
+                                                <button class="btn btn-xs">
+                                                <i class="fa fa-cogs"></i>
+                                            </button>
+                                            </a>
+                                            <div ng-if="subProducts.ongoings.endProduction">
+                                                <b>{{ 'completed_production' | translate }}</b>
+                                            </div>
+                                            <br> {{ subProducts.ongoings.currentDate }}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ product.created }}</td>
+                                <td>{{ product.volume }}</td>
+                                <td><span ng-if="product.displayRealisationDate === 'no_file_and_payment'">{{ 'Undefined_no-file_no-payment' | translate }}</span>
+                                    <span ng-if="product.displayRealisationDate === 'no_file'">{{ 'Undefined_no-file' | translate }}</span>
+                                    <span ng-if="product.displayRealisationDate === 'no_payment'">{{ 'Undefined_no-payment' | translate }}</span>
+                                    <span ng-if="product.displayRealisationDate === true">{{ product.realisationDate }}</span></td>
+                                <td>
+                                    <button class="btn btn-xs red-sunglo" ng-click="noAccept(product)">
+                                    {{ 'undo_accept' | translate }}
+                                </button>
+
+                                    <button tooltip="Generuj JDF" ng-click="getProductXml(product)" class="btn blue-hoki btn-xs">JDF
+                                </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <pagination total-items="ordersCtrl.totalItems" ng-model="ordersCtrl.currentPage" ng-change="ordersCtrl.setPage(ordersCtrl.currentPage); ordersCtrl.get()" class="pagination-sm" max-size="10" boundary-links="true" rotate="true" items-per-page="ordersCtrl.params.limit"></pagination>
+
+            </div>
+        </div>
+    </div>
+</div>

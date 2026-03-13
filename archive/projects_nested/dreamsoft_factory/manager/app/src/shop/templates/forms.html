@@ -1,0 +1,88 @@
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa icon-envelope-open"></i> {{ 'contact_forms' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="shop.forms"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>{{ 'ID' | translate }}</th>
+                            <th>{{ 'name' | translate }}</th>
+                            <th>{{ 'recipients' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="form in forms">
+                            <td>
+                                {{ $index+1 }}
+                            </td>
+                            <td>
+                                {{ form.key }}
+                            </td>
+                            <td>
+                                {{ form.value }}
+                            </td>
+                            <td class="text-left">
+                                <button ng-click="edit(form)"
+                                        data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}"
+                                        class="btn blue-hoki btn-xs">
+                                    <span class="glyphicon glyphicon-edit"></span>
+                                </button>
+                                <button ng-confirm-click="delete(form)"
+                                        data-toggle="tooltip" data-container="body" tooltip="{{ 'delete' | translate }}"
+                                        class="btn red-sunglo btn-xs">
+                                    <span class="glyphicon glyphicon-remove"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <form class="form-horizontal" role="form" ng-submit="saveForm()">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="form.key" placeholder="{{ 'name' | translate }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {{ 'recipients' | translate }}
+                                <i class="fa fa-info-circle" tooltip="{{ 'separate_email_addresses_with_comma' | translate }}" aria-hidden="true"></i>
+                            </label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="form.recipients" placeholder="{{ 'recipients' | translate }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'add' | translate }}</button>
+                                <button ng-click="reset()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="shop.forms" ></div>
+    </div>
+</div>

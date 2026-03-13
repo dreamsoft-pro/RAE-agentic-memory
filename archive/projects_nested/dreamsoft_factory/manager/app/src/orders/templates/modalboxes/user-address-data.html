@@ -1,0 +1,18 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'user_data' | translate }}: {{ product.userID }} </h3>
+</div>
+
+<div class="modal-body">
+    <span ng-if="product.defaultAddress.apertment">{{ product.defaultAddress.companyName }}</span><br>
+    {{ product.defaultAddress.name }} {{ product.defaultAddress.lastname }}<br />
+    <br />
+    {{ product.defaultAddress.zipcode }} {{ product.defaultAddress.city }}<br />
+    {{ product.defaultAddress.street }} {{ product.defaultAddress.house }}<span ng-if="product.defaultAddress.apertment">/{{ product.defaultAddress.apartment }}</span>
+    <br>
+    +{{ product.defaultAddress.areaCode }} {{ product.defaultAddress.telephone }}
+
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-warning" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

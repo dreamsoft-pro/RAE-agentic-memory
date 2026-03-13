@@ -1,0 +1,163 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="portlet light">
+      <div class="portlet-title">
+        <div class="caption">
+          <i class="fa icon-doc"></i> {{ 'workspaces' | translate }}
+        </div>
+        
+        <div class="tools">
+          <button button-faq-accordion="printshop.workspaces"></button>
+        </div>
+
+      </div>
+      <div class="portlet-body">
+        <div class="overflowContainer">
+          <table class="table table-striped table-hover"  >
+            <thead>
+              <tr role="row" class="heading">
+                <th width="5%" sort-trigger>#</th>
+                <th sort-trigger>{{ 'name' | translate }}</th>
+                <th>{{ 'paper_width' |translate }} </th>
+                <th>{{ 'paper_height' |translate }} </th>
+                <th>{{ 'print_width' | translate }}</th>
+                <th>{{ 'print_height' | translate }}</th>
+                <th>{{ 'type' | translate }}</th>
+                <th>{{ 'actions' | translate }}</th>
+              </tr>
+              <tr role="row" class="filter">
+                <td>
+                  <input type="text" class="form-control form-filter input-sm" name="" placeholder="ID" ng-model="search.ID">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-filter input-sm" name="group" placeholder="{{ 'name' | translate }}" ng-model="search.name">
+                </td>
+                <td>
+                  
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="workspace in workspaces |filter:search">
+                <td>
+                  {{ workspace.ID }}
+                </td>
+                <td>
+                  {{ workspace.name }}
+                </td>
+                <td>
+                  {{ workspace.paperWidth || ('undefined' | translate) }}
+                </td>
+                <td>
+                  {{ workspace.paperHeight || ('undefined' | translate) }}
+                </td>
+                <td>
+                  {{ workspace.width }}
+                </td>
+                <td>
+                  {{ workspace.height }}
+                </td>
+                <td>
+                  {{ getWorkspaceType(workspace).name }}
+                </td>
+                <td class="noWrap">
+                  <button ng-click="edit(workspace)"
+                    data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}"
+                    class="btn blue-hoki btn-xs">
+                    <span class="glyphicon glyphicon-edit"></span>
+                  </button>
+                  <button ng-click="devices(workspace)" tooltip="{{ 'select_devices_or_work_stations' | translate }}"
+                          class="btn blue-hoki btn-xs">
+                    {{ 'devices_or_work_stations' | translate }}
+                  </button>
+                  <button ng-confirm-click="remove(workspace)"
+                    data-toggle="tooltip" data-container="body" tooltip="{{ 'delete' | translate }}"
+                    class="btn red-sunglo btn-xs">
+                      <span class="glyphicon glyphicon-remove"></span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            
+            <div class="portlet light">
+              <div class="portlet-title">
+                <div class="caption font-green-haze col-md-3 text-right">
+                     {{ 'add_new' | translate }}
+                </div>
+              </div>
+              <div class="portlet-body form">
+
+                <form class="form-horizontal" role="form" ng-submit="add()">
+                  <div class="form-body">
+                    
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                      <div class="col-md-9">
+                        <input ng-model="form.name" type="text" class="form-control" placeholder="{{ 'name' | translate }}" required>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'paper_width' | translate }}</label>
+                      <div class="col-md-9">
+                        <input ng-model="form.paperWidth" type="text" class="form-control" placeholder="mm" required>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'paper_height' | translate }}</label>
+                      <div class="col-md-9">
+                        <input ng-model="form.paperHeight" type="text" class="form-control" placeholder="mm" required>
+                      </div> 
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'print_width' | translate }}</label>
+                      <div class="col-md-9">
+                        <input ng-model="form.width" type="text" class="form-control" placeholder="mm" required>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'print_height' | translate }}</label>
+                      <div class="col-md-9">
+                        <input ng-model="form.height" type="text" class="form-control" placeholder="mm" required>
+                      </div> 
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">{{ 'type' | translate }}</label>
+                      <div class="col-md-9">
+                        <select class="form-control"  ng-model="form.type" ng-options="each.ID as each.name for each in types"></select>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div class="form-actions">
+                    <div class="row">
+                      <div class="col-md-offset-3 col-md-9">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> {{ 'add' | translate }}</button>
+                        <button ng-click="resetForm()" type="button" class="btn red-sunglo">{{ 'cancel' | translate }}</button>
+                      </div>
+                    </div>
+                  </div>
+
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

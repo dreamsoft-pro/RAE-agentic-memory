@@ -1,0 +1,60 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'files' | translate }}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12">
+
+            <table class="table">
+                <tbody ng-repeat="attr in files">
+                <tr ng-repeat="file in attr.files">
+                    <td ng-if="product.calcProducts.length>1">{{attr.langs[currentLang.code].name}} {{attr.optLangs[currentLang.code].name}}</td>
+
+                    <td ng-if="file.minUrl">
+                        <a href="{{file.url}}" target="_blank">{{file.name}}</a>
+
+                        <span>
+                            <img src="{{file.minUrl}}" style="width: 150px;"/>
+                        </span>
+                        <div>
+                            <label>{{'select_another_file'|translate}}
+                                <input
+                                       suiChange="uploadFile(file)"
+                                       simple-upload-input
+                                       type="file"
+                                       accept="image/*,.pdf"/>
+                            </label>
+                        </div>
+                    </td>
+                    <td ng-if="file.minUrl">
+                        <a ng-if="file.fileFixed" href="{{file.url.replace('-mod','')}}" target="_blank">
+                            <i class="fa fa-external-link" tooltip="{{'file_before_fixing'|translate}}"></i>
+                        </a>
+                    </td>
+                    <td ng-if="file.minUrl">{{'file_created_date' | translate}}: {{ file.created }}
+                        <div ng-if="file.accept===1">
+                            {{'accept_date' | translate}}: {{file.acceptChangeDate}}
+                        </div>
+                        <div ng-if="file.acceptRejectUserName">
+                            {{file.acceptRejectUserName}}
+                        </div>
+                    </td>
+                    <td ng-if="!file.minUrl" colspan="3">
+                        <label>{{'add_file'|translate}}
+                            <input
+                                    suiChange="addFile(attr)"
+                                    simple-upload-input
+                                    type="file"
+                                    accept="image/*,.pdf"/>
+                        </label>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-warning" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

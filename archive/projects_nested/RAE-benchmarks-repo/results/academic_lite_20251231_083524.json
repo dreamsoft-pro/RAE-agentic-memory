@@ -1,0 +1,153 @@
+{
+  "benchmark": {
+    "name": "academic_lite",
+    "description": "Lightweight academic benchmark for RAE quality testing",
+    "version": "1.0",
+    "file": "benchmarking/sets/academic_lite.yaml"
+  },
+  "execution": {
+    "timestamp": "2025-12-31T08:35:24.864177",
+    "num_memories": 10,
+    "num_queries": 7,
+    "total_time_seconds": 2.8955650329589844
+  },
+  "metrics": {
+    "mrr": 1.0,
+    "hit_rate": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "precision": {
+      "@3": 0.3333333333333333,
+      "@5": 0.2,
+      "@10": 0.1
+    },
+    "recall": {
+      "@3": 1.0,
+      "@5": 1.0,
+      "@10": 1.0
+    },
+    "performance": {
+      "avg_insert_time_ms": 275.31630992889404,
+      "avg_query_time_ms": 20.34313338143485,
+      "p95_query_time_ms": 30.07030487060547,
+      "p99_query_time_ms": 30.07030487060547
+    },
+    "overall_quality_score": 0.88
+  },
+  "detailed_results": [
+    {
+      "query": "What is the capital of France?",
+      "expected": [
+        "2"
+      ],
+      "retrieved": [
+        "2",
+        "9",
+        "3",
+        "10",
+        "7"
+      ],
+      "latency_ms": 19.53721046447754,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "Who discovered DNA?",
+      "expected": [
+        "1"
+      ],
+      "retrieved": [
+        "1",
+        "4",
+        "10",
+        "3",
+        "6"
+      ],
+      "latency_ms": 14.253377914428711,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "What programming language was created by Guido van Rossum?",
+      "expected": [
+        "3"
+      ],
+      "retrieved": [
+        "3",
+        "4",
+        "1",
+        "7",
+        "6"
+      ],
+      "latency_ms": 14.180660247802734,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "How fast does light travel?",
+      "expected": [
+        "8"
+      ],
+      "retrieved": [
+        "8",
+        "4",
+        "6",
+        "7",
+        "9"
+      ],
+      "latency_ms": 19.669532775878906,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "How many neurons are in the human brain?",
+      "expected": [
+        "6"
+      ],
+      "retrieved": [
+        "6",
+        "8",
+        "1",
+        "7",
+        "3"
+      ],
+      "latency_ms": 30.07030487060547,
+      "difficulty": "medium",
+      "category": "unknown"
+    },
+    {
+      "query": "Which scientist developed the theory of relativity?",
+      "expected": [
+        "4"
+      ],
+      "retrieved": [
+        "4",
+        "1",
+        "8",
+        "10",
+        "3"
+      ],
+      "latency_ms": 26.427507400512695,
+      "difficulty": "easy",
+      "category": "unknown"
+    },
+    {
+      "query": "What awards did Marie Curie win?",
+      "expected": [
+        "10"
+      ],
+      "retrieved": [
+        "10",
+        "1",
+        "4",
+        "7",
+        "2"
+      ],
+      "latency_ms": 18.26333999633789,
+      "difficulty": "medium",
+      "category": "unknown"
+    }
+  ]
+}

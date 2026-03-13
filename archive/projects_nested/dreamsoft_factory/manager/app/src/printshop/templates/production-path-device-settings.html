@@ -1,0 +1,366 @@
+<div ui-view="deviceMenu"></div>
+
+<div class="row">
+
+    <div class="col-lg-7 col-md-12">
+        <div class="form-body">
+            <div class="portlet light">
+                <div class="portlet-title">
+                    <div class="caption">
+                        {{ 'settings_limits' | translate }}:
+                        {{deviceName}}
+                    </div>
+                </div>
+
+                <form class="form-horizontal" role="form" ng-submit="saveSettings()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'sheet_size_max' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.sheetSizeMax" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'sheet_size_min' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.sheetSizeMin" type="number" min="0" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'grammage_max' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.grammageMax" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'grammage_min' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.grammageMin" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'thickness_max' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.thicknessMax" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'thickness_min' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.thicknessMin" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'stiffness_max' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.stiffnessMax" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'stiffness_min' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.stiffnessMin" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'how_many_operators' | translate }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.multiOperator" class="form-control"
+                                    ng-options="machineOperator.ID as machineOperator.name for machineOperator in machineOperators">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'how_many_processes' | translate }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.multiProcess" class="form-control"
+                                    ng-options="machineProcess.ID as machineProcess.name for machineProcess in machineProcesses">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'default_path' | translate }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.defaultPath" class="form-control"
+                                    ng-options="machineDefaultPath.ID as machineDefaultPath.name for machineDefaultPath in machineDefaultPaths">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'count_additional_operation' | translate }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.countAdditionalOperation" class="form-control"
+                                    ng-options="countAdditionalOperation.ID as countAdditionalOperation.name for countAdditionalOperation in countAdditionalOperations">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'show_running_job_alerts' | translate }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.runningTasksAlert" class="form-control"
+                                    ng-options="runningTasksAlert.ID as runningTasksAlert.name for runningTasksAlert in runningTasksAlerts">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'show_operation_planned_time' | translate
+                                }}</label>
+                            <div class="col-md-9">
+                                <select ng-model="form.operationPlannedTime" class="form-control"
+                                    ng-options="operationPlannedTime.ID as operationPlannedTime.name for operationPlannedTime in operationPlannedTimes">
+                                    <option value="">{{ 'none' | translate }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.worksInSaturday}"><input
+                                                ng-model="form.worksInSaturday" type="checkbox"></span></div>
+                                        {{ 'machine_operational_in_saturday' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"></label>
+                            <div class="col-md-9">
+                                <div class="checkbox-list">
+                                    <label>
+                                        <div class="checker"><span ng-class="{checked: form.worksInSunday}"><input
+                                                ng-model="form.worksInSunday" type="checkbox"></span></div>
+                                        {{ 'machine_operational_in_sunday' | translate }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'default_operation_time_in_minutes' | translate }}
+                            </label>
+                            <div class="col-md-9">
+                                <input ng-model="form.defaultOperationTime" type="number" min="0" step="any"
+                                    class="form-control">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> {{ 'save'
+                                    |
+                                    translate }}
+                                </button>
+                                <button ng-click="resetForm()" type="button" class="btn red-sunglo">{{ 'cancel' |
+                                    translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.productionPathDeviceSettings"></div>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-lg-7 col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-fax"></i> {{ 'device_shifts' | translate }}
+                </div>
+
+                <div class="tools hidden-lg">
+                    <button button-faq-accordion="printshop.machine_shifts"></button>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr role="row" class="heading">
+                                <th>#</th>
+                                <th>{{ 'name' | translate }}</th>
+                                <th>{{ 'start' | translate }}</th>
+                                <th>{{ 'stop' | translate }}</th>
+                                <th>{{ 'actions' | translate }}</th>
+                            </tr>
+                            <tr role="row" class="filter">
+                                <td>
+                                    <input type="text" class="form-control form-filter input-sm"
+                                        placeholder="{{ 'id' | translate }}" ng-model="filterData.ID"
+                                        ng-change="search()">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-filter input-sm"
+                                        placeholder="{{ 'name' | translate }}" ng-model="filterData.name"
+                                        ng-change="search()">
+                                </td>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody ui-sortable="sortableOptions" ng-model="shifts">
+                            <tr ng-repeat="shift in shifts | filter:filterData">
+                                <td>
+                                    <button tooltip="Sort" class="btn btn-default btn-sm button-sort">
+                                        <span class="fa fa-arrows-v"></span>
+                                    </button>
+                                    {{ shift.ID }}
+                                </td>
+                                <td>
+                                    {{ shift.name }}
+                                </td>
+                                <td>
+                                    {{ shift.start }}
+                                </td>
+                                <td>
+                                    {{ shift.stop }}
+                                </td>
+                                <td class="text-left noWrap">
+                                    <!--<button ng-click="edit(shift)"
+                                            data-toggle="tooltip" data-container="body" tooltip="{{ 'edit' | translate }}"
+                                            class="btn blue-hoki btn-xs">
+                                        <span class="glyphicon glyphicon-edit"></span>
+                                    </button>-->
+                                    <button ng-confirm-click="removeShift(shift.ID)" data-toggle="tooltip"
+                                        data-container="body" tooltip="{{ 'delete' | translate }}"
+                                        class="btn red-sunglo btn-xs">
+                                        <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="fixedPositionSave" ng-show="sortChange">
+                    <button class="btn btn-success" ng-click="sortSave()">
+                        {{ 'save_the_change_order' | translate }}
+                    </button>
+                    <button class="btn red-sunglo" ng-click="sortCancel()">
+                        {{ 'cancel' | translate }}
+                    </button>
+                </div>
+
+                <form class="form-horizontal" role="form" ng-submit="addShift()">
+                    <div class="form-body">
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="formShift.name"
+                                    placeholder="{{ 'name' | translate }}" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {{ 'shift_start' | translate}}
+                            </label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="formShift.start" placeholder="hh:mm:ss"
+                                    required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {{ 'shift_stop' | translate}}
+                            </label>
+                            <div class="col-md-9">
+                                <input class="form-control" ng-model="formShift.stop" placeholder="hh:mm:ss" required />
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                        {{ 'add' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+                <form class="form-horizontal" role="form" ng-submit="copyShift()" style="margin-top: 50px;">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'copy_shifts_from' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-init="copyFromDeviceID = devicesList[0]"
+                                    ng-model="formCopy.copyFromDeviceID"
+                                    ng-options="each.ID as each.name for each in devicesList"></select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-9">
+                                    <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                        {{ 'copy' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 visible-lg">
+        <div faq-accordion="printshop.machine_shifts"></div>
+    </div>
+</div>

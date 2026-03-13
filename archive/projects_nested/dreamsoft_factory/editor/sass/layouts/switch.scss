@@ -1,0 +1,95 @@
+@use './../shared' as *;
+
+$switch-width: 40px;
+$switch-height: 24px;
+$toggle-width: 3rem;
+$toggle-height: 1.5rem;
+$circle-size: 1.2rem;
+$circle-offset: 0.2rem;
+
+$gray-light: #BEBEBE;
+$gray-dark: #9B9B9B;
+$dark-gray: #4B4B4B;
+$darker-gray: #717171;
+
+.switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.switch.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: $switch-width;
+  height: $switch-height;
+  margin: 10px;
+
+  .toggle-input {
+    display: none;
+  }
+
+  .toggle-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $toggle-width;
+    height: $toggle-height;
+    background-color: var(--gray-500);
+    border-radius: var(--border-lg-radius);
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &::before {
+      content: "";
+      position: absolute;
+      width: $circle-size;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      left: $circle-offset;
+      background-color: var(--white);
+      box-shadow: var(--md-shadow);
+      transition: transform 0.3s;
+    }
+  }
+
+  .toggle-input:checked + .toggle-label {
+    background-color: var(--green);
+
+    &::before {
+      transform: translate(0.9rem, -50%);
+    }
+  }
+
+  &.light {
+    .toggle-label {
+      background-color: $gray-light;
+
+      .toggle-input:checked + & {
+        background-color: $gray-dark;
+
+        &::before {
+          transform: translateX(6px);
+        }
+      }
+    }
+  }
+
+  // Uncomment for dark theme styles
+  // &.dark {
+  //   .toggle-label {
+  //     background-color: $dark-gray;
+
+  //     .toggle-input:checked + & {
+  //       background-color: $darker-gray;
+
+  //       &::before {
+  //         transform: translateX(16px);
+  //       }
+  //     }
+  //   }
+  // }
+}

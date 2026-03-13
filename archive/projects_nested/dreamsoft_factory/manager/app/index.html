@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html ng-app="digitalprint.app">
+
+<head>
+    <link rel="stylesheet" href="/assets/metronic/global/plugins/simple-line-icons/simple-line-icons.css">
+    <link rel="stylesheet" href="/assets/metronic/global/plugins/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/assets/metronic/global/plugins/uniform/css/uniform.default.css">
+    <link rel="stylesheet" href="/assets/metronic/global/plugins/bootstrap-switch/css/bootstrap-switch.css">
+    <link rel="stylesheet" href="/node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker3.css">
+    <link rel="stylesheet" href="/node_modules/angular-ui-notification/dist/angular-ui-notification.min.css">
+    <link rel="stylesheet" href="/node_modules/textangular/dist/textAngular.css" />
+    <link rel="stylesheet" href="/digitalprint.css">
+    <link href="/assets/metronic/global/css/components.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/metronic/global/css/components-rounded.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/metronic/global/css/plugins.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/metronic/admin/layout/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/metronic/admin/layout/css/themes/default.css" rel="stylesheet" type="text/css" id="style_color" />
+    <link href="/assets/metronic/admin/layout/css/custom.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/metronic/admin/pages/css/login.css" rel="stylesheet" type="text/css" />
+    <link href="/node_modules/angular-bootstrap-colorpicker/css/colorpicker.min.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/jsgantt/css/jsgantt.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/dhtmlxgantt/css/dhtmlxgantt.css" rel="stylesheet" type="text/css" />
+    <link href="/node_modules/angularjs-slider/dist/rzslider.min.css" rel="stylesheet" type="text/css" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+</head>
+
+<body class="page-header-fixed page-quick-sidebar-over-content {{bodyClass}}">
+    <div class="page-spinner-bar" ng-show="LoadingService.isLoading()">
+        <div class="bounce1"></div>
+        <div class="bounce2"></div>
+        <div class="bounce3"></div>
+    </div>
+    <ui-view></ui-view>
+    <!-- BEGIN CORE PLUGINS -->
+    <!--[if lt IE 9]>
+<script src="/assets/metronic/global/plugins/respond.min.js"></script>
+<script src="/assets/metronic/global/plugins/excanvas.min.js"></script>
+<![endif]-->
+    <script src="/node_modules/jquery/dist/jquery.min.js"></script>
+    <!-- <script src="/assets/metronic/global/plugins/jquery-1.11.0.min.js" type="text/javascript"></script> -->
+
+    <script src="/assets/metronic/global/plugins/jquery-migrate-1.2.1.min.js" type="text/javascript"></script>
+    <!-- IMPORTANT! Load jquery-ui-1.10.3.custom.min.js before bootstrap.min.js to fix bootstrap tooltip conflict with jquery ui tooltip -->
+    <script src="/assets/metronic/global/plugins/jquery-ui/jquery-ui-1.10.3.custom.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/jquery.blockui.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/jquery.cokie.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/uniform/jquery.uniform.min.js" type="text/javascript"></script>
+    <script src="/assets/metronic/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js" type="text/javascript"></script>
+
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="/node_modules/lodash/index.js"></script>
+    <!-- BEGIN PAGE LEVEL SCRIPTS -->
+    <script src="/assets/metronic/global/scripts/metronic.js" type="text/javascript"></script>
+    <script src="/assets/metronic/admin/layout/scripts/layout.js" type="text/javascript"></script>
+    <script src="/assets/metronic/admin/layout/scripts/quick-sidebar.js" type="text/javascript"></script>
+    <script src="/assets/metronic/admin/pages/scripts/index.js" type="text/javascript"></script>
+    <script src="/assets/metronic/admin/pages/scripts/tasks.js" type="text/javascript"></script>
+    <!-- END PAGE LEVEL SCRIPTS -->
+    <script src="/node_modules/angular/angular.js"></script>
+    <script src="/node_modules/angular-ui-router/release/angular-ui-router.js"></script>
+    <script src="/node_modules/restangular/src/restangular.js"></script>
+    <script src="/node_modules/angular-local-storage/dist/angular-local-storage.js"></script>
+    <script src="/node_modules/angular-bootstrap/ui-bootstrap.js"></script>
+    <script src="/node_modules/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="/node_modules/angular-bootstrap-colorpicker/js/bootstrap-colorpicker-module.min.js"></script>
+    <script src="/node_modules/angular-animate/angular-animate.js"></script>
+    <script src="/node_modules/angular-breadcrumb/dist/angular-breadcrumb.js"></script>
+    <script src="/node_modules/angular-translate/dist/angular-translate.js"></script>
+    <script src="/node_modules/angular-translate-loader-static-files/angular-translate-loader-static-files.js"></script>
+    <script src="/node_modules/angular-cookies/angular-cookies.js"></script>
+    <script src="/assets/helpers/angular-api-collection/angular-api-collection.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
+    <script src="/assets/helpers/tinymce.js"></script>
+    <script src="/node_modules/angular-ui-sortable/dist/sortable.js"></script>
+    <script src="/node_modules/textangular/dist/textAngular-rangy.min.js"></script>
+    <script src="/node_modules/textangular/dist/textAngular-sanitize.min.js"></script>
+    <script src="/node_modules/textangular/dist/textAngular.min.js"></script>
+
+    <script src="/assets/socket.io/socket.io.slim.js"></script>
+    <script src="/node_modules/angular-socket-io/socket.js"></script>
+    <script src="/node_modules/angular-file-upload/dist/angular-file-upload.js"></script>
+    <script src="/node_modules/angularjs-slider/dist/rzslider.min.js"></script>
+     <script src="/assets/jsgantt/js/jsgantt.js"></script>
+    <script src="/assets/dhtmlxgantt/js/dhtmlxgantt.js"></script>
+
+    <!-- build:remove -->
+    <script src="/app.js"></script>
+    <!-- /build -->
+
+    <!-- NOTIFICATION -->
+    <script src="/node_modules/angular-ui-notification/dist/angular-ui-notification.min.js"></script>
+    <!-- NOTIFICATION -->
+
+    <!-- build:js scripts/scripts.min.js -->
+
+    <!--ROUTES-->
+    <script src="/routes/auctions.js"></script>
+    <script src="/routes/contents.js"></script>
+    <script src="/routes/customerservice.js"></script>
+    <script src="/routes/main.js"></script>
+    <script src="/routes/orders.js"></script>
+    <script src="/routes/printshop.js"></script>
+    <script src="/routes/shop.js"></script>
+    <script src="/routes/superadmin.js"></script>
+    <script src="/routes/unauthorized.js"></script>
+    <!--ROUTES END-->
+
+    <!--HELPERS-->
+    <script src="/assets/helpers/LangLoader.js"></script>
+    <script src="/assets/helpers/TextAngularConfig.js"></script>
+    <script src="/assets/helpers/angular-api-collection/angular-api-collection.js"></script>
+    <script src="/assets/helpers/angular-api-collection/angular-api-pagination.js"></script>
+    <script src="/assets/helpers/config.js"></script>
+    <script src="/assets/helpers/datepicker/datepicker.js"></script>
+    <script src="/assets/helpers/faq-accordion/button-faq-accordion.js"></script>
+    <script src="/assets/helpers/faq-accordion/faq-accordion.js"></script>
+    <script src="/assets/helpers/focus-on/directive-focus-on.js"></script>
+    <script src="/assets/helpers/focus-on/service-focus-on.js"></script>
+    <script src="/assets/helpers/helpers.js"></script>
+    <script src="/assets/helpers/ids-filter/ids-filter.js"></script>
+    <script src="/assets/helpers/ng-confirm-click/ngConfirmClick.js"></script>
+    <script src="/assets/helpers/ng-file-upload/ng-file-upload-shim.js"></script>
+    <script src="/assets/helpers/ng-file-upload/ng-file-upload.js"></script>
+    <script src="/assets/helpers/offset/offset.js"></script>
+    <script src="/assets/helpers/pagination-api/pagination-module.js"></script>
+    <script src="/assets/helpers/pagination-api/sortbutton.js"></script>
+    <script src="/assets/helpers/range/range.js"></script>
+    <script src="/assets/helpers/sort-button/sortTrigger.js"></script>
+    <script src="/assets/helpers/template-variables/template-variables.js"></script>
+    <script src="/assets/helpers/tinymce.js"></script>
+    <!--HELPERS END-->
+    <!--DIRECTIVES-->
+    <!--DIRECTIVES END-->
+    <!--MODULES-->
+    <script src="/src/MainCtrl.js"></script>
+    <script src="/src/auctions/CurrentAuctionsCtrl.js"></script>
+    <script src="/src/auctions/OfferListCtrl.js"></script>
+    <script src="/src/contents/CategoriesCtrl.js"></script>
+    <script src="/src/contents/CategoriesSortCtrl.js"></script>
+    <script src="/src/contents/GraphicsCtrl.js"></script>
+    <script src="/src/contents/LayoutCtrl.js"></script>
+    <script src="/src/contents/LayoutSettingsCtrl.js"></script>
+    <script src="/src/contents/MailContentsCtrl.js"></script>
+    <script src="/src/contents/MailsCtrl.js"></script>
+    <script src="/src/contents/ReclamationsCtrl.js"></script>
+    <script src="/src/contents/RoutesCtrl.js"></script>
+    <script src="/src/contents/SeoCtrl.js"></script>
+    <script src="/src/contents/StaticContentsCtrl.js"></script>
+    <script src="/src/contents/StyleEditCtrl.js"></script>
+    <script src="/src/contents/TemplateVariablesCtrl.js"></script>
+    <script src="/src/contents/TemplatesCtrl.js"></script>
+    <script src="/src/contents/ViewsCtrl.js"></script>
+    <script src="/src/customerservice/CalculationsListCtrl.js"></script>
+    <script src="/src/customerservice/CouponsCtrl.js"></script>
+    <script src="/src/customerservice/CreateOfferCtrl.js"></script>
+    <script src="/src/customerservice/CreateOrderCalcCtrl.js"></script>
+    <script src="/src/customerservice/CreateOrderCtrl.js"></script>
+    <script src="/src/customerservice/CreateOrderGroupsCtrl.js"></script>
+    <script src="/src/customerservice/CreateOrderTypesCtrl.js"></script>
+    <script src="/src/customerservice/DiscountsCtrl.js"></script>
+    <script src="/src/customerservice/NewsletterCtrl.js"></script>
+    <script src="/src/customerservice/OfferInOrderListCtrl.js"></script>
+    <script src="/src/customerservice/OfferListCtrl.js"></script>
+    <script src="/src/customerservice/OrderListCtrl.js"></script>
+    <script src="/src/customerservice/OrderMakeOrderCtrl.js"></script>
+    <script src="/src/customerservice/OrderOfferListCtrl.js"></script>
+    <script src="/src/customerservice/PromotionsCtrl.js"></script>
+    <script src="/src/customerservice/ReclamationsCtrl.js"></script>
+    <script src="/src/customerservice/RegisterCtrl.js"></script>
+    <script src="/src/customerservice/UnfinishedOrderCtrl.js"></script>
+    <script src="/src/customerservice/UsersListCtrl.js"></script>
+    <script src="/src/layout/LangCtrl.js"></script>
+    <script src="/src/layout/SidebarCtrl.js"></script>
+    <script src="/src/orders/AuctionsListCtrl.js"></script>
+    <script src="/src/orders/CartsCtrl.js"></script>
+    <script src="/src/orders/CustomProductsCtrl.js"></script>
+    <script src="/src/orders/DpOrdersCtrl.js"></script>
+    <script src="/src/orders/OngoingsCtrl.js"></script>
+    <script src="/src/orders/OperatorsCtrl.js"></script>
+    <script src="/src/orders/OrderOngoingsCtrl.js"></script>
+    <script src="/src/orders/OrdersSummaryCtrl.js"></script>
+    <script src="/src/orders/PlannedCtrl.js"></script>
+    <script src="/src/orders/PlanningGanttCtrl.js"></script>
+    <script src="/src/orders/PlanningMachinesGanttCtrl.js"></script>
+    <script src="/src/orders/ProductionSettingsCtrl.js"></script>
+    <script src="/src/orders/ProductsAcceptCtrl.js"></script>
+    <script src="/src/orders/ProductsCtrl.js"></script>
+    <script src="/src/orders/ProductsProductionDetailsCtrl.js"></script>
+    <script src="/src/orders/RaportDeviceCtrl.js"></script>
+    <script src="/src/orders/RaportDevicesCtrl.js"></script>
+    <script src="/src/orders/RaportOperationsCtrl.js"></script>
+    <script src="/src/orders/RaportOperatorCtrl.js"></script>
+    <script src="/src/orders/RaportOperatorsCtrl.js"></script>
+    <script src="/src/orders/RaportOrderCtrl.js"></script>
+    <script src="/src/orders/RaportOrdersCtrl.js"></script>
+    <script src="/src/orders/RaportsCtrl.js"></script>
+    <script src="/src/orders/ReclamationsStatusesCtrl.js"></script>
+    <script src="/src/orders/ScheduleCtrl.js"></script>
+    <script src="/src/orders/ScheduleGanttCtrl.js"></script>
+    <script src="/src/orders/ShiftsCtrl.js"></script>
+    <script src="/src/orders/StatusesCtrl.js"></script>
+    <script src="/src/orders/TransportCtrl.js"></script>
+    <script src="/src/printshop/AttributesCtrl.js"></script>
+    <script src="/src/printshop/ComplexProductsCtrl.js"></script>
+    <script src="/src/printshop/ConfigAttributesCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionAltpapersCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionDescriptionsCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionEditCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionEfficiencyCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionExclusionsCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionIncreasesCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionOperationsCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionPricesCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionRealizationTimesCtrl.js"></script>
+    <script src="/src/printshop/ConfigOptionsCtrl.js"></script>
+    <script src="/src/printshop/DepartmentsCtrl.js"></script>
+    <script src="/src/printshop/DeviceEfficiencyCtrl.js"></script>
+    <script src="/src/printshop/DevicePricesCtrl.js"></script>
+    <script src="/src/printshop/DeviceServicesCtrl.js"></script>
+    <script src="/src/printshop/DeviceSettingsCtrl.js"></script>
+    <script src="/src/printshop/DeviceSpeedCtrl.js"></script>
+    <script src="/src/printshop/DevicesCtrl.js"></script>
+    <script src="/src/printshop/FormatStaticPricesCtrl.js"></script>
+    <script src="/src/printshop/FormatsCtrl.js"></script>
+    <script src="/src/printshop/GroupsCtrl.js"></script>
+    <script src="/src/printshop/IncreasesCtrl.js"></script>
+    <script src="/src/printshop/LabelImpositionCtrl.js"></script>
+    <script src="/src/printshop/MarginsCtrl.js"></script>
+    <script src="/src/printshop/MarginsTypeCtrl.js"></script>
+    <script src="/src/printshop/OperationsCtrl.js"></script>
+    <script src="/src/printshop/OperatorsCtrl.js"></script>
+    <script src="/src/printshop/PagesCtrl.js"></script>
+    <script src="/src/printshop/PausesCtrl.js"></script>
+    <script src="/src/printshop/PricelistsCtrl.js"></script>
+    <script src="/src/printshop/PrinttypesCtrl.js"></script>
+    <script src="/src/printshop/ProcessesCtrl.js"></script>
+    <script src="/src/printshop/RealizationTimesCtrl.js"></script>
+    <script src="/src/printshop/RtGroupCtrl.js"></script>
+    <script src="/src/printshop/RtTypeCtrl.js"></script>
+    <script src="/src/printshop/SkillsCtrl.js"></script>
+    <script src="/src/printshop/TypeDescriptionsCtrl.js"></script>
+    <script src="/src/printshop/TypesCtrl.js"></script>
+    <script src="/src/printshop/VolumesCtrl.js"></script>
+    <script src="/src/printshop/WorkspacesCtrl.js"></script>
+    <script src="/src/shop/AdditionalSettingsCtrl.js"></script>
+    <script src="/src/shop/ConfigMailCtrl.js"></script>
+    <script src="/src/shop/CouriersCtrl.js"></script>
+    <script src="/src/shop/CurrenciesCtrl.js"></script>
+    <script src="/src/shop/DeliveriesCtrl.js"></script>
+    <script src="/src/shop/DomainConfigCtrl.js"></script>
+    <script src="/src/shop/FormsCtrl.js"></script>
+    <script src="/src/shop/InvoiceDataCtrl.js"></script>
+    <script src="/src/shop/InvoicesCtrl.js"></script>
+    <script src="/src/shop/LangSettingsCtrl.js"></script>
+    <script src="/src/shop/LangsCtrl.js"></script>
+    <script src="/src/shop/PaymentsCtrl.js"></script>
+    <script src="/src/shop/PermissionsCtrl.js"></script>
+    <script src="/src/shop/SenderData.js"></script>
+    <script src="/src/shop/SeoSettingsCtrl.js"></script>
+    <script src="/src/shop/SpecialAccountsCtrl.js"></script>
+    <script src="/src/shop/SupportedCountriesCtrl.js"></script>
+    <script src="/src/shop/TaxesCtrl.js"></script>
+    <script src="/src/superadmin/AclCtrl.js"></script>
+    <script src="/src/superadmin/AddDomainCtrl.js"></script>
+    <script src="/src/superadmin/AdminHelpsCtrl.js"></script>
+    <script src="/src/superadmin/CreateCompanyCtrl.js"></script>
+    <script src="/src/superadmin/ImportUsersCtrl.js"></script>
+    <script src="/src/superadmin/LangSettingsRootCtrl.js"></script>
+    <script src="/src/superadmin/LangsRootCtrl.js"></script>
+    <script src="/src/superadmin/LangsRootEmptyCtrl.js"></script>
+    <script src="/src/superadmin/MailTypesCtrl.js"></script>
+    <script src="/src/superadmin/ModulesCtrl.js"></script>
+    <script src="/src/superadmin/RequestTesterCtrl.js"></script>
+    <script src="/src/superadmin/SocketTesterCtrl.js"></script>
+    <script src="/src/superadmin/TemplatesCtrl.js"></script>
+    <script src="/src/unauthorized/LoginCtrl.js"></script>
+    <script src="/shared/LangExportImportCtrl.js"></script>
+    <!--MODULES END-->
+    <!--SERVICES-->
+    <script src="/services/AdminHelpService.js"></script>
+    <script src="/services/AuctionService.js"></script>
+    <script src="/services/AuthService.js"></script>
+    <script src="/services/AuthorizationLogService.js"></script>
+    <script src="/services/CacheService.js"></script>
+    <script src="/services/CalcFileService.js"></script>
+    <script src="/services/CalculationService.js"></script>
+    <script src="/services/CartService.js"></script>
+    <script src="/services/CategoryDescriptionsService.js"></script>
+    <script src="/services/ConfigService.js"></script>
+    <script src="/services/ConnectOptionService.js"></script>
+    <script src="/services/ContentService.js"></script>
+    <script src="/services/CountriesService.js"></script>
+    <script src="/services/CouponService.js"></script>
+    <script src="/services/CurrencyRootService.js"></script>
+    <script src="/services/CurrencyService.js"></script>
+    <script src="/services/CustomProductService.js"></script>
+    <script src="/services/DeliveryService.js"></script>
+    <script src="/services/DepartmentService.js"></script>
+    <script src="/services/DeviceService.js"></script>
+    <script src="/services/DiscountService.js"></script>
+    <script src="/services/DomainService.js"></script>
+    <script src="/services/DpAddressService.js"></script>
+    <script src="/services/DpCategoryService.js"></script>
+    <script src="/services/DpOrderService.js"></script>
+    <script src="/services/DpProductService.js"></script>
+    <script src="/services/DpShipmentService.js"></script>
+    <script src="/services/DpStatusService.js"></script>
+    <script src="/services/DpUserAddressService.js"></script>
+    <script src="/services/GroupDescriptionsService.js"></script>
+    <script src="/services/GroupService.js"></script>
+    <script src="/services/HelpService.js"></script>
+    <script src="/services/HelpersService.js"></script>
+    <script src="/services/HomepageBannerService.js"></script>
+    <script src="/services/InvoiceService.js"></script>
+    <script src="/services/LabelImpositionService.js"></script>
+    <script src="/services/LangRootService.js"></script>
+    <script src="/services/LangService.js"></script>
+    <script src="/services/LangSettingsRootService.js"></script>
+    <script src="/services/LangSettingsService.js"></script>
+    <script src="/services/LoadingService.js"></script>
+    <script src="/services/MailContentService.js"></script>
+    <script src="/services/MailTypeService.js"></script>
+    <script src="/services/MainWidgetService.js"></script>
+    <script src="/services/MarginsService.js"></script>
+    <script src="/services/MetaTagService.js"></script>
+    <script src="/services/ModelIconsService.js"></script>
+    <script src="/services/ModuleService.js"></script>
+    <script src="/services/ModuleTypeService.js"></script>
+    <script src="/services/ModuleValueService.js"></script>
+    <script src="/services/NewsletterService.js"></script>
+    <script src="/services/OfferService.js"></script>
+    <script src="/services/OngoingService.js"></script>
+    <script src="/services/OperationService.js"></script>
+    <script src="/services/OperatorService.js"></script>
+    <script src="/services/OrderDataService.js"></script>
+    <script src="/services/OrderMessageService.js"></script>
+    <script src="/services/OrderMessageWidgetService.js"></script>
+    <script src="/services/OrderService.js"></script>
+    <script src="/services/PauseService.js"></script>
+    <script src="/services/PaymentService.js"></script>
+    <script src="/services/PermissionService.js"></script>
+    <script src="/services/PlanningService.js"></script>
+    <script src="/services/ProcessService.js"></script>
+    <script src="/services/ProductCardService.js"></script>
+    <script src="/services/ProductFileService.js"></script>
+    <script src="/services/PromotionService.js"></script>
+    <script src="/services/PsAttributeService.js"></script>
+    <script src="/services/PsCalculateServie.js"></script>
+    <script src="/services/PsComplexService.js"></script>
+    <script src="/services/PsConfigAttributeNatureService.js"></script>
+    <script src="/services/PsConfigAttributeService.js"></script>
+    <script src="/services/PsConfigAttributeTypeService.js"></script>
+    <script src="/services/PsConfigIncreaseTypeService.js"></script>
+    <script src="/services/PsConfigOptionService.js"></script>
+    <script src="/services/PsConfigPaperPriceService.js"></script>
+    <script src="/services/PsFormatService.js"></script>
+    <script src="/services/PsGroupService.js"></script>
+    <script src="/services/PsIncreaseService.js"></script>
+    <script src="/services/PsIncreaseTypeService.js"></script>
+    <script src="/services/PsPageService.js"></script>
+    <script src="/services/PsPreflightFolderService.js"></script>
+    <script src="/services/PsPriceTypeService.js"></script>
+    <script src="/services/PsPricelistService.js"></script>
+    <script src="/services/PsPrintTypeService.js"></script>
+    <script src="/services/PsPrintTypeWorkspaceService.js"></script>
+    <script src="/services/PsStaticPriceService.js"></script>
+    <script src="/services/PsTooltipService.js"></script>
+    <script src="/services/PsTypeService.js"></script>
+    <script src="/services/PsVolumeService.js"></script>
+    <script src="/services/PsWorkingHourService.js"></script>
+    <script src="/services/PsWorkspaceService.js"></script>
+    <script src="/services/RealizationTimeService.js"></script>
+    <script src="/services/ReclamationFaultService.js"></script>
+    <script src="/services/ReclamationService.js"></script>
+    <script src="/services/ReclamationStatusService.js"></script>
+    <script src="/services/RoleService.js"></script>
+    <script src="/services/RouteService.js"></script>
+    <script src="/services/ScheduleService.js"></script>
+    <script src="/services/SettingService.js"></script>
+    <script src="/services/ShiftService.js"></script>
+    <script src="/services/SkillService.js"></script>
+    <script src="/services/StaticContentService.js"></script>
+    <script src="/services/StatusService.js"></script>
+    <script src="/services/StyleService.js"></script>
+    <script src="/services/SubcategoryDescriptionsService.js"></script>
+    <script src="/services/TaxService.js"></script>
+    <script src="/services/TemplateRootService.js"></script>
+    <script src="/services/TemplateService.js"></script>
+    <script src="/services/TemplateVariablesService.js"></script>
+    <script src="/services/ThumbsWidgetService.js"></script>
+    <script src="/services/TypeDescriptionsFormatsService.js"></script>
+    <script src="/services/TypeDescriptionsService.js"></script>
+    <script src="/services/TypePatternService.js"></script>
+    <script src="/services/UploadService.js"></script>
+    <script src="/services/UserAddressService.js"></script>
+    <script src="/services/UserService.js"></script>
+    <script src="/services/UserTypeService.js"></script>
+    <script src="/services/ViewService.js"></script>
+    <script src="/services/socket.js"></script>
+    <!--SERVICES END-->
+
+    <!-- /build -->
+
+    <script>
+        jQuery(document).ready(function() {
+            Metronic.init(); // init metronic core components
+            Layout.init(); // init current layout
+            QuickSidebar.init(); // init quick sidebar
+            // Demo.init(); // init demo features
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,74 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'edit_discount' | translate }}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12">
+
+            <form class="form-horizontal" role="form">
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'group_of_product' | translate }}{{ details.domainID
+                        }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control" ng-model="form.productGroupID"
+                                ng-change="getTypes( discountGroup, form.productGroupID )"
+                                ng-options="each.ID as each.names[showLang] for each in productGroups">
+                            <option value="">{{ 'group_of_product' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'type_of_product' | translate }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control"
+                                ng-model="form.productTypeID"
+                                ng-change="getFormats(discountGroup, form.productGroupID, form.productTypeID)"
+                                ng-options="item.ID as item.name for item in productTypes[discountGroup.ID]">
+                            <option value="">{{ 'type_of_product' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'format' | translate }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control" ng-model="form.productFormatID"
+                                ng-options="item.ID as item.name for item in productFormats[discountGroup.ID]">
+                            <option value="">{{ 'format' | translate }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'quantity' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.qty_start" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="{{ 'all' | translate }}">
+                        <input ng-model="form.qty_end" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="{{ 'all' | translate }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'number_of_meters' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.meters_start" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="m2">
+                        <input ng-model="form.meters_end" type="text" class="col-md-6 form-control"
+                               style="width: 50% !important;" placeholder="m2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'percentage' | translate }}</label>
+                    <div class="col-md-9">
+                        <input ng-model="form.percentage" type="text" class="form-control"
+                               placeholder="{{ 'percentage' | translate }}">
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-warning" ng-click="$dismiss()">Cancel</button>
+    <button class="btn btn-primary" ng-click="ok()">OK</button>
+</div>

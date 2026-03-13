@@ -1,0 +1,72 @@
+<div class="btn-success modal-header">
+  <h3 class="modal-title">Podgląd złożonej oferty</h3>
+</div>
+<form class="form-horizontal" role="form">
+
+    <div class="modal-body">
+      
+      <div class="overflowContainer">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr role="row" class="heading">
+              <th width="5%">#</th>
+              <th>Lista produktów</th>
+              <th>{{ 'realization_term' | translate }}</th>
+              <th>{{ 'description' | translate }}</th>
+              <!-- <th>{{ 'actions' | translate }}</th> -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="response in responses">
+              <td>
+                {{ response.ID }}
+              </td>
+              <td>
+                <div ng-repeat="item in auction.items" class="currentAuctionsProduct">
+                  <span><i class="fa fa-cube"></i> {{ item.productName }}</span>
+                  <p>
+                    {{ 'product_name'| translate}}: <b>{{ item.name }}</b>
+                  </p>
+                  <p>
+                    {{ 'signature'| translate}}: <b>{{ item.signature }}</b>
+                  </p>
+                  <p ng-if="item.pages">
+                    {{ 'pages'| translate}}: <b>{{ item.pages }}</b>
+                  </p>
+                  <p>
+                    {{ 'format'| translate}}: <b>{{ item.formatName }} {{ item.formatWidth ? item.formatWidth + ' x ' + item.formatHeight + ' mm' : ''}} </b>
+                  </p>
+                  <p ng-repeat="opt in item.options">
+                    {{ opt.attrName }}: <b>{{ opt.optName }}</b>
+                  </p>
+                  <p>
+                    {{ 'volume'| translate}}: <b>{{ item.volume }}</b>
+                  </p>
+                  <p ng-if="item.singleDelivery">
+                    Wysyłka w jedno miejsce: <b>{{ item.singleDelivery }}</b>
+                  </p>
+                  <p ng-if="item.multiDelivery">
+                    Wysyłka wg rozdzielnika: <b>{{ item.multiDelivery }}</b>
+                  </p>
+                  <p>
+                    {{ 'price' | translate }} <b>{{ response.items[item.ID].price }}</b>
+                  </p>
+                </div>
+              </td>
+              <td>
+                {{ response.realizationDate }}
+              </td>
+              <td>
+                {{ response.description }}
+              </td>
+              <!-- <td>
+              </td> -->
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+    </div>
+  </form>

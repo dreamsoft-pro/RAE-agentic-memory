@@ -1,0 +1,42 @@
+<div class="modal-header">
+    <h3 class="modal-title">
+        {{ 'add_new_operation_to' | translate }}: {{ _.findWhere(operations, {ID: task.operationID}).name }}
+    </h3>
+</div>
+<form class="form-horizontal" role="form" ng-submit="ok()">
+    <div class="modal-body">
+        <div class="form-body">
+            <div class="form-group">
+                <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                <div class="col-md-9">
+                    <input ng-model="form.name" type="text" class="form-control">
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-3 control-label">{{ 'description' | translate }}</label>
+            <div class="col-md-9">
+                <textarea style="height:auto" class="form-control" ng-model="form.description"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-md-3 control-label"></label>
+            <div class="col-md-9">
+                <div class="checkbox-list">
+                    <label>
+                        <div class="checker">
+                        <span ng-class="{checked: form.countTime}">
+                            <input ng-model="form.countTime" type="checkbox">
+                        </span>
+                        </div>
+                        {{ 'add_to_task_time' | translate }}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'cancel' | translate }}</button>
+        <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+    </div>
+</form>

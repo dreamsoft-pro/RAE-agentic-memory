@@ -1,0 +1,20 @@
+nodes:
+  node1:
+    id: "node1"
+    name: "Lumina"
+    host: "100.68.166.117"
+    user: "operator"
+    transport: "ssh_mcp"
+  node2:
+    id: "node2"
+    name: "Julia"
+    host: "100.70.32.40"
+    user: "juliazdalnie"
+    transport: "ssh_mcp"
+  node3:
+    id: "node3"
+    name: "Piotrek"
+    url: "http://172.30.15.11:11434"
+    transport: "local_proxy"
+    proxy_script: "infra/node_agent/ollama_proxy_mcp.py"
+    setup_command: "sudo ip route add 172.30.15.0/24 via 192.168.18.10 || true"

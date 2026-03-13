@@ -1,0 +1,717 @@
+<!-- BEGIN HEADER -->
+<div class="page-header navbar navbar-fixed-top">
+    <!-- BEGIN HEADER INNER -->
+    <div class="page-header-inner">
+        <!-- BEGIN LOGO -->
+        <div class="page-logo">
+            <a href="index.html">
+                <img ng-if="currentDomain.companyID != 707" src="assets/metronic/admin/layout/img/logo.png" alt="logo"
+                    class="logo-default" />
+            </a>
+            <div class="menu-toggler sidebar-toggler hide">
+                <!-- DOC: Remove the above "hide" to enable the sidebar toggler button on header -->
+            </div>
+        </div>
+        <!-- END LOGO -->
+        <!-- BEGIN RESPONSIVE MENU TOGGLER -->
+        <a href="javascript:;" class="menu-toggler responsive-toggler" data-toggle="collapse"
+            data-target=".navbar-collapse">
+        </a>
+        <!-- END RESPONSIVE MENU TOGGLER -->
+        <!-- BEGIN TOP NAVIGATION MENU -->
+        <div class="top-menu">
+            <ul class="nav navbar-nav pull-right">
+
+                <li class="dropdown dropdown-language" ng-controller="layout.LangCtrl" dropdown>
+                    <a href="#" class="dropdown-toggle" dropdown-toggle>
+                        <span class="langname">
+                            {{ currentLang.name }} </span>
+                        <i class="fa fa-angle-down"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li ng-repeat="lang in languages">
+                            <a ng-if="lang.active" href="" ng-click="switchLanguage(lang.code)">
+                                {{ lang.name }} </a>
+                        </li>
+                    </ul>
+                </li>
+                <!-- BEGIN USER LOGIN DROPDOWN -->
+                <li ui-view="dropdown-user" class="dropdown dropdown-user" dropdown></li>
+                <!-- END USER LOGIN DROPDOWN -->
+                <!-- BEGIN QUICK SIDEBAR TOGGLER -->
+                <li class="dropdown dropdown-quick-sidebar-toggler" dropdown>
+                    <a href="javascript:;" class="dropdown-toggle" dropdown-toggle>
+                        <!-- <i class="icon-logout"></i>  -->
+                        <span ng-if="currentDomain.ID">
+                            Domena: {{ currentDomain.host }}
+                        </span>
+                    </a>
+                </li>
+                <!-- END QUICK SIDEBAR TOGGLER -->
+            </ul>
+        </div>
+        <!-- END TOP NAVIGATION MENU -->
+    </div>
+    <!-- END HEADER INNER -->
+</div>
+<!-- END HEADER -->
+<div class="clearfix">
+</div>
+<!-- BEGIN CONTAINER -->
+<div class="page-container">
+    <!-- BEGIN SIDEBAR -->
+    <div class="page-sidebar-wrapper">
+        <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+        <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+        <div class="page-sidebar navbar-collapse collapse">
+            <!-- BEGIN SIDEBAR MENU -->
+            <ul class="page-sidebar-menu " data-auto-scroll="true" data-slide-speed="200">
+                <!-- DOC: To remove the sidebar toggler from the sidebar you just need to completely remove the below "sidebar-toggler-wrapper" LI element -->
+                <li class="sidebar-toggler-wrapper">
+                    <!-- BEGIN SIDEBAR TOGGLER BUTTON -->
+                    <div class="sidebar-toggler">
+                    </div>
+                    <!-- END SIDEBAR TOGGLER BUTTON -->
+                </li>
+                <!-- DOC: To remove the search box from the sidebar you just need to completely remove the below "sidebar-search-wrapper" LI element -->
+                <li class="sidebar-search-wrapper">
+                    <!-- BEGIN RESPONSIVE QUICK SEARCH FORM -->
+                    <!-- DOC: Apply "sidebar-search-bordered" class the below search form to have bordered search box -->
+                    <!-- DOC: Apply "sidebar-search-bordered sidebar-search-solid" class the below search form to have bordered & solid search box -->
+                    <form class="sidebar-search " action="extra_search.html" method="POST">
+                        <a href="javascript:;" class="remove">
+                            <i class="icon-close"></i>
+                        </a>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="{{ 'search_dots' | translate }}">
+                            <span class="input-group-btn">
+                                <a href="javascript:;" class="btn submit"><i class="icon-magnifier"></i></a>
+                            </span>
+                        </div>
+                    </form>
+                    <!-- END RESPONSIVE QUICK SEARCH FORM -->
+                </li>
+
+                <li class="start" ng-class="{ 'active open': $state.includes('superadmin-base') }"
+                    ng-if="menuSuperadmin = _.findWhere(adminmenu, {key: 'superadmin'})">
+                    <a ng-click="menuClass = 'superadmin'">
+                        <i class="icon-home"></i>
+                        <span class="title">Superadmin</span>
+                        <span class="arrow" ng-class="{ open: $state.includes('superadmin-base') }"></span>
+                    </a>
+                    <ul class="sub-menu" ng-class="{  }">
+                        <li ng-class="{ open: $state.includes('superadmin-request-tester') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'request_tester'})">
+                            <a ui-sref="superadmin-request-tester">
+                                <i class="icon-bar-chart"></i>
+                                Request tester</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-acl') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'acl'})">
+                            <a ui-sref="superadmin-acl">
+                                <i class="fa fa-th-large"></i>
+                                ACL</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-langs') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'langs'})">
+                            <a ui-sref="superadmin-langs">
+                                <i class="fa fa-language"></i>
+                                {{ 'languages' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-modules') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'modules'})">
+                            <a ui-sref="superadmin-modules">
+                                <i class="fa fa-database"></i>
+                                {{ 'modules' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-helps') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'helps'})">
+                            <a ui-sref="superadmin-helps">
+                                <i class="fa fa-info-circle"></i>
+                                {{ 'helps' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-mail') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'mail'})">
+                            <a ui-sref="superadmin-mail">
+                                <i class="glyphicon glyphicon-envelope"></i>
+                                {{ 'email' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('superadmin-templates') }"
+                            ng-if="_.findWhere(menuSuperadmin.subMenus, {key: 'superadmin-templates'})">
+                            <a ui-sref="superadmin-templates">
+                                <i class="icon-folder-alt"></i>
+                                {{ 'default_templates' | translate }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li ng-class="{ 'active open': $state.includes('shop-base') }"
+                    ng-if="(menuShop = _.findWhere(adminmenu, {key: 'shop'})).subMenus.length">
+                    <a>
+                        <i class="fa fa-gears"></i>
+                        <span class="title">{{ 'shop' | translate }}</span>
+                        <span class="arrow"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('shop-domain-config') }"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'domain_settings'})">
+                            <a ui-sref="shop-domain-config">
+                                <i class="icon-globe"></i>
+                                {{ 'domain_settings' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('shop-couriers') }"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'couriers_settings'})">
+                            <a ui-sref="shop-couriers">
+                                <i class="icon-plane"></i>
+                                {{ 'couriers_settings' | translate }}</a>
+                        </li>
+                        <li ng-class="{open: $state.includes('shop-langs')}"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'language_edition'})">
+                            <a ui-sref="shop-langs">
+                                <i class="fa fa-language"></i>
+                                {{ 'language_edition' | translate }}</a>
+                        </li>
+                        <li ng-class="{open: $state.includes('shop-special-accounts')}"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'special_accounts'})">
+                            <a ui-sref="shop-special-accounts">
+                                <i class="fa fa-exclamation-circle"></i>
+                                {{ 'special_accounts' | translate }}</a>
+                        </li>
+
+                        <li ng-class="{open: $state.includes('shop-permissions')}"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'shop-permissions'})">
+                            <a ui-sref="shop-permissions">
+                                <i class="fa fa-key"></i>
+                                {{ 'permissions' | translate }}</a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('supported-countries') }"
+                            ng-if="_.findWhere(menuShop.subMenus, {key: 'supported-countries'})">
+                            <a ui-sref="supported-countries">
+                                <i class="fa fa-flag"></i> {{ 'supported_countries' | translate }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li ng-class="{ 'active open': $state.includes('contents-base') }"
+                    ng-if="(menuContents = _.findWhere(adminmenu, {key: 'contents'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-gears"></i>
+                        <span class="title">{{ 'contents' | translate }} {{ 'and' | translate }} {{ 'messages' |
+                            translate }}</span>
+                        <span class="arrow"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('contents-routes') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-routes'})">
+                            <a ui-sref="contents-routes">
+                                <i class="fa fa-share-alt"></i>
+                                {{ "routing" | translate}}</a>
+                            <ul class="sub-menu" ng-if="$state.includes('contents-views')" style="display: block;">
+                                <li ng-class="{ open: $state.includes('contents-views') }">
+                                    <a ui-sref="contents-views($state.params)">
+                                        <i class="fa fa-th"></i>
+                                        {{ _.findWhere(breadcrumb.getStatesChain(), {name:
+                                        'contents-views'}).ncyBreadcrumbLabel }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-seo') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-seo'})">
+                            <a ui-sref="contents-seo">
+                                <i class="fa fa-edit"></i>
+                                SEO</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-mails') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-mails'})">
+                            <a ui-sref="contents-mails">
+                                <i class="icon-globe"></i>
+                                {{ 'mails' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-categories') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-categories'})">
+                            <a ui-sref="contents-categories">
+                                <i class="icon-folder"></i>
+                                {{ 'categories' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-graphics') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-graphics'})">
+                            <a ui-sref="contents-graphics">
+                                <i class="icon-picture"></i>
+                                {{ 'graphics' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-layout') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-layout'})">
+                            <a ui-sref="contents-layout">
+                                <i class="icon-picture"></i>
+                                {{ 'view_settings' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-templates') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-templates'})">
+                            <a ui-sref="contents-templates">
+                                <i class="icon-picture"></i>
+                                {{ 'templates' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-static') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-static'})">
+                            <a ui-sref="contents-static">
+                                <i class="icon-picture"></i>
+                                {{ 'static_contents' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-reclamation-faults') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-reclamation-faults'})">
+                            <a ui-sref="contents-reclamation-faults">
+                                <i class="fa fa-thumbs-down"></i>
+                                {{ 'reasons_of_reclamations' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('contents-style-edit') }"
+                            ng-if="_.findWhere(menuContents.subMenus, {key: 'contents-style-edit'})">
+                            <a ui-sref="contents-style-edit">
+                                <i class="fa fa-file-code-o"></i>
+                                {{ 'edit_styles' | translate }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li ng-class="{ 'active open': $state.includes('printshop-base') }"
+                    ng-if="(menuPrintshop = _.findWhere(adminmenu, {key: 'printshop'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-cubes"></i>
+                        <span class="title">Printshop</span>
+                        <span class="arrow"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: true }"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'configuration_products'})">
+                            <a ui-sref="printshop-products">
+                                <i class="fa fa-share-alt"></i>
+                                {{"configuration_products" | translate}}</a>
+                            <ul class="sub-menu" style="display: block;">
+                                <li ng-if="$state.includes('printshop-types')"
+                                    ng-class="{ open: $state.includes('printshop-types') }">
+                                    <a ui-sref="printshop-types($state.params)">
+                                        <i class="fa fa-th"></i>
+                                        {{ _.findWhere(breadcrumb.getStatesChain(), {name:
+                                        'printshop-types'}).ncyBreadcrumbLabel }}
+                                    </a>
+                                    <ul class="sub-menu" style="display: block;"
+                                        ng-if="$state.includes('printshop-type-settings')">
+                                        <li ng-class="{open: $state.includes('printshop-type-settings')}">
+                                            <a ui-sref="printshop-formats($state.params)">
+                                                <i class="fa fa-list"></i>
+                                                {{ _.findWhere(breadcrumb.getStatesChain(), {name:
+                                                'printshop-type-settings'}).ncyBreadcrumbLabel }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a ui-sref="printshop-group-types">
+                                        <i class="fa fa-th"></i>
+                                        {{'printshop-group-types' | translate}}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li ng-class="{open: $state.includes('printshop-realizationTimes')}"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'realization_times'})">
+                            <a ui-sref="printshop-realizationTimes">
+                                <i class="fa fa-history"></i>
+                                {{ "realization_times" |translate }}</a>
+                        </li>
+
+                        <li ng-class="{open: $state.includes('printshop-configAttributes')}"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'config_attributes'})">
+                            <a ui-sref="printshop-configAttributes">
+                                <i class="fa fa-puzzle-piece"></i>
+                                {{"config_attributes" |translate}}</a>
+                            <ul class="sub-menu" style="display: block;">
+                                <li ng-if="$state.includes('printshop-configOptions')" ng-class="{ open: true }">
+                                    <a ui-sref="printshop-configOptions($state.params)">
+                                        <i class="fa fa-list"></i>
+                                        {{ _.findWhere(breadcrumb.getStatesChain(), {name:
+                                        'printshop-configOptions'}).ncyBreadcrumbLabel }}</a>
+
+                                    <ul class="sub-menu" style="display: block;"
+                                        ng-if="$state.includes('printshop-configOptionSettings')">
+                                        <li ng-class="{ open: $state.includes('printshop-configOptionSettings') }">
+                                            <a ui-sref="printshop-configOptionSettings($state.params)">
+                                                <i class="fa fa-gear"></i>
+                                                {{currentOptionName}}</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a ui-sref="printshop-attributes-options">
+                                        <i class="fa fa-th"></i>
+                                        {{'printshop-attributes-options' | translate}}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li ng-class="{open: $state.includes('printshop-configTechnologies')}"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'technologies'})">
+                            <a ui-sref="printshop-configTechnologies">
+                                <i class="fa fa-gear"></i>
+                                {{"technologies" |translate}}</a>
+                        </li>
+                        <li ng-class="{open: $state.includes('printshop-production-path')}"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'production_path'})">
+                            <a ui-sref="printshop-production-path">
+                                <i class="icon-graph"></i>
+                                {{ 'production_path' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('margins') }"
+                            ng-if="_.findWhere(menuPrintshop.subMenus, {key: 'margins'})">
+                            <a ui-sref="margins">
+                                <i class="fa fa-bookmark-o"></i> {{ 'margins' | translate }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li ng-class="{ 'active open': $state.includes('orders-base') }"
+                    ng-if="(menuOrders = _.findWhere(adminmenu, {key: 'orders'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="title">{{ 'orders' | translate }}</span>
+                        <span class="arrow" ng-class="{ open: $state.includes('orders-base') }"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('orders-orders') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'orders-orders'})">
+                            <a ui-sref="orders-orders">
+                                <i class="fa fa-suitcase"></i>
+                                {{ 'orders' | translate }}
+                                <span ng-if="countOrderUnreadedMessages > 0"
+                                    tooltip="{{ 'unread_message' | translate }}" class="badge">{{
+                                    countOrderUnreadedMessages }}</span>
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-products') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'orders-products'})">
+                            <a ui-sref="orders-products">
+                                <i class="fa fa-shopping-bag"></i>
+                                {{ 'products' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-production-path') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'production_path'})">
+                            <a ui-sref="orders-production-path">
+                                <i class="icon-graph"></i>
+                                {{ 'production_path' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-production-panel') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'production_panel'})">
+                            <a ui-sref="orders-production-panel">
+                                <i class="fa fa-share-alt-square"></i>
+                                {{ 'production_panel' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-operators') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'orders_operators'})">
+                            <a ui-sref="orders-operators">
+                                <i class="fa fa-user"></i>
+                                {{ 'operators' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-products-accept') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'products_accept'})">
+                            <a ui-sref="orders-products-accept">
+                                <i class="fa fa-check"></i>
+                                {{ 'orders_acceptance' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-statuses') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'statuses'})">
+                            <a ui-sref="orders-statuses">
+                                <i class="fa fa-flag-o"></i>
+                                {{ 'statuses' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('reclamations-statuses') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'reclamations-statuses'})">
+                            <a ui-sref="reclamations-statuses">
+                                <i class="fa fa-flag-o"></i>
+                                {{ 'reclamation_statuses' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-transport') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'orders-transport'})">
+
+                            <a ui-sref="orders-transport">
+                                <i class="fa fa-truck"></i>
+                                {{ 'transport' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('orders-custom-products') }"
+                            ng-if="_.findWhere(menuOrders.subMenus, {key: 'orders-custom-products'})">
+
+                            <a ui-sref="orders-custom-products">
+                                <i class="fa fa-truck"></i>
+                                {{ 'custom_orders' | translate }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li ng-class="{ 'active open': $state.includes('customerservice-base') }"
+                    ng-if="(menuCustomerService = _.findWhere(adminmenu, {key: 'customer_service'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-child"></i>
+                        <span class="title">{{ 'customer_service' | translate }}</span>
+                        <span class="arrow" ng-class="{ open: $state.includes('customerservice-base') }"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('customerservice-register') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'user_registration'})">
+                            <a ui-sref="customerservice-register">
+                                <i class="icon-user-follow"></i>
+                                {{ 'user_registration' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('customerservice-userlist') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'users_list'})">
+                            <a ui-sref="customerservice-userlist">
+                                <i class="icon-graph"></i>
+                                {{ 'users_list' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('order-list') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'order-list'})">
+                            <a ui-sref="order-list">
+                                <i class="fa fa-list"></i>
+                                {{ 'order_list' | translate }}
+                            </a>
+                        </li>
+
+                        <!--<li ng-class="{ open: $state.includes('customerservice-offer-list') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'offer_list'})">
+
+                            <a ui-sref="customerservice-offer-list">
+                                <i class="fa fa-list"></i>
+                                {{ 'offers_list' | translate }}
+                            </a>
+                        </li>-->
+
+                        <li ng-class="{ open: $state.includes('order-offer-list') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'order-offer-list'})">
+
+                            <a ui-sref="order-offer-list">
+                                <i class="fa fa-list"></i>
+                                {{ 'offers_list' | translate }}
+                            </a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('create-order') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'create_order'})">
+                            <a ui-sref="create-order">
+                                <i class="fa fa-plus-circle"></i>
+                                {{ 'create_order' | translate }}
+                            </a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('create-offer') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'create_offer'})">
+                            <a ui-sref="create-offer">
+                                <i class="fa fa-plus-circle"></i>
+                                {{ 'create_offer' | translate }}
+                            </a>
+                        </li>
+                        <!--<li ng-class="{ open: $state.includes('customerservice-create-offer') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'create_offer'})">
+
+                            <a ui-sref="customerservice-create-offer">
+                                <i class="fa fa-plus-square-o"></i>
+                                {{ 'create_offer' | translate }}
+                            </a>
+                        </li>-->
+                        <li ng-class="{ open: $state.includes('discounts') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'discounts'})">
+
+                            <a ui-sref="discounts">
+                                <i class="fa fa-gift"></i>
+                                {{ 'discounts' | translate }}
+                            </a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('promotions') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'promotions'})">
+
+                            <a ui-sref="promotions">
+                                <i class="fa fa-money"></i>
+                                {{ 'promotions' | translate }}
+                            </a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('coupons') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'coupons'})">
+
+                            <a ui-sref="coupons">
+                                <i class="fa fa-gift"></i>
+                                {{ 'coupons' | translate }}
+                            </a>
+                        </li>
+
+                        <li ng-class="{ open: $state.includes('newsletter') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'newsletter'})">
+                            <a ui-sref="newsletter">
+                                <i class="fa fa-list"></i> {{ 'newsletter' | translate }}
+                            </a>
+                        </li>
+
+                        <!--<li ng-class="{open: $state.includes('customerservice-offer-inOrder-list')}"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'offer_inOrder_list'})">
+
+                            <a ui-sref="customerservice-offer-inOrder-list">
+                                <i class="fa fa-stack-overflow"></i>
+                                {{ 'placed_orders' | translate }}</a>
+                        </li>-->
+
+                        <li ng-class="{ open: $state.includes('customerservice-reclamations') }"
+                            ng-if="_.findWhere(menuCustomerService.subMenus, {key: 'customerservice-reclamations'})">
+
+                            <a ui-sref="customerservice-reclamations">
+                                <i class="fa fa-thumbs-down"></i>
+                                {{ 'reclamations' | translate }}
+                                <span ng-if="countUnreadedMessages > 0" tooltip="{{ 'unread_message' | translate }}"
+                                    class="badge">{{ countUnreadedMessages }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- PRODUCTION
+                Produkcja
+                    Ustawienia
+                    Planowanie
+                    Ścieżka produkcji
+                    Operatorzy
+                    -->
+                <li ng-class="{ 'active open': $state.includes('production-base') }"
+                    ng-if="(menuProduction = _.findWhere(adminmenu, {key: 'production'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-print"></i>
+                        <span class="title">{{ 'production' | translate }}</span>
+                        <span class="arrow" ng-class="{ open: $state.includes('production-base') }"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('production-settings') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-settings'})">
+                            <a ui-sref="production-settings">
+                                <i class="fa fa-gear"></i> {{ 'settings' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('production-planning') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-planning'})">
+                            <a ui-sref="production-planning">
+                                <i class="fa fa-list"></i> {{ 'planning' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('production-schedule') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-schedule'})">
+                            <a ui-sref="production-schedule">
+                                <i class="fa fa-list"></i> {{ 'schedule' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('production-path') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-path'})">
+                            <a ui-sref="production-path">
+                                <i class="icon-graph"></i> {{ 'path' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('production-operators') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-operators'})">
+                            <a ui-sref="production-operators">
+                                <i class="fa fa-user"></i> {{ 'operators' | translate }}
+                            </a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('production-raports') }"
+                            ng-if="_.findWhere(menuProduction.subMenus, {key: 'production-raports'})">
+                            <a ui-sref="production-raports">
+                                <i class="fa fa-list"></i> {{ 'raports' | translate }}
+                            </a>
+                        </li>
+
+
+                    </ul>
+                </li>
+
+                <!-- auctions -->
+                <!--<li ng-class="{ 'active open': $state.includes('auctions-base') }"
+                    ng-if="(menuAuctions = _.findWhere(adminmenu, {key: 'auctions'})).subMenus.length">
+                    <a href="javascript:;">
+                        <i class="fa fa-cube"></i>
+                        <span class="title">{{ 'inquiries' | translate }}</span>
+                        <span class="arrow" ng-class="{ open: $state.includes('auctions-base') }"></span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li ng-class="{ open: $state.includes('auctions-offer-list') }"
+                            ng-if="_.findWhere(menuAuctions.subMenus, {key: 'offer_list'})">
+                            <a ui-sref="auctions-offer-list">
+                                <i class="fa fa-stack-overflow"></i>
+                                {{ 'inquiry_list' | translate }}</a>
+                        </li>
+                        <li ng-class="{ open: $state.includes('current-auctions') }"
+                            ng-if="_.findWhere(menuAuctions.subMenus, {key: 'current_auctions'})">
+                            <a ui-sref="current-auctions">
+                                <i class="fa fa-dropbox"></i>
+                                {{ 'current_inquiries' | translate }}</a>
+                        </li>
+                    </ul>
+                </li>-->
+                <!-- end of auctions -->
+            </ul>
+        </div>
+    </div>
+    <!-- END SIDEBAR -->
+    <!-- BEGIN CONTENT -->
+    <div class="page-content-wrapper">
+        <div class="page-content">
+            <!-- BEGIN SAMPLE PORTLET CONFIGURATION MODAL FORM-->
+            <div class="modal fade" id="portlet-config" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">Modal title</h4>
+                        </div>
+                        <div class="modal-body">
+                            Widget settings form goes here
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn blue">Save changes</button>
+                            <button type="button" class="btn default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
+                <!-- /.modal-dialog -->
+            </div>
+            <h3 class="page-title">
+                <span ncy-breadcrumb-last></span>
+            </h3>
+
+            <span ncy-breadcrumb></span>
+
+            <!-- END PAGE HEADER-->
+            <!-- BEGIN PAGE CONTENT-->
+            <div class="row">
+                <div class="col-md-12">
+                    <div ui-view="content" class='ui-view-animate fadeInOut'></div>
+                </div>
+            </div>
+            <!-- END PAGE CONTENT-->
+        </div>
+    </div>
+    <!-- END CONTENT -->
+</div>
+<div class="page-footer">
+    <div class="page-footer-inner">
+        2021 &copy; dreamsoft.pro
+    </div>
+    <div class="scroll-to-top">
+        <i class="icon-arrow-up"></i>
+    </div>
+</div>

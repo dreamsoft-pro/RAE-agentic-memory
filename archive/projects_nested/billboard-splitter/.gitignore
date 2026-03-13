@@ -1,0 +1,94 @@
+﻿# --- Klucze / dane wrażliwe ---
+private_key.pem
+public_key.pem
+mysql_data/private_key.pem
+mysql_data/server-key.pem
+mysql_data/client-key.pem
+mysql_data/ca-key.pem
+mysql_data/server-cert.pem
+mysql_data/client-cert.pem
+mysql_data/ca.pem
+
+# (jeśli to wolumen bazy/dev – zwykle cały katalog warto ignorować)
+mysql_data/
+
+# --- Python cache/artefakty ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Wirtualne środowiska
+venv/
+.venv/
+.env/
+.envrc
+.python-version
+.pdm-python
+
+# Paczkowanie / dystrybucja
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+wheels/
+
+# Testy i narzędzia jakości
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.hypothesis/
+
+# Notatniki
+.ipynb_checkpoints/
+
+# Logi
+logs/
+*.log
+*.log.*
+logi-*.txt
+log-*.txt
+
+# --- Artefakty projektu (tylko katalogi wyjściowe) ---
+# Główne outputy PDF/do podglądu – ignoruj całe drzewa
+/output/**
+/benchmark_output_common/**
+/benchmark_output_separate/**
+/REF/**
+/TEST/**
+
+# Pozwól na "placeholder", jeśli chcesz trzymać pusty katalog w repo
+!output/.gitkeep
+!benchmark_output_common/.gitkeep
+!benchmark_output_separate/.gitkeep
+!REF/.gitkeep
+!TEST/.gitkeep
+
+# Pliki tymczasowe/robocze
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# System / edytory
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.code-workspace
+
+# Docker (lokalne różnice/sekrety)
+docker-compose.override.yml
+*.env
+.env.*
+
+# Test artifacts
+test_*.pdf

@@ -1,0 +1,431 @@
+@use './../shared' as *;
+
+#top-menu {
+  background-color: $gray-100;
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  align-items: center;
+  width: 100vw;
+  padding: 0 1rem;
+  height: 5rem;
+  box-shadow: $md-shadow;
+}
+
+.navigation-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+.input-container {
+  display: none;
+
+  @media (min-width: 1024px) {
+    display: flex;
+    width: calc($tools-box-width - 1rem); // Adjusted for padding
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: $gray-700;
+    transition: all $transition-short ease-in-out;
+  }
+
+  &:focus-within::before {
+    width: 100%;
+  }
+}
+
+input.project-name {
+  border-radius: 0;
+  color: $gray-700;
+  border: 0;
+  width: 100%;
+  font-size: 1.25rem;
+  background-color: inherit;
+  position: relative;
+  padding: .25rem 0;
+
+  &::placeholder {
+    color: $gray-500;
+  }
+
+  &.noname {
+    font-style: italic;
+  }
+
+  &:focus,
+  & {
+    border: none;
+    outline: none;
+  }
+}
+
+.logo-container {
+  font-size: 1.75rem;
+  font-weight: 400;
+}
+
+.zoom-slider {
+  -webkit-appearance: none;
+  height: .5rem;
+  background: var(--gray-500);
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    background: var(--gray-700);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid $gray-500;
+  }
+  &::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    background: var(--gray-700);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid $gray-500;
+  }
+}
+
+.selected-image-container {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.navigation-container {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  position: relative;
+
+  &.gap {
+    gap: .5rem;
+  }
+
+  &.expanded {
+    height: 2.75rem;
+  }
+
+  &.white {
+    background: $white;
+    padding: 0 .5rem 0 .25rem;
+    border-radius: $border-sm-radius;
+    gap: .25rem;
+    border: 1px solid $gray-500;
+  }
+
+  .slider-container {
+    display: flex;
+    gap: .25rem;
+    align-items: center;
+  }
+
+  .control-font-size-button {
+    background: $gray-600;
+    border-radius: 50%;
+    height: calc(100% - .75rem);
+    aspect-ratio: 1 / 1;
+    position: relative;
+
+    &::before {
+      position: absolute;
+      color: $white;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -75%);
+      font-weight: 500;
+      width: 50%;
+      height: 50%;
+      font-size: 1.25rem;
+    }
+
+    &.increment::before {
+      content: "+";
+    }
+
+    &.decrement::before {
+      content: "-"
+    }
+  }
+
+  & > .navigation-button:not(:first-of-type),
+  .navigation-actions-buttons-container .navigation-button:not(.cart-button) {
+    border-left: 1px solid $gray-700 !important;
+  }
+
+  .navigation-actions-buttons-container > .navigation-button:last-child {
+    border-right: 1px solid $gray-700 !important;
+  }
+
+  .navigation-button-switcher {
+    display: none;
+    height: 100%;
+    padding: 0 1rem;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: $white;
+    border: solid 1px $gray-500;
+    border-radius: $border-sm-radius;
+    color: $gray-700;
+    font-weight: 500;
+    transition: background-color $transition-medium ease-in-out;
+
+    @media (min-width: 768px) {
+      display: flex;
+    }
+
+    &.active {
+      background-color: $gray-700;
+      color: $white;
+    }
+  }
+
+  .navigation-button {
+    text-align: center;
+    color: $gray-700;
+    width: 3.5rem;
+    background: inherit;
+    font-size: 2rem;
+    height: 2rem;
+    position: relative;
+
+    &.in-dropdown {
+      margin: .25rem 0;
+    }
+
+    &.no-border {
+      border: none !important;
+    }
+
+    &.slider-zoom-in, &.slider-zoom-out, &.rotate {
+      width: fit-content !important;
+    }
+
+    &.navigation-modal-button {
+      color: $blue !important;
+      z-index: 10 !important;
+
+      &:hover {
+        color: $white !important;
+      }
+
+      &::after {
+        content: "";
+        transition: opacity $transition-short ease-in-out;
+        opacity: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: $blue;
+        z-index: -1;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: $border-sm-radius;
+      }
+
+      &:hover::after {
+        opacity: 1;
+      }
+    }
+
+    &:not(.navigation-modal-button)::before {
+      scale: .9;
+      font-size: 2.5rem;
+    }
+
+    //&:not(.cart-button, .flipbook, .settings-button, .save-button, .editor-manual-button, .info-button) {
+    //  text-align: center;
+    //  color: $gray-700;
+    //  width: 2.5rem;
+    //}
+
+    &:first-child {
+      @media (max-width: 1024px) {
+        width: fit-content !important;
+        padding: 0 1rem 0 0 !important;
+      }
+    }
+
+    &:not(.disabled, .navigation-modal-button, &, .dropdown):hover {
+      filter: brightness(.75);
+    }
+
+    &.disabled {
+      color: $gray-600;
+    }
+
+    &.rotate::before {
+      content: "\0041";
+      font-family: "EditorIcons3";
+    }
+
+    &.slider-zoom-in::before {
+      content: "\0022";
+      font-family: "EditorIcons3";
+    }
+
+    &.slider-zoom-out::before {
+      content: "\0023";
+      font-family: "EditorIcons3";
+    }
+
+    &.ruler::before {
+      font-family: "EditorIcons3";
+      content: "\0050";
+    }
+
+    &.magnet::before {
+      font-family: "EditorIcons3";
+      content: "\006c";
+    }
+
+    &.fullscreen::before {
+      font-family: "EditorIcons3";
+      content: "\0047";
+    }
+
+    &.burger::before {
+      font-family: "EditorIcons3";
+      content: "\0040";
+    }
+
+    &.backwards::before {
+      font-family: "EditorIcons";
+      content: "\0077";
+    }
+
+    &.forwards::before {
+      font-family: "EditorIcons";
+      content: "\0078";
+    }
+
+    &.info-button::before {
+      content: "i";
+      font-style: italic;
+      margin-left: -.25rem;
+    }
+
+    &.editor-manual-button::before {
+      content: "?";
+    }
+
+    &.settings-button::before {
+      font-family: "EditorIcons3";
+      content: "\0058";
+    }
+
+    &.settings-button.advanced::before {
+      font-family: "EditorIcons3";
+      content: "\0070";
+    }
+
+    &.save-button::before {
+      font-family: "EditorIcons3";
+      content: "\006E";
+    }
+
+    &.cart-button {
+      background-color: $green;
+      padding: 0 .5rem;
+      border-radius: $border-sm-radius;
+      color: $white;
+      text-transform: uppercase;
+      gap: .5rem;
+      margin-left: 1rem;
+      text-wrap: nowrap;
+      width: fit-content;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      span {
+        font-size: 1rem;
+      }
+
+      &::before {
+        content: url('./../images/from-figma/cart.svg');
+        font-size: .75rem;
+        margin-top: .25rem;
+      }
+    }
+
+    &.flipbook::before {
+      font-family: "EditorIcons3";
+      content: "r";
+    }
+  }
+}
+
+//.dropdown-container {
+//  display: none;
+//  height: 100%;
+//  align-items: center;
+//  position: relative;
+//  width: 3.5rem;
+//  justify-content: center;
+//
+//  @media (min-width: 768px) {
+//    display: flex;
+//  }
+//
+//  .dropdown {
+//    display: flex;
+//    flex-direction: column;
+//    align-items: center;
+//    position: absolute;
+//    top: 110%;
+//    left: 50%;
+//    transform: translateX(-50%);
+//    z-index: 100;
+//    background-color: $gray-100;
+//    border: 1px solid $gray-700;
+//    padding: .25rem;
+//    gap: .25rem;
+//    border-radius: $border-xs-radius;
+//    width: fit-content;
+//
+//    &.hidden {
+//      display: none;
+//    }
+//
+//    & .navigation-button {
+//      width: fit-content !important;
+//    }
+//
+//    &::before {
+//      content: '\2019';
+//      font-family: "EditorIcons3";
+//      position: absolute;
+//      left: 50%;
+//      top: -11.3%;
+//      transform: translateX(-50%);
+//      color: $gray-700;
+//      font-size: 2.5rem;
+//      box-sizing: content-box;
+//      z-index: 5000;
+//      pointer-events: none;
+//    }
+//  }
+//}
+

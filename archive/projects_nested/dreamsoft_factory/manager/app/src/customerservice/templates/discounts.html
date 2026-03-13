@@ -1,0 +1,208 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'discount_groups' | translate }}
+                </div>
+                <div class="tools">
+                    <a href="javascript:;" ng-click="refresh()" class="reload"></a>
+                    <button button-faq-accordion="customservice.discounts"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="overflowContainer">
+                    <table class="table">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>
+                                {{ 'discount_group_name' | translate }}
+                                <form method="post">
+                                    <select ng-model="showLang"
+                                            ng-options="lang.code as lang.name for (key, lang) in languages"
+                                            ng-init="showLang = currentLang.code"></select>
+                                </form>
+                            </th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="discountGroup in discountGroups | offset: (pagination.currentPage-1) * pagination.perPage | limitTo: pagination.perPage ">
+                            <td>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <strong>{{ discountGroup.ID }} - {{ discountGroup.langs[showLang].name }}</strong>
+                                        <div ng-if="discountGroup.default">{{'default'|translate}}</div>
+                                    </div>
+                                    <div class="panel-body">
+                                        <button data-toggle="tooltip" ng-click="editDiscountGroup(discountGroup)" tooltip="{{ 'edit' | translate }}" class="btn blue-hoki btn-xs">
+                                            <span class="glyphicon glyphicon-edit"></span>
+                                        </button>
+                                        <button class="btn red-sunglo btn-xs"
+                                                ng-confirm-click="removeDiscountGroup(discountGroup)"
+                                                tooltip="{{ 'delete' | translate }}">
+                                            <i class="glyphicon glyphicon-remove"></i>
+                                        </button>
+                                    </div>
+                                    <div class="panel-footer">
+                                        <button type="button" class="btn btn-default btn-xs"
+                                                ng-click="processDiscounts(discountGroup)">
+                                            <i class="fa fa-shopping-bag"></i>
+                                            {{ 'process_discounts' | translate }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td colspan="6">
+
+                                <table class="table table-stripe table-hover">
+                                    <thead>
+                                        <th>{{ 'group_of_product' | translate }}</th>
+                                        <th>{{ 'type_of_product' | translate }}</th>
+                                        <th>{{ 'format' | translate }}</th>
+                                        <th>{{ 'quantity' | translate }}</th>
+                                        <th>{{ 'number_of_meters' | translate }}</th>
+                                        <th>{{ 'percentage' | translate }}</th>
+                                        <th class="text-right">{{ 'actions' | translate }}</th>
+                                    </thead>
+                                    <tr ng-repeat="discount in discountGroup.discounts">
+                                        <td class="text-left">
+                                            <span ng-show="discount.productGroupLangs[showLang].name.length > 0">{{ discount.productGroupLangs[showLang].name }}</span>
+                                            <span ng-show="!discount.productGroupLangs[showLang].name">{{ discount.groupDefaultName }}</span>
+                                            <span ng-show="!discount.productGroupID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-left">
+                                            <span ng-show="discount.productTypeLangs[showLang].name.length > 0">{{ discount.productTypeLangs[showLang].name }}</span>
+                                            <span ng-show="!discount.productTypeLangs[showLang].name">{{ discount.typeDefaultName }}</span>
+                                            <span ng-show="!discount.productTypeID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-left">
+                                            <span ng-show="discount.productFormatLangs[showLang].name.length > 0">{{ discount.productFormatLangs[showLang].name }}</span>
+                                            <span ng-show="!discount.productFormatLangs[showLang].name">{{ discount.formatDefaultName }}</span>
+                                            <span ng-show="!discount.productFormatID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-left">{{ discount.qty_start }} - {{ discount.qty_end }}</td>
+                                        <td class="text-left">{{ discount.meters_start }} - {{ discount.meters_end }}</td>
+                                        <td class="text-left">{{ discount.percentage }}%</td>
+                                        <td class="text-right">
+                                            <button class="text-right btn btn-success" ng-click="editDiscount(discountGroup, discount);"><i
+                                                    class="fa fa-pencil"></i> {{ 'edit' | translate }}
+                                            </button>
+                                            <button class="text-right btn red-sunglo"
+                                                    ng-confirm-click="removeDiscount(discount);"><i class="fa fa-remove"></i> {{ 'delete' | translate }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <form class="form-vertical" role="form" >
+                                        <tr role="row" class="heading">
+                                            <td class="col-md-2 text-left">
+                                                <select class="form-control" ng-model="discount.form.productGroupID"
+                                                        ng-change="getTypes( discountGroup, discount.form.productGroupID )"
+                                                        ng-options="each.ID as each.names[showLang] for each in productGroups">
+                                                    <option value="">{{ 'group_of_product' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-2 text-left">
+                                                <select class="form-control"
+                                                        ng-model="discount.form.productTypeID"
+                                                        ng-change="getFormats(discountGroup, discount.form.productGroupID, discount.form.productTypeID)"
+                                                        ng-options="item.ID as item.name for item in productTypes[discountGroup.ID]">
+                                                    <option value="">{{ 'type_of_product' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-1 text-left">
+                                                <select class="form-control" ng-model="discount.form.productFormatID"
+                                                        ng-options="item.ID as item.name for item in productFormats[discountGroup.ID]">
+                                                    <option value="">{{ 'format' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-2 text-left">
+                                                <input ng-model="discount.form.qty_start"
+                                                       type="text" style="width: 45% !important; float:left;"
+                                                       class="form-control" placeholder="{{ 'ALL' | translate }}">
+                                                <input ng-model="discount.form.qty_end" type="text"
+                                                       style="width: 45% !important; float:left;" class="form-control"
+                                                       placeholder="{{ 'ALL' | translate }}">
+                                            </td>
+                                            <td class="col-md-1 text-left">
+                                                <input ng-model="discount.form.meters_start"
+                                                       type="text" style="width: 45% !important; float:left;"
+                                                       class="form-control" placeholder="m2">
+                                                <input ng-model="discount.form.meters_end" type="text"
+                                                       style="width: 45% !important; float:left;" class="form-control"
+                                                       placeholder="m2">
+                                            </td>
+                                            <td class="col-md-1 text-left">
+                                                <input ng-model="discount.form.percentage"
+                                                       type="text" required="required" class="form-control" placeholder="%">
+                                            </td>
+                                            <td class="col-md-1 text-right">
+                                                <button type="button" ng-click="addDiscount(discountGroup, discount)" class="btn btn-success text-right">
+                                                    <i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </form>
+                                </table>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <pagination total-items="discountGroups.length" ng-model="pagination.currentPage"
+                                ng-click="pagination.setPage(pagination.currentPage)" class="pagination-sm"
+                                max-size="10" boundary-links="true" items-per-page="pagination.perPage"></pagination>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-md-8">
+
+                        <form class="form-horizontal" role="form" ng-submit="addDiscountGroup()">
+                            <div class="form-body">
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">{{ 'group_name' | translate }}</label>
+                                    <div class="col-md-9">
+                                        <input ng-repeat="lang in languages" ng-show="nameLang == lang.code"
+                                               ng-model="discountGroupForm.names[lang.code]" type="text" class="form-control"
+                                               placeholder="{{lang.code}}"/>
+                                        <select class="form-control" ng-init="nameLang = currentLang.code"
+                                                ng-model="nameLang"
+                                                ng-options="each.code as each.name for (key, each) in languages"></select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                        <label class="col-md-3 control-label">{{ 'default' | translate }}</label>
+                                        <div class="col-md-9">
+                                            <input ng-model="discountGroupForm.default" ng-true-value="1" ng-false-value="0" type="checkbox"/>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            <div class="form-actions">
+                                <div class="row">
+                                    <div class="col-md-offset-3 col-md-9">
+                                        <button class="btn btn-success">
+                                            <i class="fa fa-plus"></i>
+                                            {{ 'add' | translate}}
+                                        </button>
+                                        <button ng-click="reset()" type="button" class="btn red-sunglo">{{ 'cancel' |
+                                            translate }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+<!-- promotion -->
+
+

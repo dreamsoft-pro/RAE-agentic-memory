@@ -1,0 +1,2192 @@
+openapi: 3.0.3
+info:
+  title: ScreenWatcher API
+  version: 1.0.0
+  description: Industrial OEE and Telemetry monitoring system.
+paths:
+  /api/collector/ingest/:
+    post:
+      operationId: api_collector_ingest_create
+      description: Endpoint for ingesting telemetry data from machines/IoT gateways.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryIngest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TelemetryIngest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TelemetryIngest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                status: accepted
+          description: ''
+  /api/oee/downtime-events/:
+    get:
+      operationId: api_oee_downtime_events_list
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DowntimeEvent'
+          description: ''
+    post:
+      operationId: api_oee_downtime_events_create
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DowntimeEvent'
+          description: ''
+  /api/oee/downtime-events/{id}/:
+    get:
+      operationId: api_oee_downtime_events_retrieve
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this downtime event.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DowntimeEvent'
+          description: ''
+    put:
+      operationId: api_oee_downtime_events_update
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this downtime event.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DowntimeEvent'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DowntimeEvent'
+          description: ''
+    patch:
+      operationId: api_oee_downtime_events_partial_update
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this downtime event.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDowntimeEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDowntimeEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDowntimeEvent'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DowntimeEvent'
+          description: ''
+    delete:
+      operationId: api_oee_downtime_events_destroy
+      description: |-
+        API endpoint for viewing and managing downtime events.
+        Operators can assign reasons and comments to these events.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this downtime event.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/operator-panel/operators/:
+    get:
+      operationId: api_operator_panel_operators_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Operator'
+          description: ''
+    post:
+      operationId: api_operator_panel_operators_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Operator'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Operator'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Operator'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operator'
+          description: ''
+  /api/operator-panel/operators/{id}/:
+    get:
+      operationId: api_operator_panel_operators_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Operator.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operator'
+          description: ''
+    put:
+      operationId: api_operator_panel_operators_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Operator.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Operator'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Operator'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Operator'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operator'
+          description: ''
+    patch:
+      operationId: api_operator_panel_operators_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Operator.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOperator'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOperator'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOperator'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operator'
+          description: ''
+    delete:
+      operationId: api_operator_panel_operators_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Operator.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/operator-panel/reason-codes/:
+    get:
+      operationId: api_operator_panel_reason_codes_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReasonCode'
+          description: ''
+    post:
+      operationId: api_operator_panel_reason_codes_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReasonCode'
+          description: ''
+  /api/operator-panel/reason-codes/{id}/:
+    get:
+      operationId: api_operator_panel_reason_codes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Reason Code.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReasonCode'
+          description: ''
+    put:
+      operationId: api_operator_panel_reason_codes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Reason Code.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReasonCode'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReasonCode'
+          description: ''
+    patch:
+      operationId: api_operator_panel_reason_codes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Reason Code.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReasonCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReasonCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReasonCode'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReasonCode'
+          description: ''
+    delete:
+      operationId: api_operator_panel_reason_codes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Reason Code.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/registry/departments/:
+    get:
+      operationId: api_registry_departments_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Department'
+          description: ''
+    post:
+      operationId: api_registry_departments_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/registry/departments/{id}/:
+    get:
+      operationId: api_registry_departments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: api_registry_departments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: api_registry_departments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: api_registry_departments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this department.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/registry/factories/:
+    get:
+      operationId: api_registry_factories_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Factory'
+          description: ''
+    post:
+      operationId: api_registry_factories_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Factory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Factory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Factory'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factory'
+          description: ''
+  /api/registry/factories/{id}/:
+    get:
+      operationId: api_registry_factories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this factory.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factory'
+          description: ''
+    put:
+      operationId: api_registry_factories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this factory.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Factory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Factory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Factory'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factory'
+          description: ''
+    patch:
+      operationId: api_registry_factories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this factory.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFactory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFactory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFactory'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factory'
+          description: ''
+    delete:
+      operationId: api_registry_factories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this factory.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/registry/interfaces/:
+    get:
+      operationId: api_registry_interfaces_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Interface'
+          description: ''
+    post:
+      operationId: api_registry_interfaces_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interface'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Interface'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Interface'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+          description: ''
+  /api/registry/interfaces/{id}/:
+    get:
+      operationId: api_registry_interfaces_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this interface.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+          description: ''
+    put:
+      operationId: api_registry_interfaces_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this interface.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interface'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Interface'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Interface'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+          description: ''
+    patch:
+      operationId: api_registry_interfaces_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this interface.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInterface'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInterface'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInterface'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+          description: ''
+    delete:
+      operationId: api_registry_interfaces_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this interface.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/registry/lines/:
+    get:
+      operationId: api_registry_lines_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Line'
+          description: ''
+    post:
+      operationId: api_registry_lines_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+  /api/registry/lines/{id}/:
+    get:
+      operationId: api_registry_lines_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this line.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+    put:
+      operationId: api_registry_lines_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this line.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Line'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Line'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Line'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+    patch:
+      operationId: api_registry_lines_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this line.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLine'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Line'
+          description: ''
+    delete:
+      operationId: api_registry_lines_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this line.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/registry/machines/:
+    get:
+      operationId: api_registry_machines_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Machine'
+          description: ''
+    post:
+      operationId: api_registry_machines_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Machine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Machine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Machine'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+          description: ''
+  /api/registry/machines/{id}/:
+    get:
+      operationId: api_registry_machines_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this machine.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+          description: ''
+    put:
+      operationId: api_registry_machines_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this machine.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Machine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Machine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Machine'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+          description: ''
+    patch:
+      operationId: api_registry_machines_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this machine.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMachine'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMachine'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMachine'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Machine'
+          description: ''
+    delete:
+      operationId: api_registry_machines_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this machine.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/reports/export/events/:
+    get:
+      operationId: api_reports_export_events_retrieve
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/reports/export/oee/:
+    get:
+      operationId: api_reports_export_oee_retrieve
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/rules/rules/:
+    get:
+      operationId: api_rules_rules_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+          description: ''
+    post:
+      operationId: api_rules_rules_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Rule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Rule'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: ''
+  /api/rules/rules/{id}/:
+    get:
+      operationId: api_rules_rules_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this rule.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: ''
+    put:
+      operationId: api_rules_rules_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this rule.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Rule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Rule'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: ''
+    patch:
+      operationId: api_rules_rules_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this rule.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRule'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+          description: ''
+    delete:
+      operationId: api_rules_rules_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this rule.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/rules/simulate/:
+    post:
+      operationId: api_rules_simulate_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Simulation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Simulation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Simulation'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Simulation'
+          description: ''
+  /dashboard/stats/{id}/:
+    get:
+      operationId: dashboard_stats_retrieve
+      description: API endpoint for ECharts to fetch real-time data.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - dashboard
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MachineStats'
+          description: ''
+  /healthz/:
+    get:
+      operationId: healthz_retrieve
+      description: Health check endpoint.
+      tags:
+      - healthz
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Line'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Department code (e.g., 'DEPT-ASSEMBLY')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        factory:
+          type: string
+          format: uuid
+      required:
+      - code
+      - created_at
+      - factory
+      - id
+      - lines
+      - name
+      - updated_at
+    DowntimeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        machine:
+          type: string
+          format: uuid
+          readOnly: true
+        start_time:
+          type: string
+          format: date-time
+          readOnly: true
+        end_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        duration_seconds:
+          type: integer
+          readOnly: true
+        reason:
+          type: integer
+          nullable: true
+        reason_code:
+          type: string
+          nullable: true
+        reason_desc:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+      required:
+      - duration_seconds
+      - end_time
+      - id
+      - machine
+      - reason_desc
+      - start_time
+    Factory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        departments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Unique identifier for the factory (e.g., 'FACTORY-01')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        address:
+          type: string
+          nullable: true
+      required:
+      - code
+      - created_at
+      - departments
+      - id
+      - name
+      - updated_at
+    Interface:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          description: Interface name (e.g., 'Main PLC')
+          maxLength: 100
+        protocol:
+          $ref: '#/components/schemas/ProtocolEnum'
+        connection_details:
+          description: Protocol specific settings (IP, Port, Topic)
+        is_active:
+          type: boolean
+        machine:
+          type: string
+          format: uuid
+      required:
+      - created_at
+      - id
+      - machine
+      - name
+      - updated_at
+    Line:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        machines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Machine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Line code (e.g., 'LINE-01')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        department:
+          type: string
+          format: uuid
+      required:
+      - code
+      - created_at
+      - department
+      - id
+      - machines
+      - name
+      - updated_at
+    Machine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        interfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interface'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Unique Machine ID (e.g., 'M-001')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        cycle_time_ideal:
+          type: number
+          format: double
+          description: Ideal cycle time in seconds
+        line:
+          type: string
+          format: uuid
+        legacy_connection:
+          type: integer
+          nullable: true
+      required:
+      - code
+      - created_at
+      - id
+      - interfaces
+      - line
+      - name
+      - updated_at
+    MachineInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        status:
+          type: string
+        last_seen:
+          type: string
+          format: date-time
+      required:
+      - code
+      - last_seen
+      - name
+      - status
+    MachineStats:
+      type: object
+      properties:
+        machine:
+          $ref: '#/components/schemas/MachineInfo'
+        oee:
+          $ref: '#/components/schemas/OEEInfo'
+      required:
+      - machine
+      - oee
+    OEEInfo:
+      type: object
+      properties:
+        oee:
+          type: number
+          format: double
+        availability:
+          type: number
+          format: double
+        performance:
+          type: number
+          format: double
+        quality:
+          type: number
+          format: double
+      required:
+      - availability
+      - oee
+      - performance
+      - quality
+    Operator:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        badge_id:
+          type: string
+          nullable: true
+          maxLength: 50
+        user:
+          type: integer
+        default_machine:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - id
+      - user
+    PatchedDepartment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Line'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Department code (e.g., 'DEPT-ASSEMBLY')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        factory:
+          type: string
+          format: uuid
+    PatchedDowntimeEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        machine:
+          type: string
+          format: uuid
+          readOnly: true
+        start_time:
+          type: string
+          format: date-time
+          readOnly: true
+        end_time:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        duration_seconds:
+          type: integer
+          readOnly: true
+        reason:
+          type: integer
+          nullable: true
+        reason_code:
+          type: string
+          nullable: true
+        reason_desc:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+    PatchedFactory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        departments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Unique identifier for the factory (e.g., 'FACTORY-01')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        address:
+          type: string
+          nullable: true
+    PatchedInterface:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          description: Interface name (e.g., 'Main PLC')
+          maxLength: 100
+        protocol:
+          $ref: '#/components/schemas/ProtocolEnum'
+        connection_details:
+          description: Protocol specific settings (IP, Port, Topic)
+        is_active:
+          type: boolean
+        machine:
+          type: string
+          format: uuid
+    PatchedLine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        machines:
+          type: array
+          items:
+            $ref: '#/components/schemas/Machine'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Line code (e.g., 'LINE-01')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        department:
+          type: string
+          format: uuid
+    PatchedMachine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        interfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interface'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          description: Unique Machine ID (e.g., 'M-001')
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        cycle_time_ideal:
+          type: number
+          format: double
+          description: Ideal cycle time in seconds
+        line:
+          type: string
+          format: uuid
+        legacy_connection:
+          type: integer
+          nullable: true
+    PatchedOperator:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        badge_id:
+          type: string
+          nullable: true
+          maxLength: 50
+        user:
+          type: integer
+        default_machine:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedReasonCode:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 255
+        category:
+          type: string
+          description: e.g., Mechanical, Electrical, Operational
+          maxLength: 50
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        is_active:
+          type: boolean
+    PatchedRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        is_active:
+          type: boolean
+        logic:
+          type: string
+          description: Rule logic in JsonLogic format
+        actions:
+          type: string
+          description: List of actions to execute on hit
+        machine:
+          type: string
+          format: uuid
+          nullable: true
+    ProtocolEnum:
+      enum:
+      - mqtt
+      - opcua
+      - rest
+      - modbus
+      type: string
+      description: |-
+        * `mqtt` - MQTT
+        * `opcua` - OPC UA
+        * `rest` - REST API
+        * `modbus` - Modbus TCP
+    ReasonCode:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 255
+        category:
+          type: string
+          description: e.g., Mechanical, Electrical, Operational
+          maxLength: 50
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        is_active:
+          type: boolean
+      required:
+      - code
+      - description
+      - id
+    Rule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        is_active:
+          type: boolean
+        logic:
+          type: string
+          description: Rule logic in JsonLogic format
+        actions:
+          type: string
+          description: List of actions to execute on hit
+        machine:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+    SeverityEnum:
+      enum:
+      - INFO
+      - WARNING
+      - CRITICAL
+      type: string
+      description: |-
+        * `INFO` - Info
+        * `WARNING` - Warning
+        * `CRITICAL` - Critical
+    Simulation:
+      type: object
+      properties:
+        logic:
+          description: JsonLogic rule definition
+        data:
+          description: Data context to evaluate against
+      required:
+      - data
+      - logic
+    TelemetryIngest:
+      type: object
+      properties:
+        machine_code:
+          type: string
+          description: Unique code of the machine
+        timestamp:
+          type: string
+          format: date-time
+          description: Data acquisition time
+        metrics:
+          description: Key-value pairs of telemetry data
+        legacy_config:
+          description: Optional legacy DB connection settings
+      required:
+      - machine_code
+      - metrics
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

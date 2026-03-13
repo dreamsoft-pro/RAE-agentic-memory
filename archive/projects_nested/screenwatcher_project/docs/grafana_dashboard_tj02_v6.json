@@ -1,0 +1,395 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "m2/h",
+            "axisPlacement": "auto",
+            "axisWidth": 80,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "dataset": "screenwatcher",
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT\n  timestamp AS \"time\",\n  value AS \"Prędkość (m2/h)\"\nFROM screenwatcher.collector_metricreading\nWHERE\n  name = 'speed_m2h'\n  AND machine_id = '224bf64a-d590-486f-8aee-9e4b5cedc198'\n  AND $__timeFilter(timestamp)\nORDER BY timestamp ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "collector_metricreading"
+        }
+      ],
+      "title": "Wydajność Maszyny (Prędkość)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisLabel": "Status",
+            "axisWidth": 80,
+            "drawStyle": "line",
+            "fillOpacity": 80,
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 0,
+            "spanNulls": false,
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0.8": {
+                  "index": 0,
+                  "text": "IDLE"
+                },
+                "1": {
+                  "index": 1,
+                  "text": "WORKING"
+                }
+              }
+            }
+          ],
+          "max": 1.1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.8
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "dataset": "screenwatcher",
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "WITH StanMaszyny AS (\n  SELECT\n    timestamp,\n    GROUP_CONCAT(value ORDER BY name) as signature\n  FROM screenwatcher.collector_metricreading\n  WHERE\n    machine_id = '224bf64a-d590-486f-8aee-9e4b5cedc198'\n    AND $__timeFilter(timestamp)\n  GROUP BY timestamp\n),\nAnaliza AS (\n  SELECT\n    timestamp,\n    signature,\n    LAG(signature) OVER (ORDER BY timestamp) as prev_signature,\n    LAG(timestamp) OVER (ORDER BY timestamp) as prev_ts\n  FROM StanMaszyny\n)\nSELECT\n  timestamp as \"time\",\n  CASE\n    -- Bezpiecznik: Jeśli dziura w danych > 60s -> OFFLINE (0)\n    WHEN TIMESTAMPDIFF(SECOND, prev_ts, timestamp) > 60 THEN 0\n    -- Jeśli dane ciągłe i zmiana stanu -> PRACA (1.0)\n    WHEN signature != prev_signature THEN 1.0\n    -- Jeśli dane ciągłe i brak zmiany -> IDLE (0.8)\n    ELSE 0.8\n  END as \"Status\"\nFROM Analiza\nORDER BY timestamp",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "collector_metriccontext"
+        }
+      ],
+      "title": "Timeline Statusów (Detekcja Pełnej Zmiany Stanu)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Czas (s)",
+            "axisPlacement": "auto",
+            "axisWidth": 80,
+            "barAlignment": 0,
+            "drawStyle": "bar",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "dataset": "screenwatcher",
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "WITH RawData AS (\n    SELECT\n        timestamp,\n        CASE WHEN value > 0 THEN \"RUNNING\" ELSE \"STOPPED\" END AS status,\n        LEAD(timestamp) OVER (ORDER BY timestamp) AS next_ts\n    FROM screenwatcher.collector_metricreading\n    WHERE\n        name = \"speed_m2h\"\n        AND machine_id = \"224bf64a-d590-486f-8aee-9e4b5cedc198\"\n        AND $__timeFilter(timestamp)\n)\nSELECT\n    timestamp AS \"time\",\n    TIMESTAMPDIFF(SECOND, timestamp, next_ts) AS \"Czas Trwania (s)\"\nFROM RawData\nWHERE\n    status = \"STOPPED\"\n    AND TIMESTAMPDIFF(SECOND, timestamp, next_ts) > 15\n    AND TIMESTAMPDIFF(SECOND, timestamp, next_ts) <= 300\nORDER BY timestamp ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "collector_metriccontext"
+        }
+      ],
+      "title": "Mikroprzestoje (15s - 5 min)",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "TJ02",
+    "Production"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "default",
+          "value": "default"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "DS_MYSQL",
+        "options": [],
+        "query": "mysql",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "TrueJet2 - Production & Microstops",
+  "uid": "tj02-prod",
+  "version": 1,
+  "weekStart": ""
+}

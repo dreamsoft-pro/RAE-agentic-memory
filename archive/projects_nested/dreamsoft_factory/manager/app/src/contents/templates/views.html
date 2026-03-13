@@ -1,0 +1,188 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-share-alt"></i> {{ currentRoot.state }}
+                </div>
+                <div class="tools">
+                    <button ng-click="refresh()" class="btn btn-primary btn-sm"><i class="fa fa-refresh"></i> {{
+                        'refresh' | translate }}
+                    </button>
+                    <button button-faq-accordion="contents.views"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table table-hover">
+                            <thead>
+                            <tr>
+                                <th sort-trigger>#</th>
+                                <th width="20%">{{ 'name' | translate }}</th>
+                                <th width="15%">{{ 'controller' | translate }}</th>
+                                <th width="15%">{{ 'templates' | translate }}</th>
+                                <th width="15%"><i class="fa fa-info-circle"
+                                                   tooltip="Opcja ustala czy element jest zagnieżdzony oraz czy będzie mógł być zmieniony"></i>
+                                    {{ 'overwrite' | translate }}
+                                </th>
+                                <th width="20%">{{ 'actions' | translate }}</th>
+                            </tr>
+                            </thead>
+                            <tbody ui-sortable="sortableOptions" ng-model="views">
+                            <tr ng-repeat="view in views" ng-class="{'bg-grey': (view.replaceID > 0)}">
+                                <td>
+                                    <button tolltip="{{ 'sort' | translate }}"
+                                            class="btn btn-default btn-sm button-sort"><i
+                                            class="fa fa-arrows-v"></i></button>
+                                    <i class="fa fa-info-circle"
+                                       tooltip="Ten widok jest podmieniony z nadrzędnego routa"
+                                       ng-if="view.replaceID > 0"></i>
+                                </td>
+                                <td colspan="7">
+                                    <table class="table table-hover">
+                                        <tbody>
+                                        <tr>
+                                            <td width="20%"><b>{{ view.name }}</b></td>
+                                            <td width="15%">{{ view.controller }}</td>
+                                            <td width="15%">
+                                                <button class="btn btn-primary btn-xs"
+                                                        tooltip="{{ 'select_template' | translate }}"
+                                                        ng-click="template(view)">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                {{ _.findWhere(templates, { ID: view.templateID, own: view.own }).name || 'none' | translate}}
+                                            </td>
+                                            <td width="15%">
+                                                <span class="btn blue-stripe btn-xs"
+                                                      ng-class="{ 'red-sunglo-stripe': !view.isMain }">{{ !!view.isMain ? 'yes': 'no' | translate }}</span>
+                                            </td>
+                                            <td width="20%" ng-if="routeID == view.routeID">
+                                                <button class="btn blue-hoki btn-xs" ng-click="edit(view)"
+                                                        tooltip="{{ 'edit' | translate }}"><i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn red-sunglo btn-xs" ng-confirm-click="remove(view)"
+                                                        tooltip="{{ 'remove' | translate }}"><i
+                                                        class="glyphicon glyphicon-remove"></i></button>
+                                            </td>
+                                            <td width="20%" ng-if="routeID != view.routeID">
+                                                <button ng-click="makeViewReplace(view)">
+                                                    Dodaj ten widok z wyższego poziomu
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr ng-repeat="child in view.childs">
+                                            <td width="20%"><b>{{ view.name }}</b>: {{ child.name }}</td>
+                                            <td width="15%">{{ child.controller }}</td>
+                                            <td width="15%"><a ng-click="variable(child)">{{ 'variables' | translate
+                                                }}</a></td>
+                                            <td width="15%">
+                                                <button class="btn btn-primary btn-xs" ng-click="template(child)"><i
+                                                        class="fa fa-edit"></i></button>
+                                                {{ _.findWhere(templates, { ID: child.templateID, own: child.own }).name
+                                                }}
+                                            </td>
+                                            <td width="15%">
+                                                <span class="btn blue-stripe btn-xs"
+                                                      ng-class="{ 'red-sunglo-stripe': !child.isMain }">{{ !!child.isMain ? 'yes': 'no' | translate }}</span>
+                                            </td>
+                                            <td width="20%">
+                                                <button class="btn blue-hoki btn-xs" ng-click="edit(child)"
+                                                        tooltip="{{ 'edit' | translate }}"><i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn red-sunglo btn-xs" ng-confirm-click="remove(child)"
+                                                        tooltip="{{ 'remove' | translate }}"><i
+                                                        class="glyphicon glyphicon-remove"></i></button>
+                                            </td>
+                                        </tr>
+
+                                        </tbody>
+
+                                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="fixedPositionSave" ng-show="sortChange">
+                        <button class="btn btn-success" ng-click="sortSave()">
+                            {{ 'save_the_change_order' | translate }}
+                        </button>
+                        <button class="btn red-sunglo" ng-click="sortCancel()">
+                            {{ 'cancel' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="portlet light">
+                            <div class="portlet-title">
+                                <div class="caption font-green-haze col-md-3 text-right">
+                                    {{ 'add_view' | translate }}
+                                </div>
+                            </div>
+                            <div class="portlet-body form">
+                                <form class="form-horizontal" role="form" ng-submit="add()">
+                                    <div class="form-body">
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'parent' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <select ng-model="form.parentViewID" type="text" class="form-control"
+                                                        ng-options="view.ID as view.name for view in views">
+                                                    <option value="">{{ 'none' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.name" type="text" class="form-control"
+                                                       placeholder="{{ 'name' | translate }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'controller' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.controller" type="text" class="form-control"
+                                                       placeholder="{{ 'controller' | translate }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label"></label>
+                                            <div class="col-md-9">
+                                                <div class="checkbox-list">
+                                                    <label>
+                                                        <div class="checker">
+															<span ng-class="{checked: !!parseInt(form.isMain)}">
+																<input ng-model="form.isMain" ng-true-value="1"
+                                                                       ng-false-value="0" type="checkbox">
+															</span>
+                                                        </div>
+                                                        {{ 'overwrite' | translate }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                                <button ng-click="form = {}" type="button" class="btn red-sunglo">{{
+                                                    'cancel' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

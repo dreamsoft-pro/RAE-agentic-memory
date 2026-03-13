@@ -1,0 +1,365 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i>{{ 'permissions' | translate }}
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="table-toolbar">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="btn-group">
+                                <button class="btn btn-success" ng-click="addPermission()">
+                                    {{ 'add_new' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>#</th>
+                            <th>Package</th>
+                            <th>Controller</th>
+                            <th>Action</th>
+                            <th>Default</th>
+                            <th>Desc</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                        <tr role="row" class="filter">
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm"
+                                       placeholder="{{ 'controller' | translate }}" ng-model="searchPerm.controller"
+                                       ng-change="searchPermissions()">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm"
+                                       placeholder="{{ 'action' | translate }}" ng-model="searchPerm.action"
+                                       ng-change="searchPermissions()">
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="permission in filterPermissions | limitTo: permPagination.currentPage * permPagination.perPage | limitTo: -permPagination.perPage">
+                            <td>{{ permission.ID }}</td>
+                            <td>{{ permission.package }}</td>
+                            <td>{{ permission.controller }}</td>
+                            <td>{{ permission.action }}</td>
+                            <td>{{ permission.default }}</td>
+                            <td>{{ permission.desc }}</td>
+                            <td><a class="edit" href="javascript:;" ng-click="addPermission(permission.ID)">Edit</a>
+                            </td>
+                            <td><a class="edit" href="javascript:;" ng-confirm-click="removePermission(permission.ID)">Delete</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pagination total-items="filterPermissions.length" ng-model="permPagination.currentPage"
+                            ng-click="permPagination.setPage(permPagination.currentPage)" class="pagination-sm"
+                            max-size="10" boundary-links="true" num-pages="permPagination.pagesLength"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i>Roles
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="table-toolbar">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="btn-group">
+                                <button id="add-role-button" class="btn btn-success" ng-click="addRole()">
+                                    {{ 'add_new' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ 'name' | translate }}</th>
+                            <th>{{ 'descriptions' | translate }}</th>
+                            <th>{{ 'permissions' | translate }}</th>
+                            <th>{{ 'edit' | translate }}</th>
+                            <th>{{ 'delete' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="role in roles">
+                            <td>{{ role.ID }}</td>
+                            <td>{{ role.name }}</td>
+                            <td>{{ role.desc }}</td>
+                            <td><a class="edit" href="javascript:;" ng-click="openRoleSettings(role.ID)">Open</a></td>
+                            <td><a class="edit" href="javascript:;" ng-click="addRole(role.ID)">Edit</a></td>
+                            <td><a class="edit" href="javascript:;" ng-confirm-click="removeRole(role)">Delete</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- <pagination total-items="roles.length" ng-model="roles.currentPage" ng-click="roles.setPage(roles.currentPage)" class="pagination-sm" max-size="10" boundary-links="true" num-pages="roles.pagesLength"></pagination> -->
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i> {{ 'groups' | translate }}
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="table-toolbar">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="btn-group">
+                                <button id="add-new-group" class="btn btn-success" ng-click="addGroup()">
+                                    {{ 'add_new_group' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ 'name' | translate }}</th>
+                            <th>{{ 'description' | translate }}</th>
+                            <th>{{ 'default' | translate }}</th>
+                            <th>{{ 'roles' | translate }}</th>
+                            <th>{{ 'edit' | translate }}</th>
+                            <th>{{ 'delete' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="group in groups | limitTo: groups.currentPage * groups.perPage | limitTo: -groups.perPage">
+                            <td>{{ group.ID }}</td>
+                            <td>{{ group.name }}</td>
+                            <td>{{ group.desc }}</td>
+                            <td>{{ group.default }}</td>
+                            <td><a class="edit" href="javascript:;" ng-click="groupRoles(group)">Open</a></td>
+                            <td><a class="edit" href="javascript:;" ng-click="addGroup(group.ID)">Edit</a></td>
+                            <td><a class="edit" href="javascript:;" ng-confirm-click="removeGroup(group)">Delete</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pagination total-items="groups.length" ng-model="groups.currentPage"
+                            ng-click="groups.setPage(groups.currentPage)" class="pagination-sm" max-size="10"
+                            boundary-links="true" num-pages="groups.pagesLength"></pagination>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 pull-right">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i> {{ 'types' | translate }}
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="table-toolbar">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="btn-group">
+                                <button id="sample_editable_1_new" class="btn btn-success" ng-click="addType()">
+                                    {{ 'add_new' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ 'name' | translate }}</th>
+                            <th>{{ 'description' | translate }}</th>
+                            <th>{{ 'roles' | translate }}</th>
+                            <th>{{ 'groups' | translate }}</th>
+                            <th>{{ 'default' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="type in userTypes">
+                            <td>{{ type.ID }}</td>
+                            <td>{{ type.name }}</td>
+                            <td>{{ type.description }}</td>
+                            <td>
+                                <a class="edit" href="javascript:;" ng-click="typeRoles(type)">{{ 'roles' | translate
+                                    }}</a></td>
+                            <td>
+                                <a class="edit" href="javascript:;" ng-click="typeGroups(type)">{{ 'groups' | translate
+                                    }}</a>
+                            </td>
+                            <td><span class="btn blue-stripe btn-xs"
+                                      ng-class="{'red-sunglo-stripe': !type.default}">
+                    {{ !!type.default ? 'yes' : 'no' | translate }}
+                  </span></td>
+                            <td>
+                                <button class="btn btn-xs btn-primary" href="javascript:;" ng-click="addType(type.ID)">
+                                    <i class="fa fa-edit"></i></button>
+
+                                <button class="btn btn-xs red-sunglo" href="javascript:;"
+                                        ng-confirm-click="removeType(type.ID)"><i
+                                        class="glyphicon glyphicon-remove"></i></button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pagination total-items="userTypes.length" ng-model="userTypes.currentPage"
+                            ng-click="userTypes.setPage(userTypes.currentPage)" class="pagination-sm" max-size="10"
+                            boundary-links="true" num-pages="userTypes.pagesLength"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i> {{ 'users' | translate }}
+                </div>
+                <div class="tools">
+                    <span>{{ 'number_of_rows' | translate }}: <span
+                            class="badge">{{ usersCtrl.totalItems }}</span> </span>
+                    <select ng-model="showRows" ng-change="usersCtrl.setRows(showRows)"
+                            ng-options="each for (null, each) in [10,25,50,100]"></select>
+                    <button ng-click="usersCtrl.clearCache()" class="btn btn-primary btn-sm">
+                        <i class="fa fa-refresh"></i> {{ 'refresh' | translate }}
+                    </button>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th>#</th>
+                            <th>Mail</th>
+                            <th>Name</th>
+                            <th>Lastname</th>
+                            <th>{{ 'types' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        <tr role="row" class="filter">
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm"
+                                       placeholder="ID" ng-model="usersCtrl.params.ID"
+                                       ng-change="setParams()">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm"
+                                       placeholder="{{ 'Mail' | translate }}" ng-model="usersCtrl.params.user"
+                                       ng-change="setParams()">
+                            </td>
+                            <td>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="user in usersCtrl.items">
+                            <td>{{ user.ID }}</td>
+                            <td>{{ user.user }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.lastname }}</td>
+                            <td>{{ _.findWhere(userTypes, {ID: user.userTypeID}).name }}</td>
+                            <td>
+                                <a class="btn btn-primary btn-xs" ng-click="userEditType(user)">
+                                    <i class="fa fa-briefcase" aria-hidden="true"></i>
+                                    {{ 'types' | translate }}
+                                </a>
+                                <a class="roles btn btn-primary btn-xs" ng-click="userRoles(user)">
+                                    <i class="fa fa-video-camera" aria-hidden="true"></i>
+                                    {{ 'roles' | translate }}
+                                </a>
+                                <a class="groups btn btn-primary btn-xs" ng-click="userGroups(user)">
+                                    <i class="fa fa-users" aria-hidden="true"></i>
+                                    {{ 'groups' | translate }}
+                                </a>
+                                <a class="blocked-resources btn btn-primary btn-xs" ng-click="userAclLogs(user)">
+                                    <i class="fa fa-lock" aria-hidden="true"></i>
+                                    {{ 'blocked_resources' | translate }}
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pagination total-items="usersCtrl.totalItems" ng-model="usersCtrl.currentPage"
+                            ng-change="usersCtrl.setPage(usersCtrl.currentPage); usersCtrl.get()" class="pagination-sm"
+                            max-size="10" boundary-links="true" rotate="true"
+                            items-per-page="usersCtrl.params.limit"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-bars"></i> {{ 'menu' | translate }}
+                </div>
+                <div class="tools">
+                    <button button-faq-accordion="acl.menu"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <ul>
+                    <li ng-repeat="menu in adminmenu" ng-if="menu.title">
+
+                        {{ menu.title | translate }}
+                        <ul ng-repeat="subMenu in menu.subMenus">
+                            <li ng-if="subMenu.title">
+                                {{ subMenu.title | translate }} -
+                                {{ subMenu.controller }} | {{ subMenu.action }}
+                            </li>
+                        </ul>
+
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </div>
+</div>

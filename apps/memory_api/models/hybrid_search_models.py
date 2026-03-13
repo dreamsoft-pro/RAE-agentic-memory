@@ -66,7 +66,7 @@ class QueryAnalysis(BaseModel):
     # Query classification
     intent: QueryIntent = Field(..., description="Detected query intent")
     confidence: float = Field(
-        ..., ge=0.0,  description="Confidence in classification"
+        ..., ge=0.0, le=1.0, description="Confidence in classification"
     )
 
     # Extracted components
@@ -142,21 +142,21 @@ class SearchResultItem(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # Strategy-specific scores (0-1)
-    vector_score: Optional[float] = Field(None, ge=0.0, )
-    semantic_score: Optional[float] = Field(None, ge=0.0, )
-    graph_score: Optional[float] = Field(None, ge=0.0, )
-    fulltext_score: Optional[float] = Field(None, ge=0.0, )
+    vector_score: Optional[float] = Field(None, ge=0.0, le=1.0)
+    semantic_score: Optional[float] = Field(None, ge=0.0, le=1.0)
+    graph_score: Optional[float] = Field(None, ge=0.0, le=1.0)
+    fulltext_score: Optional[float] = Field(None, ge=0.0, le=1.0)
 
     # Composite score
     hybrid_score: float = Field(
-        ..., ge=0.0,  description="Weighted composite score"
+        ..., ge=0.0, le=1.0, description="Weighted composite score"
     )
     rerank_score: Optional[float] = Field(
-        None, ge=0.0,  description="LLM re-ranking score"
+        None, ge=0.0, le=1.0, description="LLM re-ranking score"
     )
 
     # Final score and rank
-    final_score: float = Field(..., ge=0.0, )
+    final_score: float = Field(..., ge=0.0, le=1.0)
     rank: int = Field(..., ge=1)
 
     # Matched components
@@ -223,7 +223,7 @@ class HybridSearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1024)
 
     # Result parameters
-    k: int = Field(10, gt=0,  description="Number of results")
+    k: int = Field(10, gt=0, le=100, description="Number of results")
 
     # Strategy enablement
     enable_vector_search: bool = Field(True)
@@ -244,7 +244,7 @@ class HybridSearchRequest(BaseModel):
     # Filters
     temporal_filter: Optional[datetime] = Field(None, description="Filter by time")
     tag_filter: Optional[List[str]] = Field(None, description="Filter by tags")
-    min_importance: Optional[float] = Field(None, ge=0.0, )
+    min_importance: Optional[float] = Field(None, ge=0.0, le=1.0)
 
     # Graph search parameters
     graph_max_depth: int = Field(
@@ -367,7 +367,7 @@ class RerankingRequest(BaseModel):
 
     query: str
     results: List[SearchResultItem]
-    k: int = Field(10, gt=0,  description="Top k to re-rank")
+    k: int = Field(10, gt=0, le=100, description="Top k to re-rank")
     model: RerankingModel = Field(RerankingModel.CLAUDE_HAIKU)
 
 
@@ -388,7 +388,7 @@ class RerankingExplanation(BaseModel):
 
     result_id: UUID
     rank: int
-    rerank_score: float = Field(..., ge=0.0, )
+    rerank_score: float = Field(..., ge=0.0, le=1.0)
     explanation: str
     relevance_factors: List[str] = Field(default_factory=list)
 
@@ -414,7 +414,7 @@ class SearchAnalytics(BaseModel):
 
     # Strategy usage
     strategy_usage: Dict[SearchStrategy, int] = Field(default_factory=dict)
-    avg_hybrid_score: float = Field(0.0, ge=0.0, )
+    avg_hybrid_score: float = Field(0.0, ge=0.0, le=1.0)
 
     # Re-ranking
     reranking_usage_percent: float = Field(0.0, ge=0.0, le=100.0)

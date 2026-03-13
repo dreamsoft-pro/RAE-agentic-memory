@@ -8,7 +8,7 @@
 **At the beginning of EVERY session, the Agent MUST:**
 1.  **Ask the user:** "Which project are we working on today?" (or similar confirmation).
 2.  **Verify the context:** Ensure the current working directory matches the user's intended project.
-3.  **Load project-specific rules:** Once the project is confirmed, read the `AGENT_CORE_PROTOCOL.md` (or equivalent) specific to that project (e.g., inside `RAE-agentic-memory/docs/rules/`).
+3.  **Load project-specific rules:** Once the project is confirmed, read the `AGENT_CORE_PROTOCOL.md` (or equivalent) specific to that project (e.g., inside `RAE-agentic-memory-agnostic-core/docs/rules/`).
 
 **Why?** The `~/cloud` workspace contains multiple parallel projects (RAE, Screenwatcher, Feniks, etc.). Acting on the wrong project can cause data loss or configuration drift.
 

@@ -1,0 +1,17 @@
+{
+  "graph_connectivity_score": {
+    "value": 0.0,
+    "metadata": {
+      "num_nodes": 1000,
+      "num_edges": 0,
+      "average_degree": 0.0
+    }
+  },
+  "graph_entropy": {
+    "value": 0.0,
+    "metadata": {
+      "num_nodes": 1000,
+      "degree_distribution": []
+    }
+  }
+}

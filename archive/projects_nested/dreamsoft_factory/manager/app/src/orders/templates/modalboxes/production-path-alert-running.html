@@ -1,0 +1,58 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'info_already_running_jobs_by_you' | translate }} </h3>
+</div>
+<div class="modal-body">
+    <div class="overflowContainer">
+        <span ng-if="!tasks.length" class="btn red-sunglo-stripe">
+            {{ 'noLogs' | translate }}
+        </span>
+
+        <table ng-if="!!tasks.length" class="table table-striped table-hover">
+            <thead>
+                <tr role="row" class="heading">
+                    <th width="8%">#</th>
+                    <th>{{ 'order_id' | translate }}</th>
+                    <th>{{ 'device' | translate }}</th>
+                    <th>{{ 'created' | translate }}</th>
+                    <th>{{ 'status' | translate }}</th>
+                    <th>{{ 'action' | translate }}</th>
+                </tr>
+            </thead> 
+            <tbody>
+                <tr ng-repeat="task in tasks">
+                    <td>
+                        {{ task.ID }}
+                    </td>
+                    <td>
+                        {{ task.orderID }}
+                    </td>
+                    <td>
+                        {{ task.device.name }}
+                    </td>
+                    <td>
+                        {{ task.created }}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-default btn-xs"
+                        ng-class="{'btn-success': task.state == 1, 'btn-danger': task.state == 3}" ng-disabled="1">
+                        <span class="glyphicon"
+                            ng-class="{ 'glyphicon-play': task.state == 1, 'glyphicon-pause': task.state == 2, 'glyphicon-stop': task.state == 3 }"></span>
+                    </button>
+                    </td>
+                    <td class="noWrap">
+                        <button type="button" class="btn btn-default btn-xs" ng-if="task.state == 1"
+                        class="btn-success" ng-click="pauseTask(task);">
+                        <span class="glyphicon glyphicon-pause"></span> {{ 'pause' | translate }}
+                        <button type="button" class="btn btn-default btn-xs" ng-if="task.state == 1 || task.state == 2"
+                        class="btn-success" ng-confirm-click="changeState(task, 3, null);">
+                        <span class="glyphicon glyphicon-stop"></span> {{ 'stop' | translate }}
+                    </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

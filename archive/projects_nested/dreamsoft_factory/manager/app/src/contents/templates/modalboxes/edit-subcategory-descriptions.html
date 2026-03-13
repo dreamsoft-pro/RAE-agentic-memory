@@ -1,0 +1,114 @@
+<div class="modal-header">
+    <h3 class="modal-title"> {{ 'description' | translate }} {{'subcategory' | translate }}:
+        {{currentSubcat.langs.pl.name}}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped">
+                <thead>
+                <tr role="row" class="heading">
+                    <th>#</th>
+                    <th>
+                        {{ 'name' | translate }}
+                        <select ng-model="form.showLang"
+                                ng-options="lang.code as lang.name for (key, lang) in languages"
+                                ng-init="form.showLang = currentLang.code"></select>
+
+                    </th>
+                    <th>{{ 'group' | translate}}</th>
+                    <th class="text-right">{{ 'actions' | translate }}</th>
+                </tr>
+                </thead>
+                <tbody ui-sortable="descriptionSortableOptions" ng-model="subcategoryDescriptions">
+                <tr ng-repeat="description in subcategoryDescriptions">
+
+                    <td class="noWrap verticalMiddle">
+                        <button
+                                class="btn btn-default btn-xs button-sort">
+                            <span class="fa fa-sort"></span>
+                        </button>
+                        {{ description.descID }}
+                    </td>
+                    <td>
+                        {{ description.langs[form.showLang].name }}
+                    </td>
+                    <td>
+                        <button ng-show="description.descType == 1" class="btn blue-hoki btn-xs"> Text</button>
+                        <button ng-show="description.descType == 3" class="btn green-seagreen btn-xs"> Slider</button>
+                        <button ng-show="description.descType == 5" class="btn green-meadow btn-xs"> Galeria</button>
+                    </td>
+                    <td class="text-right">
+                        <button class="btn blue-hoki btn-xs" href="javascript:;"
+                                ng-click="checkChildDescriptionType(description, currentSubcat.ID)"
+                                tooltip="{{ 'edit' | translate }}">
+                            <i class="glyphicon glyphicon-edit"></i>
+                        </button>
+                        <button class="btn red-sunglo btn-xs" href="javascript:;"
+                                ng-confirm-click="deleteChild(description)" tooltip="{{ 'delete' | translate }}">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-success" ng-if="sortChange" ng-click="sortSubcategoryDescSave()">
+                {{ 'save_the_change_order' | translate }}
+            </button>
+            <button class="btn red-sunglo" ng-if="sortChange" ng-click="sortSubcategoryDescCancel()">
+                {{ 'cancel' | translate }}
+            </button>
+
+            <form class="form-horizontal" role="form" ng-submit="save()">
+                <div class="form-body">
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'language' | translate }}</label>
+                        <div class="col-md-9">
+                            <select class="form-control" ng-init="selectedLang = currentLang.code"
+                                    ng-model="selectedLang"
+                                    ng-options="each.code as each.name for (key, each) in languages"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                        <div class="col-md-9">
+                            <input ng-repeat="lang in languages" ng-show="selectedLang == lang.code"
+                                   ng-model="form.subcategoryDescriptions.langs[selectedLang].name" type="text"
+                                   class="form-control" placeholder="{{lang.code}}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{{ 'type_of_description' | translate }}</label>
+                    <div class="col-md-9">
+                        <select class="form-control"
+                                ng-init="form.subcategoryDescriptions.descType = subcategoryDescriptionsTypes[0].ID"
+                                ng-model="form.subcategoryDescriptions.descType"
+                                ng-options="each.ID as each.name for (key, each) in subcategoryDescriptionsTypes"></select>
+                    </div>
+                </div>
+                <div class="form-group" ng-show="form.subcategoryDescriptions.descType == 1">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <div class="checkbox-list">
+                            <label>
+                                <div class="checker"><span
+                                        ng-class="{checked: form.subcategoryDescriptions.visible}"><input
+                                        ng-model="form.subcategoryDescriptions.visible" type="checkbox"></span></div>
+                                {{ 'always_visible' | translate }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'cancel' | translate }}
+                    </button>
+                    <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

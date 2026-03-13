@@ -1,0 +1,104 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-edit"></i>{{ mailType.names[currentLang.code] }}
+                </div>
+                <div class="tools">
+                    <button ui-sref="contents-mails" class="btn btn-default"><i class="fa fa-mail-reply-all"></i> {{
+                        'back' | translate }}
+                    </button>
+                    <button button-faq-accordion="contents.mails"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <form class="form-horizontal" role="form" ng-submit="save()">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'available_variables' | translate }}<br/><a
+                                    href="javascript:;" ng-click="isCollapsed = !isCollapsed">{{ isCollapsed == true ?
+                                'expand': 'collapse' | translate }} <i class="fa"
+                                                                       ng-class="{' fa-chevron-circle-down': !isCollapsed, ' fa-chevron-circle-up': isCollapsed}"></i></a></label>
+                            <div class="col-md-9">
+                                <div class="panel panel-default" collapse="isCollapsed">
+                                    <table class="table table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>{{ 'name' | translate }}</th>
+                                            <th>{{ 'description' | translate }} <select ng-model="showLang"
+                                                                                        ng-options="lang.code as lang.name for (key, lang) in languages"
+                                                                                        ng-init="showLang = currentLang.code"></select>
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr ng-repeat="variable in variables">
+                                            <td>{{ '{' + variable.variable + '}'}}</td>
+                                            <td>{{ variable.langs[showLang] }}</td>
+                                        </tr>
+                                        <tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'language' | translate }}</label>
+                            <div class="col-md-9">
+                                <select class="form-control" ng-init="selectedLang = currentLang.code"
+                                        ng-model="selectedLang"
+                                        ng-options="each.code as each.name for (key, each) in languages"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">{{ 'title' | translate }}</label>
+                            <div class="col-md-9">
+                                <input ng-repeat="lang in languages" ng-show="selectedLang == lang.code"
+                                       ng-model="form.titles[lang.code]" type="text" class="form-control"
+                                       placeholder="{{lang.code}}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {{ 'content' | translate }}<br>
+                            </label>
+                            <div class="col-md-9" ng-repeat="lang in languages" ng-show="selectedLang == lang.code" >
+                                <div ds-tinymce
+                                     ng-model="form.contents[lang.code]"></div>
+
+                            </div>
+                        </div>
+
+                        <div ng-show="mailType.key == 'register'" class="form-group">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button class="btn btn-primary" ng-click="showRegisterCoupon()">
+                                    {{ 'add_discount_coupon_in_content_mail' | translate }}
+                                    <i ng-show="!showCouponForm" class="fa fa-angle-double-down" aria-hidden="true"></i>
+                                    <i ng-show="showCouponForm" class="fa fa-angle-double-up" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div ng-show="showCouponForm">
+                            <div ui-view="add-register-coupon"></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                                    {{ 'save' | translate }}
+                                </button>
+                                <button ng-click="resetForm()" type="button" class="btn red-sunglo">
+                                    {{ 'cancel' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

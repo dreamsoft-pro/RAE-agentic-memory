@@ -1,0 +1,53 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'select_tech_use_to_calculate' | translate }}</h3>
+</div>
+
+<form class="form-horizontal" role="form" ng-submit="save()">
+
+    <div class="modal-body">
+
+        <h3 class="modal-title alert alert-info ng-binding">{{ 'print_types' | translate }}: {{oryg.name}}</h3>
+
+        <div class="list-group clickable">
+            <a class="list-group-item" style="cursor: pointer;"
+               data-ng-repeat="printType in printTypes"
+               data-ng-click="printType.selected = (printType.selected != 1 ? 1 : 0)"
+               data-ng-class="{active: printType.selected}">
+                <h3 class="list-group-item-heading">
+
+                    {{printType.name}}
+
+                    <div class="form-group col-md-3 pull-right" ng-if="printType.selected">
+                        <div>
+                            <input ng-click="$event.stopPropagation()" ng-model="printType.maxVolume" type="text"
+                                   class="form-control" placeholder="{{ 'maximum_volume' | translate }}" tabindex="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-3 pull-right" ng-if="printType.selected">
+                        <div>
+                            <input ng-click="$event.stopPropagation()" ng-model="printType.minVolume" type="text"
+                                   class="form-control" placeholder="{{ 'minimum_volume' | translate }}" tabindex="2">
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-3 pull-right" ng-if="printType.selected">
+                        <button type="button" class="btn btn-default"
+                                ng-class="{'btn-warning': printType.printTypeWorkspaceExist}"
+                                ng-click="$event.stopPropagation();formatWorkspacesStart(oryg, printType)">
+                            {{ 'short_text_workspaces' | translate }}
+                        </button>
+                    </div>
+
+                </h3>
+            </a>
+        </div>
+
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn red-sunglo" type="button" ng-click="cancel()">{{ 'cancel' | translate }}</button>
+        <button class="btn btn-success"><i class="fa fa-check"></i> {{ 'save' | translate }}</button>
+    </div>
+
+</form>

@@ -1,0 +1,108 @@
+<div class="row">
+	<div class="col-md-12">
+		<div class="portlet light">
+			<div class="portlet-title">
+				<div class="caption">
+					<i class="fa fa-stack-overflow"></i> {{ 'calculations' | translate }}
+				</div>
+				<div class="tools">
+		         
+		          <button button-faq-accordion="customerService.calculationsDeprecated"></button>
+		        </div>
+			</div>
+			<div class="portlet-body">
+				<div class="wrapper1">
+					<div class="div1"></div>
+				</div>
+
+				<div class="overflowContainer">
+					<table class="table table-striped table-hover">
+						<thead>
+							<tr role="row" class="heading">
+								<th width="5%">#</th>
+								<th>{{ 'create_date' | translate }}</th>
+								<th>{{ 'seller' | translate }}</th>
+								<th>{{ 'user' | translate }}</th>
+								<th>{{ 'net_price' | translate }}</th>
+								<th>{{ 'product' | translate }}</th>
+								<th>{{ 'expires' | translate }}</th>
+							</tr>
+							<!-- <tr role="row" class="filter">
+								<td>
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="ID" ng-model="OfferListCtrl.list.ID">
+								</td>
+								<td>
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="data otrzymania" ng-model="OfferListCtrl.list.date">
+								</td>
+								<td>
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="produkt" ng-model="OfferListCtrl.list.product">
+								</td>
+								<td width="9%">
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="nakład" ng-model="OfferListCtrl.list.volume">
+								</td>
+								<td>
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="termin realizacji" ng-model="OfferListCtrl.list.realization">
+								</td>
+								<td>
+									<input type="text" class="form-control form-filter input-sm" ng-change="setParams()"  placeholder="klient" ng-model="OfferListCtrl.list.ID">
+								</td>
+							</tr> -->
+						</thead>
+						<tbody>
+							<tr ng-repeat="calculation in calculations">
+								<td>
+									{{ calculation.baseID + "/" + calculation.ver }}
+								</td>
+								<td>
+									{{ calculation.created }}
+								</td>
+								<td>
+									{{ calculation.sellerName }} {{ calculation.sellerLastname }}
+								</td>
+								<td>
+									{{ calculation.userCompanyName }}<br />
+									{{ calculation.userName }} {{ calculation.userLastname }}<br />
+									{{ calculation.userMail }}
+								</td>
+								<td>
+									{{ calculation.price }} {{ calculation.currency }}
+								</td>
+								<td>
+									<p class="marginBottomNo">
+										<b>{{ calculation.typeName }}</b>
+									</p>
+									<span ng-repeat="product in calculation.products">
+										<b>{{ product.typeName }}</b>
+	                  <p class="marginBottomNo noWrap">
+	                    {{ product.formatName }} <b>{{ product.formatWidth }} x {{ product.formatHeight }}</b>
+	                  </p>
+	                  <p ng-repeat="attr in product.attributes" class="marginBottomNo noWrap">
+	                    {{ attr.attrName }} <b>{{ attr.optName }} {{ attr.attrPages ? "("+attr.attrPages+")" : "" }}</b> 
+	                  </p>
+										
+									</span>
+									<p>
+										{{ 'volume' | translate }} <b>{{ calculation.volume }}</b>
+									</p>
+								</td>
+								<td>
+									{{ calculation.expires }}
+
+								</td>
+								<td>
+									<button class="btn blue-hoki btn-xs" ng-click="edit(calculation)"> <i class="fa fa-plus"></i> Edit</button>
+									<button class="btn blue-hoki btn-xs" ng-click="history(calculation)"> <i class="fa fa-book"></i> Historia</button>
+									<button class="btn blue-hoki btn-xs" ng-click="makeOrder(calculation)"> <i class="fa fa-plus"></i> Stwórz zamówienie</button>
+									
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<pagination total-items="cartsCtrl.totalItems" ng-model="cartsCtrl.currentPage" ng-change="cartsCtrl.setPage(cartsCtrl.currentPage); cartsCtrl.get()" class="pagination-sm" max-size="10" boundary-links="true" rotate="true" items-per-page="cartsCtrl.params.limit" ></pagination>
+
+			</div>
+		</div>
+	</div>
+</div>

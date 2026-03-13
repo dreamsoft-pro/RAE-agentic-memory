@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2026-01-04T20:40:04.176785",
+    "num_memories": 45,
+    "embedding_dim": 384,
+    "num_edges": 0,
+    "metadata": {
+      "label": "after_insertion",
+      "num_memories": 45
+    }
+  },
+  {
+    "timestamp": "2026-01-04T20:40:05.080088",
+    "num_memories": 45,
+    "embedding_dim": 384,
+    "num_edges": 0,
+    "metadata": {
+      "label": "after_queries",
+      "num_memories": 45
+    }
+  }
+]

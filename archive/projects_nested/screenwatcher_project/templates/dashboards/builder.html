@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block container_class %}container-fluid p-0{% endblock %}
+
+{% block extra_head %}
+<!-- GridStack CSS (CDN) -->
+<link href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css" rel="stylesheet"/>
+<!-- Bootstrap Icons (CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<!-- GridStack JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack-all.js"></script>
+<!-- ECharts JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<style>
+    .grid-stack { background: #f8f9fa; border: 1px dashed #ced4da; min-height: 80vh; }
+    .grid-stack-item-content { background: white; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    
+    .widget-header { 
+        background: #f8f9fa; padding: 5px 12px; height: 38px; border-bottom: 1px solid #eee; 
+        display: flex; justify-content: space-between; align-items: center; 
+        cursor: move; 
+    }
+    .widget-header-title { display: flex; align-items: center; min-width: 0; }
+    .widget-controls { display: flex; align-items: center; flex-shrink: 0; margin-left: auto !important; }
+    .widget-range-label { font-size: 0.75rem; font-weight: 300; color: #6c757d; }
+    
+    .widget-body { padding: 10px; flex-grow: 1; width: 100%; position: relative; min-height: 250px; }
+    .chart-container { width: 100%; height: 100%; min-height: 240px; }
+    .widget-controls .btn { font-size: 1rem; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+    .grid-stack-item:hover .widget-controls .btn { opacity: 1; }
+    
+    /* 95% Width Container */
+    .dashboard-container { width: 95%; max-width: 95%; margin: 0 auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="bi bi-speedometer text-primary me-2"></i>Dashboard: {{ dashboard.name }} <span class="badge bg-danger">!!! VERSION NEW 13:00 !!!</span></h4>
+        <div class="me-3 text-muted small" id="available-machines">Checking nodes...</div>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" onclick="openGlobalSettings()">⚙️ Global</button>
+            <button class="btn btn-outline-success" onclick="addNewWidget('production_trend', 'Prod. Trend')">+ Production</button>
+            <button class="btn btn-outline-info" onclick="addNewWidget('temp_trend', 'Temp. Trend')">+ Temp</button>
+            <button class="btn btn-outline-info" onclick="addNewWidget('pressure_trend', 'Pressure')">+ Pressure</button>
+            <button class="btn btn-outline-warning" onclick="addNewWidget('oee_gauge', 'OEE Gauge')">+ OEE</button>
+            <button class="btn btn-outline-dark" onclick="addNewWidget('machine_gantt', 'Status Gantt')">+ Status</button>
+            <button class="btn btn-outline-danger" onclick="addNewWidget('oee_heatmap', 'OEE Heatmap')">+ Heatmap</button>
+            <button class="btn btn-outline-primary" onclick="addNewWidget('multi_series_chart', 'Custom Chart')">+ Custom</button>
+            <button class="btn btn-primary ms-2" onclick="saveDashboard()">Save Layout</button>
+        </div>
+    </div>
+    <div class="grid-stack"></div>
+</div>
+
+<!-- Global Settings Modal -->
+<div class="modal fade" id="globalSettingsModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5>Global Settings</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <label class="form-label">Default Range (Apply to all)</label>
+            <select class="form-select" id="globalRange">
+                <option value="30s">30 Seconds</option>
+                <option value="1m">1 Minute</option>
+                <option value="5m">5 Minutes</option>
+                <option value="15m">15 Minutes</option>
+                <option value="1h">1 Hour</option>
+                <option value="6h">6 Hours</option>
+                <option value="8h">8 Hours</option>
+                <option value="12h">12 Hours</option>
+                <option value="24h" selected>24 Hours</option>
+                <option value="7d">7 Days</option>
+                <option value="30d">30 Days</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="applyGlobalSettings()">Apply to All</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Widget Configuration Modal -->
+<div class="modal fade" id="widgetModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5>Widget Configuration</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="editWidgetId">
+            <div class="mb-3"><label class="form-label">Title</label><input type="text" class="form-control" id="editTitle"></div>
+            
+            <div class="mb-3">
+                <label class="form-label">Source Machine</label>
+                <select class="form-select" id="editMachine">
+                    <option value="">-- Select Machine --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Time Range</label>
+                <select class="form-select" id="editRange" onchange="toggleCustomDateInputs()">
+                    <option value="30s">30 Seconds</option>
+                    <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="6h">6 Hours</option>
+                    <option value="8h">8 Hours</option>
+                    <option value="12h">12 Hours</option>
+                    <option value="24h">24 Hours</option>
+                    <option value="7d">7 Days</option>
+                    <option value="30d">30 Days</option>
+                    <option value="custom">Custom Range...</option>
+                </select>
+            </div>
+
+            <div id="customDateContainer" class="d-none border p-2 rounded bg-light">
+                <div class="mb-2">
+                    <label class="small text-muted">Start:</label>
+                    <input type="datetime-local" class="form-control form-control-sm" id="editCustomStart" step="1">
+                </div>
+                <div class="mb-2">
+                    <label class="small text-muted">End:</label>
+                    <input type="datetime-local" class="form-control form-control-sm" id="editCustomEnd" step="1">
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveWidgetSettings()">Update Widget</button></div>
+    </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class ChartRegistry {
+        constructor() {
+            this.renderers = {};
+            this.instances = {};
+            console.log("ChartRegistry V6.4 Initialized.");
+        }
+
+        register(type, renderer) {
+            this.renderers[type] = renderer;
+        }
+
+        initWidget(widgetId, widgetType, container, config) {
+            if (!this.renderers[widgetType]) return;
+            if (this.instances[widgetId]) this.instances[widgetId].dispose();
+            const chart = echarts.init(container);
+            this.instances[widgetId] = chart;
+            this.refreshWidget(widgetId, widgetType, config);
+            new ResizeObserver(() => { setTimeout(() => chart.resize(), 100); }).observe(container);
+        }
+
+        async refreshWidget(widgetId, widgetType, config) {
+            let chart = this.instances[widgetId];
+            const container = document.getElementById(`chart-${widgetId}`);
+            if (!container) return;
+
+            // Update badge immediately
+            const rangeBadge = document.getElementById(`range-${widgetId}`);
+            if (rangeBadge) {
+                rangeBadge.innerText = config.range === 'custom' ? 'Custom' : config.range;
+            }
+
+            if (chart) chart.showLoading();
+
+            try {
+                const baseUrl = this.buildApiUrl(widgetId, widgetType, config);
+                const apiUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                
+                console.log(`[${widgetId}] Fetching: ${apiUrl}`);
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error(`[${widgetId}] HTTP Error ${response.status}: ${errText}`);
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                console.log(`[${widgetId}] Data received:`, data);
+                
+                if (!this.instances[widgetId]) {
+                    this.instances[widgetId] = echarts.init(container);
+                }
+                chart = this.instances[widgetId];
+                
+                const option = this.renderers[widgetType](data, config);
+                console.log(`[${widgetId}] ECharts Option:`, option);
+                
+                // Force X-axis range to match requested time window
+                const minTime = new Date(config._calculatedStart).getTime();
+                const maxTime = new Date(config._calculatedEnd).getTime();
+
+                if (option.xAxis) {
+                    const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+                    axes.forEach(ax => {
+                        if (ax.type === 'time') {
+                            ax.min = minTime;
+                            ax.max = maxTime;
+                        }
+                    });
+                }
+
+                chart.hideLoading();
+                chart.setOption(option, true);
+            } catch (error) {
+                console.error(`[${widgetId}] Render Error:`, error);
+                if (chart) chart.hideLoading();
+            }
+        }
+        
+        resetZoom(widgetId) {
+            const chart = this.instances[widgetId];
+            if (chart) chart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+        }
+
+        buildApiUrl(widgetId, widgetType, config) {
+            let startStr, endStr;
+            const now = new Date();
+            
+            if (config.range === 'custom' && config.customStart && config.customEnd) {
+                startStr = new Date(config.customStart).toISOString();
+                endStr = new Date(config.customEnd).toISOString();
+            } else {
+                const start = new Date();
+                const rangeMap = { 
+                    '30s': 0.5/60, '1m': 1/60, '5m': 5/60, '15m': 15/60, 
+                    '1h': 1, '6h': 6, '8h': 8, '12h': 12, '24h': 24, '7d': 168, '30d': 720 
+                };
+                const hours = rangeMap[config.range] || 24;
+                start.setTime(now.getTime() - (hours * 3600000));
+                startStr = start.toISOString();
+                endStr = now.toISOString();
+            }
+            
+            config._calculatedStart = startStr;
+            config._calculatedEnd = endStr;
+
+            const machineId = config.machine_id || "";
+
+            if (widgetType.endsWith('_trend')) {
+                const metricMap = { 'production_trend': 'speed', 'temp_trend': 'temp', 'pressure_trend': 'pressure' };
+                const metric = metricMap[widgetType] || widgetType.replace('_trend', '');
+                return `/dashboard/api/series/?machine_id=${machineId}&metric=${metric}&from=${startStr}&to=${endStr}`;
+            }
+            if (widgetType === 'machine_gantt') {
+                return `/dashboard/api/status_history/?machine_id=${machineId}&from=${startStr}&to=${endStr}`;
+            }
+            return `/dashboard/api/widgets/${widgetId}/data/?from=${startStr}&to=${endStr}`;
+        }
+    }
+
+    const chartRegistry = new ChartRegistry();
+
+    const timeSeriesRenderer = (data, config) => {
+        const rawData = data.data || [];
+        const seriesData = rawData.map(d => [new Date(d[0] || d.t).getTime(), d[1] || d.v]);
+        const isBar = config.type === 'production_trend';
+        return {
+            tooltip: { trigger: 'axis' },
+            legend: { show: true, top: 0 },
+            grid: { left: '3%', right: '4%', bottom: 80, top: '15%', containLabel: true },
+            xAxis: { type: 'time' },
+            yAxis: { type: 'value', scale: true },
+            dataZoom: [{ type: 'slider', bottom: 10, height: 25 }, { type: 'inside' }],
+            series: [{ 
+                name: config.title, 
+                type: isBar ? 'bar' : 'line', 
+                smooth: isBar ? 0 : 0.3, 
+                symbol: 'none', 
+                data: seriesData,
+                itemStyle: isBar ? { color: '#4caf50' } : undefined
+            }]
+        };
+    };
+
+    chartRegistry.register('production_trend', timeSeriesRenderer);
+    chartRegistry.register('temp_trend', timeSeriesRenderer);
+    chartRegistry.register('pressure_trend', timeSeriesRenderer);
+
+    chartRegistry.register('oee_gauge', (data, config) => ({
+        series: [{
+            type: 'gauge', min: 0, max: 100, radius: '100%',
+            detail: { valueAnimation: true, fontSize: 24, formatter: '{value}%' },
+            data: [{ value: (data.oee?.oee || 0).toFixed(1), name: 'OEE' }]
+        }]
+    }));
+
+    chartRegistry.register('machine_gantt', (data, config) => {
+        const rawData = data.data || data;
+        const colors = { 'RUNNING': '#91cc75', 'IDLE': '#fac858', 'STOPPED': '#ee6666' };
+        return {
+            tooltip: { formatter: (p) => `${p.marker} ${p.name}` },
+            grid: { left: '3%', right: '4%', bottom: 80, top: '10%', containLabel: true },
+            xAxis: { type: 'time' },
+            yAxis: { type: 'category', data: ['Status'] },
+            dataZoom: [{ type: 'slider', bottom: 20, height: 25 }, { type: 'inside' }],
+            series: [{
+                type: 'custom',
+                renderItem: (params, api) => {
+                    const start = api.coord([api.value(1), 0]);
+                    const end = api.coord([api.value(2), 0]);
+                    return { type: 'rect', shape: { x: start[0], y: start[1]-10, width: end[0]-start[0], height: 20 }, style: api.style() };
+                },
+                data: Array.isArray(rawData) ? rawData.map(item => ({
+                    name: item.name, value: [0, item.value[1], item.value[2]],
+                    itemStyle: { color: colors[item.name] || '#999' }
+                })) : []
+            }]
+        };
+    });
+
+    chartRegistry.register('multi_series_chart', (data, config) => {
+        const seriesList = data.series || [];
+        const hasRightAxis = seriesList.some(s => s.yAxisIndex === 1);
+        return {
+            tooltip: { trigger: 'axis' },
+            legend: { show: true, top: 0, left: 'center' },
+            grid: { left: '3%', right: '10%', bottom: 80, top: '15%', containLabel: true },
+            xAxis: { type: 'time' },
+            yAxis: [
+                { type: 'value', scale: true, position: 'left', name: 'Speed' },
+                hasRightAxis ? { type: 'value', scale: true, position: 'right', name: 'Area', splitLine: {show: false} } : null
+            ].filter(Boolean),
+            dataZoom: [{ type: 'slider', bottom: 10, height: 25 }, { type: 'inside' }],
+            series: seriesList.map(s => ({
+                name: s.name, type: s.type || 'line', yAxisIndex: s.yAxisIndex,
+                symbol: 'none', data: s.data.map(d => [new Date(d[0]).getTime(), d[1]]),
+                itemStyle: s.color ? { color: s.color } : undefined
+            }))
+        };
+    });
+
+    // --- PAGE LOGIC ---
+    let grid;
+    const initialWidgets = {{ widgets_json|safe|default:"[]" }};
+    const widgetConfigs = {}; 
+    let allMachines = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        grid = GridStack.init({ cellHeight: 80, float: true, margin: 5, handle: '.widget-header' });
+        fetchMachines();
+        initialWidgets.forEach(w => {
+            w.config = w.config || { range: '24h' };
+            widgetConfigs[w.id] = w;
+            renderWidget(w);
+        });
+    });
+
+    async function fetchMachines() {
+        const statusEl = document.getElementById('available-machines');
+        try {
+            const r = await fetch('/api/registry/machines/');
+            if (!r.ok) throw new Error(`Status ${r.status}`);
+            allMachines = await r.json();
+            statusEl.innerText = `Nodes: ${allMachines.map(m => m.code).join(', ')}`;
+            populateMachineSelector();
+        } catch (e) {
+            statusEl.innerText = "Nodes: error (check login)";
+        }
+    }
+
+    function populateMachineSelector() {
+        const sel = document.getElementById('editMachine');
+        if (sel && allMachines.length > 0) {
+            sel.innerHTML = '<option value="">-- Select Machine --</option>' + 
+                allMachines.map(m => `<option value="${m.id}">${m.name} [${m.code}]</option>`).join('');
+        }
+    }
+
+    function renderWidget(w) {
+        const html = `
+            <div class="grid-stack-item-content">
+                <div class="widget-header d-flex justify-content-between align-items-center">
+                    <div class="widget-header-title d-flex align-items-center">
+                        <span class="widget-title text-truncate" style="max-width: 150px;">${w.title}</span>
+                        <span class="badge bg-light text-dark border widget-range-label ms-2" id="range-${w.id}">${w.config.range}</span>
+                    </div>
+                    <div class="widget-controls d-flex">
+                        <button class="btn btn-link text-primary p-0 me-2" onclick="chartRegistry.resetZoom('${w.id}')" title="Reset Zoom"><i class="bi bi-zoom-out"></i></button>
+                        <button class="btn btn-link text-secondary p-0 me-2" onclick="openWidgetSettings('${w.id}')" title="Settings"><i class="bi bi-gear-fill"></i></button>
+                        <button class="btn btn-link text-danger p-0 ms-1" onclick="removeWidget('${w.id}')" title="Remove"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                </div>
+                <div class="widget-body"><div id="chart-${w.id}" class="chart-container"></div></div>
+            </div>`;
+        const el = grid.addWidget({ id: w.id, x: w.x, y: w.y, w: w.w, h: Math.max(w.h, 5), content: html });
+        setTimeout(() => chartRegistry.initWidget(w.id, w.type, el.querySelector('.chart-container'), w.config), 100);
+    }
+
+    function openWidgetSettings(id) {
+        const w = widgetConfigs[id];
+        document.getElementById('editWidgetId').value = id;
+        document.getElementById('editTitle').value = w.title;
+        document.getElementById('editRange').value = w.config.range || '24h';
+        
+        const custom = document.getElementById('customDateContainer');
+        if (w.config.range === 'custom') {
+            custom.classList.remove('d-none');
+            // Format ISO dates to YYYY-MM-DDTHH:MM for datetime-local
+            const formatForInput = (isoStr) => isoStr ? isoStr.substring(0, 16) : "";
+            document.getElementById('editCustomStart').value = formatForInput(w.config.customStart);
+            document.getElementById('editCustomEnd').value = formatForInput(w.config.customEnd);
+        } else {
+            custom.classList.add('d-none');
+        }
+
+        populateMachineSelector();
+        const selMachine = document.getElementById('editMachine');
+        if (selMachine) selMachine.value = w.config.machine_id || "";
+        new bootstrap.Modal(document.getElementById('widgetModal')).show();
+    }
+
+    function applyGlobalSettings() {
+        const globalRange = document.getElementById('globalRange').value;
+        Object.keys(widgetConfigs).forEach(id => {
+            const w = widgetConfigs[id];
+            w.config.range = globalRange;
+            if (globalRange !== 'custom') {
+                delete w.config.customStart;
+                delete w.config.customEnd;
+            }
+            chartRegistry.refreshWidget(id, w.type, w.config);
+            const rangeBadge = document.getElementById(`range-${id}`);
+            if (rangeBadge) rangeBadge.innerText = globalRange;
+        });
+        bootstrap.Modal.getInstance(document.getElementById('globalSettingsModal')).hide();
+    }
+
+    function saveWidgetSettings() {
+        const id = document.getElementById('editWidgetId').value;
+        const w = widgetConfigs[id];
+        w.title = document.getElementById('editTitle').value;
+        w.config.range = document.getElementById('editRange').value;
+        w.config.machine_id = document.getElementById('editMachine').value;
+        if (w.config.range === 'custom') {
+            w.config.customStart = document.getElementById('editCustomStart').value;
+            w.config.customEnd = document.getElementById('editCustomEnd').value;
+        }
+        chartRegistry.refreshWidget(id, w.type, w.config);
+        bootstrap.Modal.getInstance(document.getElementById('widgetModal')).hide();
+    }
+
+    function removeWidget(id) {
+        if (confirm('Remove this widget?')) {
+            const el = document.querySelector(`[gs-id="${id}"]`);
+            if (el) grid.removeWidget(el);
+            delete widgetConfigs[id];
+        }
+    }
+
+    document.getElementById('editRange').addEventListener('change', (e) => {
+        const custom = document.getElementById('customDateContainer');
+        if (e.target.value === 'custom') custom.classList.remove('d-none');
+        else custom.classList.add('d-none');
+    });
+
+    function saveDashboard() {
+        const layout = grid.getGridItems().map(item => ({
+            id: item.getAttribute('gs-id').startsWith('new') ? null : item.getAttribute('gs-id'),
+            type: widgetConfigs[item.getAttribute('gs-id')].type,
+            title: widgetConfigs[item.getAttribute('gs-id')].title,
+            x: parseInt(item.getAttribute('gs-x')), y: parseInt(item.getAttribute('gs-y')),
+            w: parseInt(item.getAttribute('gs-w')), h: parseInt(item.getAttribute('gs-h')),
+            config: widgetConfigs[item.getAttribute('gs-id')].config
+        }));
+        fetch(`/dashboard/api/management/{{ dashboard.id }}/save_layout/`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ widgets: layout })
+        }).then(() => window.location.reload());
+    }
+</script>
+{% endblock %}

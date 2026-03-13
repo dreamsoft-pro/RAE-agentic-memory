@@ -1,0 +1,34 @@
+{
+    "machine_code": "DEFAULT_MACHINE",
+    "api_url": "http://localhost:8000/api/collector/ingest/",
+    "interval_sec": 10,
+    "rois": [
+        {
+            "name": "job_name",
+            "type": "text",
+            "x": 149,
+            "y": 62,
+            "w": 286,
+            "h": 25,
+            "transformations": []
+        },
+        {
+            "name": "time",
+            "type": "text",
+            "x": 113,
+            "y": 948,
+            "w": 73,
+            "h": 52,
+            "transformations": []
+        },
+        {
+            "name": "job_number",
+            "type": "text",
+            "x": 1643,
+            "y": 919,
+            "w": 220,
+            "h": 70,
+            "transformations": []
+        }
+    ]
+}

@@ -1,0 +1,149 @@
+version: "3"
+services:
+
+  proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+    volumes:
+      - ./proxy/data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+  mongo:
+    container_name: mongo
+    image: mongo:4.2
+    restart: on-failure
+    ports:
+      - 27017:27017
+    volumes:
+      - ./docker/mongo-import/mongo-backup:/home/mongo-backup
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: M0nG0f69b54
+      MONGO_INITDB_DATABASE: admin
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    container_name: mysql
+    image: mariadb:10.5.13
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: dupa123
+      MYSQL_DATABASE: printworks
+    command: --max-allowed-packet=1073741824 --general-log=true --general-log-file=query.log
+    ports:
+      - 3306:3306
+    volumes:
+      - ./database/data:/var/lib/mysql
+      - ./database/dump:/tmp/dump
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - proxy
+      - mysql
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_USER: root
+      PMA_PASSWORD: dupa123
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 300M
+
+  static:
+    container_name: static
+    image: ds-static
+    build:
+      context: ./static
+      dockerfile: ./Dockerfile
+    depends_on:
+      - proxy
+    volumes:
+      - ./static/data:/var/www/app
+    env_file:
+      - ./static/.env
+
+  authapp:
+    container_name: authapp
+    image: ds-authapp
+    build:
+      context: ./authApp
+      dockerfile: ./Dockerfile
+    links:
+      - mongo
+    depends_on:
+      - proxy
+      - mongo
+    env_file:
+      - ./authApp/.env
+    ports:
+      - 2600:2600
+
+  backend:
+    container_name: backend
+    image: ds-backend
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    depends_on:
+      - proxy
+      - mysql
+    volumes:
+      - ./data:/var/www/app/data
+    env_file:
+      - ./backend/.env
+
+  frontend:
+    container_name: frontend
+    image: ds-frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    depends_on:
+      - proxy
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./data/templates/default:/app/.default
+      - ./data/35/routing:/app/routing
+
+  editor-backend:
+    container_name: editor-backend
+    image: ds-editor-backend-dev
+    build:
+      context: ./editor-backend
+      dockerfile: ./Dockerfile-dev
+    depends_on:
+      - proxy
+      - mongo
+    env_file:
+      - ./editor-backend/.env
+    command: 'npm run start-dev'
+    volumes:
+      - ./editor-backend/controllers:/app/controllers
+      - ./editor-backend/libs:/app/libs
+      - ./editor-backend/models:/app/models
+      - ./editor-backend/confs:/app/confs
+      - ./editor-backend/app.js:/app/app.js
+
+  editor:
+    container_name: editor
+    image: ds-editor-dev
+    build:
+      context: ./editor
+      dockerfile: ./Dockerfile-dev
+    depends_on:
+      - proxy
+    env_file:
+      - ./editor/.env
+    volumes:
+      - ./editor:/app/
+    command: 'npm run admin'

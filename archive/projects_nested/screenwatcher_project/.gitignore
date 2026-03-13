@@ -1,0 +1,109 @@
+# ---------------------------------
+# Python / Byte-compiled files
+# ---------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# ---------------------------------
+# Virtual environments & env files
+# ---------------------------------
+venv/
+.venv/
+env/
+.python-version
+.env
+.env.*
+# jeśli używasz dotenv w wielu modułach:
+**/.env
+**/.env.*
+
+# ---------------------------------
+# Distribution / packaging
+# ---------------------------------
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ---------------------------------
+# Tests / coverage / tooling caches
+# ---------------------------------
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------
+# Translations
+# ---------------------------------
+*.mo
+*.pot
+
+# ---------------------------------
+# Django
+# ---------------------------------
+*.log
+local_settings.py
+db.sqlite3
+*.sqlite3
+media/
+static/
+staticfiles/
+.collectstatic/
+# Uwaga: zwykle NIE ignorujemy migracji aplikacji Django
+
+# ---------------------------------
+# IDE / Editors
+# ---------------------------------
+.idea/
+.vscode/
+*.code-workspace
+
+# ---------------------------------
+# Node (jeśli używasz frontu)
+# ---------------------------------
+node_modules/
+
+# ---------------------------------
+# OS metadata
+# ---------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+Umowa screenwatcher.docx
+docs/PrintHistory
+
+# Edge Client Config
+edge_client/config.json

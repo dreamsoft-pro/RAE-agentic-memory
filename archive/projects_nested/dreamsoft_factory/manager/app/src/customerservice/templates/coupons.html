@@ -1,0 +1,295 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption">
+                    {{ 'coupons' | translate }}
+                </div>
+                <div class="tools">
+                    <form method="post">
+                        <div class="form-group">
+                            <select class="form-control" ng-model="showLang"
+                                    ng-options="lang.code as lang.name for (key, lang) in languages"
+                                    ng-init="showLang = currentLang.code"></select>
+                        </div>
+                    </form>
+                    <a href="javascript:;" ng-click="refresh()" class="reload"></a>
+                    <button button-faq-accordion="customservice.coupons"></button>
+                </div>
+            </div>
+            <div class="portlet-body">
+
+                <div class="overflowContainer">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr role="row" class="heading">
+                            <th width="5%" sort-trigger>#</th>
+                            <th width="10%">{{ 'value' | translate }}</th>
+                            <th>{{ 'expires' | translate }}</th>
+                            <th>{{ 'created' | translate }}</th>
+                            <th width="3%">{{ 'coupon_for_multiple_use' | translate }}</th>
+                            <th width="3%">{{ 'coupon_percent_value' | translate }}</th>
+                            <th>{{ 'actions' | translate }}</th>
+                        </tr>
+                        <tr role="row" class="filter">
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"
+                                       placeholder="ID" ng-model="couponsCtrl.params.ID">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-filter input-sm" ng-change="setParams()"
+                                       placeholder="% / {{defaultCurrency.code}}" ng-model="couponsCtrl.params.value">
+                            </td>
+                            <td>
+                                <div ng-model="couponsCtrl.params.expiresFrom" ng-change="setParams"
+                                     dp-datepicker></div>
+                                <div ng-model="couponsCtrl.params.expiresTo" ng-change="setParams" dp-datepicker></div>
+                            </td>
+                            <td>
+                                <div ng-model="couponsCtrl.params.dateFrom" ng-change="setParams" dp-datepicker></div>
+                                <div ng-model="couponsCtrl.params.dateTo" ng-change="setParams" dp-datepicker></div>
+                            </td>
+                            <td>
+                                <select ng-model="couponsCtrl.params.multiUser" class="form-control form-filter input-sm" ng-change="setParams()" >
+                                    <option value="">{{ 'select' | translate }}</option>
+                                    <option value="0">{{ 'no' | translate }}</option>
+                                    <option value="1">{{ 'yes' | translate }}</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select ng-model="couponsCtrl.params.percent" class="form-control form-filter input-sm" ng-change="setParams()" >
+                                    <option value="">{{ 'select' | translate }}</option>
+                                    <option value="0">{{ 'no' | translate }}</option>
+                                    <option value="1">{{ 'yes' | translate }}</option>
+                                </select>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        </thead>
+
+                        <tbody ng-repeat="coupon in couponsCtrl.items" class="coupon-row-{{ coupon.ID }}">
+                        <tr>
+                            <td>
+                                {{ coupon.ID }}
+                            </td>
+                            <td>
+                                {{ coupon.value }}
+                                <span ng-if="!coupon.percent">{{ defaultCurrency.code }}</span>
+                                <span ng-if="coupon.percent">%</span>
+                            </td>
+                            <td>{{ coupon.expires }}</td>
+                            <td>{{ coupon.created }}</td>
+                            <td>{{ }}
+                                <span class="btn blue-stripe btn-xs"
+                                      ng-class="{'red-sunglo-stripe': !coupon.multiUser}">
+                                        {{ !!coupon.multiUser ? 'yes' : 'no' | translate }}
+                                    </span>
+                            </td>
+                            <td>
+                                    <span class="btn blue-stripe btn-xs"
+                                          ng-class="{'red-sunglo-stripe': !coupon.percent}">
+                                        {{ !!coupon.percent ? 'yes' : 'no' | translate }}
+                                    </span>
+                            </td>
+                            <td>
+                                <button class="pull-right btn btn-sm red-sunglo"
+                                        ng-confirm-click="remove(coupon);"></i> {{ 'delete' | translate }}
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td colspan="6">
+
+                                <table class="table table-stripe table-hover">
+                                    <thead>
+                                    <th>{{ 'group_of_product' | translate }}</th>
+                                    <th>{{ 'type_of_product' | translate }}</th>
+                                    <th>{{ 'format' | translate }}</th>
+                                    <th class="text-right"></th>
+                                    </thead>
+                                    <tr ng-repeat="couponProduct in coupon.products">
+                                        <td class="text-left">
+                                            <span ng-show="couponProduct.productGroupLangs[showLang].name.length > 0">{{ couponProduct.productGroupLangs[showLang].name }}</span>
+                                            <span ng-show="!couponProduct.productGroupLangs[showLang].name">{{ couponProduct.groupDefaultName }}</span>
+                                            <span ng-show="!couponProduct.groupID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-left">
+                                            <span ng-show="couponProduct.productTypeLangs[showLang].name.length > 0">{{ couponProduct.productTypeLangs[showLang].name }}</span>
+                                            <span ng-show="!couponProduct.productTypeLangs[showLang].name">{{ couponProduct.typeDefaultName }}</span>
+                                            <span ng-show="!couponProduct.typeID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-left">
+                                            <span ng-show="couponProduct.productFormatLangs[showLang].name.length > 0">{{ couponProduct.productFormatLangs[showLang].name }}</span>
+                                            <span ng-show="!couponProduct.productFormatLangs[showLang].name">{{ couponProduct.formatDefaultName }}</span>
+                                            <span ng-show="!couponProduct.formatID">{{ 'all' | translate }}</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <button class="text-right btn red-sunglo"
+                                                    ng-confirm-click="deleteRelation(coupon, couponProduct);"></i> {{ 'delete' | translate }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <form class="form-vertical" role="form">
+                                        <tr role="row" class="heading">
+                                            <td class="col-md-2 text-left">
+                                                <select class="form-control" ng-model="coupon.form.products.groupID"
+                                                        ng-change="getTypes( coupon, coupon.form.products.groupID )"
+                                                        ng-options="each.ID as each.names[showLang] for each in productGroups">
+                                                    <option value="">{{ 'all_products' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-2 text-left">
+                                                <select class="form-control"
+                                                        ng-model="coupon.form.products.typeID"
+                                                        ng-change="getFormats(coupon, coupon.form.products.groupID, coupon.form.products.typeID)"
+                                                        ng-options="item.ID as item.names[showLang] for item in productTypes[coupon.ID]">
+                                                    <option value="">{{ 'all_types' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-1 text-left">
+                                                <select class="form-control" ng-model="coupon.form.products.formatID"
+                                                        ng-options="item.ID as item.langs[showLang].name for item in productFormats[coupon.ID]">
+                                                    <option value="">{{ 'all_formats' | translate }}</option>
+                                                </select>
+                                            </td>
+                                            <td class="col-md-1 text-right">
+                                                <button type="button" ng-click="addRelation(coupon)"
+                                                        class="btn btn-success text-right">
+                                                    <i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </form>
+                                </table>
+                            </td>
+
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <pagination total-items="couponsCtrl.totalItems"
+                                ng-model="couponsCtrl.currentPage"
+                                ng-change="couponsCtrl.setPage(couponsCtrl.currentPage); couponsCtrl.get()"
+                                class="pagination-sm" max-size="10" boundary-links="true"
+                                rotate="true"
+                                items-per-page="couponsCtrl.params.limit">
+                    </pagination>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="portlet light">
+                            <div class="portlet-title">
+                                <div class="caption font-green-haze col-md-3 text-right">
+                                    {{ 'add_new' | translate }}
+                                </div>
+                            </div>
+                            <div class="portlet-body form">
+
+                                <form class="form-horizontal" id="addCouponForm" role="form" ng-submit="save()">
+                                    <div class="form-body">
+
+                                        <div ng-show="form.amount < 2 || form.amount === undefined" class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'name' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.ID" type="text" class="form-control"
+                                                       placeholder="{{ 'name' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div ng-show="form.ID.length === 0 || form.ID === undefined" class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'amount' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.amount" type="number" class="form-control"
+                                                       placeholder="{{ 'amount' | translate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'value' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input ng-model="form.value" type="text" class="form-control"
+                                                       placeholder="{{ 'value' | translate }}" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'end_date' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <div ng-required="true" ng-model="form.expires" required dp-datepicker></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'coupon_percent_value' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input class="toggle bootstrap-switch-percent" ng-model="form.percent"
+                                                       ng-value="form.percent" type="checkbox" checked>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'coupon_for_multiple_use' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <input class="toggle bootstrap-switch-multiUser"
+                                                       ng-model="form.multiUser"
+                                                       ng-value="form.multiUser" type="checkbox">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'group_of_product' |
+                                                translate}}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" ng-model="form.products.groupID"
+                                                        ng-change="getMainTypes(form.products.groupID)"
+                                                        ng-options="each.ID as each.names[currentLang.code] for each in productGroups">
+                                                    <option value="">{{ 'all_products' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'type_of_product' | translate }}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control"
+                                                        ng-model="form.products.typeID"
+                                                        ng-change="getMainFormats(form.products.groupID, form.products.typeID)"
+                                                        ng-options="item.ID as item.names[currentLang.code] for item in mainProductTypes">
+                                                    <option value="">{{ 'all_types' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">{{ 'format' | translate}}</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" ng-model="form.products.formatID"
+                                                        ng-options="item.ID as item.langs[currentLang.code].name for item in mainProductFormats">
+                                                    <option value="">{{ 'all_formats' | translate }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-offset-3 col-md-9">
+                                                <button type="submit" class="btn btn-success text-right">
+                                                    <i class="fa fa-plus"></i>
+                                                    {{ 'add' | translate }}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

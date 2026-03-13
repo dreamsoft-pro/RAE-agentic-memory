@@ -1,0 +1,59 @@
+<div class="logo">
+    <a href="index.html">
+        <img ng-if="!customLogo" src="assets/metronic/admin/layout/img/logo.png" alt="">
+    </a>
+</div>
+
+<div class="content">
+
+    <form class="login-form" ng-submit="login(credentials)">
+
+        <h3 class="form-title">{{ 'admin_panel' | translate }}</h3>
+
+        <div class="alert alert-danger display-hide">
+            <button class="close" data-close="alert"></button>
+            <span>Enter any username and password. </span>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label visible-ie8 visible-ie9">Username</label>
+            <div class="input-icon">
+                <i class="fa fa-user"></i>
+                <input ng-keyup="$event.keyCode == 13 ? login(credentials) : null"
+                       class="form-control placeholder-no-fix" type="text" autocomplete="off" placeholder="Username"
+                       name="email" ng-model="credentials.email" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label visible-ie8 visible-ie9">Password</label>
+            <div class="input-icon">
+                <i class="fa fa-lock"></i>
+                <input ng-keyup="$event.keyCode == 13 ? login(credentials) : null"
+                       class="form-control placeholder-no-fix" type="password" autocomplete="off" placeholder="Password"
+                       name="password" ng-model="credentials.password" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label visible-ie8 visible-ie9"></label>
+            <div class="input-icon">
+                <i class="fa fa-sitemap"></i>
+                <select title="{{ 'select_domain' | translate }}"
+                        class="form-control" required
+                        ng-model="credentials.domainID"
+                        ng-options="domain.ID as domain.name for domain in domains">
+                    <option value="">{{ 'select_domain' | translate }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions" style="border-bottom: 0;">
+            <button type="submit" class="btn btn-success pull-right">
+                {{ 'log_in' | translate }} <i class="m-icon-swapright m-icon-white"></i>
+            </button>
+        </div>
+
+    </form>
+
+</div>

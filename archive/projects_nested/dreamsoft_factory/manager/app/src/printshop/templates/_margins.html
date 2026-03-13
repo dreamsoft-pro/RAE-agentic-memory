@@ -1,0 +1,138 @@
+<div ng-if="selectedPriceListID && selectedNatureID" class="col-lg-7 col-md-12">
+    <div class="portlet light">
+        <div class="portlet-title">
+            <div class="caption">
+                {{ 'parameters' | translate }}
+            </div>
+        </div>
+        <form class="form-horizontal" role="form" ng-submit="addMargin()">
+            <div class="form-body">
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_pieces' | translate }}
+                    </label>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.piecesMin" type="number" min="0" class="form-control"
+                               placeholder="{{ 'from' | translate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.piecesMax" type="number" min="0" class="form-control"
+                               placeholder="{{ 'to' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_sheets' | translate }}</label>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.sheetsMin" type="number" min="0" class="form-control"
+                               placeholder="{{ 'from' | translate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.sheetsMax" type="number" min="0" class="form-control"
+                               placeholder="{{ 'to' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_square_meters' | translate }}</sup></label>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.sqmetersMin" type="number" min="0" class="form-control"
+                               placeholder="{{ 'from' | translate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.sqmetersMax" type="number" min="0" class="form-control"
+                               placeholder="{{ 'to' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_kilograms' | translate }}</sup></label>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.kilogramsMin" type="number" min="0" class="form-control"
+                               placeholder="{{ 'from' | translate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.kilogramsMax" type="number" min="0" class="form-control"
+                               placeholder="{{ 'to' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_meters' | translate }}</sup></label>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.metersMin" type="number" min="0" class="form-control"
+                               placeholder="{{ 'from' | translate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input ng-model="marginForm.metersMax" type="number" min="0" class="form-control"
+                               placeholder="{{ 'to' | translate }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">{{ 'margin_percentage' | translate }}</label>
+                    <div class="col-md-8">
+                        <input ng-model="marginForm.percentage" type="number" step="any"
+                               class="form-control" placeholder="{{ 'margin_percentage' | translate }}">
+                    </div>
+                </div>
+
+            </div>
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset-3 col-md-9">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i>
+                            {{ 'add' | translate }}
+                        </button>
+                        <button ng-click="marginForm={}" type="button" class="btn red-sunglo">
+                            {{'cancel' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="overflowContainer">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr role="row" class="heading">
+                    <th>#</th>
+                    <th>{{ 'margin_pieces' | translate }}</th>
+                    <th>{{ 'margin_sheets' | translate }}</th>
+                    <th>{{ 'margin_square_meters' | translate }}</th>
+                    <th>{{ 'margin_kilograms' | translate }}</th>
+                    <th>{{ 'margin_meters' | translate }}</th>
+                    <th>{{ 'margin_percentage' | translate }}</th>
+                    <th>{{ 'actions' | translate }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="margin in margins">
+                    <td>{{margin.ID}}</td>
+                    <td>{{margin.piecesMin}} - {{margin.piecesMax}}</td>
+                    <td>{{margin.sheetsMin}} - {{margin.sheetsMax}}</td>
+                    <td>{{margin.sqmetersMin}} - {{margin.sqmetersMax}}</td>
+                    <td>{{margin.kilogramsMin}} - {{margin.kilogramsMax}}</td>
+                    <td>{{margin.metersMin}} - {{margin.metersMax}}</td>
+                    <td>{{margin.percentage}}%</td>
+                    <td>
+                        <button ng-click="editMarginBegin(margin)" data-toggle="tooltip" data-container="body"
+                                tooltip="{{ 'edit' | translate }}"
+                                class="btn blue-hoki btn-xs">
+                            <span class="glyphicon glyphicon-edit"></span>
+                        </button>
+                        <button ng-confirm-click="removeMargin(margin.ID)" data-toggle="tooltip"
+                                data-container="body" tooltip="{{ 'delete' | translate }}"
+                                class="btn red-sunglo btn-xs">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="col-lg-5 visible-lg">
+    <div faq-accordion="printshop.margins_material_parameters_for_type"></div>
+</div>

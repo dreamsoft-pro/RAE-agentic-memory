@@ -1,0 +1,21 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{ 'templateVariables' | translate }}</h3>
+</div>
+<div class="modal-body">
+    <div class="row" ng-repeat="template in templateVariables">
+        <div class="col-md-10">
+            <div ng-repeat="variable in template.variables" class="clickable-buttons">
+                {{variable.name}}
+                <button ng-repeat="value in variable.valuesArray"
+                        ng-click="saveVariable(variable,value)"
+                        ng-class="{'red-sunglo':value.selected, 'btn-warning': value.selected2}" class="btn">{{value.name|translate}}
+                </button><br>
+                <p style="font-size: 12px; margin-bottom: 0px;"><i><b>{{ 'description' | translate }}:</b></i> <div ng-bind-html="templateStatic[variable.name]"></div></p>
+                <hr>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn red-sunglo" type="button" ng-click="$dismiss()">{{ 'close' | translate }}</button>
+</div>

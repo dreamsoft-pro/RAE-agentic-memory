@@ -1,0 +1,275 @@
+[
+  {
+    "decision_id": "728c17b4",
+    "timestamp": "2025-12-24T20:11:05.416701+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": null,
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 0,
+    "query_text": "What is the capital of France?"
+  },
+  {
+    "decision_id": "99bb0037",
+    "timestamp": "2025-12-24T20:11:05.417469+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 1,
+    "query_text": "Who discovered DNA?"
+  },
+  {
+    "decision_id": "c07d9569",
+    "timestamp": "2025-12-24T20:11:05.418070+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 2,
+    "query_text": "What programming language was created by Guido van Rossum?"
+  },
+  {
+    "decision_id": "3b57deb5",
+    "timestamp": "2025-12-24T20:11:05.418648+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 3,
+    "query_text": "How fast does light travel?"
+  },
+  {
+    "decision_id": "cb12b43d",
+    "timestamp": "2025-12-24T20:11:05.419237+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 4,
+    "query_text": "How many neurons are in the human brain?"
+  },
+  {
+    "decision_id": "42c5413d",
+    "timestamp": "2025-12-24T20:11:05.419829+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 5,
+    "query_text": "Which scientist developed the theory of relativity?"
+  },
+  {
+    "decision_id": "5655e494",
+    "timestamp": "2025-12-24T20:11:05.420405+00:00",
+    "selected_level": "deterministic_heuristic",
+    "strategy_id": "relevance_scoring",
+    "params": {
+      "use_recency": true,
+      "recency_weight": 0.3,
+      "importance_threshold": 0.3
+    },
+    "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+    "telemetry_tags": {
+      "math.level": "deterministic_heuristic",
+      "math.strategy": "relevance_scoring",
+      "math.task_type": "memory_retrieve",
+      "math.profile": "research",
+      "session.length": "0",
+      "memory.count": "10",
+      "tenant.id": "unknown"
+    },
+    "features": {
+      "task_type": "memory_retrieve",
+      "memory_count": 10,
+      "graph_density": 0.0,
+      "session_length": 0,
+      "memory_entropy": 0.0,
+      "recent_mrr": 0.0,
+      "recent_gcs": 0.0,
+      "recent_scs": 0.0,
+      "cost_budget": null,
+      "latency_budget_ms": null,
+      "previous_level": "deterministic_heuristic",
+      "previous_level_success": null,
+      "custom": {}
+    },
+    "confidence": 0.7,
+    "query_index": 6,
+    "query_text": "What awards did Marie Curie win?"
+  }
+]
