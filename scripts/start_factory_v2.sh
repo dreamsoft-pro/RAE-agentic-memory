@@ -5,7 +5,7 @@ echo "🚀 STARTING RAE-FENIKS POWERED FACTORY V2.2 (Oracle V2.0 Protocol)..."
 
 # 📍 Path Definitions
 FENIKS_ROOT="/mnt/extra_storage/factory/RAE-Feniks"
-PROJECT_ROOT="/mnt/extra_storage/RAE-agentic-memory-agnostic-core"
+PROJECT_ROOT="/mnt/extra_storage/RAE-agentic-memory"
 CONFIG_PATH="$PROJECT_ROOT/config/agentic_board.yaml"
 STRATEGY_PATH="$PROJECT_ROOT/docs/modernization/STRATEGIC_ORACLE_PLAN_V2.md"
 

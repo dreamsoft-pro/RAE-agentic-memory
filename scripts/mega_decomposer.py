@@ -6,7 +6,7 @@ import time
 import re
 import urllib.request
 
-OUT_DIR = '/mnt/extra_storage/RAE-agentic-memory-agnostic-core/agent_hive/work_dir/components/'
+OUT_DIR = '/mnt/extra_storage/RAE-agentic-memory/agent_hive/work_dir/components/'
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
 

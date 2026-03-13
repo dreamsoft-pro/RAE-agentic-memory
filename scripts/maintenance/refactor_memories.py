@@ -120,7 +120,7 @@ class MemoryRefactor:
 
         is_rae_core = (
             "rae-core" in project
-            or "rae-agentic-memory-agnostic-core" in project
+            or "rae-agentic-memory" in project
             or "rae-core" in content
         )
 
