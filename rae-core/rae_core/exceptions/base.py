@@ -23,3 +23,12 @@ class SecurityPolicyViolationError(RAEError):
     """Exception raised when a security policy is violated (ISO 27000)."""
 
     pass
+
+class ContractViolationError(RAEError):
+    """Exception raised when an agentic contract is violated."""
+    pass
+
+
+class InfrastructureError(RAEError):
+    """Exception raised for underlying infrastructure failures (Redis, Qdrant, etc)."""
+    pass

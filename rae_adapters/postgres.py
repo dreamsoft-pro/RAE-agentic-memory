@@ -37,7 +37,6 @@ class PostgreSQLStorage(IMemoryStorage):
         content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
         
         # 2. Prepare Lineage Data
-        # We track which instance/source provided this fact
         instance_id = kwargs.get("metadata", {}).get("instance_id", "local-node")
         source = kwargs.get("source", "api")
         
@@ -46,16 +45,16 @@ class PostgreSQLStorage(IMemoryStorage):
         
         async with pool.acquire() as conn:
             # 3. Federated UPSERT (Evidence Consolidation)
-            # We use jsonb_set to maintain a list of 'witnesses' (sources) in metadata
             sql = """
                 INSERT INTO memories (
-                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source, human_label
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 ON CONFLICT (tenant_id, content_hash) DO UPDATE SET
                     importance = GREATEST(memories.importance, EXCLUDED.importance),
                     usage_count = memories.usage_count + 1,
                     last_accessed_at = now(),
                     source = memories.source || ', ' || EXCLUDED.source,
+                    human_label = COALESCE(EXCLUDED.human_label, memories.human_label),
                     metadata = memories.metadata || EXCLUDED.metadata || 
                                jsonb_build_object('witness_count', (COALESCE((memories.metadata->>'witness_count')::int, 1) + 1))
                 RETURNING id
@@ -75,7 +74,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 kwargs.get("importance", 0.5),
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 kwargs.get("project"),
-                source
+                source,
+                kwargs.get("human_label")
             )
             return row["id"]
 
@@ -84,7 +84,6 @@ class PostgreSQLStorage(IMemoryStorage):
             return None
         d = dict(row)
         
-        # Aggressive JSON Parsing for metadata (Fixes Double-Encoding)
         meta = d.get("metadata")
         while isinstance(meta, str):
             try:
@@ -168,9 +167,6 @@ class PostgreSQLStorage(IMemoryStorage):
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
         pool = await self._get_pool()
-
-        # SYSTEM 40.8: Universal Information Gravity (SQL Native)
-        # We use 'simple' config to avoid mangling technical IDs/codes.
         raw_query = query.strip()
         
         where_parts = ["tenant_id = $2", "agent_id = $3"]
@@ -185,12 +181,10 @@ class PostgreSQLStorage(IMemoryStorage):
             where_parts.append(f"project = ${len(params) + 1}")
             params.append(project)
 
-        # SYSTEM 46.0: Balanced Recall
         limit = max(limit, 100)
         limit_idx = len(params) + 1
         params.append(limit)
 
-        # SYSTEM 46.1: Word-level fallback for better technical recall
         words = [w for w in raw_query.replace("?", "").split() if len(w) > 3]
         word_conditions = []
         for i, w in enumerate(words):
@@ -199,20 +193,15 @@ class PostgreSQLStorage(IMemoryStorage):
             params.append(f"%{w}%")
         
         word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"
-
         where_clause = " AND ".join(where_parts)
 
-        # The query uses:
-        # 1. websearch_to_tsquery: supports "quotes" and -exclusion
-        # 2. ts_rank_cd: covers structural density (proximity)
-        # 3. ILIKE: as a fallback for non-tokenized symbols and word fragments
         sql = f"""
             WITH ranked_results AS (
                 SELECT *,
                        ts_rank_cd(
                            to_tsvector('simple', coalesce(content, '') || ' ' || coalesce(metadata::text, '')), 
                            websearch_to_tsquery('simple', $1),
-                           32 /* Rank normalization: divide by document length */
+                           32
                        ) as fts_score
                 FROM memories
                 WHERE {where_clause}
@@ -232,46 +221,14 @@ class PostgreSQLStorage(IMemoryStorage):
             rows = await conn.fetch(sql, *params)
         return [self._row_to_dict(r) for r in rows if r]
 
-
-    async def delete_memories_with_metadata_filter(self, *args, **kwargs) -> int:
-        return 0
-
-    async def count_memories(self, *args, **kwargs) -> int:
-        return 0
-
-    async def update_memory_access(self, *args, **kwargs) -> bool:
-        return True
-
-    async def delete_expired_memories(self, *args, **kwargs) -> int:
-        return 0
-
-    async def update_memory(self, *args, **kwargs) -> bool:
-        return True
-
-    async def delete_memory(self, *args, **kwargs) -> bool:
-        return True
-
     async def close(self) -> None:
         if self._pool:
             await self._pool.close()
 
-    async def get_metric_aggregate(self, *args, **kwargs) -> float:
-        return 0.0
-
-    async def update_memory_access_batch(self, *args, **kwargs) -> bool:
-        return True
-
-    async def adjust_importance(self, *args, **kwargs) -> float:
-        return 0.5
-
-    async def delete_memories_below_importance(self, *args, **kwargs) -> int:
-        return 0
-
-    async def decay_importance(self, *args, **kwargs) -> int:
-        return 0
-
-    async def save_embedding(self, *args, **kwargs) -> bool:
-        return True
-
-    async def update_memory_expiration(self, *args, **kwargs) -> bool:
-        return True
+    async def get_metric_aggregate(self, *args, **kwargs) -> float: return 0.0
+    async def update_memory_access_batch(self, *args, **kwargs) -> bool: return True
+    async def adjust_importance(self, *args, **kwargs) -> float: return 0.5
+    async def decay_importance(self, *args, **kwargs) -> int: return 0
+    async def count_memories(self, *args, **kwargs) -> int: return 0
+    async def delete_memory(self, *args, **kwargs) -> bool: return True
+    async def delete_expired_memories(self, *args, **kwargs) -> int: return 0

@@ -1,0 +1,10 @@
+[MEMORY ARCHITECTURE v3.1 - QUANTUM UPDATE]
+LAYER_01: SENSORY (Input ingestion, implicit capture)
+LAYER_02: WORKING (Context isolation, restricted data processing)
+LAYER_03: SEMANTIC (Fact extraction, GraphRAG indexing)
+LAYER_04: REFLECTIVE (Expanded 3-tier structure):
+  - L1: OPERATIONAL REFLECTION (Immediate feedback, error correction)
+  - L2: STRUCTURAL REFLECTION (Pattern recognition, Graph topology analysis)
+  - L3: META-REFLECTION (Council logic, strategy adaptation, MAB tuning)
+STRATEGY: HYBRID_SEARCH (FTS5 + Vector + Metadata Injection)
+COLLISION_PREVENTION: Mandatory use of rae_math (Avoid "import math")
