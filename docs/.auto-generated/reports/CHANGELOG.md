@@ -312,8 +312,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Metrics & Cost Optimization
 - ✅ **Token Savings Tracker** - Comprehensive system for tracking tokens saved via optimizations (Cache, GraphRAG, Reranking)
 - ✅ **Metrics API** - New endpoints for savings analytics:
-  - `GET /v1/metrics/savings` - Summary statistics (total tokens, USD saved)
-  - `GET /v1/metrics/savings/graph` - Time-series data for visualization
+  - `GET /v2/metrics/savings` - Summary statistics (total tokens, USD saved)
+  - `GET /v2/metrics/savings/graph` - Time-series data for visualization
 - ✅ **Hybrid Search Integration** - Automatically tracks savings when search results are served from cache
 - ✅ **Database Schema** - New `token_savings_log` table with efficient indexing
 - ✅ **Repository Layer** - `TokenSavingsRepository` for high-performance logging and aggregation
@@ -392,20 +392,20 @@ This release achieves **100% compliance** with ISO/IEC 42001 AI Management Syste
 
 #### API Endpoints ✅
 
-**New Compliance API** (`apps/memory_api/api/v1/compliance.py` - 700+ lines)
-- ✅ POST `/v1/compliance/approvals` - Request approval for high-risk operations
-- ✅ GET `/v1/compliance/approvals/{request_id}` - Check approval status
-- ✅ POST `/v1/compliance/approvals/{request_id}/decide` - Approve or reject
-- ✅ POST `/v1/compliance/provenance/context` - Create decision context
-- ✅ POST `/v1/compliance/provenance/decision` - Record decision
-- ✅ GET `/v1/compliance/provenance/lineage/{decision_id}` - Get decision lineage
-- ✅ GET `/v1/compliance/circuit-breakers` - Get all circuit breaker states
-- ✅ GET `/v1/compliance/circuit-breakers/{name}` - Get specific breaker state
-- ✅ POST `/v1/compliance/circuit-breakers/{name}/reset` - Reset circuit breaker
-- ✅ GET `/v1/compliance/policies` - List policies
-- ✅ POST `/v1/compliance/policies` - Create policy
-- ✅ POST `/v1/compliance/policies/{policy_id}/activate` - Activate policy
-- ✅ POST `/v1/compliance/policies/{policy_id}/enforce` - Enforce policy
+**New Compliance API** (`apps/memory_api/api/v2/compliance.py` - 700+ lines)
+- ✅ POST `/v2/compliance/approvals` - Request approval for high-risk operations
+- ✅ GET `/v2/compliance/approvals/{request_id}` - Check approval status
+- ✅ POST `/v2/compliance/approvals/{request_id}/decide` - Approve or reject
+- ✅ POST `/v2/compliance/provenance/context` - Create decision context
+- ✅ POST `/v2/compliance/provenance/decision` - Record decision
+- ✅ GET `/v2/compliance/provenance/lineage/{decision_id}` - Get decision lineage
+- ✅ GET `/v2/compliance/circuit-breakers` - Get all circuit breaker states
+- ✅ GET `/v2/compliance/circuit-breakers/{name}` - Get specific breaker state
+- ✅ POST `/v2/compliance/circuit-breakers/{name}/reset` - Reset circuit breaker
+- ✅ GET `/v2/compliance/policies` - List policies
+- ✅ POST `/v2/compliance/policies` - Create policy
+- ✅ POST `/v2/compliance/policies/{policy_id}/activate` - Activate policy
+- ✅ POST `/v2/compliance/policies/{policy_id}/enforce` - Enforce policy
 
 **OpenAPI Documentation**
 - ✅ New tag: "ISO/IEC 42001 Compliance"
@@ -606,15 +606,15 @@ This release completes the implementation of critical functionalities identified
 - ✅ delete_workflow() - Remove workflow definitions
 
 **API Integration** (`apps/memory_api/routes/event_triggers.py`)
-- ✅ POST /v1/triggers/create - Now stores triggers in database
-- ✅ GET /v1/triggers/{trigger_id} - Now retrieves from database
-- ✅ PUT /v1/triggers/{trigger_id} - Now updates database records
-- ✅ DELETE /v1/triggers/{trigger_id} - Now deletes from database
-- ✅ GET /v1/triggers/list - Now queries database with filters
-- ✅ POST /v1/triggers/executions - Now retrieves execution history from database
-- ✅ POST /v1/triggers/workflows/create - Now stores workflows in database
-- ✅ GET /v1/triggers/workflows/{workflow_id} - Now retrieves from database
-- ✅ GET /v1/triggers/workflows - Now lists workflows from database
+- ✅ POST /v2/triggers/create - Now stores triggers in database
+- ✅ GET /v2/triggers/{trigger_id} - Now retrieves from database
+- ✅ PUT /v2/triggers/{trigger_id} - Now updates database records
+- ✅ DELETE /v2/triggers/{trigger_id} - Now deletes from database
+- ✅ GET /v2/triggers/list - Now queries database with filters
+- ✅ POST /v2/triggers/executions - Now retrieves execution history from database
+- ✅ POST /v2/triggers/workflows/create - Now stores workflows in database
+- ✅ GET /v2/triggers/workflows/{workflow_id} - Now retrieves from database
+- ✅ GET /v2/triggers/workflows - Now lists workflows from database
 
 **Impact:**
 - Replaced placeholder implementations with full database persistence
@@ -661,7 +661,7 @@ This release completes the implementation of critical functionalities identified
 - ✅ get_metrics_by_dimensions() - Filter by dimension values
 
 **API Integration** (`apps/memory_api/routes/dashboard.py`)
-- ✅ GET /v1/dashboard/metrics/timeseries/{metric_name} - Now retrieves real data from database
+- ✅ GET /v2/dashboard/metrics/timeseries/{metric_name} - Now retrieves real data from database
   - Automatic aggregation interval selection based on time period
   - Trend calculation (up/down/stable with percentage change)
   - Support for 1 hour, 24 hours, 7 days, and 30 days periods
@@ -735,10 +735,10 @@ This release completes the implementation of critical functionalities identified
 - ✅ delete_suite() - Delete suite with cascade to executions
 
 **API Integration** (`apps/memory_api/routes/evaluation.py`)
-- ✅ POST /v1/evaluation/ab-test/create - Now stores tests in database with variant configurations
-- ✅ POST /v1/evaluation/ab-test/{test_id}/compare - Now retrieves results and calculates statistics
-- ✅ POST /v1/evaluation/benchmark/run - Now creates execution records and tracks status
-- ✅ GET /v1/evaluation/benchmark/suites - Now lists suites from database with execution history
+- ✅ POST /v2/evaluation/ab-test/create - Now stores tests in database with variant configurations
+- ✅ POST /v2/evaluation/ab-test/{test_id}/compare - Now retrieves results and calculates statistics
+- ✅ POST /v2/evaluation/benchmark/run - Now creates execution records and tracks status
+- ✅ GET /v2/evaluation/benchmark/suites - Now lists suites from database with execution history
 
 **Impact:**
 - A/B testing infrastructure ready for production experimentation
@@ -1044,7 +1044,7 @@ This release completes the implementation of critical functionalities identified
   - Records duration and update counts per tenant
 
 #### ContextBuilder Enforcement ✅
-- **Agent endpoint refactored** (`api/v1/agent.py`)
+- **Agent endpoint refactored** (`api/v2/agent.py`)
   - Now uses `ContextBuilder.build_context()` for all agent executions
   - Replaced manual context construction with unified pattern
   - Reflections automatically included in every agent call (when enabled)
@@ -1300,10 +1300,10 @@ await rbac_service.assign_role(
   - `integrations/mcp/tests/test_mcp_integration.py` (17 tests) - MCP protocol integration
   - `integrations/mcp/tests/test_mcp_load.py` (7 tests) - Load and performance testing
   - `integrations/mcp/tests/test_pii_scrubber.py` (36 tests) - PII detection and masking
-  - `tests/api/v1/test_governance.py` (13 tests) - Governance API endpoints
-  - `tests/api/v1/test_search_hybrid.py` (9 tests) - Hybrid search functionality
-  - `tests/api/v1/test_memory.py` (+6 tests) - Enhanced memory operations
-  - `tests/api/v1/test_agent.py` (+3 tests) - Agent execution with context
+  - `tests/api/v2/test_governance.py` (13 tests) - Governance API endpoints
+  - `tests/api/v2/test_search_hybrid.py` (9 tests) - Hybrid search functionality
+  - `tests/api/v2/test_memory.py` (+6 tests) - Enhanced memory operations
+  - `tests/api/v2/test_agent.py` (+3 tests) - Agent execution with context
   - `tests/integration/test_lite_profile.py` (11 tests) - RAE Lite integration tests
   - **Total test count: 431 → 461 tests (+7% increase, 461 tests total)**
   - Coverage: Comprehensive test suite across all major components
@@ -1462,9 +1462,9 @@ await rbac_service.assign_role(
 - `apps/memory_api/logging_config.py` completely rewritten with multi-level configuration
 
 ### Changed - API Endpoints (2025-11-22)
-- `/v1/graph/query` now uses `get_hybrid_search_service()` dependency
-- `/v1/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-- `/v1/memory/query` now uses `get_hybrid_search_service()` dependency
+- `/v2/graph/query` now uses `get_hybrid_search_service()` dependency
+- `/v2/graph/subgraph` now uses `get_hybrid_search_service()` dependency
+- `/v2/memory/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed (2025-11-22)
 - Test fixtures updated to match new DI constructor signatures
@@ -1529,9 +1529,9 @@ await rbac_service.assign_role(
   - `apps/memory_api/logging_config.py` completely rewritten with multi-level configuration
 
 - **API Endpoints**
-  - `/v1/graph/query` now uses `get_hybrid_search_service()` dependency
-  - `/v1/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-  - `/v1/memory/query` now uses `get_hybrid_search_service()` dependency
+  - `/v2/graph/query` now uses `get_hybrid_search_service()` dependency
+  - `/v2/graph/subgraph` now uses `get_hybrid_search_service()` dependency
+  - `/v2/memory/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed
 - Test fixtures updated to match new DI constructor signatures
@@ -1564,7 +1564,7 @@ await rbac_service.assign_role(
 
 ### Changed
 - Module renamed: `rae_mcp_server` → `rae_mcp`
-- API endpoints standardized to `/v1/memory/*` pattern
+- API endpoints standardized to `/v2/memory/*` pattern
 - Architectural separation: `integrations/mcp/` vs `integrations/context-watcher/`
 
 ### Documentation

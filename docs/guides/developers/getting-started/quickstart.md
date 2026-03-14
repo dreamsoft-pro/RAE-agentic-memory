@@ -100,7 +100,7 @@ Open your browser and navigate to:
 ### Using curl
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: quickstart-demo" \
   -H "X-Project-ID: my-first-project" \
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 ### Semantic Search
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: quickstart-demo" \
   -H "X-Project-ID: my-first-project" \

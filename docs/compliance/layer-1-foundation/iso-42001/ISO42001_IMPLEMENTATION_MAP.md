@@ -122,10 +122,10 @@ result = ReflectionResult(
 
 | Right | Implementation | Code Location |
 |-------|----------------|---------------|
-| **Right to Access** | Export all user data | `apps/memory_api/api/v1/gdpr.py:export_user_data` |
+| **Right to Access** | Export all user data | `apps/memory_api/api/v2/gdpr.py:export_user_data` |
 | **Right to Erasure** | Delete all user data | `apps/memory_api/tasks/background_tasks.py:gdpr_delete_user_data_task` |
 | **Right to Rectification** | Update memory data | `apps/memory_api/repositories/memory_repository.py:update_memory` |
-| **Right to Portability** | Export in standard format | `apps/memory_api/api/v1/gdpr.py:export_user_data` |
+| **Right to Portability** | Export in standard format | `apps/memory_api/api/v2/gdpr.py:export_user_data` |
 
 **Key Implementation**:
 

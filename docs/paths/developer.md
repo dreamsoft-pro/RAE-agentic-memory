@@ -331,7 +331,7 @@ RAE follows a clean, 3-layer architecture pattern within its services:
 
 3.  **Route Layer (API):**
     -   **Purpose:** Defines the external-facing API endpoints. It handles incoming HTTP requests, performs validation (using Pydantic), calls the relevant service layer methods, and formats the HTTP response.
-    -   **Example:** `apps/memory_api/routes/memory.py` defines the `/v1/memory/query` endpoint, which calls the memory service to perform a search.
+    -   **Example:** `apps/memory_api/routes/memory.py` defines the `/v2/memory/query` endpoint, which calls the memory service to perform a search.
 
 This separation of concerns makes the codebase modular, easier to test, and easier to maintain.
 

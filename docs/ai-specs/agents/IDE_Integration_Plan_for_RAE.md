@@ -153,7 +153,7 @@ Dodać sekcję w `IDE_INTEGRATION.md`:
 
 - **Vim/Neovim/Sublime**:
   - alias terminalowy `rae-mcp-server` + konfig w zewnętrznym kliencie MCP (Claude Desktop / Cursor / Cline),
-  - ewentualnie pluginy LSP/command hooks, które triggerują zapytania HTTP do RAE API (np. zapis pliku → POST na `/v1/memories/create`).   
+  - ewentualnie pluginy LSP/command hooks, które triggerują zapytania HTTP do RAE API (np. zapis pliku → POST na `/v2/memories/create`).   
 
 ---
 

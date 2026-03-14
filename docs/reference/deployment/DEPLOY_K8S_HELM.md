@@ -376,7 +376,7 @@ ingress:
   hosts:
     - host: rae.example.com
       paths:
-        - path: /api/v1
+        - path: /api/v2
           pathType: Prefix
           backend:
             service:

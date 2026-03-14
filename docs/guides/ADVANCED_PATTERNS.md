@@ -25,7 +25,7 @@ Process multiple items efficiently with batch endpoints.
 ### Batch Create Memories
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store/batch \
+curl -X POST http://localhost:8000/v2/memory/store/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -71,7 +71,7 @@ curl -X POST http://localhost:8000/v1/memory/store/batch \
 ### Batch Create Graph Nodes
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
+curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -101,7 +101,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
 ### Batch Create Graph Edges
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
+curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -128,7 +128,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
 ### Batch with Error Handling
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store/batch \
+curl -X POST http://localhost:8000/v2/memory/store/batch \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -190,15 +190,15 @@ Handle large result sets efficiently.
 
 ```bash
 # Page 1
-curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=0" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=0" \
   -H "X-API-Key: your-key"
 
 # Page 2
-curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=50" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=50" \
   -H "X-API-Key: your-key"
 
 # Page 3
-curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=100" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=100" \
   -H "X-API-Key: your-key"
 ```
 
@@ -219,7 +219,7 @@ curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&li
 
 ```bash
 # First page
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -240,7 +240,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 ```bash
 # Next page
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -283,7 +283,7 @@ def fetch_all_pages(url, params, max_pages=None):
 
 # Usage
 items = fetch_all_pages(
-    'http://localhost:8000/v1/triggers/list',
+    'http://localhost:8000/v2/triggers/list',
     {
         'tenant_id': 'demo',
         'project_id': 'my-app',
@@ -298,7 +298,7 @@ items = fetch_all_pages(
 For very large result sets, use streaming:
 
 ```bash
-curl -N http://localhost:8000/v1/memory/export/stream?tenant_id=demo \
+curl -N http://localhost:8000/v2/memory/export/stream?tenant_id=demo \
   -H "X-API-Key: your-key" \
   > memories_export.jsonl
 ```
@@ -389,7 +389,7 @@ def make_request_with_retry(
 # Usage
 response = make_request_with_retry(
     'POST',
-    'http://localhost:8000/v1/memory/store',
+    'http://localhost:8000/v2/memory/store',
     json={
         'tenant_id': 'demo',
         'content': 'Memory content',
@@ -522,7 +522,7 @@ class CircuitBreaker:
 breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=60)
 
 def api_call():
-    return requests.post('http://localhost:8000/v1/memory/store', json=data)
+    return requests.post('http://localhost:8000/v2/memory/store', json=data)
 
 try:
     response = breaker.call(api_call)
@@ -538,7 +538,7 @@ Use idempotency keys to safely retry:
 # Generate unique key
 IDEMPOTENCY_KEY=$(uuidgen)
 
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Idempotency-Key: $IDEMPOTENCY_KEY" \
   -H "X-API-Key: your-key" \
@@ -549,7 +549,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
   }'
 
 # Safe to retry with same key
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Idempotency-Key: $IDEMPOTENCY_KEY" \
   -H "X-API-Key: your-key" \
@@ -579,7 +579,7 @@ Respect API rate limits.
 ### Rate Limit Headers
 
 ```bash
-curl -i http://localhost:8000/v1/memory/query \
+curl -i http://localhost:8000/v2/memory/query \
   -H "X-API-Key: your-key"
 ```
 
@@ -705,7 +705,7 @@ def robust_batch_upload(
         for attempt in range(max_retries + 1):
             try:
                 response = requests.post(
-                    'http://localhost:8000/v1/memory/store/batch',
+                    'http://localhost:8000/v2/memory/store/batch',
                     json={'memories': batch},
                     headers={'X-API-Key': 'your-key'},
                     timeout=30

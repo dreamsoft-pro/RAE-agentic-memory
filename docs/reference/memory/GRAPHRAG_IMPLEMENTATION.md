@@ -45,48 +45,48 @@ Extended with:
 
 ### 3. API Endpoints
 
-#### `apps/memory_api/api/v1/graph.py`
+#### `apps/memory_api/api/v2/graph.py`
 New router with comprehensive graph operations:
 
-**POST /v1/graph/extract**
+**POST /v2/graph/extract**
 - Extract knowledge graph from memories
 - Parameters: project_id, limit, min_confidence, auto_store
 - Returns: GraphExtractionResult with triples and statistics
 
-**POST /v1/graph/query**
+**POST /v2/graph/query**
 - Advanced hybrid search with full graph traversal
 - Parameters: query, project_id, top_k_vector, graph_depth, traversal_strategy
 - Returns: HybridSearchResult with vector matches and graph data
 
-**POST /v1/graph/reflection/hierarchical**
+**POST /v2/graph/reflection/hierarchical**
 - Generate map-reduce reflections from large episode sets
 - Parameters: project_id, bucket_size, max_episodes
 - Returns: Summary and statistics
 
-**GET /v1/graph/stats**
+**GET /v2/graph/stats**
 - Retrieve graph statistics
 - Parameters: project_id
 - Returns: Node counts, edge counts, unique relations
 
-**GET /v1/graph/nodes**
+**GET /v2/graph/nodes**
 - List graph nodes
 - Parameters: project_id, limit
 - Returns: List of nodes with metadata
 
-**GET /v1/graph/edges**
+**GET /v2/graph/edges**
 - List graph edges
 - Parameters: project_id, limit, relation (optional filter)
 - Returns: List of edges with metadata
 
-**GET /v1/graph/subgraph**
+**GET /v2/graph/subgraph**
 - Extract subgraph from starting nodes
 - Parameters: project_id, node_ids, depth
 - Returns: Nodes and edges in subgraph
 
-#### Enhanced `apps/memory_api/api/v1/memory.py`
+#### Enhanced `apps/memory_api/api/v2/memory.py`
 Extended existing endpoints:
 
-**POST /v1/memory/query** (Enhanced)
+**POST /v2/memory/query** (Enhanced)
 - Added hybrid search support
 - New parameters: use_graph, graph_depth, project
 - Returns include: synthesized_context, graph_statistics
@@ -286,12 +286,12 @@ search_result = await hybrid_search.search(
 ### API Usage
 ```bash
 # Extract graph
-curl -X POST http://localhost:8000/v1/graph/extract \
+curl -X POST http://localhost:8000/v2/graph/extract \
   -H "X-Tenant-ID: tenant" \
   -d '{"project_id": "proj", "limit": 50}'
 
 # Hybrid search
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "X-Tenant-ID: tenant" \
   -d '{"query_text": "bugs", "use_graph": true, "project": "proj"}'
 ```

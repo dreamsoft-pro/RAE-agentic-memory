@@ -12,7 +12,7 @@
 
 ```mermaid
 graph TD
-    IDE[VS Code Extension] -->|JSON POST /v1/editor/ask| RAE[RAE Kernel :8000]
+    IDE[VS Code Extension] -->|JSON POST /v2/editor/ask| RAE[RAE Kernel :8000]
     RAE -->|Token Check| Auth[Auth Service]
     RAE -->|Intent Check| FW[Semantic Firewall]
     RAE -->|Retrieval| Mem[Memory Store]
@@ -23,7 +23,7 @@ graph TD
 
 ## 3. API Specification
 
-### Endpoint: `POST /v1/editor/ask`
+### Endpoint: `POST /v2/editor/ask`
 
 #### Request Payload
 ```json
@@ -62,5 +62,5 @@ graph TD
 
 ## 5. Implementation Roadmap
 - [ ] Create `rae-vscode-client` (TypeScript, fetch-only).
-- [ ] Implement `/v1/editor/ask` in RAE API.
+- [ ] Implement `/v2/editor/ask` in RAE API.
 - [ ] Add `EditorService` to RAE Core.

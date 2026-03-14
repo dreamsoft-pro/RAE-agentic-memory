@@ -44,7 +44,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 1. Create Memory
 
-**POST** `/v1/memories/create`
+**POST** `/v2/memories/create`
 
 ### Request Body
 
@@ -100,7 +100,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 2. Query Memory (Hybrid Search)
 
-**POST** `/v1/memory/query`
+**POST** `/v2/memory/query`
 
 ### Request Body
 
@@ -167,7 +167,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 3. Generate Reflection
 
-**POST** `/v1/reflection/generate`
+**POST** `/v2/reflection/generate`
 
 ### Request Body
 
@@ -207,7 +207,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 4. List Memories
 
-**GET** `/v1/memories?layer=ltm&limit=50&offset=0`
+**GET** `/v2/memories?layer=ltm&limit=50&offset=0`
 
 ### Query Parameters
 
@@ -240,7 +240,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 5. Update Memory
 
-**PUT** `/v1/memories/{id}`
+**PUT** `/v2/memories/{id}`
 
 ### Request Body
 
@@ -271,7 +271,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 6. Delete Memory
 
-**DELETE** `/v1/memories/{id}`
+**DELETE** `/v2/memories/{id}`
 
 ### Response
 

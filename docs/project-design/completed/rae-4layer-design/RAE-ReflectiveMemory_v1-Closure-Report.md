@@ -56,7 +56,7 @@ This report documents the **complete finalization effort** that transformed Refl
    - **MaintenanceScheduler:** Coordinates all workers, logs config on startup
    - **Result:** Workers exit early when disabled, log clear skip reasons
 
-3. **Agent Endpoint Refactoring** (`api/v1/agent.py`)
+3. **Agent Endpoint Refactoring** (`api/v2/agent.py`)
    - Changed from manual prompt assembly to `ContextBuilder.build_context()`
    - Reflections now automatically included in every agent execution
    - No more bypassing the reflection system
@@ -100,7 +100,7 @@ This report documents the **complete finalization effort** that transformed Refl
 **Files Modified:**
 - `apps/memory_api/services/context_builder.py` (flag checks)
 - `apps/memory_api/workers/memory_maintenance.py` (flag respect, metrics)
-- `apps/memory_api/api/v1/agent.py` (ContextBuilder usage)
+- `apps/memory_api/api/v2/agent.py` (ContextBuilder usage)
 - `apps/memory_api/metrics.py` (11 new metrics)
 - `apps/memory_api/celery_app.py` (typo fix)
 - `apps/memory_api/tasks/background_tasks.py` (maintenance task)
@@ -254,7 +254,7 @@ This report documents the **complete finalization effort** that transformed Refl
 | Component | Status | Evidence |
 |-----------|--------|----------|
 | **Single Entrypoint** | ✅ Complete | All agents use `ContextBuilder.build_context()` |
-| **Agent Integration** | ✅ Complete | `/v1/agent/execute` refactored |
+| **Agent Integration** | ✅ Complete | `/v2/agent/execute` refactored |
 | **Reflection Retrieval** | ✅ Complete | Queries `memory_type in ("reflection", "strategy")` |
 | **Token Limit** | ✅ Complete | Respects `REFLECTIVE_LESSONS_TOKEN_BUDGET` |
 | **Importance Threshold** | ✅ Complete | Filters by `REFLECTION_MIN_IMPORTANCE_THRESHOLD` |
@@ -302,11 +302,11 @@ This report documents the **complete finalization effort** that transformed Refl
 | **Honest Documentation** | ✅ Complete | SECURITY.md with "What IS/ISN'T" |
 
 **Protected Endpoints:**
-- ✅ `/v1/memory/*` - All memory operations
-- ✅ `/v1/agent/*` - Agent execution
-- ✅ `/v1/governance/*` - Cost tracking & audits
-- ✅ `/v1/graph/*` - Knowledge graph operations
-- ✅ `/v1/cache/*` - Context cache management
+- ✅ `/v2/memory/*` - All memory operations
+- ✅ `/v2/agent/*` - Agent execution
+- ✅ `/v2/governance/*` - Cost tracking & audits
+- ✅ `/v2/graph/*` - Knowledge graph operations
+- ✅ `/v2/cache/*` - Context cache management
 
 ---
 
@@ -660,7 +660,7 @@ Before deploying to production:
 
 **Example:** ContextBuilder existed, but agent endpoint bypassed it
 
-**Fix:** Refactored `/v1/agent/execute` to use ContextBuilder
+**Fix:** Refactored `/v2/agent/execute` to use ContextBuilder
 
 **Result:** Reflections now consistently included
 

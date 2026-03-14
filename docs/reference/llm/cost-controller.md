@@ -340,7 +340,7 @@ async def agent_execute(self, request: AgentExecuteRequest):
 
 ```
 1. Client Request
-   └─> POST /api/v1/agent/execute
+   └─> POST /api/v2/agent/execute
        Headers: X-Request-ID: abc-123
        Body: { tenant_id, project, query, model, ... }
 
@@ -385,7 +385,7 @@ async def agent_execute(self, request: AgentExecuteRequest):
 
 ```
 1. Client Request
-   └─> POST /api/v1/agent/execute
+   └─> POST /api/v2/agent/execute
 
 2. CostGuardMiddleware - PRE-EXECUTION
    ├─> Estimate cost: $0.015
@@ -415,7 +415,7 @@ async def agent_execute(self, request: AgentExecuteRequest):
 
 ```
 1. Client Request
-   └─> POST /api/v1/agent/execute
+   └─> POST /api/v2/agent/execute
        Headers: X-Dry-Run: true
 
 2. CostGuardMiddleware - PRE-EXECUTION
@@ -917,7 +917,7 @@ from apps.memory_api.models import AgentExecuteRequest, AgentExecuteResponse
 
 app = FastAPI()
 
-@app.post("/api/v1/agent/execute")
+@app.post("/api/v2/agent/execute")
 @cost_guard()
 async def agent_execute(
     request: Request,
@@ -1009,7 +1009,7 @@ gemini-1.5-pro-002 (google):
 
 ```bash
 # Test without budget enforcement
-curl -X POST http://localhost:8000/api/v1/agent/execute \
+curl -X POST http://localhost:8000/api/v2/agent/execute \
   -H "Content-Type: application/json" \
   -H "X-Dry-Run: true" \
   -d '{

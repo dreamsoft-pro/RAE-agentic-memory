@@ -70,7 +70,7 @@ data_retention:
 #### 2. Prawo do usunięcia danych (Right to be Forgotten)
 ```python
 # API do usuwania danych osoby
-DELETE /api/v1/tenants/{tenant_id}/data-subjects/{subject_id}
+DELETE /api/v2/tenants/{tenant_id}/data-subjects/{subject_id}
 
 # Kasuje wszystkie dane związane z daną osobą
 # Zgodnie z Art. 17 RODO
@@ -79,7 +79,7 @@ DELETE /api/v1/tenants/{tenant_id}/data-subjects/{subject_id}
 #### 3. Prawo do przenoszenia danych (Data Portability)
 ```python
 # Eksport danych osoby w formacie maszynowym
-GET /api/v1/tenants/{tenant_id}/data-subjects/{subject_id}/export
+GET /api/v2/tenants/{tenant_id}/data-subjects/{subject_id}/export
 
 # Zwraca JSON zgodny z Art. 20 RODO
 ```
@@ -240,7 +240,7 @@ MON - Ministerstwo
 
 ```python
 # Jako administrator systemu
-POST /api/v1/admin/tenants
+POST /api/v2/admin/tenants
 
 {
   "name": "Urząd Miasta Warszawa",
@@ -297,10 +297,10 @@ SELECT * FROM memories WHERE id = '123'
 
 ```bash
 # Pobierz logi z ostatnich 7 dni
-GET /api/v1/admin/audit-logs?from=2025-11-29&to=2025-12-06
+GET /api/v2/admin/audit-logs?from=2025-11-29&to=2025-12-06
 
 # Eksport do CSV (dla celów compliance)
-GET /api/v1/admin/audit-logs/export?format=csv
+GET /api/v2/admin/audit-logs/export?format=csv
 ```
 
 ### Monitoring Systemu

@@ -4485,7 +4485,7 @@ OpenRouter offers a unified interface to hundreds of AI models via a single API 
 import requests
 import json
 response = requests.post(
- url="https://openrouter.ai/api/v1/chat/completions",
+ url="https://openrouter.ai/api/v2/chat/completions",
  headers={
    "Authorization": "Bearer <OPENROUTER_API_KEY>",
    "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.

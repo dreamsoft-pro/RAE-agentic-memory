@@ -9,7 +9,7 @@ RAE Memory Engine implements the Repository/DAO (Data Access Object) pattern to 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     API Layer (FastAPI)                     │
-│                  routes/*, api/v1/*                         │
+│                  routes/*, api/v2/*                         │
 └──────────────────────────┬──────────────────────────────────┘
                            │
                            ▼

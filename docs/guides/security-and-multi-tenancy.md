@@ -27,7 +27,7 @@ SECRET_KEY=your-secret-key-here
 
 **Usage:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "X-API-Key: your-secret-key-here" \
   -H "Content-Type: application/json" \
   -d '{...}'
@@ -59,7 +59,7 @@ OAUTH_AUDIENCE=https://your-api.com
 
 **Usage:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Authorization: Bearer eyJhbGciOi..." \
   -H "Content-Type: application/json" \
   -d '{...}'
@@ -85,7 +85,7 @@ RAE is built as a multi-tenant system from the ground up. Each tenant's data is 
 Every request must include a `X-Tenant-ID` header:
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha" \
   -H "Content-Type: application/json" \
@@ -421,13 +421,13 @@ RAE provides tools for GDPR compliance:
 
 ```python
 # Right to erasure
-DELETE /v1/tenants/{tenant_id}/memories?user_id={user_id}
+DELETE /v2/tenants/{tenant_id}/memories?user_id={user_id}
 
 # Right to access
-GET /v1/tenants/{tenant_id}/export?user_id={user_id}
+GET /v2/tenants/{tenant_id}/export?user_id={user_id}
 
 # Data portability
-GET /v1/tenants/{tenant_id}/export?format=json
+GET /v2/tenants/{tenant_id}/export?format=json
 ```
 
 ### SOC 2 Considerations

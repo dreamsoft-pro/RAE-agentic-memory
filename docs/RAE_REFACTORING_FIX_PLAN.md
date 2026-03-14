@@ -314,7 +314,7 @@ pytest apps/memory_api/tests/api/v2/ -v
 python -c "
 import requests
 # Test v1 endpoint (should work with rae_core backend)
-resp = requests.post('http://localhost:8000/v1/memories', json={...})
+resp = requests.post('http://localhost:8000/v2/memories', json={...})
 print(resp.json())
 "
 ```

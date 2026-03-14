@@ -104,7 +104,7 @@ Two traversal strategies are supported:
 
 ### 1. Extract Knowledge Graph
 
-**Endpoint:** `POST /v1/graph/extract`
+**Endpoint:** `POST /v2/graph/extract`
 
 Extracts knowledge graph from episodic memories.
 
@@ -150,7 +150,7 @@ Extracts knowledge graph from episodic memories.
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:8000/v1/graph/extract \
+curl -X POST http://localhost:8000/v2/graph/extract \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -164,7 +164,7 @@ curl -X POST http://localhost:8000/v1/graph/extract \
 
 ### 2. Hybrid Search (Memory Query with Graph)
 
-**Endpoint:** `POST /v1/memory/query`
+**Endpoint:** `POST /v2/memory/query`
 
 Standard memory query extended with graph traversal capabilities.
 
@@ -204,7 +204,7 @@ Standard memory query extended with graph traversal capabilities.
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -219,7 +219,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 ### 3. Advanced Graph Query
 
-**Endpoint:** `POST /v1/graph/query`
+**Endpoint:** `POST /v2/graph/query`
 
 Dedicated endpoint for complex graph-based searches.
 
@@ -266,7 +266,7 @@ Dedicated endpoint for complex graph-based searches.
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:8000/v1/graph/query \
+curl -X POST http://localhost:8000/v2/graph/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -281,7 +281,7 @@ curl -X POST http://localhost:8000/v1/graph/query \
 
 ### 4. Get Graph Statistics
 
-**Endpoint:** `GET /v1/graph/stats?project_id=my-project`
+**Endpoint:** `GET /v2/graph/stats?project_id=my-project`
 
 Retrieve statistics about the knowledge graph.
 
@@ -307,14 +307,14 @@ Retrieve statistics about the knowledge graph.
 
 **cURL Example:**
 ```bash
-curl -X GET "http://localhost:8000/v1/graph/stats?project_id=my-project" \
+curl -X GET "http://localhost:8000/v2/graph/stats?project_id=my-project" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ### 5. Get Subgraph
 
-**Endpoint:** `GET /v1/graph/subgraph`
+**Endpoint:** `GET /v2/graph/subgraph`
 
 Retrieve a subgraph starting from specific nodes.
 
@@ -325,14 +325,14 @@ Retrieve a subgraph starting from specific nodes.
 
 **Example:**
 ```bash
-curl -X GET "http://localhost:8000/v1/graph/subgraph?project_id=my-project&node_ids=AuthService,EncryptionService&depth=2" \
+curl -X GET "http://localhost:8000/v2/graph/subgraph?project_id=my-project&node_ids=AuthService,EncryptionService&depth=2" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ### 6. Hierarchical Reflection
 
-**Endpoint:** `POST /v1/graph/reflection/hierarchical`
+**Endpoint:** `POST /v2/graph/reflection/hierarchical`
 
 Generate hierarchical (map-reduce) reflection from large episode collections.
 
@@ -365,14 +365,14 @@ import httpx
 
 # 1. Store episodic memories
 for event in events:
-    httpx.post("http://localhost:8000/v1/memory/store", json={
+    httpx.post("http://localhost:8000/v2/memory/store", json={
         "content": event,
         "layer": "em",
         "project": "my-project"
     }, headers={"X-Tenant-ID": "tenant-123"})
 
 # 2. Extract knowledge graph
-result = httpx.post("http://localhost:8000/v1/graph/extract", json={
+result = httpx.post("http://localhost:8000/v2/graph/extract", json={
     "project_id": "my-project",
     "limit": 100,
     "min_confidence": 0.6,
@@ -389,7 +389,7 @@ Periodically update the graph as new memories are added:
 ```python
 # Run graph extraction on a schedule (e.g., every hour)
 async def update_knowledge_graph():
-    result = await client.post("/v1/graph/extract", json={
+    result = await client.post("/v2/graph/extract", json={
         "project_id": "my-project",
         "limit": 50,  # Only process recent memories
         "min_confidence": 0.5,
@@ -407,7 +407,7 @@ Use hybrid search to provide rich context to AI agents:
 user_query = "How does authentication work in our system?"
 
 # Perform hybrid search
-response = httpx.post("http://localhost:8000/v1/memory/query", json={
+response = httpx.post("http://localhost:8000/v2/memory/query", json={
     "query_text": user_query,
     "k": 10,
     "use_graph": True,
@@ -428,7 +428,7 @@ Explore dependencies and relationships in your codebase:
 
 ```python
 # Find all dependencies of a specific module
-result = httpx.post("http://localhost:8000/v1/graph/query", json={
+result = httpx.post("http://localhost:8000/v2/graph/query", json={
     "query": "AuthService dependencies and relationships",
     "project_id": "my-project",
     "graph_depth": 3,
@@ -614,10 +614,10 @@ agent = create_agent(
 ### Why GraphRAG Instead of CRUD?
 
 Earlier versions of the documentation described a **low-level CRUD Graph API** with endpoints like:
-- `POST /v1/graph/nodes` (Create Node)
-- `POST /v1/graph/edges` (Create Edge)
-- `POST /v1/graph/traverse` (Traverse)
-- `POST /v1/graph/shortest-path` (Find Shortest Path)
+- `POST /v2/graph/nodes` (Create Node)
+- `POST /v2/graph/edges` (Create Edge)
+- `POST /v2/graph/traverse` (Traverse)
+- `POST /v2/graph/shortest-path` (Find Shortest Path)
 
 **These endpoints were never implemented.** Instead, RAE implements **GraphRAG**, which provides a higher-level, more intelligent approach:
 
@@ -635,10 +635,10 @@ Earlier versions of the documentation described a **low-level CRUD Graph API** w
 - ✅ Simple, high-level API
 
 **If you need low-level graph operations**, use the provided GraphRAG endpoints:
-- Use `POST /v1/graph/extract` for automatic graph construction
-- Use `POST /v1/graph/query` for advanced graph queries
-- Use `GET /v1/graph/subgraph` for graph traversal
-- Use `GET /v1/graph/nodes` and `GET /v1/graph/edges` for inspection
+- Use `POST /v2/graph/extract` for automatic graph construction
+- Use `POST /v2/graph/query` for advanced graph queries
+- Use `GET /v2/graph/subgraph` for graph traversal
+- Use `GET /v2/graph/nodes` and `GET /v2/graph/edges` for inspection
 
 For most use cases, **GraphRAG provides a more powerful and user-friendly experience** than traditional CRUD operations would.
 

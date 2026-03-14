@@ -149,7 +149,7 @@ pm.request.headers.add({
 
 ### 1. Store Memory
 
-**Endpoint**: `POST {{base_url}}/v1/memory/store`
+**Endpoint**: `POST {{base_url}}/v2/memories/store`
 
 **Headers**:
 - `Content-Type: application/json`
@@ -183,7 +183,7 @@ pm.environment.set("last_memory_id", pm.response.json().memory_id);
 
 ### 2. Query Memory
 
-**Endpoint**: `POST {{base_url}}/v1/memory/query`
+**Endpoint**: `POST {{base_url}}/v2/memories/query`
 
 **Body**:
 ```json
@@ -256,10 +256,10 @@ Run entire collection or folders:
 Create a folder "Core Workflows" with these requests in order:
 
 1. Health Check (`GET /health`)
-2. Store Memory (`POST /v1/memory/store`)
-3. Query Memory (`POST /v1/memory/query`)
-4. Get Memory Stats (`GET /v1/memory/stats`)
-5. Delete Memory (`DELETE /v1/memory/delete`)
+2. Store Memory (`POST /v2/memories/store`)
+3. Query Memory (`POST /v2/memories/query`)
+4. Get Memory Stats (`GET /v2/memories/stats`)
+5. Delete Memory (`DELETE /v2/memories/delete`)
 
 Run as suite to test full workflow.
 

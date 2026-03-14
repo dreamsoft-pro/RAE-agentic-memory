@@ -312,7 +312,7 @@ Dodaj:
 
 providers:
   deepseek:
-    endpoint: https://api.deepseek.com/v1/chat/completions
+    endpoint: https://api.deepseek.com/v2/chat/completions
     api_key_env: DEEPSEEK_API_KEY
 
   qwen:
@@ -320,7 +320,7 @@ providers:
     api_key_env: QWEN_API_KEY
 
   grok:
-    endpoint: https://api.x.ai/v1/chat/completions
+    endpoint: https://api.x.ai/v2/chat/completions
     api_key_env: GROK_API_KEY
 
 10. Konfiguracja llm_profiles.yaml

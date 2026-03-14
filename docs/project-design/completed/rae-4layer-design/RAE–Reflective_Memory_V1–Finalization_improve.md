@@ -61,8 +61,8 @@ At the end, all sections 1–5 should have status `DONE`.
   with config-driven weights and decay parameters.
 
 - [ ] All memory retrieval paths (at least):
-  - `/v1/memory/search`
-  - `/v1/search/hybrid`
+  - `/v2/memory/search`
+  - `/v2/search/hybrid`
   - internal retrieval in `ContextBuilder`
 
   use **one canonical scoring implementation** (no custom “shortcut” scoring hidden in services).
@@ -136,7 +136,7 @@ At the end, all sections 1–5 should have status `DONE`.
 ### 3.1. ContextBuilder as single entrypoint
 
 - [ ] All agent-like entrypoints:
-  - `/v1/agent/execute`
+  - `/v2/agent/execute`
   - MCP/IDE integrations
   - any CLI agent loop
 - [ ] …use pattern:

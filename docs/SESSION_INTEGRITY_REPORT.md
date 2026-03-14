@@ -1,7 +1,7 @@
 # SESSION INTEGRITY REPORT - 2026-01-17
 
 ## 1. Status Architektury (RAE-First)
-- **RAE-First**: Wdrożono w `/v1/agent/execute`. Każda akcja przechodzi przez `RAERuntime`.
+- **RAE-First**: Wdrożono w `/v2/agent/execute`. Każda akcja przechodzi przez `RAERuntime`.
 - **Project Isolation**: Wdrożono. Dane są izolowane na poziomie zapytań i zapisu (`Project-Alpha` vs `Project-Beta`).
 - **Memory Hooks**: Wdrożono automatyczne tworzenie refleksji w `RAERuntime` na podstawie sygnałów agenta.
 - **Context Construction**: Skonsolidowano `ContextBuilder` w `rae-core`. API używa teraz wersji agnostycznej.

@@ -411,7 +411,7 @@ lowercase-with-dashes/  # All folders lowercase
 ```markdown
 ## Endpoint Name
 
-**POST** `/v1/path/to/endpoint`
+**POST** `/v2/path/to/endpoint`
 
 ### Request Body
 

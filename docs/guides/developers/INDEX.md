@@ -378,7 +378,7 @@ For enterprise users employing the Knowledge Graph, RAE supports full point-in-t
 **Restore a snapshot:**
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/snapshots/{snapshot_id}/restore \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots/{snapshot_id}/restore \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{

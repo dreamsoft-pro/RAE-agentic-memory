@@ -25,7 +25,7 @@ This cookbook provides **complete, working examples** for common RAE use cases. 
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memories/create \
+curl -X POST http://localhost:8000/v2/memories/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -66,7 +66,7 @@ curl -X POST http://localhost:8000/v1/memories/create \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memories/create \
+curl -X POST http://localhost:8000/v2/memories/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -115,7 +115,7 @@ curl -X POST http://localhost:8000/v1/memories/create \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memories/create \
+curl -X POST http://localhost:8000/v2/memories/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -166,7 +166,7 @@ curl -X POST http://localhost:8000/v1/memories/create \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memories/batch \
+curl -X POST http://localhost:8000/v2/memories/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -227,7 +227,7 @@ curl -X POST http://localhost:8000/v1/memories/batch \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -282,7 +282,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/search/hybrid \
+curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -352,7 +352,7 @@ curl -X POST http://localhost:8000/v1/search/hybrid \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -398,7 +398,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request for Long-Term Memory only**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -414,7 +414,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request for Recent Events only**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -451,7 +451,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/reflections/generate \
+curl -X POST http://localhost:8000/v2/reflections/generate \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -487,7 +487,7 @@ curl -X POST http://localhost:8000/v1/reflections/generate \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/reflections/query \
+curl -X POST http://localhost:8000/v2/reflections/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -524,7 +524,7 @@ curl -X POST http://localhost:8000/v1/reflections/query \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/graph/extract \
+curl -X POST http://localhost:8000/v2/graph/extract \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -554,7 +554,7 @@ curl -X POST http://localhost:8000/v1/graph/extract \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/graph/query \
+curl -X POST http://localhost:8000/v2/graph/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -602,7 +602,7 @@ curl -X POST http://localhost:8000/v1/graph/query \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/delete_user \
+curl -X POST http://localhost:8000/v2/memory/delete_user \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -638,7 +638,7 @@ curl -X POST http://localhost:8000/v1/memory/delete_user \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/export \
+curl -X POST http://localhost:8000/v2/memory/export \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -681,7 +681,7 @@ curl -X POST http://localhost:8000/v1/memory/export \
 
 **Request**:
 ```bash
-curl -X GET http://localhost:8000/v1/cost/budget \
+curl -X GET http://localhost:8000/v2/cost/budget \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key"
 ```
@@ -710,7 +710,7 @@ curl -X GET http://localhost:8000/v1/cost/budget \
 
 **Request**:
 ```bash
-curl -X GET "http://localhost:8000/v1/cost/breakdown?start_date=2025-12-01&end_date=2025-12-01" \
+curl -X GET "http://localhost:8000/v2/cost/breakdown?start_date=2025-12-01&end_date=2025-12-01" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key"
 ```
@@ -750,7 +750,7 @@ curl -X GET "http://localhost:8000/v1/cost/breakdown?start_date=2025-12-01&end_d
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/search/hybrid \
+curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -811,7 +811,7 @@ curl -X POST http://localhost:8000/v1/search/hybrid \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/context/build \
+curl -X POST http://localhost:8000/v2/context/build \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -876,8 +876,8 @@ When you receive HTTP 402, it means the cost budget was exceeded:
 ```
 
 **Actions**:
-1. Check budget status: `GET /v1/cost/budget`
-2. Increase budget (if authorized): `POST /v1/cost/budget/update`
+1. Check budget status: `GET /v2/cost/budget`
+2. Increase budget (if authorized): `POST /v2/cost/budget/update`
 3. Wait until next billing period (daily/monthly)
 4. Optimize usage (use caching, reduce unnecessary operations)
 

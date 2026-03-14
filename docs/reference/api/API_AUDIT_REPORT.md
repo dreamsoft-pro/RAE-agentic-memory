@@ -183,13 +183,13 @@ memory.py               6          ✅ Excellent docs
 
 ```bash
 # API_COOKBOOK.md uses:
-POST /v1/memories/create
+POST /v2/memories/create
 
 # rest-api.md uses:
-POST /v1/memory/store
+POST /v2/memory/store
 
 # Actual endpoint:
-POST /v1/memory/store
+POST /v2/memory/store
 ```
 
 **Fix**: Standardize on actual endpoint paths
@@ -350,7 +350,7 @@ When documenting new endpoints:
 
        **Example**:
        ```bash
-       curl -X POST http://localhost:8000/v1/example \
+       curl -X POST http://localhost:8000/v2/example \
          -H "X-Tenant-ID: demo" \
          -H "X-API-Key: key" \
          -d '{"field": "value"}'

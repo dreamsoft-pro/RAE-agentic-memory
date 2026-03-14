@@ -1,6 +1,3 @@
-[MANDATORY AGENT BEHAVIOR v1.0]
-RULE_01: NO_INTERACTIVE_COMMANDS (Always use non-interactive tools)
-RULE_02: ZERO_WARNING_POLICY (Interrupt execution on any linter/type warning)
-RULE_03: ENTERPRISE_AUDIT (Every operation must be decorated with @audited_operation)
-RULE_04: RAEC_LOCATOR (Deterministic tenant resolution based on project name)
-RULE_05: FAIL_FAST (Stop testing/execution on the first error)
+version https://git-lfs.github.com/spec/v1
+oid sha256:af098e3772da55ebab6f517253d4346029b59cbe7ffb1cddebc02bd95c735b2e
+size 405

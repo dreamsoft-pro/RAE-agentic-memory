@@ -125,7 +125,7 @@ curl http://localhost:8000/health
 ### Store Memory
 
 ```bash
-curl -X POST http://localhost:8000/v1/memories/create \
+curl -X POST http://localhost:8000/v2/memories/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -d '{
@@ -138,7 +138,7 @@ curl -X POST http://localhost:8000/v1/memories/create \
 ### Query Memory
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -d '{
@@ -150,7 +150,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 ### Hybrid Search (GraphRAG)
 
 ```bash
-curl -X POST http://localhost:8000/v1/search/hybrid \
+curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -d '{

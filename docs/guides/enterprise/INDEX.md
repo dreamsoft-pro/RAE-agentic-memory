@@ -339,8 +339,8 @@ SAML_ATTRIBUTE_MAPPING={"email": "email", "name": "displayName", "groups": "grou
 # RAE exports these metrics at /metrics
 
 # Request metrics
-rae_http_requests_total{method="POST", endpoint="/v1/memories", status="200"}
-rae_http_request_duration_seconds{method="POST", endpoint="/v1/memories"}
+rae_http_requests_total{method="POST", endpoint="/v2/memories", status="200"}
+rae_http_request_duration_seconds{method="POST", endpoint="/v2/memories"}
 
 # Memory metrics
 rae_memories_total{tenant_id="acme-corp", layer="episodic"}
@@ -450,7 +450,7 @@ groups:
 
 ```python
 # Real-time LLM cost tracking
-GET /api/v1/admin/costs/llm?period=today
+GET /api/v2/admin/costs/llm?period=today
 
 {
   "total_usd": 245.67,
@@ -505,7 +505,7 @@ GET /api/v1/admin/costs/llm?period=today
 
 4. **Budget Limits** - Set per-tenant spending limits
    ```python
-   PUT /api/v1/admin/tenants/{tenant_id}/budget
+   PUT /api/v2/admin/tenants/{tenant_id}/budget
    {
      "monthly_limit_usd": 1000.00,
      "alert_threshold_pct": 80
@@ -592,7 +592,7 @@ redis:
 ab -n 1000 -c 10 -H "X-API-Key: test" \
   -T "application/json" \
   -p payload.json \
-  http://localhost:8000/v1/memories
+  http://localhost:8000/v2/memories
 ```
 
 **k6 Load Testing:**
@@ -613,7 +613,7 @@ export let options = {
 };
 
 export default function () {
-  let response = http.post('http://localhost:8000/v1/memories', JSON.stringify({
+  let response = http.post('http://localhost:8000/v2/memories', JSON.stringify({
     content: "Load test memory",
     metadata: { test: true }
   }), {

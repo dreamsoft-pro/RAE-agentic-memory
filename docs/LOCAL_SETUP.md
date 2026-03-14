@@ -146,7 +146,7 @@ docker exec -it rae-ollama ollama run llama3
 Using `curl`:
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-Id: demo-tenant" \
   -d '{

@@ -70,7 +70,7 @@ MCP uses **JSON-RPC 2.0** over **STDIO** for communication, making it:
 └────────────────────┬────────────────────────────────────────┘
                      │
                      │ HTTP REST API
-                     │ POST /v1/memory/store
+                     │ POST /v2/memory/store
                      │
 ┌────────────────────▼────────────────────────────────────────┐
 │  RAE Memory API (port 8000)                                 │
@@ -553,7 +553,7 @@ Found 3 relevant memories:
 
 **Content**: Synthesized project reflection
 
-**Generation**: On-demand via RAE API `/v1/memory/reflection/hierarchical`
+**Generation**: On-demand via RAE API `/v2/memory/reflection/hierarchical`
 
 **Cache**: Not cached (always fresh)
 
@@ -573,7 +573,7 @@ PROJECT GUIDELINES
 ============================================================
 
 1. Use PostgreSQL for all new projects requiring ACID compliance
-2. Follow RESTful API conventions with /v1/ versioning
+2. Follow RESTful API conventions with /v2/ versioning
 3. Always include unit tests for business logic
 ...
 
@@ -692,7 +692,7 @@ All tool parameters are validated before processing:
    ```
 2. Check API key is valid:
    ```bash
-   curl -H "X-API-Key: your-key" http://localhost:8000/v1/memory/query
+   curl -H "X-API-Key: your-key" http://localhost:8000/v2/memory/query
    ```
 3. Review MCP server logs (if available via IDE)
 4. Test tool manually using JSON-RPC:
@@ -724,7 +724,7 @@ All tool parameters are validated before processing:
 **Solutions**:
 1. Check RAE API response times:
    ```bash
-   time curl -X POST http://localhost:8000/v1/memory/query \
+   time curl -X POST http://localhost:8000/v2/memory/query \
      -H "Content-Type: application/json" \
      -d '{"query_text":"test","k":5}'
    ```
@@ -815,7 +815,7 @@ Tested with Apache Bench (100 requests, concurrency 10):
 
 ```bash
 # save_memory benchmark
-ab -n 100 -c 10 -T application/json -p payload.json http://localhost:8000/v1/memory/store
+ab -n 100 -c 10 -T application/json -p payload.json http://localhost:8000/v2/memory/store
 
 Requests per second:    23.45 [#/sec]
 Time per request:       42.6ms [mean]

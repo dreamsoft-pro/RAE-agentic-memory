@@ -102,7 +102,7 @@ Brakuje jednego, centralnego miejsca z **jawnie opisanym mapowaniem**.
 
 **[P1] Wymusić użycie ContextBuildera w agent loop**
 
-- [ ] Przejrzeć wszystkie miejsca, w których agent buduje prompt (MCP, REST `/v1/agent/execute`, integracje z SDK).
+- [ ] Przejrzeć wszystkie miejsca, w których agent buduje prompt (MCP, REST `/v2/agent/execute`, integracje z SDK).
 - [ ] Upewnić się, że _wszędzie_ zamiast ręcznego składania promptu używany jest:
 
   ```python

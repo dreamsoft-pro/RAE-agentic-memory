@@ -15,9 +15,9 @@ Ensure all documentation uses consistent, accurate endpoint paths matching the a
 
 ✅ **Use actual endpoint paths from code**:
 ```
-POST /v1/memory/store
-POST /v1/search/hybrid
-GET /v1/triggers/list
+POST /v2/memory/store
+POST /v2/search/hybrid
+GET /v2/triggers/list
 ```
 
 ### Incorrect Formats to Avoid
@@ -39,17 +39,17 @@ All endpoints are documented in [API_INDEX.md](reference/api/API_INDEX.md).
 
 | Module | Prefix | Example |
 |--------|--------|---------|
-| Memory Core | `/v1/memory/*` | `/v1/memory/store` |
-| Agent | `/v1/agent/*` | `/v1/agent/execute` |
-| Knowledge Graph | `/v1/graph/*` | `/v1/graph/extract` |
-| Event Triggers | `/v1/triggers/*` | `/v1/triggers/create` |
-| Hybrid Search | `/v1/search/*` | `/v1/search/hybrid` |
-| Reflections | `/v1/reflections/*` | `/v1/reflections/generate` |
-| Graph Enhanced | `/v1/graph-management/*` | `/v1/graph-management/nodes` |
-| Evaluation | `/v1/evaluation/*` | `/v1/evaluation/search` |
-| Dashboard | `/v1/dashboard/*` | `/v1/dashboard/metrics` |
-| Compliance | `/v1/compliance/*` | `/v1/compliance/approvals` |
-| Governance | `/v1/governance/*` | `/v1/governance/overview` |
+| Memory Core | `/v2/memory/*` | `/v2/memory/store` |
+| Agent | `/v2/agent/*` | `/v2/agent/execute` |
+| Knowledge Graph | `/v2/graph/*` | `/v2/graph/extract` |
+| Event Triggers | `/v2/triggers/*` | `/v2/triggers/create` |
+| Hybrid Search | `/v2/search/*` | `/v2/search/hybrid` |
+| Reflections | `/v2/reflections/*` | `/v2/reflections/generate` |
+| Graph Enhanced | `/v2/graph-management/*` | `/v2/graph-management/nodes` |
+| Evaluation | `/v2/evaluation/*` | `/v2/evaluation/search` |
+| Dashboard | `/v2/dashboard/*` | `/v2/dashboard/metrics` |
+| Compliance | `/v2/compliance/*` | `/v2/compliance/approvals` |
+| Governance | `/v2/governance/*` | `/v2/governance/overview` |
 
 ---
 
@@ -69,7 +69,7 @@ rg "APIRouter\(prefix=" apps/memory_api/
 
 ```bash
 # Find all endpoint references in docs
-rg "POST|GET|PUT|DELETE /v1/" docs/ -g "*.md" > endpoint_refs.txt
+rg "POST|GET|PUT|DELETE /v2/" docs/ -g "*.md" > endpoint_refs.txt
 
 # Check for old patterns
 rg "/memory/add|/memories/create" docs/ -g "*.md"
@@ -130,7 +130,7 @@ def get_actual_endpoints():
 
 def find_doc_endpoints(docs_dir='docs'):
     """Find all endpoint references in documentation"""
-    endpoint_pattern = r'(GET|POST|PUT|DELETE|PATCH)\s+(/v1/[^\s\n]+)'
+    endpoint_pattern = r'(GET|POST|PUT|DELETE|PATCH)\s+(/v2/[^\s\n]+)'
     doc_endpoints = {}
 
     for md_file in Path(docs_dir).rglob('*.md'):
@@ -199,7 +199,7 @@ When updating documentation:
 
 - [ ] Use actual endpoint paths from API_INDEX.md
 - [ ] Include HTTP method (GET, POST, etc.)
-- [ ] Include `/v1/` prefix
+- [ ] Include `/v2/` prefix
 - [ ] Match plurality (e.g., `/triggers/` not `/trigger/`)
 - [ ] Verify against OpenAPI spec
 - [ ] Test curl examples
@@ -226,7 +226,7 @@ curl -X POST http://localhost:8000/memories/create \
 ## Store Memory
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -247,7 +247,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 # Find old patterns
 rg "/memory/add|/memories/" docs/ -g "*.md" -l
 
-# Find references without /v1/ prefix
+# Find references without /v2/ prefix
 rg "POST /(memory|graph|triggers)" docs/ -g "*.md" -l
 ```
 
@@ -255,7 +255,7 @@ rg "POST /(memory|graph|triggers)" docs/ -g "*.md" -l
 
 ```bash
 # Example: Replace old pattern
-find docs/ -name "*.md" -exec sed -i 's|/memories/create|/v1/memory/store|g' {} \;
+find docs/ -name "*.md" -exec sed -i 's|/memories/create|/v2/memory/store|g' {} \;
 
 # Verify changes
 git diff docs/

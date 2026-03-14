@@ -32,7 +32,7 @@ class QwenProvider:
     """
 
     def __init__(
-        self, api_key: str, api_base: str = "https://dashscope.aliyuncs.com/api/v1"
+        self, api_key: str, api_base: str = "https://dashscope.aliyuncs.com/api/v2"
     ):
         """
         Initialize the Qwen provider.

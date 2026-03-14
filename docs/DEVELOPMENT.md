@@ -322,7 +322,7 @@ make -f Makefile.dev dev-logs-api
 # 3. Make code changes in your editor
 # 4. Watch auto-reload in logs
 # 5. Test your changes
-curl http://localhost:8000/api/v1/your-endpoint
+curl http://localhost:8000/api/v2/your-endpoint
 
 # 6. Run tests
 make -f Makefile.dev dev-test-unit
@@ -352,13 +352,13 @@ dc-dev exec rae-api pip list | grep new-package
 
 ```bash
 # 1. Edit code (hot-reload enabled)
-vim apps/memory_api/api/v1/my_endpoint.py
+vim apps/memory_api/api/v2/my_endpoint.py
 
 # 2. Watch logs for reload confirmation
 make -f Makefile.dev dev-logs-api
 
 # 3. Test endpoint
-curl http://localhost:8000/api/v1/my-endpoint
+curl http://localhost:8000/api/v2/my-endpoint
 
 # 4. Write tests
 vim apps/memory_api/tests/test_my_endpoint.py

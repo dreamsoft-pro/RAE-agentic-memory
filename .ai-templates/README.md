@@ -112,18 +112,18 @@
    - Methods: create_entity, get_entity, update_entity, delete_entity
    - Plus business logic methods
 
-3. **API**: `apps/memory_api/api/v1/my_entities.py`
+3. **API**: `apps/memory_api/api/v2/my_entities.py`
    - Template: `route_template.py`
    - Endpoints: POST, GET, PATCH, DELETE
 
 4. **Tests**:
    - `apps/memory_api/tests/repositories/test_my_entity_repository.py`
    - `apps/memory_api/tests/services/test_my_entity_service.py`
-   - `apps/memory_api/tests/api/v1/test_my_entities.py`
+   - `apps/memory_api/tests/api/v2/test_my_entities.py`
    - Template: `test_template.py`
 
 5. **Register router**:
-   - Edit: `apps/memory_api/api/v1/__init__.py`
+   - Edit: `apps/memory_api/api/v2/__init__.py`
    - Add: `from .my_entities import router as my_entities_router`
    - Add: `app.include_router(my_entities_router)`
 
@@ -143,11 +143,11 @@
 
 **Files to modify**:
 
-1. **API**: `apps/memory_api/api/v1/existing_domain.py`
+1. **API**: `apps/memory_api/api/v2/existing_domain.py`
    - Template: `route_template.py` (copy endpoint example)
    - Add new @router.post or @router.get
 
-2. **Tests**: `apps/memory_api/tests/api/v1/test_existing_domain.py`
+2. **Tests**: `apps/memory_api/tests/api/v2/test_existing_domain.py`
    - Template: `test_template.py` (API tests section)
 
 ## 🔍 Template Features Explained
@@ -272,7 +272,7 @@ apps/memory_api/my_tests.py      # ❌ Not in tests/ folder
 ```
 apps/memory_api/repositories/entity_repository.py
 apps/memory_api/services/entity_service.py
-apps/memory_api/api/v1/entities.py
+apps/memory_api/api/v2/entities.py
 apps/memory_api/tests/repositories/test_entity_repository.py
 ```
 

@@ -8,7 +8,7 @@
 RAE-agentic-memory/
 ├── apps/
 │   ├── memory_api/           # Main API application
-│   │   ├── api/v1/          # FastAPI routes (REST endpoints)
+│   │   ├── api/v2/          # FastAPI routes (REST endpoints)
 │   │   ├── repositories/    # Data access layer (PostgreSQL)
 │   │   ├── services/        # Business logic layer
 │   │   ├── models/          # Pydantic data models
@@ -55,12 +55,12 @@ RAE-agentic-memory/
 
 ### Adding a New API Endpoint
 
-**Location**: `apps/memory_api/api/v1/<domain>.py`
+**Location**: `apps/memory_api/api/v2/<domain>.py`
 
 **Example**: Adding user profile endpoint
-- Create: `apps/memory_api/api/v1/users.py`
-- Tests: `apps/memory_api/tests/api/v1/test_users.py`
-- Register router in: `apps/memory_api/api/v1/__init__.py`
+- Create: `apps/memory_api/api/v2/users.py`
+- Tests: `apps/memory_api/tests/api/v2/test_users.py`
+- Register router in: `apps/memory_api/api/v2/__init__.py`
 
 **Template**: See `.ai-templates/route_template.py`
 
@@ -119,7 +119,7 @@ RAE-agentic-memory/
 
 | Code Location | Test Location | Test Type |
 |---------------|---------------|-----------|
-| `apps/memory_api/api/v1/memory.py` | `apps/memory_api/tests/api/v1/test_memory.py` | Integration |
+| `apps/memory_api/api/v2/memory.py` | `apps/memory_api/tests/api/v2/test_memory.py` | Integration |
 | `apps/memory_api/services/hybrid_search.py` | `apps/memory_api/tests/services/test_hybrid_search.py` | Unit |
 | `apps/memory_api/repositories/memory_repository.py` | `apps/memory_api/tests/repositories/test_memory_repository.py` | Integration |
 | `apps/llm/providers/openai.py` | `apps/llm/tests/providers/test_openai.py` | Unit |
@@ -201,19 +201,19 @@ import sys; sys.path.append('../../llm')  # DON'T hack sys.path
 
 | Feature | Service | Repository | API Route |
 |---------|---------|------------|-----------|
-| Memory storage/retrieval | `services/vector_store/` | `repositories/memory_repository.py` | `api/v1/memory.py` |
-| Hybrid search | `services/hybrid_search.py` | `repositories/graph_repository.py` | `api/v1/memory.py` |
+| Memory storage/retrieval | `services/vector_store/` | `repositories/memory_repository.py` | `api/v2/memory.py` |
+| Hybrid search | `services/hybrid_search.py` | `repositories/graph_repository.py` | `api/v2/memory.py` |
 | Reflections | `services/reflection_engine.py` | `repositories/reflection_repository.py` | `routes/reflections.py` |
-| Knowledge graph | `services/graph/` | `repositories/graph_repository.py` | `api/v1/graph.py` |
-| Cost tracking | `services/cost_controller.py` | `repositories/cost_logs_repository.py` | `api/v1/compliance.py` |
+| Knowledge graph | `services/graph/` | `repositories/graph_repository.py` | `api/v2/graph.py` |
+| Cost tracking | `services/cost_controller.py` | `repositories/cost_logs_repository.py` | `api/v2/compliance.py` |
 | Auth & RBAC | `security/rbac_service.py` | `repositories/rbac_repository.py` | Middleware |
-| LLM routing | `apps/llm/broker/llm_router.py` | N/A | `api/v1/agent.py` |
+| LLM routing | `apps/llm/broker/llm_router.py` | N/A | `api/v2/agent.py` |
 
 ### By Layer
 
 **API Layer** (Entry points):
 ```bash
-apps/memory_api/api/v1/*.py
+apps/memory_api/api/v2/*.py
 apps/memory_api/routes/*.py
 ```
 
@@ -305,14 +305,14 @@ logger.error("operation_failed", error=str(e), tenant_id=tenant_id)
 
 1. **Service**: `apps/memory_api/services/custom_retrieval.py`
 2. **Tests**: `apps/memory_api/tests/services/test_custom_retrieval.py`
-3. **Integrate**: Import in `api/v1/memory.py` and add endpoint
+3. **Integrate**: Import in `api/v2/memory.py` and add endpoint
 4. **Commit**: `git commit -m "feat: add custom retrieval algorithm"`
 
 ### Task: Add new cost tracking metric
 
 1. **Repository**: Update `repositories/cost_logs_repository.py`
 2. **Service**: Update `services/cost_controller.py`
-3. **API**: Update `api/v1/compliance.py` to expose new metric
+3. **API**: Update `api/v2/compliance.py` to expose new metric
 4. **Tests**: Add tests in all three layers
 5. **Commit**: `git commit -m "feat: add new cost metric"`
 

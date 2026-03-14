@@ -739,7 +739,7 @@ We welcome research collaborations! Contact: research@rae-memory.ai
 
 ```python
 # Research metrics endpoint
-GET /api/v1/research/metrics
+GET /api/v2/research/metrics
 
 {
   "embeddings": {
