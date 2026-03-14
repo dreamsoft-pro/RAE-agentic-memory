@@ -302,7 +302,7 @@ def prune_working_memory():
 
 ```
 1. Client Request
-   POST /v1/memory/store
+   POST /v2/memories/store
    {
      "content": "...",
      "layer": "episodic",
@@ -340,7 +340,7 @@ def prune_working_memory():
 
 ```
 1. Client Request
-   POST /v1/memory/query
+   POST /v2/memories/query
    {
      "query": "...",
      "top_k": 10,

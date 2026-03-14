@@ -164,7 +164,7 @@ Generic webhook receiver:
 
 ```python
 # POST to RAE webhook endpoint
-POST /api/v1/webhooks/memory
+POST /api/v2/webhooks/memory
 Content-Type: application/json
 X-Webhook-Secret: your-secret
 
@@ -184,7 +184,7 @@ Direct API calls from any system:
 import requests
 
 response = requests.post(
-    "http://rae:8000/api/v1/memories",
+    "http://rae:8000/api/v2/memories",
     headers={
         "Authorization": f"Bearer {api_key}",
         "X-Tenant-ID": tenant_id
@@ -303,7 +303,7 @@ rae_integration_errors_total{integration="slack", error_type="auth"}
 
 ```bash
 # Check integration health
-curl http://rae:8000/api/v1/integrations/health
+curl http://rae:8000/api/v2/integrations/health
 
 # Response:
 {

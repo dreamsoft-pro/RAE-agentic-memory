@@ -394,7 +394,7 @@ result = task.get(timeout=30)
 
 ```bash
 # Trigger graph extraction
-curl -X POST http://localhost:8000/v1/memory \
+curl -X POST http://localhost:8000/v2/memories \
   -H "Content-Type: application/json" \
   -d '{
     "content": "Meeting with Sarah about Q3 roadmap",

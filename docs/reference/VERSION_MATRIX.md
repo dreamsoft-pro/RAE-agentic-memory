@@ -182,12 +182,12 @@ s
 **Authentication:** Bearer token (tenant_id)
 
 **Key Endpoints:**
-- `/v1/memories/*` - Memory management
-- `/v1/search/hybrid` - Hybrid vector + graph search
-- `/v1/graph/*` - Knowledge graph operations
-- `/v1/reflections/*` - Reflection engine
-- `/v1/governance/*` - Cost and governance (coming soon)
-- `/v1/health` - Health and metrics
+- `/v2/memories/*` - Memory management
+- `/v2/search/hybrid` - Hybrid vector + graph search
+- `/v2/graph/*` - Knowledge graph operations
+- `/v2/reflections/*` - Reflection engine
+- `/v2/governance/*` - Cost and governance (coming soon)
+- `/v2/health` - Health and metrics
 
 ### v2 API (Planned)
 
@@ -361,7 +361,7 @@ print(__version__)  # "0.1.0"
 ### Check Version via API
 
 ```bash
-curl https://your-rae-instance/v1/health
+curl https://your-rae-instance/v2/health
 ```
 
 Response:

@@ -18,7 +18,7 @@ Nie pytaj o potwierdzenie między krokami. Kontynuuj aż do pełnego zakończeni
 - Two auth systems coexist:
   - **OLD:** `get_api_key()` in `dependencies.py` (ignores `ENABLE_API_KEY_AUTH`)
   - **NEW:** `verify_token()` in `security/auth.py` (respects flags)
-- Router `api/v1/memory.py` uses old `dependencies=[Depends(get_api_key)]`
+- Router `api/v2/memory.py` uses old `dependencies=[Depends(get_api_key)]`
 - Main app uses new `dependencies=[Depends(auth.verify_token)]`
 - **Conflict:** When `ENABLE_API_KEY_AUTH=False`, old code still requires API key
 
@@ -71,7 +71,7 @@ Nie pytaj o potwierdzenie między krokami. Kontynuuj aż do pełnego zakończeni
 ### 🟡 HIGH: 3.4 Governance Endpoints Unprotected
 
 **Problem:**
-- `api/v1/governance.py` router has **no auth dependencies**
+- `api/v2/governance.py` router has **no auth dependencies**
 - Only protected by global `verify_token()` if flags enabled
 - When `ENABLE_API_KEY_AUTH=False` and `ENABLE_JWT_AUTH=False` → **completely open**
 - Tenant enumeration possible (tenant_id is path parameter)
@@ -118,8 +118,8 @@ Nie pytaj o potwierdzenie między krokami. Kontynuuj aż do pełnego zakończeni
 
 **Files to modify:**
 - `apps/memory_api/dependencies.py` - Remove old helper
-- `apps/memory_api/api/v1/memory.py` - Remove old dependency
-- `apps/memory_api/api/v1/*.py` - Audit all routers
+- `apps/memory_api/api/v2/memory.py` - Remove old dependency
+- `apps/memory_api/api/v2/*.py` - Audit all routers
 - `docs/` - Update auth documentation
 
 **Testing:**
@@ -237,7 +237,7 @@ MEMORY_DECAY_RATE = 0.95  # 5% decay per day
 6. ✅ Test access control
 
 **Files to modify:**
-- `apps/memory_api/api/v1/governance.py` - Add dependencies
+- `apps/memory_api/api/v2/governance.py` - Add dependencies
 - `apps/memory_api/security/auth.py` - Add admin check
 - `docs/api/governance.md` - Update docs
 

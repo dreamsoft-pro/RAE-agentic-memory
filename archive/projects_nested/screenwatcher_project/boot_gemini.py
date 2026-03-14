@@ -29,7 +29,7 @@ def get_git_status():
         return "Unknown"
 
 # 1. Store session start
-rae_request("POST", "/v1/memory/store", {
+rae_request("POST", "/v2/memories/store", {
     "project": "screenwatcher_project",
     "layer": "episodic",
     "tag": "session_start",
@@ -38,7 +38,7 @@ rae_request("POST", "/v1/memory/store", {
 
 # 2. Query recent context
 print("Recent context from RAE:")
-context = rae_request("POST", "/v1/memory/query", {
+context = rae_request("POST", "/v2/memories/query", {
     "project": "screenwatcher_project",
     "query_text": "status task plan",
     "limit": 5

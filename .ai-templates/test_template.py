@@ -404,7 +404,7 @@ def test_api_create_entity_returns_201(test_client, auth_headers, test_tenant):
 
     # Act
     response = test_client.post(
-        "/api/v1/my-domain/entities", json=request_body, headers=auth_headers
+        "/api/v2/my-domain/entities", json=request_body, headers=auth_headers
     )
 
     # Assert
@@ -425,7 +425,7 @@ def test_api_get_entity_returns_404_for_nonexistent(test_client, auth_headers):
     """
     # Act
     response = test_client.get(
-        "/api/v1/my-domain/entities/nonexistent-id", headers=auth_headers
+        "/api/v2/my-domain/entities/nonexistent-id", headers=auth_headers
     )
 
     # Assert
@@ -449,7 +449,7 @@ def test_api_create_entity_returns_400_for_invalid_input(test_client, auth_heade
 
     # Act
     response = test_client.post(
-        "/api/v1/my-domain/entities", json=request_body, headers=auth_headers
+        "/api/v2/my-domain/entities", json=request_body, headers=auth_headers
     )
 
     # Assert
@@ -464,7 +464,7 @@ def test_api_requires_authentication(test_client):
     WHY: Verify security (no access without JWT)
     """
     # Act: Call without auth headers
-    response = test_client.get("/api/v1/my-domain/entities")
+    response = test_client.get("/api/v2/my-domain/entities")
 
     # Assert: 401 Unauthorized
     assert response.status_code == 401

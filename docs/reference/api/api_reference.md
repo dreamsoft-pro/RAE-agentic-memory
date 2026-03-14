@@ -59,20 +59,20 @@ Use this JSON file to:
 RAE Memory API v2.0-enterprise provides:
 
 ### Core Features (v1)
-- **Memory Management** (`/v1/memory/*`) - Store, query, delete memories
-- **Agent Operations** (`/v1/agent/*`) - Execute agent tasks with memory context
-- **Knowledge Graphs** (`/v1/graph/*`) - Build and query GraphRAG knowledge graphs
-- **Cache Management** (`/v1/cache/*`) - Context cache operations
-- **Governance** (`/v1/governance/*`) - Cost tracking and budget management
+- **Memory Management** (`/v2/memory/*`) - Store, query, delete memories
+- **Agent Operations** (`/v2/agent/*`) - Execute agent tasks with memory context
+- **Knowledge Graphs** (`/v2/graph/*`) - Build and query GraphRAG knowledge graphs
+- **Cache Management** (`/v2/cache/*`) - Context cache operations
+- **Governance** (`/v2/governance/*`) - Cost tracking and budget management
 - **Health & Monitoring** (`/health`, `/metrics`) - System health and Prometheus metrics
 
 ### Enterprise Features (v1)
-- **Event Triggers** (`/v1/triggers/*`) - Event-driven automation and workflows
-- **Reflections** (`/v1/reflections/*`) - Hierarchical reflection system with clustering
-- **Hybrid Search** (`/v1/search/*`) - Multi-strategy search (vector + semantic + graph + fulltext)
-- **Evaluation** (`/v1/evaluation/*`) - Search quality metrics, A/B testing, drift detection
-- **Dashboard** (`/v1/dashboard/*`) - Real-time monitoring with WebSocket support
-- **Graph Management** (`/v1/graph-management/*`) - Advanced graph operations, snapshots, traversal
+- **Event Triggers** (`/v2/triggers/*`) - Event-driven automation and workflows
+- **Reflections** (`/v2/reflections/*`) - Hierarchical reflection system with clustering
+- **Hybrid Search** (`/v2/search/*`) - Multi-strategy search (vector + semantic + graph + fulltext)
+- **Evaluation** (`/v2/evaluation/*`) - Search quality metrics, A/B testing, drift detection
+- **Dashboard** (`/v2/dashboard/*`) - Real-time monitoring with WebSocket support
+- **Graph Management** (`/v2/graph-management/*`) - Advanced graph operations, snapshots, traversal
 
 ### Core Mathematical Modules (Internal)
 - **State Management** (`apps/memory_api/core/state.py`) - MDP state space (S) with memory layers and budget tracking
@@ -94,10 +94,10 @@ All endpoints (except health checks) require authentication:
 
 ```bash
 # API Key
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v1/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memory/query
 
 # JWT Bearer Token
-curl -H "Authorization: Bearer your-token" http://localhost:8000/v1/memory/query
+curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/memory/query
 ```
 
 ## Common Headers
@@ -113,7 +113,7 @@ curl -H "Authorization: Bearer your-token" http://localhost:8000/v1/memory/query
 
 ### Store Memory
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -122,7 +122,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 
 ### Query Memory
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -131,7 +131,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 ### Hybrid Search
 ```bash
-curl -X POST http://localhost:8000/v1/search/hybrid \
+curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \

@@ -298,7 +298,7 @@ Force cache rebuild via API:
 
 ```bash
 # Rebuild all caches
-curl -X POST http://localhost:8000/v1/cache/rebuild \
+curl -X POST http://localhost:8000/v2/cache/rebuild \
   -H "X-API-Key: your-key"
 ```
 
@@ -446,7 +446,7 @@ LIMIT 100;
 Pre-warm cache for these projects:
 ```bash
 for project in hot_projects:
-    curl -X POST /v1/cache/rebuild?project=${project}
+    curl -X POST /v2/cache/rebuild?project=${project}
 ```
 
 ### 2. Monitor Cache Hit Rate

@@ -450,7 +450,7 @@ For IDEs without native MCP support, you can integrate RAE through HTTP API call
    def save_memory(content, source, tags=None, layer="episodic"):
        """Save content to RAE memory."""
        response = requests.post(
-           f"{RAE_API_URL}/v1/memory/store",
+           f"{RAE_API_URL}/v2/memories/store",
            headers={
                "Content-Type": "application/json",
                "X-API-Key": RAE_API_KEY,
@@ -469,7 +469,7 @@ For IDEs without native MCP support, you can integrate RAE through HTTP API call
    def search_memory(query, top_k=5):
        """Search RAE memory."""
        response = requests.post(
-           f"{RAE_API_URL}/v1/memory/query",
+           f"{RAE_API_URL}/v2/memories/query",
            headers={
                "Content-Type": "application/json",
                "X-API-Key": RAE_API_KEY,
@@ -534,7 +534,7 @@ Add to `~/.vimrc` or `~/.config/nvim/init.vim`:
 
 ```vim
 " Save selected text to RAE memory
-vnoremap <leader>rs :!curl -X POST http://localhost:8000/v1/memory/store \
+vnoremap <leader>rs :!curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -H "X-Project-Id: my-project" \
@@ -542,7 +542,7 @@ vnoremap <leader>rs :!curl -X POST http://localhost:8000/v1/memory/store \
   -d '{"content": "<C-R>\"", "source": "vim", "layer": "episodic"}'<CR>
 
 " Search RAE memory (prompt for query)
-nnoremap <leader>rq :!curl -X POST http://localhost:8000/v1/memory/query \
+nnoremap <leader>rq :!curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -H "X-Project-Id: my-project" \
@@ -566,7 +566,7 @@ M.save_memory = function()
   local source = vim.fn.expand('%:p')
 
   local cmd = string.format(
-    'curl -s -X POST http://localhost:8000/v1/memory/store ' ..
+    'curl -s -X POST http://localhost:8000/v2/memories/store ' ..
     '-H "Content-Type: application/json" ' ..
     '-H "X-API-Key: your-api-key" ' ..
     '-H "X-Project-Id: my-project" ' ..
@@ -584,7 +584,7 @@ M.search_memory = function()
   local query = vim.fn.input("Search RAE: ")
 
   local cmd = string.format(
-    'curl -s -X POST http://localhost:8000/v1/memory/query ' ..
+    'curl -s -X POST http://localhost:8000/v2/memories/query ' ..
     '-H "Content-Type: application/json" ' ..
     '-H "X-API-Key: your-api-key" ' ..
     '-H "X-Project-Id: my-project" ' ..
@@ -617,7 +617,7 @@ Create `RAE.sublime-build`:
 
 ```json
 {
-  "shell_cmd": "curl -X POST http://localhost:8000/v1/memory/store -H 'Content-Type: application/json' -H 'X-API-Key: your-api-key' -H 'X-Project-Id: my-project' -H 'X-Tenant-Id: my-tenant' -d '{\"content\": \"$selection\", \"source\": \"$file\", \"layer\": \"episodic\"}'",
+  "shell_cmd": "curl -X POST http://localhost:8000/v2/memories/store -H 'Content-Type: application/json' -H 'X-API-Key: your-api-key' -H 'X-Project-Id: my-project' -H 'X-Tenant-Id: my-tenant' -d '{\"content\": \"$selection\", \"source\": \"$file\", \"layer\": \"episodic\"}'",
   "selector": "source"
 }
 ```
@@ -774,7 +774,7 @@ Create `RAE.sublime-build`:
 
 1. **Check RAE API performance**:
    ```bash
-   time curl -X POST http://localhost:8000/v1/memory/query \
+   time curl -X POST http://localhost:8000/v2/memories/query \
      -H "Content-Type: application/json" \
      -H "X-API-Key: your-key" \
      -d '{"query_text":"test","k":5}'

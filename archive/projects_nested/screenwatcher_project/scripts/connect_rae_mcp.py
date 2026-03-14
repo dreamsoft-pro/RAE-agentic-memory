@@ -43,7 +43,7 @@ def get_memories():
         "Content-Type": "application/json"
     }}
     # Get last 5 memories
-    conn.request("GET", "/v1/memory/list?limit=5", headers=headers)
+    conn.request("GET", "/v2/memories/list?limit=5", headers=headers)
     res = conn.getresponse()
     data = res.read().decode("utf-8")
     conn.close()
@@ -88,7 +88,7 @@ def log_start():
         "source": "gemini_cli",
         "metadata": {{ "type": "session_start" }}
     }}
-    conn.request("POST", "/v1/memory/store", json.dumps(body), headers=headers)
+    conn.request("POST", "/v2/memories/store", json.dumps(body), headers=headers)
     res = conn.getresponse()
     print(res.status)
     conn.close()

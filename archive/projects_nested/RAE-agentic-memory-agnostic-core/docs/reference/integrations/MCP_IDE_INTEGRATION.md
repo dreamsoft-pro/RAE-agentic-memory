@@ -363,7 +363,7 @@ Verify API key:
 ```bash
 # Test API key
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     http://localhost:8000/api/v1/memories
+     http://localhost:8000/api/v2/memories
 ```
 
 ### No Memories Retrieved

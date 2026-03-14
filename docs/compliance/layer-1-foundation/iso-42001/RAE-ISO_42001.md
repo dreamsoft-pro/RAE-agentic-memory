@@ -358,7 +358,7 @@ Status wdrożenia (aktualizacja: 2025-11-30):
      * Data retention compliance monitoring
      * Source trust distribution metrics
      * RLS verification status
-     * API endpoints: `/v1/dashboard/compliance/*`
+     * API endpoints: `/v2/dashboard/compliance/*`
      * Prometheus metrics for real-time monitoring
    - Migration 007 with compliance tracking tables
    - RISK-009 mitigation (enhanced)

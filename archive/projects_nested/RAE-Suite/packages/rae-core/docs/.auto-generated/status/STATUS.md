@@ -100,7 +100,7 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 ### Dashboard & Vector Store Fixes (17:00-17:30)
 - ✅ **Vector Store Query Fix** - Added tenant_id to MemoryRecord model for proper multi-tenancy filtering
 - ✅ **Qdrant Configuration** - Created collection with dense (384d) and sparse (text) vectors
-- ✅ **Demo Data Seeding** - Fixed seed script endpoint (/v1/memory/store) and layer values (sm→ltm)
+- ✅ **Demo Data Seeding** - Fixed seed script endpoint (/v2/memories/store) and layer values (sm→ltm)
 - ✅ **Knowledge Graph Page** - Fixed parameter name (project→project_id) and separate nodes/edges fetching
 - ✅ **Timeline Page** - Fixed timezone comparison error (UTC-aware datetime)
 - ✅ **Query Results** - 10 demo memories successfully stored and queryable with relevance scores
@@ -108,7 +108,7 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 
 **Files Modified:**
 - `apps/memory_api/models.py` - Added tenant_id field to MemoryRecord
-- `apps/memory_api/api/v1/memory.py` - Include tenant_id when creating records
+- `apps/memory_api/api/v2/memory.py` - Include tenant_id when creating records
 - `apps/memory_api/repositories/memory_repository.py` - Conditional tenancy context
 - `apps/memory_api/services/vector_store/qdrant_store.py` - Fixed duplicate id in query
 - `tools/memory-dashboard/utils/api_client.py` - Fixed graph fetching and datetime comparison

@@ -19,7 +19,7 @@ This plan aims to refine and stabilize the `Reflective Memory v1` implementation
 The RAE API is built with FastAPI, offering interactive documentation (Swagger UI, ReDoc) and an OpenAPI 3.0 specification for client generation and integration. Authentication is required for most endpoints via `X-API-Key` or `Authorization` headers. The API is multi-tenant, requiring `X-Tenant-ID`.
 
 **Core API Features (v1):**
-*   **Memory Management (`/v1/memory/*`):** Store, query, and delete various types of memories.
+*   **Memory Management (`/v2/memories/*`):** Store, query, and delete various types of memories.
 *   **Agent Operations (`/v1/agent/*`):** Facilitate the execution of agent tasks, providing memory context.
 *   **Knowledge Graphs (`/v1/graph/*`):** Functionality to build and query GraphRAG knowledge graphs.
 *   **Cache Management (`/v1/cache/*`):** Operations related to the context cache.
@@ -55,7 +55,7 @@ The RAE architecture is built on core concepts and services supporting memory ma
 *   **ReflectionEngine:** Dedicated service for generating and managing higher-level reflections from agent memories.
 
 **Memory Lifecycle & Governance:**
-*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v1/memory/query` or `/v1/agent/execute`).
+*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v2/memories/query` or `/v1/agent/execute`).
 *   **Importance Scoring:** Utilizes `ImportanceScoringService` to calculate dynamic scores based on factors like Recency, Access Frequency, Graph Centrality, Semantic Relevance, User Rating, Consolidation, and Manual Boost.
 *   **Temporal Decay:** Automated periodic process to adjust importance scores based on time and access patterns, with protected, normal, and accelerated decay strategies.
 *   **Memory Lifecycle States:** Defines states such as `CREATED`, `ACTIVE`, `AGING`, `STALE`, and `ARCHIVED`, guiding memory management and retention.
@@ -77,7 +77,7 @@ GraphRAG extends RAE's memory capabilities by integrating Knowledge Graph techno
 
 **API Endpoints:**
 *   **Extract Knowledge Graph (`POST /v1/graph/extract`):** Extracts knowledge graph from episodic memories using LLM-based prompts.
-*   **Hybrid Search (extended `POST /v1/memory/query`):** Standard memory query enhanced with graph traversal capabilities.
+*   **Hybrid Search (extended `POST /v2/memories/query`):** Standard memory query enhanced with graph traversal capabilities.
 *   **Advanced Graph Query (`POST /v1/graph/query`):** Dedicated endpoint for complex graph-based searches.
 *   **Get Graph Statistics (`GET /v1/graph/stats`):** Retrieves statistics about the knowledge graph.
 *   **Get Subgraph (`GET /v1/graph/subgraph`):** Retrieves a subgraph starting from specific nodes.

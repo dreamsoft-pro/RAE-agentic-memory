@@ -104,7 +104,7 @@ The report includes:
   "total_tests": 860,
   "flaky_tests": [
     {
-      "nodeid": "tests/api/v1/test_cache.py::test_concurrent_access",
+      "nodeid": "tests/api/v2/test_cache.py::test_concurrent_access",
       "outcomes": ["passed", "failed", "passed"],
       "pass_rate": 0.67,
       "avg_duration_seconds": 2.341,
@@ -123,7 +123,7 @@ Move the flaky test to quarantine to prevent blocking CI:
 ```bash
 # Quarantine a flaky test
 python scripts/ci/quarantine_test.py \
-  tests/api/v1/test_cache.py::test_concurrent_access \
+  tests/api/v2/test_cache.py::test_concurrent_access \
   --reason "race condition in concurrent access"
 ```
 
@@ -283,7 +283,7 @@ Once verified:
 
 ```bash
 # Move test back to main suite
-mv tests/quarantine/api/v1/test_cache.py tests/api/v1/test_cache.py
+mv tests/quarantine/api/v2/test_cache.py tests/api/v2/test_cache.py
 
 # Remove quarantine markers from the file
 # Open PR with fix and verification results
@@ -342,7 +342,7 @@ python scripts/ci/analyze_flaky_tests.py \
 **Usage:**
 ```bash
 python scripts/ci/quarantine_test.py \
-  tests/api/v1/test_cache.py::test_flaky_function \
+  tests/api/v2/test_cache.py::test_flaky_function \
   --reason "timing issue in async operation"
 ```
 
@@ -358,7 +358,7 @@ python scripts/ci/quarantine_test.py \
 
 **Example output:**
 ```
-✅ Test quarantined: tests/quarantine/api/v1/test_cache.py
+✅ Test quarantined: tests/quarantine/api/v2/test_cache.py
 📝 Next step: Create ticket to fix and move back to main suite
 ```
 
@@ -385,8 +385,8 @@ Each quarantined test file includes:
 ```python
 """
 QUARANTINED: timing issue in async operation
-Original: tests/api/v1/test_cache.py
-Nodeid: tests/api/v1/test_cache.py::test_flaky_function
+Original: tests/api/v2/test_cache.py
+Nodeid: tests/api/v2/test_cache.py::test_flaky_function
 Date: 2025-12-08T10:30:00
 
 This test has been identified as flaky and moved to quarantine.
@@ -564,7 +564,7 @@ Download the `flaky_report.json` from the CI run that detected it.
 pytest tests/quarantine/ -v
 
 # Run specific quarantined test
-pytest tests/quarantine/api/v1/test_cache.py::test_name -v
+pytest tests/quarantine/api/v2/test_cache.py::test_name -v
 ```
 
 ### Q: Can I skip the flaky check for my PR?

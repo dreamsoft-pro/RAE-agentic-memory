@@ -10,7 +10,7 @@ def sync_completion():
         "content": "Phase 6 implemented: Operator Panel GUI (PyQt6) added to edge_client/main.py. Data transformation pipeline (Regex, Map, Round) integrated into ROI processing. Configurator updated to support transformation rules."
     }
     headers = {'X-Tenant-Id': 'screenwatcher', 'Content-Type': 'application/json'}
-    conn.request("POST", "/v1/memory/store", json.dumps(payload), headers)
+    conn.request("POST", "/v2/memories/store", json.dumps(payload), headers)
     print(conn.getresponse().read().decode())
 
 if __name__ == "__main__":

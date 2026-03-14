@@ -36,7 +36,7 @@
   - `GET /graph/edges` - List graph edges with filtering
   - `GET /graph/subgraph` - Extract subgraph from starting nodes
 
-- **Enhanced `/v1/memory/query` endpoint**:
+- **Enhanced `/v2/memories/query` endpoint**:
   - Added `use_graph` parameter for hybrid search
   - Added `graph_depth` parameter for traversal control
   - Added `project` parameter for graph context
@@ -257,13 +257,13 @@ POSTGRES_DB=rae_db
 - **New Files**: 5
   - `services/graph_extraction.py` (~450 lines)
   - `services/hybrid_search.py` (~650 lines)
-  - `api/v1/graph.py` (~730 lines)
+  - `api/v2/graph.py` (~730 lines)
   - `tests/integration/test_graphrag.py` (~400 lines)
   - `examples/graphrag_examples.py` (~500 lines)
 
 - **Modified Files**: 4
   - `services/reflection_engine.py` (+350 lines)
-  - `api/v1/memory.py` (+70 lines)
+  - `api/v2/memory.py` (+70 lines)
   - `models.py` (+13 lines)
   - `main.py` (+2 lines)
 

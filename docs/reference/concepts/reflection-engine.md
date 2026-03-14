@@ -147,7 +147,7 @@ result = await client.generate_reflection(
 
 ```bash
 # Via CLI
-curl -X POST http://localhost:8000/v1/agent/reflect \
+curl -X POST http://localhost:8000/v2/agent/reflect \
   -H "X-Tenant-ID: demo-tenant" \
   -H "Content-Type: application/json" \
   -d '{
@@ -162,7 +162,7 @@ Triggered by specific events:
 
 ```python
 # After significant event
-@app.post("/v1/memory/store")
+@app.post("/v2/memory/store")
 async def store_memory(memory: MemoryCreate):
     stored = await memory_service.store(memory)
 
@@ -567,7 +567,7 @@ metrics = {
 Monitor reflection quality:
 
 ```python
-@app.post("/v1/reflection/feedback")
+@app.post("/v2/reflection/feedback")
 async def provide_feedback(reflection_id: str, helpful: bool):
     """User feedback on reflection quality."""
 

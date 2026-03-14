@@ -526,7 +526,7 @@ If you have OTel collector configured:
 
 ```bash
 # Example query for test duration trend (last 30 days)
-curl -X POST http://localhost:8889/api/v1/query \
+curl -X POST http://localhost:8889/api/v2/query \
   -d 'query=histogram_quantile(0.95, test_duration_seconds{branch="main"})' \
   -d 'start=2025-11-08T00:00:00Z' \
   -d 'end=2025-12-08T00:00:00Z'

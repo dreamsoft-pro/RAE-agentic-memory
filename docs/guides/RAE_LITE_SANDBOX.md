@@ -29,7 +29,7 @@ To see RAE in action, populate it with sample memories (Project Phoenix and City
 Test if the system returns results using hybrid search (Full-Text + Math):
 
 ```bash
-curl -X POST http://localhost:8002/v1/memory/query \
+curl -X POST http://localhost:8002/v2/memory/query \
      -H "Content-Type: application/json" \
      -H "X-Tenant-Id: 00000000-0000-0000-0000-000000000100" \
      -H "X-User-Id: admin" \

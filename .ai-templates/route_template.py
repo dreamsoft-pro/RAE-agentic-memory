@@ -7,8 +7,8 @@ INSTRUCTIONS FOR AI AGENTS:
 3. Replace "MyBusiness" with your service name
 4. Add your specific endpoints
 5. Use Pydantic models for request/response validation
-6. Register router in apps/memory_api/api/v1/__init__.py
-7. Add tests in apps/memory_api/tests/api/v1/test_[domain].py
+6. Register router in apps/memory_api/api/v2/__init__.py
+7. Add tests in apps/memory_api/tests/api/v2/test_[domain].py
 
 WHY THIS PATTERN:
 - Input Validation: Automatic via Pydantic models
@@ -477,7 +477,7 @@ async def delete_entity(
 #
 # def test_create_entity_returns_201(test_client, auth_headers, test_tenant):
 #     response = test_client.post(
-#         "/api/v1/my-domain/entities",
+#         "/api/v2/my-domain/entities",
 #         json={
 #             "name": "Test Entity",
 #             "value": 100,
@@ -495,7 +495,7 @@ async def delete_entity(
 #
 # def test_get_entity_returns_404_for_nonexistent(test_client, auth_headers):
 #     response = test_client.get(
-#         "/api/v1/my-domain/entities/nonexistent-id",
+#         "/api/v2/my-domain/entities/nonexistent-id",
 #         headers=auth_headers
 #     )
 #
@@ -505,7 +505,7 @@ async def delete_entity(
 #
 # def test_create_entity_returns_400_for_invalid_input(test_client, auth_headers):
 #     response = test_client.post(
-#         "/api/v1/my-domain/entities",
+#         "/api/v2/my-domain/entities",
 #         json={
 #             "name": "",  # Invalid: empty name
 #             "value": -1   # Invalid: negative value

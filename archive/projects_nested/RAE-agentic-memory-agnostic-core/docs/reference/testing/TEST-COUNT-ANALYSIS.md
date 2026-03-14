@@ -106,7 +106,7 @@ integrations/mcp/tests/          99 tests (21.5%)
 ├── test_pii_scrubber.py         36 tests
 └── test_server.py               20 tests
 
-tests/api/v1/                    37 tests (8.0%)
+tests/api/v2/                    37 tests (8.0%)
 ├── test_agent.py                 4 tests
 ├── test_cache.py                 1 test
 ├── test_governance.py           13 tests

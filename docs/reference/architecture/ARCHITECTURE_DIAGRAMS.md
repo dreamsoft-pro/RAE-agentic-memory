@@ -57,7 +57,7 @@ sequenceDiagram
     participant DB
     participant Vector
 
-    Client->>API: POST /v1/memory/store
+    Client->>API: POST /v2/memory/store
     API->>Auth: Verify API Key & Tenant
     Auth-->>API: Authenticated
 
@@ -89,7 +89,7 @@ sequenceDiagram
     participant LLM
     participant Cache
 
-    Client->>API: POST /v1/search/hybrid
+    Client->>API: POST /v2/search/hybrid
     API->>HybridSearch: hybrid_search(query, k=10)
 
     HybridSearch->>Cache: check_cache(query_hash)

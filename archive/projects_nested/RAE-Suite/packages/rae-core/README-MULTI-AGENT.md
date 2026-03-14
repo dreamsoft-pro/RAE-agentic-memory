@@ -447,7 +447,7 @@ gemini mcp list
 ### Query RAE for activity
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: dev-key" \
   -H "X-Tenant-Id: my-team" \

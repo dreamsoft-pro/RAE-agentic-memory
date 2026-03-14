@@ -202,7 +202,7 @@ Modify `thresholds` in panel configuration:
 ### No Data in Dashboard
 1. Verify Prometheus is scraping Feniks:
    ```bash
-   curl http://localhost:9090/api/v1/targets
+   curl http://localhost:9090/api/v2/targets
    ```
 
 2. Check Feniks metrics endpoint:

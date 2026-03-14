@@ -97,7 +97,7 @@ To interact with the API, you now need to provide a valid JWT from your OAuth2 p
 # Replace YOUR_ACCESS_TOKEN with a valid JWT
 export RAE_ACCESS_TOKEN="YOUR_ACCESS_TOKEN"
 
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RAE_ACCESS_TOKEN" \
   -H "X-Tenant-ID: getting-started-tenant" \
@@ -112,7 +112,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 And then query for it:
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RAE_ACCESS_TOKEN" \
   -H "X-Tenant-ID: getting-started-tenant" \

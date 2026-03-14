@@ -298,7 +298,7 @@ async def test_my_function(mock_app_state_pool):
 ```
 
 **Used By:**
-- All API endpoint tests (`tests/api/v1/*.py`)
+- All API endpoint tests (`tests/api/v2/*.py`)
 - Service layer tests requiring database
 - Repository tests
 
@@ -651,7 +651,7 @@ Comprehensive smoke test for the minimal deployment profile (`docker compose.lit
 - ✅ Docker Compose YAML syntax validation
 - ✅ Service startup and health checks
 - ✅ API availability and responsiveness
-- ✅ Core endpoint functionality (`/health`, `/v1/memory/store`, `/v1/memory/query`)
+- ✅ Core endpoint functionality (`/health`, `/v2/memories/store`, `/v2/memories/query`)
 - ✅ All 4 services running (API, PostgreSQL, Qdrant, Redis)
 
 **Usage:**
@@ -666,8 +666,8 @@ Comprehensive smoke test for the minimal deployment profile (`docker compose.lit
 # 🚀 Starting RAE Lite services...
 # ✅ API is ready
 # ✅ Health check passed
-# ✅ POST /v1/memory/store passed
-# ✅ POST /v1/memory/query passed
+# ✅ POST /v2/memories/store passed
+# ✅ POST /v2/memories/query passed
 # ✅ RAE Lite Profile smoke test PASSED
 ```
 

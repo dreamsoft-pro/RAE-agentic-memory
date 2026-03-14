@@ -174,7 +174,7 @@ Jeżeli scheduler jest tylko „na papierze”:
 
 **Zadanie E1 – Znajdź wszystkie miejsca, gdzie budowany jest prompt:**
 
-- API endpoints (`/v1/agent/execute`, inne agentowe ścieżki),
+- API endpoints (`/v2/agent/execute`, inne agentowe ścieżki),
 - integracje (MCP, SDK, context-watcher, inne usługi),
 - ewentualne dedykowane „agent loops”.
 

@@ -42,7 +42,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 | GET | `/metrics` | Prometheus metrics |
 | GET | `/health/detailed` | Detailed system health status |
 
-**File**: `apps/memory_api/api/v1/health.py`
+**File**: `apps/memory_api/api/v2/health.py`
 
 ---
 
@@ -50,14 +50,14 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/v1/memory/store` | Store a new memory (episodic, semantic, procedural) |
-| POST | `/v1/memory/query` | Query memories with vector similarity + filters |
-| DELETE | `/v1/memory/delete` | Delete memories by ID or filters |
-| POST | `/v1/memory/rebuild-reflections` | Trigger reflection regeneration |
-| GET | `/v1/memory/reflection-stats` | Get reflection statistics |
-| POST | `/v1/memory/reflection/hierarchical` | Generate hierarchical reflections (deprecated) |
+| POST | `/v2/memories/store` | Store a new memory (episodic, semantic, procedural) |
+| POST | `/v2/memories/query` | Query memories with vector similarity + filters |
+| DELETE | `/v2/memories/delete` | Delete memories by ID or filters |
+| POST | `/v2/memories/rebuild-reflections` | Trigger reflection regeneration |
+| GET | `/v2/memories/reflection-stats` | Get reflection statistics |
+| POST | `/v2/memories/reflection/hierarchical` | Generate hierarchical reflections (deprecated) |
 
-**File**: `apps/memory_api/api/v1/memory.py`
+**File**: `apps/memory_api/api/v2/memory.py`
 
 **Key Features**:
 - Multi-layer memory (episodic, semantic, procedural, ltm)
@@ -73,7 +73,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 |--------|----------|-------------|
 | POST | `/v1/agent/execute` | Execute agent task with memory-augmented context |
 
-**File**: `apps/memory_api/api/v1/agent.py`
+**File**: `apps/memory_api/api/v2/agent.py`
 
 **Features**:
 - Retrieves relevant memories
@@ -95,7 +95,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 | POST | `/v1/graph/query` | Hybrid search across graph and vectors |
 | GET | `/v1/graph/subgraph` | Extract subgraph by traversal |
 
-**File**: `apps/memory_api/api/v1/graph.py`
+**File**: `apps/memory_api/api/v2/graph.py`
 
 **Features**:
 - GraphRAG (Graph + RAG)
@@ -111,7 +111,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 |--------|----------|-------------|
 | POST | `/v1/cache/rebuild` | Rebuild context cache for tenant/project |
 
-**File**: `apps/memory_api/api/v1/cache.py`
+**File**: `apps/memory_api/api/v2/cache.py`
 
 **Use Case**: Force cache refresh after bulk updates
 
@@ -125,7 +125,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 | GET | `/v1/governance/tenant/{tenant_id}` | Tenant-specific cost stats |
 | GET | `/v1/governance/tenant/{tenant_id}/budget` | Budget status and alerts |
 
-**File**: `apps/memory_api/api/v1/governance.py`
+**File**: `apps/memory_api/api/v2/governance.py`
 
 **Features**:
 - Token usage tracking
@@ -169,7 +169,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 | POST | `/v1/compliance/policies/{policy_id}/activate` | Activate policy version |
 | POST | `/v1/compliance/policies/{policy_id}/enforce` | Enforce policy on operation |
 
-**File**: `apps/memory_api/api/v1/compliance.py`
+**File**: `apps/memory_api/api/v2/compliance.py`
 
 **Features**:
 - Human-in-the-loop approvals
@@ -395,10 +395,10 @@ All endpoints (except `/health*` and `/metrics`) require authentication:
 
 ```bash
 # API Key
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v1/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memories/query
 
 # JWT Bearer Token
-curl -H "Authorization: Bearer your-token" http://localhost:8000/v1/memory/query
+curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/memories/query
 ```
 
 ## Common Headers

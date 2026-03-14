@@ -27,7 +27,7 @@ The Compliance API implements **ISO/IEC 42001** requirements for AI Management S
 ### 1. Request Approval for High-Risk Operation
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/approvals \
+curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -69,14 +69,14 @@ curl -X POST http://localhost:8000/v1/compliance/approvals \
 ### 2. Check Approval Status
 
 ```bash
-curl http://localhost:8000/v1/compliance/approvals/550e8400-e29b-41d4-a716-446655440000 \
+curl http://localhost:8000/v2/compliance/approvals/550e8400-e29b-41d4-a716-446655440000 \
   -H "X-API-Key: your-key"
 ```
 
 ### 3. Approve the Request
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/approvals/550e8400-e29b-41d4-a716-446655440000/decide \
+curl -X POST http://localhost:8000/v2/compliance/approvals/550e8400-e29b-41d4-a716-446655440000/decide \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -130,7 +130,7 @@ Common operation types requiring approval:
 ### Request Approval
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/approvals \
+curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -164,7 +164,7 @@ curl -X POST http://localhost:8000/v1/compliance/approvals \
 ### Check Status
 
 ```bash
-curl http://localhost:8000/v1/compliance/approvals/{request_id} \
+curl http://localhost:8000/v2/compliance/approvals/{request_id} \
   -H "X-API-Key: your-key"
 ```
 
@@ -178,7 +178,7 @@ curl http://localhost:8000/v1/compliance/approvals/{request_id} \
 
 ```bash
 # Approve
-curl -X POST http://localhost:8000/v1/compliance/approvals/{request_id}/decide \
+curl -X POST http://localhost:8000/v2/compliance/approvals/{request_id}/decide \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -188,7 +188,7 @@ curl -X POST http://localhost:8000/v1/compliance/approvals/{request_id}/decide \
   }'
 
 # Reject
-curl -X POST http://localhost:8000/v1/compliance/approvals/{request_id}/decide \
+curl -X POST http://localhost:8000/v2/compliance/approvals/{request_id}/decide \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -231,7 +231,7 @@ Track full decision lineage: query → context → decision → output.
 Record the context used for a decision:
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/provenance/context \
+curl -X POST http://localhost:8000/v2/compliance/provenance/context \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -305,7 +305,7 @@ curl -X POST http://localhost:8000/v1/compliance/provenance/context \
 Link decision to context:
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/provenance/decision \
+curl -X POST http://localhost:8000/v2/compliance/provenance/decision \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -350,7 +350,7 @@ curl -X POST http://localhost:8000/v1/compliance/provenance/decision \
 Retrieve full provenance chain:
 
 ```bash
-curl http://localhost:8000/v1/compliance/provenance/lineage/770e8400-e29b-41d4-a716-446655440002 \
+curl http://localhost:8000/v2/compliance/provenance/lineage/770e8400-e29b-41d4-a716-446655440002 \
   -H "X-API-Key: your-key"
 ```
 
@@ -437,7 +437,7 @@ CLOSED → OPEN → HALF_OPEN → CLOSED
 ### List All Circuit Breakers
 
 ```bash
-curl http://localhost:8000/v1/compliance/circuit-breakers \
+curl http://localhost:8000/v2/compliance/circuit-breakers \
   -H "X-API-Key: your-key"
 ```
 
@@ -478,7 +478,7 @@ curl http://localhost:8000/v1/compliance/circuit-breakers \
 ### Get Specific Circuit Breaker
 
 ```bash
-curl http://localhost:8000/v1/compliance/circuit-breakers/database \
+curl http://localhost:8000/v2/compliance/circuit-breakers/database \
   -H "X-API-Key: your-key"
 ```
 
@@ -487,7 +487,7 @@ curl http://localhost:8000/v1/compliance/circuit-breakers/database \
 Manually reset after fixing issues:
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/circuit-breakers/database/reset \
+curl -X POST http://localhost:8000/v2/compliance/circuit-breakers/database/reset \
   -H "X-API-Key: your-key"
 ```
 
@@ -506,7 +506,7 @@ curl -X POST http://localhost:8000/v1/compliance/circuit-breakers/database/reset
 
 ```bash
 # Using Event Triggers
-curl -X POST http://localhost:8000/v1/triggers/create \
+curl -X POST http://localhost:8000/v2/triggers/create \
   -d '{
     "rule_name": "Circuit Breaker Alert",
     "event_types": ["circuit_breaker_opened"],
@@ -557,7 +557,7 @@ Versioned, enforceable policies for governance.
 ### Create Policy
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/policies \
+curl -X POST http://localhost:8000/v2/compliance/policies \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -596,7 +596,7 @@ curl -X POST http://localhost:8000/v1/compliance/policies \
 ### List Policies
 
 ```bash
-curl "http://localhost:8000/v1/compliance/policies?tenant_id=demo" \
+curl "http://localhost:8000/v2/compliance/policies?tenant_id=demo" \
   -H "X-API-Key: your-key"
 ```
 
@@ -620,7 +620,7 @@ curl "http://localhost:8000/v1/compliance/policies?tenant_id=demo" \
 ### Activate Policy Version
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/policies/retention-policy/activate?version=2 \
+curl -X POST http://localhost:8000/v2/compliance/policies/retention-policy/activate?version=2 \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key"
 ```
@@ -642,7 +642,7 @@ curl -X POST http://localhost:8000/v1/compliance/policies/retention-policy/activ
 Check if operation complies with policy:
 
 ```bash
-curl -X POST http://localhost:8000/v1/compliance/policies/retention-policy/enforce \
+curl -X POST http://localhost:8000/v2/compliance/policies/retention-policy/enforce \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -700,7 +700,7 @@ curl -X POST http://localhost:8000/v1/compliance/policies/retention-policy/enfor
 
 ```bash
 # 1. Request approval for data deletion
-APPROVAL_ID=$(curl -X POST http://localhost:8000/v1/compliance/approvals \
+APPROVAL_ID=$(curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -715,7 +715,7 @@ APPROVAL_ID=$(curl -X POST http://localhost:8000/v1/compliance/approvals \
   }' | jq -r '.request_id')
 
 # 2. First approval (DPO)
-curl -X POST http://localhost:8000/v1/compliance/approvals/$APPROVAL_ID/decide \
+curl -X POST http://localhost:8000/v2/compliance/approvals/$APPROVAL_ID/decide \
   -d '{
     "approver_id": "dpo@example.com",
     "decision": "approved",
@@ -723,7 +723,7 @@ curl -X POST http://localhost:8000/v1/compliance/approvals/$APPROVAL_ID/decide \
   }'
 
 # 3. Second approval (Legal)
-curl -X POST http://localhost:8000/v1/compliance/approvals/$APPROVAL_ID/decide \
+curl -X POST http://localhost:8000/v2/compliance/approvals/$APPROVAL_ID/decide \
   -d '{
     "approver_id": "legal@example.com",
     "decision": "approved",
@@ -731,7 +731,7 @@ curl -X POST http://localhost:8000/v1/compliance/approvals/$APPROVAL_ID/decide \
   }'
 
 # 4. Execute deletion (now approved)
-curl -X DELETE http://localhost:8000/v1/memory/delete \
+curl -X DELETE http://localhost:8000/v2/memory/delete \
   -d '{
     "tenant_id": "demo",
     "filters": {"user_id": "user_12345"},
@@ -743,7 +743,7 @@ curl -X DELETE http://localhost:8000/v1/memory/delete \
 
 ```bash
 # 1. Create context
-CONTEXT_ID=$(curl -X POST http://localhost:8000/v1/compliance/provenance/context \
+CONTEXT_ID=$(curl -X POST http://localhost:8000/v2/compliance/provenance/context \
   -d '{
     "tenant_id": "demo",
     "project_id": "loan-approval",
@@ -760,7 +760,7 @@ CONTEXT_ID=$(curl -X POST http://localhost:8000/v1/compliance/provenance/context
   }' | jq -r '.context_id')
 
 # 2. Record decision
-DECISION_ID=$(curl -X POST http://localhost:8000/v1/compliance/provenance/decision \
+DECISION_ID=$(curl -X POST http://localhost:8000/v2/compliance/provenance/decision \
   -d '{
     "tenant_id": "demo",
     "project_id": "loan-approval",
@@ -776,14 +776,14 @@ DECISION_ID=$(curl -X POST http://localhost:8000/v1/compliance/provenance/decisi
   }' | jq -r '.decision_id')
 
 # 3. Later: Retrieve full lineage for audit
-curl http://localhost:8000/v1/compliance/provenance/lineage/$DECISION_ID
+curl http://localhost:8000/v2/compliance/provenance/lineage/$DECISION_ID
 ```
 
 ### Example 3: Policy Enforcement Pipeline
 
 ```bash
 # 1. Create quality threshold policy
-curl -X POST http://localhost:8000/v1/compliance/policies \
+curl -X POST http://localhost:8000/v2/compliance/policies \
   -d '{
     "tenant_id": "demo",
     "policy_id": "quality-policy",
@@ -798,10 +798,10 @@ curl -X POST http://localhost:8000/v1/compliance/policies \
   }'
 
 # 2. Activate policy
-curl -X POST http://localhost:8000/v1/compliance/policies/quality-policy/activate?version=1
+curl -X POST http://localhost:8000/v2/compliance/policies/quality-policy/activate?version=1
 
 # 3. Enforce before using AI output
-curl -X POST http://localhost:8000/v1/compliance/policies/quality-policy/enforce \
+curl -X POST http://localhost:8000/v2/compliance/policies/quality-policy/enforce \
   -d '{
     "context": {
       "confidence": 0.75,
@@ -845,7 +845,7 @@ curl -X POST .../provenance/decision -d '{"context_id": "'$CONTEXT_ID'", ...}'
 
 Set up alerts when breakers open:
 ```bash
-curl http://localhost:8000/v1/compliance/circuit-breakers | \
+curl http://localhost:8000/v2/compliance/circuit-breakers | \
   jq '.[] | select(.state == "OPEN")'
 ```
 
@@ -888,7 +888,7 @@ fi
 **Solution**:
 ```bash
 # Manually reset
-curl -X POST http://localhost:8000/v1/compliance/circuit-breakers/database/reset
+curl -X POST http://localhost:8000/v2/compliance/circuit-breakers/database/reset
 ```
 
 ### Provenance Chain Incomplete
@@ -917,19 +917,19 @@ curl -X POST http://localhost:8000/v1/compliance/circuit-breakers/database/reset
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/compliance/approvals` | POST | Request approval |
-| `/v1/compliance/approvals/{request_id}` | GET | Check status |
-| `/v1/compliance/approvals/{request_id}/decide` | POST | Approve/reject |
-| `/v1/compliance/provenance/context` | POST | Create context |
-| `/v1/compliance/provenance/decision` | POST | Record decision |
-| `/v1/compliance/provenance/lineage/{decision_id}` | GET | Get lineage |
-| `/v1/compliance/circuit-breakers` | GET | List breakers |
-| `/v1/compliance/circuit-breakers/{name}` | GET | Get breaker |
-| `/v1/compliance/circuit-breakers/{name}/reset` | POST | Reset breaker |
-| `/v1/compliance/policies` | GET | List policies |
-| `/v1/compliance/policies` | POST | Create policy |
-| `/v1/compliance/policies/{policy_id}/activate` | POST | Activate policy |
-| `/v1/compliance/policies/{policy_id}/enforce` | POST | Enforce policy |
+| `/v2/compliance/approvals` | POST | Request approval |
+| `/v2/compliance/approvals/{request_id}` | GET | Check status |
+| `/v2/compliance/approvals/{request_id}/decide` | POST | Approve/reject |
+| `/v2/compliance/provenance/context` | POST | Create context |
+| `/v2/compliance/provenance/decision` | POST | Record decision |
+| `/v2/compliance/provenance/lineage/{decision_id}` | GET | Get lineage |
+| `/v2/compliance/circuit-breakers` | GET | List breakers |
+| `/v2/compliance/circuit-breakers/{name}` | GET | Get breaker |
+| `/v2/compliance/circuit-breakers/{name}/reset` | POST | Reset breaker |
+| `/v2/compliance/policies` | GET | List policies |
+| `/v2/compliance/policies` | POST | Create policy |
+| `/v2/compliance/policies/{policy_id}/activate` | POST | Activate policy |
+| `/v2/compliance/policies/{policy_id}/enforce` | POST | Enforce policy |
 
 **Full API documentation**: [API_INDEX.md](../../reference/api/API_INDEX.md#isoiec-42001-compliance-13)
 

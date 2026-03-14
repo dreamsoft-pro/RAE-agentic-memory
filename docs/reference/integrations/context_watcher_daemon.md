@@ -86,7 +86,7 @@ Context Watcher is a FastAPI-based HTTP daemon that:
 │  - Calls RAE API                                            │
 └────────────────────┬────────────────────────────────────────┘
                      │
-                     │ POST /v1/memory/store
+                     │ POST /v2/memory/store
                      │ {
                      │   "content": "...",
                      │   "source": "src/auth.py",
@@ -533,7 +533,7 @@ Create payload:
     "tags": ["py", "file-watcher"]
   }
     ↓
-POST to RAE API /v1/memory/store
+POST to RAE API /v2/memory/store
     ↓
 Memory stored with embedding
 ```
@@ -687,7 +687,7 @@ livenessProbe:
    ```
 3. Validate API key:
    ```bash
-   curl -H "X-API-Key: your-key" http://localhost:8000/v1/memory/query
+   curl -H "X-API-Key: your-key" http://localhost:8000/v2/memory/query
    ```
 4. Check network connectivity (if remote):
    ```bash

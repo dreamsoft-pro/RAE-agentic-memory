@@ -161,13 +161,13 @@ High-level approach (2-3 sentences)
 ## Implementation Plan
 1. Step 1: [e.g., Create EntityRepository with CRUD methods]
 2. Step 2: [e.g., Create EntityService with business logic]
-3. Step 3: [e.g., Add API endpoints in /api/v1/entities.py]
+3. Step 3: [e.g., Add API endpoints in /api/v2/entities.py]
 4. Step 4: [e.g., Add tests for all layers]
 
 ## Code Structure
 Repository: apps/memory_api/repositories/entity_repository.py
 Service: apps/memory_api/services/entity_service.py
-API: apps/memory_api/api/v1/entities.py
+API: apps/memory_api/api/v2/entities.py
 Tests: apps/memory_api/tests/[repositories|services|api]/test_*.py
 
 ## Testing Strategy
@@ -228,16 +228,16 @@ with proper tenant isolation.
 Add 3-layer architecture:
 - UserProfileRepository (CRUD operations)
 - UserProfileService (business logic, validation)
-- API endpoints at /api/v1/users/profile
+- API endpoints at /api/v2/users/profile
 
 ## Architecture Impact
 - Layers affected: Repository, Service, API
 - New files:
   - apps/memory_api/repositories/user_profile_repository.py
   - apps/memory_api/services/user_profile_service.py
-  - apps/memory_api/api/v1/users.py
+  - apps/memory_api/api/v2/users.py
 - Modified files:
-  - apps/memory_api/api/v1/__init__.py (register router)
+  - apps/memory_api/api/v2/__init__.py (register router)
 - Dependencies: None (uses existing Pydantic, asyncpg)
 
 ## Implementation Plan
@@ -445,7 +445,7 @@ def test_user_authentication_calls_bcrypt_with_hash():
 
 - **Repository Pattern**: Use `apps/memory_api/repositories/` for DB access. Do NOT use raw SQL in services/routes.
 - **Services**: Business logic goes in `apps/memory_api/services/`.
-- **Routes**: FastAPI routes in `apps/memory_api/api/v1/` or `routes/`.
+- **Routes**: FastAPI routes in `apps/memory_api/api/v2/` or `routes/`.
 - **Config**: Use `apps/memory_api/config.py` via `pydantic-settings`. Do NOT hardcode secrets.
 
 ## 🐳 Docker

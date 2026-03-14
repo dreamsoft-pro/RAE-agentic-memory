@@ -27,8 +27,8 @@ class VolumeHandler {
     async fetchData() {
         try {
             const [volumesResponse, productItemResponse] = await Promise.all([
-                api.get('/api/v1/volumes'),
-                api.get('/api/v1/product-item')
+                api.get('/api/v2/volumes'),
+                api.get('/api/v2/product-item')
             ]);
 
             this.volumes = volumesResponse.data;

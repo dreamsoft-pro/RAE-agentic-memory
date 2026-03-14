@@ -9,7 +9,7 @@ def repair_and_check():
     print("[*] Triggering RAE database rebuild...")
     payload = {"project": "screenwatcher_project", "tenant_id": "screenwatcher"}
     try:
-        conn1.request("POST", "/v1/memory/rebuild-reflections", json.dumps(payload), headers)
+        conn1.request("POST", "/v2/memories/rebuild-reflections", json.dumps(payload), headers)
         res1 = conn1.getresponse()
         print(f"Rebuild status: {res1.status}")
         print(res1.read().decode())

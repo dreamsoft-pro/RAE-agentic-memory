@@ -450,7 +450,7 @@ await engine.store_reflection(result, tenant_id, project_id)
 Expose reflection generation via API:
 
 ```python
-# POST /api/v1/reflections/generate
+# POST /api/v2/reflections/generate
 {
   "tenant_id": "tenant-123",
   "project_id": "default",

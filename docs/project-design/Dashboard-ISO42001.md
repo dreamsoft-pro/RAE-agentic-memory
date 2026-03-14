@@ -12,19 +12,19 @@
 
   📍 Dostępne endpointy:
 
-  POST /v1/dashboard/compliance/report
+  POST /v2/dashboard/compliance/report
     → Pełny raport zgodności (100% compliance score)
 
-  POST /v1/dashboard/compliance/metrics
+  POST /v2/dashboard/compliance/metrics
     → Metryki według 6 obszarów (governance, risk, data, transparency, oversight, security)
 
-  POST /v1/dashboard/compliance/risks
+  POST /v2/dashboard/compliance/risks
     → Rejestr 10 ryzyk z mitygacjami (RISK-001 do RISK-010)
 
-  POST /v1/dashboard/compliance/audit-trail
+  POST /v2/dashboard/compliance/audit-trail
     → Historia audytu operacji
 
-  GET /v1/dashboard/compliance/rls-status
+  GET /v2/dashboard/compliance/rls-status
     → Status Row-Level Security
 
   🧪 Jak przetestować (zapisałem skrypt):
@@ -33,7 +33,7 @@
   /tmp/test_compliance_dashboard.sh
 
   # Lub ręcznie:
-  curl -X POST http://localhost:8000/v1/dashboard/compliance/report \
+  curl -X POST http://localhost:8000/v2/dashboard/compliance/report \
     -H "Content-Type: application/json" \
     -H "X-Tenant-ID: demo-tenant" \
     -d '{"tenant_id": "demo-tenant"}' | jq '.'

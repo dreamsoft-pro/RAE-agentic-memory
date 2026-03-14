@@ -731,7 +731,7 @@ curl -X POST http://localhost:8000/v1/compliance/approvals/$APPROVAL_ID/decide \
   }'
 
 # 4. Execute deletion (now approved)
-curl -X DELETE http://localhost:8000/v1/memory/delete \
+curl -X DELETE http://localhost:8000/v2/memories/delete \
   -d '{
     "tenant_id": "demo",
     "filters": {"user_id": "user_12345"},

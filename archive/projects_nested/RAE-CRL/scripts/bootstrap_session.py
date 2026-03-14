@@ -90,7 +90,7 @@ def fetch_black_box_context(base_url):
     }
 
     code, data = make_request(
-        f"{base_url}/v1/memory/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload
     )
 
     if code == 200:
@@ -114,7 +114,7 @@ def fetch_black_box_context(base_url):
     query_payload["query_text"] = "Strategic protocols, critical stability rules"
 
     code, data = make_request(
-        f"{base_url}/v1/memory/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload
     )
 
     if code == 200:
@@ -143,7 +143,7 @@ def log_session_start(base_url, session_id):
     }
 
     # Fire and forget
-    make_request(f"{base_url}/v1/memory/store", method="POST", data=payload)
+    make_request(f"{base_url}/v2/memories/store", method="POST", data=payload)
 
 
 def main():

@@ -27,7 +27,7 @@
   - Backward compatibility with legacy models
 
 #### API Endpoints
-- **New `/v1/graph` router** with 7 endpoints:
+- **New `/v2/graph` router** with 7 endpoints:
   - `POST /graph/extract` - Extract knowledge graph from memories
   - `POST /graph/query` - Advanced hybrid search with full traversal
   - `POST /graph/reflection/hierarchical` - Map-reduce reflection generation
@@ -36,7 +36,7 @@
   - `GET /graph/edges` - List graph edges with filtering
   - `GET /graph/subgraph` - Extract subgraph from starting nodes
 
-- **Enhanced `/v1/memory/query` endpoint**:
+- **Enhanced `/v2/memory/query` endpoint**:
   - Added `use_graph` parameter for hybrid search
   - Added `graph_depth` parameter for traversal control
   - Added `project` parameter for graph context
@@ -226,7 +226,7 @@ alembic upgrade head
 # No configuration changes required
 
 # 4. Verify installation
-curl http://localhost:8000/v1/graph/stats?project_id=test
+curl http://localhost:8000/v2/graph/stats?project_id=test
 
 # 5. (Optional) Run tests
 pytest tests/integration/test_graphrag.py -v
@@ -257,13 +257,13 @@ POSTGRES_DB=rae_db
 - **New Files**: 5
   - `services/graph_extraction.py` (~450 lines)
   - `services/hybrid_search.py` (~650 lines)
-  - `api/v1/graph.py` (~730 lines)
+  - `api/v2/graph.py` (~730 lines)
   - `tests/integration/test_graphrag.py` (~400 lines)
   - `examples/graphrag_examples.py` (~500 lines)
 
 - **Modified Files**: 4
   - `services/reflection_engine.py` (+350 lines)
-  - `api/v1/memory.py` (+70 lines)
+  - `api/v2/memory.py` (+70 lines)
   - `models.py` (+13 lines)
   - `main.py` (+2 lines)
 

@@ -13,7 +13,7 @@ def query_specific_node():
         'Content-Type': 'application/json'
     }
     try:
-        conn.request("POST", "/v1/memory/query", json.dumps(payload), headers)
+        conn.request("POST", "/v2/memories/query", json.dumps(payload), headers)
         res = conn.getresponse()
         print(res.read().decode("utf-8"))
     except Exception as e:

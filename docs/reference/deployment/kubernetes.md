@@ -361,7 +361,7 @@ configMap:
 
 ```bash
 # Set budget via API
-curl -X PUT http://rae-api.yourdomain.com/v1/budgets \
+curl -X PUT http://rae-api.yourdomain.com/v2/budgets \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha" \
@@ -375,7 +375,7 @@ curl -X PUT http://rae-api.yourdomain.com/v1/budgets \
 
 ```bash
 # Check current usage
-curl http://rae-api.yourdomain.com/v1/budgets/current \
+curl http://rae-api.yourdomain.com/v2/budgets/current \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha"
 
@@ -706,11 +706,11 @@ memoryApi:
 
 ```bash
 # Check current budget
-curl http://rae-api.yourdomain.com/v1/budgets/current \
+curl http://rae-api.yourdomain.com/v2/budgets/current \
   -H "X-Tenant-ID: your-tenant"
 
 # Increase budget
-curl -X PUT http://rae-api.yourdomain.com/v1/budgets \
+curl -X PUT http://rae-api.yourdomain.com/v2/budgets \
   -H "X-Tenant-ID: your-tenant" \
   -d '{"monthly_limit": 1000.00}'
 ```

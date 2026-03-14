@@ -57,7 +57,7 @@ sequenceDiagram
     participant DB
     participant Vector
 
-    Client->>API: POST /v1/memory/store
+    Client->>API: POST /v2/memories/store
     API->>Auth: Verify API Key & Tenant
     Auth-->>API: Authenticated
 

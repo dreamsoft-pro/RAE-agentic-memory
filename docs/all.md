@@ -19,20 +19,20 @@ This plan aims to refine and stabilize the `Reflective Memory v1` implementation
 The RAE API is built with FastAPI, offering interactive documentation (Swagger UI, ReDoc) and an OpenAPI 3.0 specification for client generation and integration. Authentication is required for most endpoints via `X-API-Key` or `Authorization` headers. The API is multi-tenant, requiring `X-Tenant-ID`.
 
 **Core API Features (v1):**
-*   **Memory Management (`/v1/memory/*`):** Store, query, and delete various types of memories.
-*   **Agent Operations (`/v1/agent/*`):** Facilitate the execution of agent tasks, providing memory context.
-*   **Knowledge Graphs (`/v1/graph/*`):** Functionality to build and query GraphRAG knowledge graphs.
-*   **Cache Management (`/v1/cache/*`):** Operations related to the context cache.
-*   **Governance (`/v1/governance/*`):** Includes features for cost tracking and budget management.
+*   **Memory Management (`/v2/memory/*`):** Store, query, and delete various types of memories.
+*   **Agent Operations (`/v2/agent/*`):** Facilitate the execution of agent tasks, providing memory context.
+*   **Knowledge Graphs (`/v2/graph/*`):** Functionality to build and query GraphRAG knowledge graphs.
+*   **Cache Management (`/v2/cache/*`):** Operations related to the context cache.
+*   **Governance (`/v2/governance/*`):** Includes features for cost tracking and budget management.
 *   **Health & Monitoring (`/health`, `/metrics`):** Endpoints for system health checks and Prometheus metrics.
 
 **Enterprise API Features (v1):**
-*   **Event Triggers (`/v1/triggers/*`):** Supports event-driven automation, including creating, listing, and managing trigger rules and workflows. Allows manual event emission and provides health/info for the trigger service.
-*   **Reflections (`/v1/reflections/*`):** Comprehensive hierarchical reflection system, including generation with clustering, semantic querying, relationship management, statistics, and batch deletion.
-*   **Hybrid Search (`/v1/search/*`):** Advanced multi-strategy search (vector + semantic + graph + full-text).
-*   **Evaluation (`/v1/evaluation/*`):** Search quality metrics, A/B testing, drift detection.
-*   **Dashboard (`/v1/dashboard/*`):** Real-time monitoring with WebSocket support.
-*   **Graph Management (`/v1/graph-management/*`):** Advanced graph operations, including creation, retrieval, updating, deleting graph components, and querying complex graph structures for relationship discovery.
+*   **Event Triggers (`/v2/triggers/*`):** Supports event-driven automation, including creating, listing, and managing trigger rules and workflows. Allows manual event emission and provides health/info for the trigger service.
+*   **Reflections (`/v2/reflections/*`):** Comprehensive hierarchical reflection system, including generation with clustering, semantic querying, relationship management, statistics, and batch deletion.
+*   **Hybrid Search (`/v2/search/*`):** Advanced multi-strategy search (vector + semantic + graph + full-text).
+*   **Evaluation (`/v2/evaluation/*`):** Search quality metrics, A/B testing, drift detection.
+*   **Dashboard (`/v2/dashboard/*`):** Real-time monitoring with WebSocket support.
+*   **Graph Management (`/v2/graph-management/*`):** Advanced graph operations, including creation, retrieval, updating, deleting graph components, and querying complex graph structures for relationship discovery.
 
 ### 3. RAE Architecture
 
@@ -55,7 +55,7 @@ The RAE architecture is built on core concepts and services supporting memory ma
 *   **ReflectionEngine:** Dedicated service for generating and managing higher-level reflections from agent memories.
 
 **Memory Lifecycle & Governance:**
-*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v1/memory/query` or `/v1/agent/execute`).
+*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v2/memory/query` or `/v2/agent/execute`).
 *   **Importance Scoring:** Utilizes `ImportanceScoringService` to calculate dynamic scores based on factors like Recency, Access Frequency, Graph Centrality, Semantic Relevance, User Rating, Consolidation, and Manual Boost.
 *   **Temporal Decay:** Automated periodic process to adjust importance scores based on time and access patterns, with protected, normal, and accelerated decay strategies.
 *   **Memory Lifecycle States:** Defines states such as `CREATED`, `ACTIVE`, `AGING`, `STALE`, and `ARCHIVED`, guiding memory management and retention.
@@ -76,12 +76,12 @@ GraphRAG extends RAE's memory capabilities by integrating Knowledge Graph techno
 *   **Graph Traversal:** Supports BFS (Breadth-First Search) and DFS (Depth-First Search) for exploring relationships.
 
 **API Endpoints:**
-*   **Extract Knowledge Graph (`POST /v1/graph/extract`):** Extracts knowledge graph from episodic memories using LLM-based prompts.
-*   **Hybrid Search (extended `POST /v1/memory/query`):** Standard memory query enhanced with graph traversal capabilities.
-*   **Advanced Graph Query (`POST /v1/graph/query`):** Dedicated endpoint for complex graph-based searches.
-*   **Get Graph Statistics (`GET /v1/graph/stats`):** Retrieves statistics about the knowledge graph.
-*   **Get Subgraph (`GET /v1/graph/subgraph`):** Retrieves a subgraph starting from specific nodes.
-*   **Hierarchical Reflection (`POST /v1/graph/reflection/hierarchical`):** Generates hierarchical reflections from large episode collections.
+*   **Extract Knowledge Graph (`POST /v2/graph/extract`):** Extracts knowledge graph from episodic memories using LLM-based prompts.
+*   **Hybrid Search (extended `POST /v2/memory/query`):** Standard memory query enhanced with graph traversal capabilities.
+*   **Advanced Graph Query (`POST /v2/graph/query`):** Dedicated endpoint for complex graph-based searches.
+*   **Get Graph Statistics (`GET /v2/graph/stats`):** Retrieves statistics about the knowledge graph.
+*   **Get Subgraph (`GET /v2/graph/subgraph`):** Retrieves a subgraph starting from specific nodes.
+*   **Hierarchical Reflection (`POST /v2/graph/reflection/hierarchical`):** Generates hierarchical reflections from large episode collections.
 
 **Usage Patterns:** Initial graph construction, incremental updates, contextual AI agent queries, dependency analysis.
 
@@ -207,7 +207,7 @@ RAE's event-driven automation system for defining triggers, conditions, and acti
     *   **Triggers:** Define when rules fire (Event Type, Condition, Actions, Rate Limiting, Cooldown).
     *   **Conditions:** Determine if a trigger fires (various operators, AND/OR logic, nested groups, dot notation).
     *   **Actions:** Operations executed (e.g., `SEND_NOTIFICATION`, `SEND_WEBHOOK`, `GENERATE_REFLECTION`, `RUN_EVALUATION`).
-*   **API Usage:** `RulesEngine.process_event`, `POST /v1/automation/triggers` for creation.
+*   **API Usage:** `RulesEngine.process_event`, `POST /v2/automation/triggers` for creation.
 *   **Common Use Cases:** Automatic reflection generation, budget alerts, drift detection response, semantic extraction pipeline.
 *   **Rate Limiting & Cooldown:** Configurable limits to prevent runaway automation and rapid re-triggers.
 *   **Retry Logic:** Actions can be configured with retry mechanisms for transient failures.

@@ -38,7 +38,7 @@ openssl rand -base64 32
 
 **Using API Key:**
 ```bash
-curl -X POST https://api.yourdomain.com/v1/memory/store \
+curl -X POST https://api.yourdomain.com/v2/memory/store \
   -H "X-API-Key: your-api-key-here" \
   -H "Content-Type: application/json" \
   -d '{"content": "test", "layer": "episodic"}'
@@ -117,7 +117,7 @@ Retry-After: 60
 **Customizing Rate Limits:**
 ```python
 # Per-endpoint rate limiting
-@app.get("/v1/memory/expensive-operation")
+@app.get("/v2/memory/expensive-operation")
 @limiter.limit("10/minute")
 async def expensive_operation():
     ...
@@ -274,7 +274,7 @@ def cleanup_old_memories():
 
 **GDPR Right to Deletion:**
 ```python
-@app.delete("/v1/user/{user_id}/data")
+@app.delete("/v2/user/{user_id}/data")
 async def delete_user_data(user_id: str):
     """Delete all user data (GDPR compliance)."""
     # Delete memories
@@ -568,7 +568,7 @@ async def check_brute_force(ip: str):
 
 **Implementation:**
 ```python
-@app.get("/v1/user/{user_id}/data")
+@app.get("/v2/user/{user_id}/data")
 async def export_user_data(user_id: str):
     """Export all user data (GDPR compliance)."""
     memories = await get_user_memories(user_id)

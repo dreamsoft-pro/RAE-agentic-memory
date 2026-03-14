@@ -298,7 +298,7 @@ Alternatywnie: Claude może kontynuować samodzielnie
 
 ```bash
 # API endpoint do sprawdzenia pamięci
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: dev-key" \
   -H "X-Tenant-Id: claude-code" \

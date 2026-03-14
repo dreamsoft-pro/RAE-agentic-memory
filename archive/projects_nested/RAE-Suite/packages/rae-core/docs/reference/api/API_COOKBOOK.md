@@ -227,7 +227,7 @@ curl -X POST http://localhost:8000/v1/memories/batch \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -352,7 +352,7 @@ curl -X POST http://localhost:8000/v1/search/hybrid \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -398,7 +398,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request for Long-Term Memory only**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -414,7 +414,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 **Request for Recent Events only**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -602,7 +602,7 @@ curl -X POST http://localhost:8000/v1/graph/query \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/delete_user \
+curl -X POST http://localhost:8000/v2/memories/delete_user \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -638,7 +638,7 @@ curl -X POST http://localhost:8000/v1/memory/delete_user \
 
 **Request**:
 ```bash
-curl -X POST http://localhost:8000/v1/memory/export \
+curl -X POST http://localhost:8000/v2/memories/export \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \

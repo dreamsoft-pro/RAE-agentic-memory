@@ -51,7 +51,7 @@ Jeden prosty scenariusz: docker compose up → jeden kontener API + Postgres + Q
 Podniesienie coverage do ~75–80% dla kluczowych endpointów
 Skupiłbym się na:
 
-/v1/memory/*, /v1/agent/execute, /v1/search/hybrid, /v1/governance/*.
+/v2/memory/*, /v2/agent/execute, /v2/search/hybrid, /v2/governance/*.
 
 Stabilne „product story” i wersjonowanie
 

@@ -85,7 +85,7 @@
 # =============================================================================
 
 # REST API endpoints
-/apps/memory_api/api/v1/* @grzegorz
+/apps/memory_api/api/v2/* @grzegorz
 /apps/memory_api/routes/* @grzegorz
 
 # =============================================================================

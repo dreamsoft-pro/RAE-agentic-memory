@@ -15,7 +15,7 @@ Ensure all documentation uses consistent, accurate endpoint paths matching the a
 
 ✅ **Use actual endpoint paths from code**:
 ```
-POST /v1/memory/store
+POST /v2/memories/store
 POST /v1/search/hybrid
 GET /v1/triggers/list
 ```
@@ -39,7 +39,7 @@ All endpoints are documented in [API_INDEX.md](reference/api/API_INDEX.md).
 
 | Module | Prefix | Example |
 |--------|--------|---------|
-| Memory Core | `/v1/memory/*` | `/v1/memory/store` |
+| Memory Core | `/v2/memories/*` | `/v2/memories/store` |
 | Agent | `/v1/agent/*` | `/v1/agent/execute` |
 | Knowledge Graph | `/v1/graph/*` | `/v1/graph/extract` |
 | Event Triggers | `/v1/triggers/*` | `/v1/triggers/create` |
@@ -226,7 +226,7 @@ curl -X POST http://localhost:8000/memories/create \
 ## Store Memory
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -255,7 +255,7 @@ rg "POST /(memory|graph|triggers)" docs/ -g "*.md" -l
 
 ```bash
 # Example: Replace old pattern
-find docs/ -name "*.md" -exec sed -i 's|/memories/create|/v1/memory/store|g' {} \;
+find docs/ -name "*.md" -exec sed -i 's|/memories/create|/v2/memories/store|g' {} \;
 
 # Verify changes
 git diff docs/

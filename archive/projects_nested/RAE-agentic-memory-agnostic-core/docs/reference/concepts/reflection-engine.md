@@ -162,7 +162,7 @@ Triggered by specific events:
 
 ```python
 # After significant event
-@app.post("/v1/memory/store")
+@app.post("/v2/memories/store")
 async def store_memory(memory: MemoryCreate):
     stored = await memory_service.store(memory)
 

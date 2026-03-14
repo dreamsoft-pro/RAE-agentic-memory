@@ -145,7 +145,7 @@ docker compose up -d
 
 ```bash
 # Check Prometheus targets
-curl http://localhost:9090/api/v1/targets
+curl http://localhost:9090/api/v2/targets
 
 # Verify services are exposing metrics
 curl http://localhost:8000/metrics

@@ -392,7 +392,7 @@ This release achieves **100% compliance** with ISO/IEC 42001 AI Management Syste
 
 #### API Endpoints ✅
 
-**New Compliance API** (`apps/memory_api/api/v1/compliance.py` - 700+ lines)
+**New Compliance API** (`apps/memory_api/api/v2/compliance.py` - 700+ lines)
 - ✅ POST `/v1/compliance/approvals` - Request approval for high-risk operations
 - ✅ GET `/v1/compliance/approvals/{request_id}` - Check approval status
 - ✅ POST `/v1/compliance/approvals/{request_id}/decide` - Approve or reject
@@ -1044,7 +1044,7 @@ This release completes the implementation of critical functionalities identified
   - Records duration and update counts per tenant
 
 #### ContextBuilder Enforcement ✅
-- **Agent endpoint refactored** (`api/v1/agent.py`)
+- **Agent endpoint refactored** (`api/v2/agent.py`)
   - Now uses `ContextBuilder.build_context()` for all agent executions
   - Replaced manual context construction with unified pattern
   - Reflections automatically included in every agent call (when enabled)
@@ -1300,10 +1300,10 @@ await rbac_service.assign_role(
   - `integrations/mcp/tests/test_mcp_integration.py` (17 tests) - MCP protocol integration
   - `integrations/mcp/tests/test_mcp_load.py` (7 tests) - Load and performance testing
   - `integrations/mcp/tests/test_pii_scrubber.py` (36 tests) - PII detection and masking
-  - `tests/api/v1/test_governance.py` (13 tests) - Governance API endpoints
-  - `tests/api/v1/test_search_hybrid.py` (9 tests) - Hybrid search functionality
-  - `tests/api/v1/test_memory.py` (+6 tests) - Enhanced memory operations
-  - `tests/api/v1/test_agent.py` (+3 tests) - Agent execution with context
+  - `tests/api/v2/test_governance.py` (13 tests) - Governance API endpoints
+  - `tests/api/v2/test_search_hybrid.py` (9 tests) - Hybrid search functionality
+  - `tests/api/v2/test_memory.py` (+6 tests) - Enhanced memory operations
+  - `tests/api/v2/test_agent.py` (+3 tests) - Agent execution with context
   - `tests/integration/test_lite_profile.py` (11 tests) - RAE Lite integration tests
   - **Total test count: 431 → 461 tests (+7% increase, 461 tests total)**
   - Coverage: Comprehensive test suite across all major components
@@ -1464,7 +1464,7 @@ await rbac_service.assign_role(
 ### Changed - API Endpoints (2025-11-22)
 - `/v1/graph/query` now uses `get_hybrid_search_service()` dependency
 - `/v1/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-- `/v1/memory/query` now uses `get_hybrid_search_service()` dependency
+- `/v2/memories/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed (2025-11-22)
 - Test fixtures updated to match new DI constructor signatures
@@ -1531,7 +1531,7 @@ await rbac_service.assign_role(
 - **API Endpoints**
   - `/v1/graph/query` now uses `get_hybrid_search_service()` dependency
   - `/v1/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-  - `/v1/memory/query` now uses `get_hybrid_search_service()` dependency
+  - `/v2/memories/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed
 - Test fixtures updated to match new DI constructor signatures
@@ -1564,7 +1564,7 @@ await rbac_service.assign_role(
 
 ### Changed
 - Module renamed: `rae_mcp_server` → `rae_mcp`
-- API endpoints standardized to `/v1/memory/*` pattern
+- API endpoints standardized to `/v2/memories/*` pattern
 - Architectural separation: `integrations/mcp/` vs `integrations/context-watcher/`
 
 ### Documentation

@@ -203,14 +203,14 @@ async def test_store_and_retrieve_memory(db_pool):
 # tests/e2e/test_memory_operations.py
 async def test_full_memory_workflow(api_client):
     # Store memory
-    response = api_client.post("/api/v1/memories", json={
+    response = api_client.post("/api/v2/memories", json={
         "content": "User logged in",
         "source": "app"
     })
     memory_id = response.json()["id"]
 
     # Query for memory
-    response = api_client.post("/api/v1/memories/query", json={
+    response = api_client.post("/api/v2/memories/query", json={
         "query": "user login"
     })
     results = response.json()["results"]

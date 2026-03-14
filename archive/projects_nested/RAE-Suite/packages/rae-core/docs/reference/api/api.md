@@ -27,14 +27,14 @@ All API endpoints (except health checks) require authentication via API key or J
 
 Include API key in request headers:
 ```bash
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v1/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memories/query
 ```
 
 ### JWT Authentication
 
 Include JWT token in Authorization header:
 ```bash
-curl -H "Authorization: Bearer your-jwt-token" http://localhost:8000/v1/memory/query
+curl -H "Authorization: Bearer your-jwt-token" http://localhost:8000/v2/memories/query
 ```
 
 ## Common Headers
@@ -62,15 +62,15 @@ curl -H "Authorization: Bearer your-jwt-token" http://localhost:8000/v1/memory/q
 
 ### Memory Operations
 
-Base path: `/v1/memory`
+Base path: `/v2/memories`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/v1/memory/store` | Store new memory |
-| POST | `/v1/memory/query` | Query memories with vector search |
-| DELETE | `/v1/memory/delete` | Delete memory by ID |
-| POST | `/v1/memory/rebuild-reflections` | Trigger reflection rebuild |
-| GET | `/v1/memory/reflection-stats` | Get reflection statistics |
+| POST | `/v2/memories/store` | Store new memory |
+| POST | `/v2/memories/query` | Query memories with vector search |
+| DELETE | `/v2/memories/delete` | Delete memory by ID |
+| POST | `/v2/memories/rebuild-reflections` | Trigger reflection rebuild |
+| GET | `/v2/memories/reflection-stats` | Get reflection statistics |
 
 ### Agent Operations
 

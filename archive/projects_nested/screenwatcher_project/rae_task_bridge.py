@@ -71,7 +71,7 @@ class RAETaskBridge:
             "tag": "delegation_lesson",
             "content": content
         }
-        self._request("POST", "/v1/memory/store", payload)
+        self._request("POST", "/v2/memories/store", payload)
 
 if __name__ == "__main__":
     # Test call if run directly

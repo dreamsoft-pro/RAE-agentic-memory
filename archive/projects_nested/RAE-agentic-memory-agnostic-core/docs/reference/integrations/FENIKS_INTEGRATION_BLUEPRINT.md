@@ -384,7 +384,7 @@ class EnhancedRAEClient(RAEClient):
         try:
             response = self._make_request(
                 method="POST",
-                endpoint="/v1/memory/query",
+                endpoint="/v2/memories/query",
                 data={
                     "query_text": query_text,
                     "project_id": project_id,
@@ -422,7 +422,7 @@ class EnhancedRAEClient(RAEClient):
         try:
             response = self._make_request(
                 method="POST",
-                endpoint="/v1/memory/patterns/search",
+                endpoint="/v2/memories/patterns/search",
                 data={
                     "pattern_type": pattern_type,
                     "min_confidence": min_confidence,
@@ -466,7 +466,7 @@ class EnhancedRAEClient(RAEClient):
 
             response = self._make_request(
                 method="GET",
-                endpoint="/v1/memory/refactorings/history",
+                endpoint="/v2/memories/refactorings/history",
                 params=params
             )
 
@@ -873,8 +873,8 @@ CONTINUOUS LEARNING LOOP:
 
 **Deliverables**:
 - Working bidirectional RAE client
-- API endpoint: `/v1/memory/refactorings/history`
-- API endpoint: `/v1/memory/patterns/search`
+- API endpoint: `/v2/memories/refactorings/history`
+- API endpoint: `/v2/memories/patterns/search`
 - Test coverage: 80%+
 
 ### Phase 2: Intelligence (Week 3-4)

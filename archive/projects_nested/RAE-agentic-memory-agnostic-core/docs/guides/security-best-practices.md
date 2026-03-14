@@ -38,7 +38,7 @@ openssl rand -base64 32
 
 **Using API Key:**
 ```bash
-curl -X POST https://api.yourdomain.com/v1/memory/store \
+curl -X POST https://api.yourdomain.com/v2/memories/store \
   -H "X-API-Key: your-api-key-here" \
   -H "Content-Type: application/json" \
   -d '{"content": "test", "layer": "episodic"}'
@@ -117,7 +117,7 @@ Retry-After: 60
 **Customizing Rate Limits:**
 ```python
 # Per-endpoint rate limiting
-@app.get("/v1/memory/expensive-operation")
+@app.get("/v2/memories/expensive-operation")
 @limiter.limit("10/minute")
 async def expensive_operation():
     ...

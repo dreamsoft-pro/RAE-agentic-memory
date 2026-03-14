@@ -44,7 +44,7 @@ RAE adds detailed custom spans for core operations:
 - **Reflection Pipeline** (`reflection_pipeline.py`) - Memory clustering (HDBSCAN/K-means), insight generation
 - **Context Builder** (`context_builder.py`) - Working Memory construction with LTM + reflections
 
-**API Endpoints** (`api/v1/memory.py`):
+**API Endpoints** (`api/v2/memory.py`):
 - `/store` - Memory storage with PII scrubbing tracking
 - `/query` - Hybrid search (vector + graph) vs vector-only modes
 - `/delete` - Memory deletion from DB and vector store
@@ -513,7 +513,7 @@ The following OpenTelemetry instrumentation phases are planned for future implem
 
 ### Phase 2: Graph API Instrumentation (Priority: Medium)
 
-**File:** `apps/memory_api/api/v1/graph.py`
+**File:** `apps/memory_api/api/v2/graph.py`
 
 **Value Proposition:** Critical for research and scientific applications requiring knowledge graph analysis and entity relationship tracking.
 

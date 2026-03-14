@@ -133,15 +133,15 @@ All reflective memory flags were defined in `config.py` but **NEVER USED** anywh
 
 - ✅ ContextBuilder exists with `_retrieve_reflections()` method
 - ✅ ContextBuilder creates "Lessons Learned" section in prompts
-- ❌ **PROBLEM:** Agent endpoint (`api/v1/agent.py`) does NOT use ContextBuilder
+- ❌ **PROBLEM:** Agent endpoint (`api/v2/agent.py`) does NOT use ContextBuilder
 - ❌ **PROBLEM:** Agent uses `context_cache` instead, which doesn't include live reflections
 
 **Key Finding from E1 Audit:**
-The agent endpoint at `api/v1/agent.py` manually constructs prompts from cached semantic/reflective contexts. It never calls ContextBuilder, so reflections are never actually retrieved for live agent calls.
+The agent endpoint at `api/v2/agent.py` manually constructs prompts from cached semantic/reflective contexts. It never calls ContextBuilder, so reflections are never actually retrieved for live agent calls.
 
 ### Co Zmieniłem
 
-1. **Agent Endpoint Refactored** (`api/v1/agent.py`):
+1. **Agent Endpoint Refactored** (`api/v2/agent.py`):
    - ✅ Added `ContextBuilder` and `ContextConfig` imports
    - ✅ Replaced manual context construction with `ContextBuilder.build_context()`
    - ✅ Agent now gets `WorkingMemoryContext` with live reflections
@@ -174,7 +174,7 @@ static_context_block = working_memory.context_text  # Includes reflections!
 ✅ **DONE:** Unified context building pattern enforced
 
 **Files Modified:**
-- `apps/memory_api/api/v1/agent.py` (enforced ContextBuilder usage)
+- `apps/memory_api/api/v2/agent.py` (enforced ContextBuilder usage)
 
 ---
 
@@ -259,7 +259,7 @@ Focus on core functionality and observability first. Integration tests require f
 | ✅ All flags have code coverage | **DONE** | Tests + runtime checks in ContextBuilder + Workers |
 | ✅ Decay/summarization/dreaming scheduled | **DONE** | Celery Beat schedule at 2 AM (decay) and 3 AM (maintenance) |
 | ✅ Workers have metrics | **DONE** | 11 Prometheus metrics added and integrated |
-| ✅ All agent entrypoints use ContextBuilder | **DONE** | api/v1/agent.py refactored |
+| ✅ All agent entrypoints use ContextBuilder | **DONE** | api/v2/agent.py refactored |
 | ✅ Multi-tenant memory access is secure | **PARTIAL** | RLS + RBAC implemented, needs documentation |
 | ✅ Documentation matches reality | **PENDING** | Requires updates in next section |
 
@@ -272,7 +272,7 @@ Focus on core functionality and observability first. Integration tests require f
 ### Core Implementation
 1. `apps/memory_api/services/context_builder.py` - Added flag checks and reflection retrieval
 2. `apps/memory_api/workers/memory_maintenance.py` - Added flag checks and metrics integration
-3. `apps/memory_api/api/v1/agent.py` - Refactored to use ContextBuilder
+3. `apps/memory_api/api/v2/agent.py` - Refactored to use ContextBuilder
 
 ### Infrastructure
 4. `apps/memory_api/celery_app.py` - Fixed import path typo

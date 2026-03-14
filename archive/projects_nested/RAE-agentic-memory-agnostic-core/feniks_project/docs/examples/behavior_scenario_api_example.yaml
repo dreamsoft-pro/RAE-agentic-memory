@@ -22,7 +22,7 @@ tags:
 input:
   api_request:
     method: POST
-    url: /api/v1/orders
+    url: /api/v2/orders
     headers:
       Content-Type: application/json
       Accept: application/json

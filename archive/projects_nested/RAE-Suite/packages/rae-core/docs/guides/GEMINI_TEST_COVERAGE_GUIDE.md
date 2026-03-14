@@ -194,24 +194,24 @@ apps/memory_api/tests/services/test_graph_algorithms.py
 
 ```bash
 # Iteracja 11
-apps/memory_api/api/v1/memory.py
-tests/api/v1/test_memory.py
+apps/memory_api/api/v2/memory.py
+tests/api/v2/test_memory.py
 
 # Iteracja 12
-apps/memory_api/api/v1/agent.py
-tests/api/v1/test_agent.py
+apps/memory_api/api/v2/agent.py
+tests/api/v2/test_agent.py
 
 # Iteracja 13
-apps/memory_api/api/v1/graph.py
-tests/api/v1/test_graph.py
+apps/memory_api/api/v2/graph.py
+tests/api/v2/test_graph.py
 
 # Iteracja 14
-apps/memory_api/api/v1/search_hybrid.py
-tests/api/v1/test_search_hybrid.py
+apps/memory_api/api/v2/search_hybrid.py
+tests/api/v2/test_search_hybrid.py
 
 # Iteracja 15
-apps/memory_api/api/v1/triggers.py
-tests/api/v1/test_triggers.py
+apps/memory_api/api/v2/triggers.py
+tests/api/v2/test_triggers.py
 ```
 
 ---

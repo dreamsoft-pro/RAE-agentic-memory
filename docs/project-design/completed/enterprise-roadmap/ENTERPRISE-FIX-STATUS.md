@@ -36,23 +36,23 @@ Successfully removed old auth system and unified on new security/auth.py module.
    - ❌ Removed `APIKeyHeader` and `Security` imports
    - ✅ Added redirect comment to security/auth.py
 
-2. **api/v1/cache.py**
+2. **api/v2/cache.py**
    - ❌ Removed `from apps.memory_api.dependencies import get_api_key`
    - ❌ Removed `dependencies=[Depends(get_api_key)]`
    - ✅ Added comment: "Auth is handled globally"
 
-3. **api/v1/memory.py**
+3. **api/v2/memory.py**
    - ❌ Removed `get_api_key` import
    - ❌ Removed `dependencies=[Depends(get_api_key)]`
    - ✅ Added global auth comment
 
-4. **api/v1/agent.py**
+4. **api/v2/agent.py**
    - ❌ Removed `get_api_key` import
    - ❌ Removed duplicate router declaration
    - ❌ Removed `dependencies=[Depends(get_api_key)]`
    - ✅ Added global auth comment
 
-5. **api/v1/graph.py**
+5. **api/v2/graph.py**
    - ❌ Removed `get_api_key` import
    - ❌ Removed `dependencies=[Depends(get_api_key)]`
    - ✅ Added global auth comment
@@ -136,10 +136,10 @@ async def check_tenant_access(
 
 #### 2.4 Add to Endpoints
 Add `Depends(check_tenant_access)` to all tenant-specific endpoints:
-- `/v1/memory/*` - all endpoints
-- `/v1/agent/*` - all endpoints
-- `/v1/graph/*` - all endpoints
-- `/v1/governance/tenant/{tenant_id}/*` - all tenant endpoints
+- `/v2/memory/*` - all endpoints
+- `/v2/agent/*` - all endpoints
+- `/v2/graph/*` - all endpoints
+- `/v2/governance/tenant/{tenant_id}/*` - all tenant endpoints
 
 #### 2.5 Migration Script
 Create migration to populate `user_tenant_access` for existing data:
@@ -242,12 +242,12 @@ Add metrics:
 ### What Needs to Be Done
 
 #### 4.1 Add Auth to Router
-Update `apps/memory_api/api/v1/governance.py`:
+Update `apps/memory_api/api/v2/governance.py`:
 ```python
 from apps.memory_api.security.auth import verify_token, require_admin
 
 router = APIRouter(
-    prefix="/v1/governance",
+    prefix="/v2/governance",
     tags=["Governance"],
     dependencies=[Depends(verify_token)]  # ADD THIS
 )
@@ -293,7 +293,7 @@ async def get_tenant_stats(...):
 ```
 
 ### Files to Modify
-- [ ] `apps/memory_api/api/v1/governance.py`
+- [ ] `apps/memory_api/api/v2/governance.py`
 - [ ] `apps/memory_api/security/auth.py` (add require_admin)
 - [ ] `apps/memory_api/config.py` (add rate limits)
 

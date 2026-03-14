@@ -31,7 +31,7 @@ We follow a strict Git Flow variant (see `docs/BRANCHING.md`):
 
 ## Architecture Boundaries
 
-- **API Layer**: `apps/memory_api/routes` or `api/v1` - Input validation, auth checks.
+- **API Layer**: `apps/memory_api/routes` or `api/v2` - Input validation, auth checks.
 - **Service Layer**: `apps/memory_api/services` - Business logic, orchestration.
 - **Data Access**: `apps/memory_api/repositories` - Direct DB/Qdrant interactions.
 - **Models**: `apps/memory_api/models` - Pydantic models and DB schemas.

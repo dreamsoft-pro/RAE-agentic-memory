@@ -186,10 +186,10 @@ memory.py               6          ✅ Excellent docs
 POST /v1/memories/create
 
 # rest-api.md uses:
-POST /v1/memory/store
+POST /v2/memories/store
 
 # Actual endpoint:
-POST /v1/memory/store
+POST /v2/memories/store
 ```
 
 **Fix**: Standardize on actual endpoint paths

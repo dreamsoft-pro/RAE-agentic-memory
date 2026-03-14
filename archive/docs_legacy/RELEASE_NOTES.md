@@ -421,7 +421,7 @@ RAE_APP_LOG_LEVEL=INFO      # RAE visible for debugging
 **Updated Endpoints**:
 - `/v1/graph/query` - Uses DI service injection
 - `/v1/graph/subgraph` - Uses DI service injection
-- `/v1/memory/query` - Uses DI service injection
+- `/v2/memories/query` - Uses DI service injection
 
 **Configuration Files**:
 - `.env.example` - Added `LOG_LEVEL` and `RAE_APP_LOG_LEVEL`
@@ -576,7 +576,7 @@ This release focuses on enterprise-grade hardening of the Model Context Protocol
 ### 🔧 Technical Changes
 
 - Module renamed: `rae_mcp_server` → `rae_mcp`
-- API endpoints standardized to `/v1/memory/*` pattern
+- API endpoints standardized to `/v2/memories/*` pattern
 - Prometheus metrics integrated throughout
 - Example configs updated and validated
 

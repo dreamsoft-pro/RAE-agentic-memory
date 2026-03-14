@@ -15,7 +15,7 @@ def store_memory(layer, tag, content):
         "content": content,
         "project": "screenwatcher_project"
     }
-    response = requests.post(f"{BASE_URL}/v1/memory/store", headers=HEADERS, json=data)
+    response = requests.post(f"{BASE_URL}/v2/memories/store", headers=HEADERS, json=data)
     return response.json()
 
 def query_memory(query_text, limit=10):
@@ -24,7 +24,7 @@ def query_memory(query_text, limit=10):
         "project": "screenwatcher_project",
         "limit": limit
     }
-    response = requests.post(f"{BASE_URL}/v1/memory/query", headers=HEADERS, json=data)
+    response = requests.post(f"{BASE_URL}/v2/memories/query", headers=HEADERS, json=data)
     return response.json()
 
 if __name__ == "__main__":

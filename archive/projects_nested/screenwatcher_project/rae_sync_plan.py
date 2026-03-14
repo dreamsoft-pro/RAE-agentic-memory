@@ -10,7 +10,7 @@ def sync_master_plan():
         "content": "Updated Roadmap based on Agreement Annex 2. Key gaps identified: Edge Operator Panel, MTBF/MTTR metrics, SPC/Heatmap charts, and Block Rule Editor. Priority shifted to Phase 6: Edge Operator GUI and Data Transformation."
     }
     headers = {'X-Tenant-Id': 'screenwatcher', 'Content-Type': 'application/json'}
-    conn.request("POST", "/v1/memory/store", json.dumps(payload), headers)
+    conn.request("POST", "/v2/memories/store", json.dumps(payload), headers)
     print(conn.getresponse().read().decode())
 
 if __name__ == "__main__":

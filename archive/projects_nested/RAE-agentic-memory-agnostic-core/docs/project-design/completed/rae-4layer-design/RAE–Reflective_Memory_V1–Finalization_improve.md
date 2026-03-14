@@ -61,7 +61,7 @@ At the end, all sections 1–5 should have status `DONE`.
   with config-driven weights and decay parameters.
 
 - [ ] All memory retrieval paths (at least):
-  - `/v1/memory/search`
+  - `/v2/memories/search`
   - `/v1/search/hybrid`
   - internal retrieval in `ContextBuilder`
 

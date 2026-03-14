@@ -29,7 +29,7 @@ Event Triggers enable automated workflows based on system events. When specific 
 Auto-generate reflections when 100+ memories exist:
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/create \
+curl -X POST http://localhost:8000/v2/triggers/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -68,7 +68,7 @@ curl -X POST http://localhost:8000/v1/triggers/create \
 ### 2. Emit an Event to Test
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/events/emit \
+curl -X POST http://localhost:8000/v2/triggers/events/emit \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -119,7 +119,7 @@ Your trigger fired! ✅
 
 **List event types**:
 ```bash
-curl http://localhost:8000/v1/triggers/events/types \
+curl http://localhost:8000/v2/triggers/events/types \
   -H "X-API-Key: your-key"
 ```
 
@@ -294,7 +294,7 @@ Workflows chain multiple actions together with dependencies and execution modes.
 Actions execute one after another:
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/workflows/create \
+curl -X POST http://localhost:8000/v2/triggers/workflows/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -360,13 +360,13 @@ Actions execute simultaneously:
 
 ### Get Workflow
 ```bash
-curl http://localhost:8000/v1/triggers/workflows/{workflow_id} \
+curl http://localhost:8000/v2/triggers/workflows/{workflow_id} \
   -H "X-API-Key: your-key"
 ```
 
 ### List Workflows
 ```bash
-curl "http://localhost:8000/v1/triggers/workflows?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/triggers/workflows?tenant_id=demo&project_id=my-app" \
   -H "X-API-Key: your-key"
 ```
 
@@ -379,7 +379,7 @@ Use pre-built templates for common scenarios.
 ### Available Templates
 
 ```bash
-curl http://localhost:8000/v1/triggers/templates \
+curl http://localhost:8000/v2/triggers/templates \
   -H "X-API-Key: your-key"
 ```
 
@@ -408,7 +408,7 @@ curl http://localhost:8000/v1/triggers/templates \
 ### Instantiate Template
 
 ```bash
-curl -X POST "http://localhost:8000/v1/triggers/templates/auto_reflection/instantiate?tenant_id=demo&project_id=my-app&rule_name=My%20Reflection%20Rule&created_by=admin" \
+curl -X POST "http://localhost:8000/v2/triggers/templates/auto_reflection/instantiate?tenant_id=demo&project_id=my-app&rule_name=My%20Reflection%20Rule&created_by=admin" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -426,7 +426,7 @@ curl -X POST "http://localhost:8000/v1/triggers/templates/auto_reflection/instan
 ### List Triggers
 
 ```bash
-curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&status_filter=active&limit=50" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&status_filter=active&limit=50" \
   -H "X-API-Key: your-key"
 ```
 
@@ -450,14 +450,14 @@ curl "http://localhost:8000/v1/triggers/list?tenant_id=demo&project_id=my-app&st
 ### Get Trigger Details
 
 ```bash
-curl http://localhost:8000/v1/triggers/{trigger_id} \
+curl http://localhost:8000/v2/triggers/{trigger_id} \
   -H "X-API-Key: your-key"
 ```
 
 ### Update Trigger
 
 ```bash
-curl -X PUT http://localhost:8000/v1/triggers/{trigger_id} \
+curl -X PUT http://localhost:8000/v2/triggers/{trigger_id} \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -473,18 +473,18 @@ curl -X PUT http://localhost:8000/v1/triggers/{trigger_id} \
 
 ```bash
 # Enable
-curl -X POST http://localhost:8000/v1/triggers/{trigger_id}/enable \
+curl -X POST http://localhost:8000/v2/triggers/{trigger_id}/enable \
   -H "X-API-Key: your-key"
 
 # Disable
-curl -X POST http://localhost:8000/v1/triggers/{trigger_id}/disable \
+curl -X POST http://localhost:8000/v2/triggers/{trigger_id}/disable \
   -H "X-API-Key: your-key"
 ```
 
 ### Delete Trigger
 
 ```bash
-curl -X DELETE http://localhost:8000/v1/triggers/{trigger_id} \
+curl -X DELETE http://localhost:8000/v2/triggers/{trigger_id} \
   -H "X-API-Key: your-key"
 ```
 
@@ -497,7 +497,7 @@ Monitor trigger executions to debug and optimize automation.
 ### Get Execution History
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/executions \
+curl -X POST http://localhost:8000/v2/triggers/executions \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -543,7 +543,7 @@ curl -X POST http://localhost:8000/v1/triggers/executions \
 
 ```bash
 # Get only failed executions
-curl -X POST http://localhost:8000/v1/triggers/executions \
+curl -X POST http://localhost:8000/v2/triggers/executions \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -560,7 +560,7 @@ curl -X POST http://localhost:8000/v1/triggers/executions \
 ### Example 1: Slack Alerts on Quality Degradation
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/create \
+curl -X POST http://localhost:8000/v2/triggers/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -593,7 +593,7 @@ curl -X POST http://localhost:8000/v1/triggers/create \
 ### Example 2: Scheduled Nightly Backup
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/create \
+curl -X POST http://localhost:8000/v2/triggers/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -623,7 +623,7 @@ curl -X POST http://localhost:8000/v1/triggers/create \
 ### Example 3: Multi-Action Compliance Workflow
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/workflows/create \
+curl -X POST http://localhost:8000/v2/triggers/workflows/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -739,7 +739,7 @@ Always test triggers with `status: "inactive"` first, then enable after verifica
 ### 5. Monitor Execution History
 Regularly check execution logs for failed actions:
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/executions \
+curl -X POST http://localhost:8000/v2/triggers/executions \
   -d '{"trigger_id": "...", "status_filter": "failed"}'
 ```
 
@@ -759,20 +759,20 @@ Start with templates for common patterns, then customize as needed.
 
 **Check 1**: Verify trigger is active
 ```bash
-curl http://localhost:8000/v1/triggers/{trigger_id}
+curl http://localhost:8000/v2/triggers/{trigger_id}
 # Check status: "active"
 ```
 
 **Check 2**: Verify event type matches
 ```bash
-curl http://localhost:8000/v1/triggers/events/types
+curl http://localhost:8000/v2/triggers/events/types
 # Ensure your event_type exists
 ```
 
 **Check 3**: Test conditions
 Emit test event with matching payload:
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/events/emit \
+curl -X POST http://localhost:8000/v2/triggers/events/emit \
   -d '{
     "event_type": "memory_created",
     "payload": {"memory_count": 105}
@@ -781,7 +781,7 @@ curl -X POST http://localhost:8000/v1/triggers/events/emit \
 
 **Check 4**: Review execution history
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/executions \
+curl -X POST http://localhost:8000/v2/triggers/executions \
   -d '{"trigger_id": "...", "limit": 10}'
 ```
 
@@ -799,7 +799,7 @@ curl -X POST http://localhost:8000/v1/triggers/executions \
 
 **Check action logs**:
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/executions \
+curl -X POST http://localhost:8000/v2/triggers/executions \
   -d '{"trigger_id": "...", "status_filter": "failed"}'
 ```
 
@@ -830,24 +830,24 @@ curl -X POST https://your-webhook-url.com/endpoint \
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/triggers/create` | POST | Create trigger |
-| `/v1/triggers/{trigger_id}` | GET | Get trigger |
-| `/v1/triggers/{trigger_id}` | PUT | Update trigger |
-| `/v1/triggers/{trigger_id}` | DELETE | Delete trigger |
-| `/v1/triggers/{trigger_id}/enable` | POST | Enable trigger |
-| `/v1/triggers/{trigger_id}/disable` | POST | Disable trigger |
-| `/v1/triggers/list` | GET | List triggers |
-| `/v1/triggers/events/emit` | POST | Emit event |
-| `/v1/triggers/events/types` | GET | List event types |
-| `/v1/triggers/executions` | POST | Get execution history |
-| `/v1/triggers/workflows/create` | POST | Create workflow |
-| `/v1/triggers/workflows/{workflow_id}` | GET | Get workflow |
-| `/v1/triggers/workflows` | GET | List workflows |
-| `/v1/triggers/templates` | GET | List templates |
-| `/v1/triggers/templates/{template_id}` | GET | Get template |
-| `/v1/triggers/templates/{template_id}/instantiate` | POST | Instantiate template |
-| `/v1/triggers/health` | GET | Health check |
-| `/v1/triggers/info` | GET | System info |
+| `/v2/triggers/create` | POST | Create trigger |
+| `/v2/triggers/{trigger_id}` | GET | Get trigger |
+| `/v2/triggers/{trigger_id}` | PUT | Update trigger |
+| `/v2/triggers/{trigger_id}` | DELETE | Delete trigger |
+| `/v2/triggers/{trigger_id}/enable` | POST | Enable trigger |
+| `/v2/triggers/{trigger_id}/disable` | POST | Disable trigger |
+| `/v2/triggers/list` | GET | List triggers |
+| `/v2/triggers/events/emit` | POST | Emit event |
+| `/v2/triggers/events/types` | GET | List event types |
+| `/v2/triggers/executions` | POST | Get execution history |
+| `/v2/triggers/workflows/create` | POST | Create workflow |
+| `/v2/triggers/workflows/{workflow_id}` | GET | Get workflow |
+| `/v2/triggers/workflows` | GET | List workflows |
+| `/v2/triggers/templates` | GET | List templates |
+| `/v2/triggers/templates/{template_id}` | GET | Get template |
+| `/v2/triggers/templates/{template_id}/instantiate` | POST | Instantiate template |
+| `/v2/triggers/health` | GET | Health check |
+| `/v2/triggers/info` | GET | System info |
 
 **Full API documentation**: [API_INDEX.md](../../reference/api/API_INDEX.md#event-triggers--workflows-18)
 

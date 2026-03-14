@@ -312,7 +312,7 @@ python scripts/map_affected_tests.py
 
 # Przykład mapowania:
 services/cache_service.py → tests/services/test_cache_service.py
-services/cache_service.py → tests/api/v1/test_cache.py (jeśli używa)
+services/cache_service.py → tests/api/v2/test_cache.py (jeśli używa)
 repositories/cache_repository.py → tests/repositories/test_cache_repository.py
 ```
 
@@ -435,7 +435,7 @@ make test-unit
 git diff --stat
 # apps/memory_api/services/cache/cache_service.py | 150 +++++
 # apps/memory_api/tests/services/cache/test_cache_service.py | 120 +++++
-# apps/memory_api/api/v1/cache.py | 80 +++++
+# apps/memory_api/api/v2/cache.py | 80 +++++
 # apps/memory_api/repositories/cache_repository.py | 100 +++++
 # 4 files changed, 450 insertions(+)
 
@@ -443,7 +443,7 @@ git diff --stat
 Change type: MEDIUM (4 files, 450 lines)
 
 # Testowanie (feature branch)
-pytest --testmon --no-cov tests/services/cache/ tests/api/v1/test_cache.py
+pytest --testmon --no-cov tests/services/cache/ tests/api/v2/test_cache.py
 # ✅ 30 tests, 2 minutes
 
 # Testowanie (develop)

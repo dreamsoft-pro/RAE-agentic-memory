@@ -21,7 +21,7 @@ Graph Enhanced Operations provide advanced knowledge graph capabilities beyond b
 ### 1. Create Nodes
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/nodes \
+curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -58,7 +58,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes \
 ### 2. Create Weighted, Temporal Edge
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges \
+curl -X POST http://localhost:8000/v2/graph-management/edges \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key": your-key" \
@@ -98,7 +98,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges \
 ### Create Node
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/nodes \
+curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -120,7 +120,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes \
 Analyze node connectivity:
 
 ```bash
-curl "http://localhost:8000/v1/graph-management/nodes/550e8400-e29b-41d4-a716-446655440000/metrics?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/graph-management/nodes/550e8400-e29b-41d4-a716-446655440000/metrics?tenant_id=demo&project_id=my-app" \
   -H "X-API-Key: your-key"
 ```
 
@@ -151,7 +151,7 @@ curl "http://localhost:8000/v1/graph-management/nodes/550e8400-e29b-41d4-a716-44
 ### Find Connected Nodes
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/nodes/connected \
+curl -X POST http://localhost:8000/v2/graph-management/nodes/connected \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -190,7 +190,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes/connected \
 ### Create Edge
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges \
+curl -X POST http://localhost:8000/v2/graph-management/edges \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -217,7 +217,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges \
 ### Update Edge Weight
 
 ```bash
-curl -X PUT http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/weight \
+curl -X PUT http://localhost:8000/v2/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/weight \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -229,7 +229,7 @@ curl -X PUT http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a
 ### Deactivate Edge (Soft Delete)
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/deactivate \
+curl -X POST http://localhost:8000/v2/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/deactivate \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -240,7 +240,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-
 ### Reactivate Edge
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/activate \
+curl -X POST http://localhost:8000/v2/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/activate \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{}'
@@ -251,7 +251,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-
 Define when an edge is valid:
 
 ```bash
-curl -X PUT http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/temporal \
+curl -X PUT http://localhost:8000/v2/graph-management/edges/770e8400-e29b-41d4-a716-446655440002/temporal \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -275,7 +275,7 @@ curl -X PUT http://localhost:8000/v1/graph-management/edges/770e8400-e29b-41d4-a
 Breadth-First Search explores layer by layer:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/traverse \
+curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -311,7 +311,7 @@ curl -X POST http://localhost:8000/v1/graph-management/traverse \
 Depth-First Search explores deep before wide:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/traverse \
+curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -329,7 +329,7 @@ curl -X POST http://localhost:8000/v1/graph-management/traverse \
 Apply filters during traversal:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/traverse \
+curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -350,7 +350,7 @@ curl -X POST http://localhost:8000/v1/graph-management/traverse \
 Traverse graph as it existed at a specific time:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/traverse \
+curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -379,7 +379,7 @@ curl -X POST http://localhost:8000/v1/graph-management/traverse \
 Find minimum weight path between two nodes:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/path/shortest \
+curl -X POST http://localhost:8000/v2/graph-management/path/shortest \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -422,7 +422,7 @@ curl -X POST http://localhost:8000/v1/graph-management/path/shortest \
 Find path valid at specific timestamp:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/path/shortest \
+curl -X POST http://localhost:8000/v2/graph-management/path/shortest \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -443,7 +443,7 @@ curl -X POST http://localhost:8000/v1/graph-management/path/shortest \
 Prevent circular dependencies:
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/cycles/detect \
+curl -X POST http://localhost:8000/v2/graph-management/cycles/detect \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -495,7 +495,7 @@ Version control for knowledge graphs.
 ### Create Snapshot
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/snapshots \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -525,14 +525,14 @@ curl -X POST http://localhost:8000/v1/graph-management/snapshots \
 ### List Snapshots
 
 ```bash
-curl "http://localhost:8000/v1/graph-management/snapshots?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/graph-management/snapshots?tenant_id=demo&project_id=my-app" \
   -H "X-API-Key: your-key"
 ```
 
 ### Get Snapshot Details
 
 ```bash
-curl http://localhost:8000/v1/graph-management/snapshots/990e8400-e29b-41d4-a716-446655440004 \
+curl http://localhost:8000/v2/graph-management/snapshots/990e8400-e29b-41d4-a716-446655440004 \
   -H "X-API-Key: your-key"
 ```
 
@@ -558,7 +558,7 @@ curl http://localhost:8000/v1/graph-management/snapshots/990e8400-e29b-41d4-a716
 ### Restore Snapshot
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/snapshots/990e8400-e29b-41d4-a716-446655440004/restore \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots/990e8400-e29b-41d4-a716-446655440004/restore \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -593,7 +593,7 @@ curl -X POST http://localhost:8000/v1/graph-management/snapshots/990e8400-e29b-4
 ### Get Statistics
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/statistics \
+curl -X POST http://localhost:8000/v2/graph-management/statistics \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -653,7 +653,7 @@ Create multiple nodes/edges efficiently.
 ### Batch Create Nodes
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
+curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -697,7 +697,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
 ### Batch Create Edges
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
+curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -731,7 +731,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
 
 ```bash
 # Create service nodes
-curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
+curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -747,7 +747,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes/batch \
   }'
 
 # Create dependencies
-curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
+curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -772,7 +772,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges/batch \
   }'
 
 # Detect circular dependencies
-curl -X POST http://localhost:8000/v1/graph-management/cycles/detect \
+curl -X POST http://localhost:8000/v2/graph-management/cycles/detect \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo" \
   -H "X-API-Key: your-key" \
@@ -788,7 +788,7 @@ curl -X POST http://localhost:8000/v1/graph-management/cycles/detect \
 
 ```bash
 # Create employee node
-curl -X POST http://localhost:8000/v1/graph-management/nodes \
+curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -d '{
     "tenant_id": "demo",
     "project_id": "hr",
@@ -798,7 +798,7 @@ curl -X POST http://localhost:8000/v1/graph-management/nodes \
   }'
 
 # Create reporting relationship valid for 6 months
-curl -X POST http://localhost:8000/v1/graph-management/edges \
+curl -X POST http://localhost:8000/v2/graph-management/edges \
   -d '{
     "tenant_id": "demo",
     "project_id": "hr",
@@ -810,7 +810,7 @@ curl -X POST http://localhost:8000/v1/graph-management/edges \
   }'
 
 # Query org chart as it was in March
-curl -X POST http://localhost:8000/v1/graph-management/traverse \
+curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -d '{
     "tenant_id": "demo",
     "project_id": "hr",
@@ -825,7 +825,7 @@ curl -X POST http://localhost:8000/v1/graph-management/traverse \
 
 ```bash
 # Before major update, create snapshot
-curl -X POST http://localhost:8000/v1/graph-management/snapshots \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -d '{
     "tenant_id": "demo",
     "project_id": "knowledge",
@@ -838,7 +838,7 @@ curl -X POST http://localhost:8000/v1/graph-management/snapshots \
 # (add/remove nodes and edges)
 
 # If something breaks, restore
-curl -X POST http://localhost:8000/v1/graph-management/snapshots/{snapshot-id}/restore \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots/{snapshot-id}/restore \
   -d '{
     "restore_mode": "replace",
     "create_backup": true
@@ -960,25 +960,25 @@ curl -X POST .../traverse \
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/graph-management/nodes` | POST | Create node |
-| `/v1/graph-management/nodes/{node_id}/metrics` | GET | Get node metrics |
-| `/v1/graph-management/nodes/connected` | POST | Find connected nodes |
-| `/v1/graph-management/edges` | POST | Create edge |
-| `/v1/graph-management/edges/{edge_id}/weight` | PUT | Update weight |
-| `/v1/graph-management/edges/{edge_id}/deactivate` | POST | Deactivate edge |
-| `/v1/graph-management/edges/{edge_id}/activate` | POST | Activate edge |
-| `/v1/graph-management/edges/{edge_id}/temporal` | PUT | Set temporal validity |
-| `/v1/graph-management/traverse` | POST | Traverse graph |
-| `/v1/graph-management/path/shortest` | POST | Find shortest path |
-| `/v1/graph-management/cycles/detect` | POST | Detect cycle |
-| `/v1/graph-management/snapshots` | POST | Create snapshot |
-| `/v1/graph-management/snapshots/{snapshot_id}` | GET | Get snapshot |
-| `/v1/graph-management/snapshots` | GET | List snapshots |
-| `/v1/graph-management/snapshots/{snapshot_id}/restore` | POST | Restore snapshot |
-| `/v1/graph-management/statistics` | POST | Get statistics |
-| `/v1/graph-management/nodes/batch` | POST | Batch create nodes |
-| `/v1/graph-management/edges/batch` | POST | Batch create edges |
-| `/v1/graph-management/health` | GET | Health check |
+| `/v2/graph-management/nodes` | POST | Create node |
+| `/v2/graph-management/nodes/{node_id}/metrics` | GET | Get node metrics |
+| `/v2/graph-management/nodes/connected` | POST | Find connected nodes |
+| `/v2/graph-management/edges` | POST | Create edge |
+| `/v2/graph-management/edges/{edge_id}/weight` | PUT | Update weight |
+| `/v2/graph-management/edges/{edge_id}/deactivate` | POST | Deactivate edge |
+| `/v2/graph-management/edges/{edge_id}/activate` | POST | Activate edge |
+| `/v2/graph-management/edges/{edge_id}/temporal` | PUT | Set temporal validity |
+| `/v2/graph-management/traverse` | POST | Traverse graph |
+| `/v2/graph-management/path/shortest` | POST | Find shortest path |
+| `/v2/graph-management/cycles/detect` | POST | Detect cycle |
+| `/v2/graph-management/snapshots` | POST | Create snapshot |
+| `/v2/graph-management/snapshots/{snapshot_id}` | GET | Get snapshot |
+| `/v2/graph-management/snapshots` | GET | List snapshots |
+| `/v2/graph-management/snapshots/{snapshot_id}/restore` | POST | Restore snapshot |
+| `/v2/graph-management/statistics` | POST | Get statistics |
+| `/v2/graph-management/nodes/batch` | POST | Batch create nodes |
+| `/v2/graph-management/edges/batch` | POST | Batch create edges |
+| `/v2/graph-management/health` | GET | Health check |
 
 **Full API documentation**: [API_INDEX.md](../../reference/api/API_INDEX.md#graph-enhanced-operations-19)
 

@@ -45,7 +45,7 @@ Extended with:
 
 ### 3. API Endpoints
 
-#### `apps/memory_api/api/v1/graph.py`
+#### `apps/memory_api/api/v2/graph.py`
 New router with comprehensive graph operations:
 
 **POST /v1/graph/extract**
@@ -83,10 +83,10 @@ New router with comprehensive graph operations:
 - Parameters: project_id, node_ids, depth
 - Returns: Nodes and edges in subgraph
 
-#### Enhanced `apps/memory_api/api/v1/memory.py`
+#### Enhanced `apps/memory_api/api/v2/memory.py`
 Extended existing endpoints:
 
-**POST /v1/memory/query** (Enhanced)
+**POST /v2/memories/query** (Enhanced)
 - Added hybrid search support
 - New parameters: use_graph, graph_depth, project
 - Returns include: synthesized_context, graph_statistics
@@ -291,7 +291,7 @@ curl -X POST http://localhost:8000/v1/graph/extract \
   -d '{"project_id": "proj", "limit": 50}'
 
 # Hybrid search
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "X-Tenant-ID: tenant" \
   -d '{"query_text": "bugs", "use_graph": true, "project": "proj"}'
 ```

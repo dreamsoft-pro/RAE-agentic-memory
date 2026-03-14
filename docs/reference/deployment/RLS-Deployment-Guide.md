@@ -173,13 +173,13 @@ grep "rls_context" /var/log/rae/memory-api.log | grep -E "WARNING|ERROR"
 **Test via API:**
 ```bash
 # Create memory as tenant 1
-curl -X POST http://localhost:8000/v1/memories \
+curl -X POST http://localhost:8000/v2/memories \
   -H "X-Tenant-ID: tenant-1" \
   -H "Content-Type: application/json" \
   -d '{"content": "Test memory for tenant 1"}'
 
 # Try to query as tenant 2 (should not see tenant 1 data)
-curl http://localhost:8000/v1/memories \
+curl http://localhost:8000/v2/memories \
   -H "X-Tenant-ID: tenant-2"
 ```
 

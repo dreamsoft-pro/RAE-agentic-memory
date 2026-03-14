@@ -224,7 +224,7 @@ result = await engine.process_event(event)
 ### Creating Triggers (via API)
 
 ```bash
-POST /v1/automation/triggers
+POST /v2/automation/triggers
 
 {
   "name": "Critical Memory Alert",
@@ -451,7 +451,7 @@ ActionExecution(
 
 **Query Execution History**:
 ```bash
-GET /v1/automation/executions?trigger_id=trg_001&limit=100
+GET /v2/automation/executions?trigger_id=trg_001&limit=100
 ```
 
 ## Best Practices

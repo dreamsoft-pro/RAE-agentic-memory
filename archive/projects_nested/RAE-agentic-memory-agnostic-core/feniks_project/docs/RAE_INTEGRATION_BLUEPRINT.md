@@ -1040,7 +1040,7 @@ Krok po kroku setup:
 
 - [ ] 7. **Verify RAE Storage**
   ```bash
-  curl http://localhost:8000/v1/memory/query \
+  curl http://localhost:8000/v2/memories/query \
     -H "Content-Type: application/json" \
     -d '{"query_text":"my-project","k":5}'
   ```

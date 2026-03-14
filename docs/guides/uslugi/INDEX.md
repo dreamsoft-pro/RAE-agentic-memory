@@ -102,7 +102,7 @@ Ten portal został stworzony specjalnie dla firm świadczących usługi profesjo
 
 ```python
 # Jednokrotna rejestracja kancelarii
-POST /api/v1/admin/tenants
+POST /api/v2/admin/tenants
 
 {
   "name": "Kancelaria Kowalski & Wspólnicy",
@@ -121,7 +121,7 @@ POST /api/v1/admin/tenants
 
 ```python
 # Nowa sprawa = nowy projekt
-POST /api/v1/projects
+POST /api/v2/projects
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -143,7 +143,7 @@ POST /api/v1/projects
 
 ```python
 # Wszystkie operacje automatycznie izolowane do projektu
-POST /api/v1/memories
+POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -187,7 +187,7 @@ SELECT * FROM memories WHERE tenant_id = 'kancelaria-kowalski'
 
 ```python
 # Próba dostępu do pamięci z innego projektu
-GET /api/v1/memories/mem-xyz-999
+GET /api/v2/memories/mem-xyz-999
 X-Tenant-ID: kancelaria-kowalski
 X-Project-ID: sprawa-2025-001
 
@@ -199,7 +199,7 @@ X-Project-ID: sprawa-2025-001
 
 ```python
 # Wyszukiwanie ZAWSZE ograniczone do projektu
-POST /api/v1/memories/search
+POST /api/v2/memories/search
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -272,10 +272,10 @@ data_retention:
 
 ```python
 # Usunięcie wszystkich danych osoby po zakończeniu sprawy
-DELETE /api/v1/tenants/{tenant_id}/projects/{project_id}/data-subjects/{subject_id}
+DELETE /api/v2/tenants/{tenant_id}/projects/{project_id}/data-subjects/{subject_id}
 
 # Przykład:
-DELETE /api/v1/tenants/kancelaria-kowalski/projects/sprawa-2025-001/data-subjects/jan-kowalski
+DELETE /api/v2/tenants/kancelaria-kowalski/projects/sprawa-2025-001/data-subjects/jan-kowalski
 
 # Usuwa:
 # - Wszystkie memories zawierające dane osoby
@@ -288,7 +288,7 @@ DELETE /api/v1/tenants/kancelaria-kowalski/projects/sprawa-2025-001/data-subject
 
 ```python
 # Eksport wszystkich danych klienta
-GET /api/v1/tenants/{tenant_id}/projects/{project_id}/export
+GET /api/v2/tenants/{tenant_id}/projects/{project_id}/export
 
 # Zwraca JSON z:
 # - Wszystkimi memories
@@ -314,7 +314,7 @@ GET /api/v1/tenants/{tenant_id}/projects/{project_id}/export
 
 ```python
 # Flaga "privileged" dla komunikacji chronionej
-POST /api/v1/memories
+POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -401,13 +401,13 @@ NOTIFY_BEFORE_DELETION_DAYS=30
 
 ```python
 # Raport wszystkich dostępów do sprawy
-GET /api/v1/admin/audit-logs?project_id=sprawa-2025-001&from=2025-01-01&to=2025-12-31
+GET /api/v2/admin/audit-logs?project_id=sprawa-2025-001&from=2025-01-01&to=2025-12-31
 
 # Raport dostępów konkretnego użytkownika
-GET /api/v1/admin/audit-logs?user_id=jan.nowak@kancelaria.pl
+GET /api/v2/admin/audit-logs?user_id=jan.nowak@kancelaria.pl
 
 # Eksport do CSV dla audytorów
-GET /api/v1/admin/audit-logs/export?format=csv&project_id=sprawa-2025-001
+GET /api/v2/admin/audit-logs/export?format=csv&project_id=sprawa-2025-001
 ```
 
 **Typowe pytania audytorów:**
@@ -436,7 +436,7 @@ AUDIT_LOG_ENCRYPTION=true      # Zaszyfrowane
 
 ```python
 # Projekt: baza-wiedzy (wspólny dla całej kancelarii)
-POST /api/v1/memories
+POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -453,7 +453,7 @@ POST /api/v1/memories
 }
 
 # Wyszukiwanie precedensów
-POST /api/v1/memories/search
+POST /api/v2/memories/search
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -477,7 +477,7 @@ events = [
 ]
 
 for event in events:
-    POST /api/v1/memories
+    POST /api/v2/memories
     {
         "tenant_id": "kancelaria-kowalski",
         "project_id": "sprawa-2025-001",
@@ -490,7 +490,7 @@ for event in events:
     }
 
 # Odtworzenie timeline
-GET /api/v1/memories?project_id=sprawa-2025-001&sort=metadata.date&type=case_event
+GET /api/v2/memories?project_id=sprawa-2025-001&sort=metadata.date&type=case_event
 ```
 
 ### Wykrywanie Konfliktów Interesów
@@ -499,7 +499,7 @@ GET /api/v1/memories?project_id=sprawa-2025-001&sort=metadata.date&type=case_eve
 
 ```python
 # Nowy potencjalny klient: Firma XYZ
-POST /api/v1/conflict-check
+POST /api/v2/conflict-check
 
 {
   "tenant_id": "kancelaria-kowalski",
@@ -531,7 +531,7 @@ POST /api/v1/conflict-check
 
 ```python
 # Analiza ryzyk wykrytych w trakcie audytu
-POST /api/v1/memories/search
+POST /api/v2/memories/search
 
 {
   "tenant_id": "firma-audit-abc",
@@ -544,7 +544,7 @@ POST /api/v1/memories/search
 }
 
 # Generowanie raportu ryzyk
-GET /api/v1/projects/{project_id}/risk-report
+GET /api/v2/projects/{project_id}/risk-report
 ```
 
 ### Raportowanie (dla Księgowych)
@@ -553,10 +553,10 @@ GET /api/v1/projects/{project_id}/risk-report
 
 ```python
 # Eksport wszystkich operacji księgowych
-GET /api/v1/projects/{project_id}/export?type=accounting_operations&format=xlsx
+GET /api/v2/projects/{project_id}/export?type=accounting_operations&format=xlsx
 
 # Filtrowanie per okres
-GET /api/v1/memories?project_id=klient-abc&from=2025-01-01&to=2025-03-31&type=transaction
+GET /api/v2/memories?project_id=klient-abc&from=2025-01-01&to=2025-03-31&type=transaction
 ```
 
 ## 🛠️ Instalacja i Konfiguracja
@@ -620,7 +620,7 @@ BACKUP_ENCRYPTION=true
 
 ```python
 # Dodanie prawnika do sprawy
-POST /api/v1/projects/{project_id}/access
+POST /api/v2/projects/{project_id}/access
 
 {
   "user_id": "jan.nowak@kancelaria.pl",
@@ -644,11 +644,11 @@ POST /api/v1/projects/{project_id}/access
 **Rozwiązanie:**
 1. Sprawdź czy masz dostęp do projektu:
    ```bash
-   GET /api/v1/users/me/projects
+   GET /api/v2/users/me/projects
    ```
 2. Poproś partnera o przyznanie dostępu:
    ```bash
-   POST /api/v1/projects/{project_id}/access
+   POST /api/v2/projects/{project_id}/access
    ```
 
 #### Problem: Conflict check zwraca false positive
@@ -659,7 +659,7 @@ POST /api/v1/projects/{project_id}/access
 **Rozwiązanie:**
 1. Sprawdź graf relacji:
    ```bash
-   GET /api/v1/graph/entities?name="Firma XYZ"
+   GET /api/v2/graph/entities?name="Firma XYZ"
    ```
 2. Zaktualizuj relacje jeśli są błędne
 3. Uruchom ponownie conflict check

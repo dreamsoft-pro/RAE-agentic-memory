@@ -1549,16 +1549,16 @@ apps/llm/providers/openai_provider.py                                           
 apps/llm/providers/qwen_provider.py                                               103     91    12%   44-51, 66-72, 80-83, 118-239, 255-324
 apps/memory_api/__init__.py                                                         0      0   100%
 apps/memory_api/api/__init__.py                                                     0      0   100%
-apps/memory_api/api/v1/__init__.py                                                  2      0   100%
-apps/memory_api/api/v1/agent.py                                                   110     88    20%   62-301
-apps/memory_api/api/v1/cache.py                                                     7      2    71%   14-15
-apps/memory_api/api/v1/compliance.py                                              330    229    31%   187-228, 244-280, 298-342, 363-414, 429-471, 486-507, 528-554, 571-608, 625-654, 681-704, 720-757, 776-805, 821-849
-apps/memory_api/api/v1/feedback.py                                                 17      5    71%   30-44
-apps/memory_api/api/v1/governance.py                                              168    116    31%   114-204, 228-360, 384-505
-apps/memory_api/api/v1/graph.py                                                   194    123    37%   153-195, 224-279, 303-366, 407-521, 550-600, 635-693, 725-795
-apps/memory_api/api/v1/health.py                                                  128    128     0%   7-353
-apps/memory_api/api/v1/memory.py                                                  191    157    18%   61-112, 127-176, 199-279, 294-356, 369-386, 394-404, 421-441, 483-553
-apps/memory_api/api/v1/system.py                                                   18      2    89%   29, 40
+apps/memory_api/api/v2/__init__.py                                                  2      0   100%
+apps/memory_api/api/v2/agent.py                                                   110     88    20%   62-301
+apps/memory_api/api/v2/cache.py                                                     7      2    71%   14-15
+apps/memory_api/api/v2/compliance.py                                              330    229    31%   187-228, 244-280, 298-342, 363-414, 429-471, 486-507, 528-554, 571-608, 625-654, 681-704, 720-757, 776-805, 821-849
+apps/memory_api/api/v2/feedback.py                                                 17      5    71%   30-44
+apps/memory_api/api/v2/governance.py                                              168    116    31%   114-204, 228-360, 384-505
+apps/memory_api/api/v2/graph.py                                                   194    123    37%   153-195, 224-279, 303-366, 407-521, 550-600, 635-693, 725-795
+apps/memory_api/api/v2/health.py                                                  128    128     0%   7-353
+apps/memory_api/api/v2/memory.py                                                  191    157    18%   61-112, 127-176, 199-279, 294-356, 369-386, 394-404, 421-441, 483-553
+apps/memory_api/api/v2/system.py                                                   18      2    89%   29, 40
 apps/memory_api/api/v2/__init__.py                                                  0      0   100%
 apps/memory_api/api/v2/memory.py                                                   81     81     0%   7-264
 apps/memory_api/celery_app.py                                                       4      0   100%
@@ -1748,7 +1748,7 @@ apps/memory_api/tests/adapters/test_redis.py                                    
 apps/memory_api/tests/adapters/test_redis_coverage.py                              88     60    32%   16-18, 23-27, 32-36, 41-45, 50-54, 59-63, 68-72, 77-83, 88-92, 97-101, 106-111, 116-121
 apps/memory_api/tests/adapters/test_redis_extra.py                                 71     56    21%   10-20, 25-36, 42-54, 59-83, 88-99, 104-117
 apps/memory_api/tests/api/__init__.py                                               0      0   100%
-apps/memory_api/tests/api/v1/test_federation.py                                    44     27    39%   21-36, 41-43, 51-68, 75-135
+apps/memory_api/tests/api/v2/test_federation.py                                    44     27    39%   21-36, 41-43, 51-68, 75-135
 apps/memory_api/tests/conftest.py                                                  83     55    34%   26-28, 34, 57, 62-65, 69, 73, 108-142, 161-178, 198-319, 334
 apps/memory_api/tests/core/__init__.py                                              0      0   100%
 apps/memory_api/tests/core/test_actions.py                                        201    140    30%   37-41, 47-53, 59-68, 74-82, 88-97, 103-111, 117-128, 134-144, 150-166, 172-181, 187-198, 204-214, 220-229, 235-243, 249-261, 267-279, 285-299, 305-315, 321-334, 340-353, 359-370, 376-388, 394-409, 415-423, 429-440, 446-460, 466-480, 486-495, 501-528

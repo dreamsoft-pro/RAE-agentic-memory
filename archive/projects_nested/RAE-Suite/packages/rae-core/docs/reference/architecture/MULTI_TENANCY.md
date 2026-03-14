@@ -56,7 +56,7 @@ async with pool.acquire() as conn:
 #### Via Header (Recommended)
 
 ```http
-GET /api/v1/memories
+GET /api/v2/memories
 X-Tenant-ID: 123e4567-e89b-12d3-a456-426614174000
 Authorization: Bearer <token>
 ```

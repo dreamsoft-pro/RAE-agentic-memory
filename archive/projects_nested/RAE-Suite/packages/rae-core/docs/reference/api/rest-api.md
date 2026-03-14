@@ -24,10 +24,10 @@ curl -H "Authorization: Bearer your-token"
 
 ### Store Memory
 
-**POST** `/v1/memory/store`
+**POST** `/v2/memories/store`
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -50,10 +50,10 @@ curl -X POST http://localhost:8000/v1/memory/store \
 
 ### Query Memory
 
-**POST** `/v1/memory/query`
+**POST** `/v2/memories/query`
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -85,10 +85,10 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 ### Delete Memory
 
-**DELETE** `/v1/memory/delete?memory_id={id}`
+**DELETE** `/v2/memories/delete?memory_id={id}`
 
 ```bash
-curl -X DELETE "http://localhost:8000/v1/memory/delete?memory_id=550e8400-e29b-41d4-a716-446655440000" \
+curl -X DELETE "http://localhost:8000/v2/memories/delete?memory_id=550e8400-e29b-41d4-a716-446655440000" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key"
 ```

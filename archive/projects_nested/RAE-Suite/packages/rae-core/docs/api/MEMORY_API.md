@@ -100,7 +100,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 2. Query Memory (Hybrid Search)
 
-**POST** `/v1/memory/query`
+**POST** `/v2/memories/query`
 
 ### Request Body
 

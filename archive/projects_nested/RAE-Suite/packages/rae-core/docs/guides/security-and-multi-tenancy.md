@@ -27,7 +27,7 @@ SECRET_KEY=your-secret-key-here
 
 **Usage:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "X-API-Key: your-secret-key-here" \
   -H "Content-Type: application/json" \
   -d '{...}'
@@ -59,7 +59,7 @@ OAUTH_AUDIENCE=https://your-api.com
 
 **Usage:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Authorization: Bearer eyJhbGciOi..." \
   -H "Content-Type: application/json" \
   -d '{...}'
@@ -85,7 +85,7 @@ RAE is built as a multi-tenant system from the ground up. Each tenant's data is 
 Every request must include a `X-Tenant-ID` header:
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha" \
   -H "Content-Type: application/json" \

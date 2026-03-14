@@ -54,15 +54,15 @@ async def store_memory(
 ```
 
 **Protected Endpoints**:
-- ✅ `/v1/memory/*` - All memory operations
-- ✅ `/v1/agent/*` - Agent execution
-- ✅ `/v1/governance/*` - Cost tracking & audits
-- ✅ `/v1/graph/*` - Knowledge graph operations
-- ✅ `/v1/cache/*` - Context cache management
+- ✅ `/v2/memory/*` - All memory operations
+- ✅ `/v2/agent/*` - Agent execution
+- ✅ `/v2/governance/*` - Cost tracking & audits
+- ✅ `/v2/graph/*` - Knowledge graph operations
+- ✅ `/v2/cache/*` - Context cache management
 
 **Code References**:
 - `apps/memory_api/security/dependencies.py:get_and_verify_tenant_id` - Tenant verification
-- `apps/memory_api/api/v1/` - All API routers use tenant guards
+- `apps/memory_api/api/v2/` - All API routers use tenant guards
 
 ---
 
@@ -168,7 +168,7 @@ async def get_overview(
   "event": "memory_accessed",
   "user_id": "uuid",
   "tenant_id": "uuid",
-  "resource": "/v1/memory/query",
+  "resource": "/v2/memory/query",
   "timestamp": "2025-11-28T10:00:00Z",
   "result": "success"
 }

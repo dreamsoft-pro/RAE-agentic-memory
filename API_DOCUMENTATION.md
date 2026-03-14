@@ -54,7 +54,7 @@ curl -H "X-Tenant-ID: your-tenant-id" \
 
 ## Memory API
 
-Base path: `/v1/memory`
+Base path: `/v2/memories`
 
 The Memory API provides core memory storage, retrieval, and management operations. It supports hybrid search combining vector similarity with knowledge graph traversal.
 
@@ -88,7 +88,7 @@ For configuration and implementation details, see:
 Store a new memory record in the system.
 
 ```http
-POST /v1/memory/store
+POST /v2/memories/store
 Content-Type: application/json
 X-Tenant-Id: tenant-1
 
@@ -122,7 +122,7 @@ X-Tenant-Id: tenant-1
 List memories with pagination support.
 
 ```http
-GET /v1/memory/list?limit=50&offset=0
+GET /v2/memories/list?limit=50&offset=0
 X-Tenant-Id: tenant-1
 ```
 
@@ -160,7 +160,7 @@ Query memories using vector search or hybrid search with graph traversal (GraphR
 
 **Standard Vector Search:**
 ```http
-POST /v1/memory/query
+POST /v2/memories/query
 Content-Type: application/json
 X-Tenant-Id: tenant-1
 
@@ -185,7 +185,7 @@ When `use_graph: true` is specified, the query endpoint performs **hybrid search
 4. Synthesizing comprehensive context from all sources
 
 ```http
-POST /v1/memory/query
+POST /v2/memories/query
 Content-Type: application/json
 X-Tenant-Id: tenant-1
 
@@ -238,7 +238,7 @@ X-Tenant-Id: tenant-1
 Delete a memory record by ID.
 
 ```http
-DELETE /v1/memory/delete?memory_id={memory_id}
+DELETE /v2/memories/delete?memory_id={memory_id}
 X-Tenant-Id: tenant-1
 ```
 
@@ -256,7 +256,7 @@ X-Tenant-Id: tenant-1
 Trigger background task to rebuild reflective memories for a project.
 
 ```http
-POST /v1/memory/rebuild-reflections
+POST /v2/memories/rebuild-reflections
 Content-Type: application/json
 
 {
@@ -279,7 +279,7 @@ Content-Type: application/json
 Get statistics about reflective memories in a project.
 
 ```http
-GET /v1/memory/reflection-stats?project=project-1
+GET /v2/memories/reflection-stats?project=project-1
 X-Tenant-Id: tenant-1
 ```
 
@@ -300,7 +300,7 @@ Generate hierarchical (map-reduce) summarization of episodic memories.
 This enterprise endpoint handles large numbers of episodes by recursively summarizing them using a map-reduce pattern, scaling to thousands of episodes without hitting context limits.
 
 ```http
-POST /v1/memory/reflection/hierarchical?project=project-1&bucket_size=10
+POST /v2/memories/reflection/hierarchical?project=project-1&bucket_size=10
 X-Tenant-Id: tenant-1
 ```
 
@@ -1735,7 +1735,7 @@ This documentation now accurately reflects the **complete** RAE Memory API v2.0 
 ### ✅ Implemented APIs (96 endpoints)
 
 **Core APIs:**
-- **Memory API** (6 endpoints) - `/v1/memory/*` - Core storage and retrieval
+- **Memory API** (6 endpoints) - `/v2/memories/*` - Core storage and retrieval
 - **Agent API** (1 endpoint) - `/v1/agent/execute` - Agent orchestration
 - **Graph API** (7 endpoints) - `/v1/graph/*` - Basic GraphRAG operations
 - **Cache API** (1 endpoint) - `/v1/cache/rebuild` - Cache management

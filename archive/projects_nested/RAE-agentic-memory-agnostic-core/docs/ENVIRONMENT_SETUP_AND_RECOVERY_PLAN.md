@@ -88,9 +88,9 @@ Po poprawnym skonfigurowaniu środowiska, uruchomienie testów (`.venv/bin/pytes
 ### Problem 3: Błąd Walidacji Pydantic (pole `layer`)
 
 -   **Błąd:** `pydantic_core.ValidationError` dla pola `layer` z wartością `'em'`.
--   **Przyczyna:** Test `test_agent_execute_happy_path` w `tests/api/v1/test_agent.py` próbuje utworzyć obiekt z nieprawidłową wartością dla pola `layer`, które jest enumem.
+-   **Przyczyna:** Test `test_agent_execute_happy_path` w `tests/api/v2/test_agent.py` próbuje utworzyć obiekt z nieprawidłową wartością dla pola `layer`, które jest enumem.
 -   **Plan Naprawy:**
-    1.  Otwórz plik `tests/api/v1/test_agent.py`.
+    1.  Otwórz plik `tests/api/v2/test_agent.py`.
     2.  Znajdź dane wejściowe dla testu.
     3.  Zmień wartość pola `layer` z `'em'` na jedną z dozwolonych wartości, np. `'episodic'` lub `'working'`.
 

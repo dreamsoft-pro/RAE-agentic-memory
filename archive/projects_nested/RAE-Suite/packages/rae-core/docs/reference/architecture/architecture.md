@@ -35,14 +35,14 @@ There are two main data flows in RAE: storing and querying memories.
 
 The process of storing a memory is as follows:
 
-1.  A client sends a `POST` request to the `/v1/memory/store` endpoint.
+1.  A client sends a `POST` request to the `/v2/memories/store` endpoint.
 2.  The request is authenticated and validated by the FastAPI application.
 3.  The content of the memory is sent to an embedding model to generate a vector embedding.
 4.  The memory, along with its metadata and vector embedding, is stored in the PostgreSQL database.
 5.  The vector embedding is also stored in the selected vector store (Qdrant or pgvector) for similarity searching.
 
 ```
-Client → POST /v1/memory/store → MemoryService
+Client → POST /v2/memories/store → MemoryService
   ├─ Pydantic model validation
   ├─ EmbeddingService.generate()
   ├─ Postgres.save(memory)
@@ -53,7 +53,7 @@ Client → POST /v1/memory/store → MemoryService
 
 The process of querying for memories is more complex and involves several steps:
 
-1.  A client sends a `POST` request to the `/v1/memory/query` endpoint.
+1.  A client sends a `POST` request to the `/v2/memories/query` endpoint.
 2.  The query is vectorized using the same embedding model.
 3.  The vector store is searched for the most similar memories.
 4.  (Optional) The retrieved memories are re-ranked by the `reranker-service` to improve relevance.
@@ -62,7 +62,7 @@ The process of querying for memories is more complex and involves several steps:
 7.  The final set of memories and any generated reflections are returned to the client.
 
 ```
-Client → POST /v1/memory/query → MemoryService
+Client → POST /v2/memories/query → MemoryService
   ├─ VectorStore.search()  (episodic/semantic)
   ├─ Reranker.rerank()     (optional)
   ├─ PIIScrubber.scrub()
@@ -114,7 +114,7 @@ Every memory retrieval operation automatically updates two critical tracking fie
 These fields are updated in batch operations for performance:
 
 ```
-Client → /v1/memory/query or /v1/agent/execute
+Client → /v2/memories/query or /v1/agent/execute
   ├─ VectorStore.search()
   ├─ Results returned to client
   └─ MemoryRepository.update_memory_access_stats(memory_ids[])
@@ -122,8 +122,8 @@ Client → /v1/memory/query or /v1/agent/execute
 ```
 
 **Tracked Operations:**
-- `/v1/memory/query` - Standard vector search
-- `/v1/memory/query` with `use_graph=true` - Hybrid GraphRAG search
+- `/v2/memories/query` - Standard vector search
+- `/v2/memories/query` with `use_graph=true` - Hybrid GraphRAG search
 - `/v1/agent/execute` - Agent execution with memory retrieval
 
 **Implementation:** The batch update uses PostgreSQL's `ANY` array operator to avoid N+1 queries:

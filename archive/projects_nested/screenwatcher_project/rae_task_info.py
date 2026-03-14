@@ -9,7 +9,7 @@ def query_task_types():
         "limit": 10
     }
     headers = {'X-Tenant-Id': 'screenwatcher', 'Content-Type': 'application/json'}
-    conn.request("POST", "/v1/memory/query", json.dumps(payload), headers)
+    conn.request("POST", "/v2/memories/query", json.dumps(payload), headers)
     print(conn.getresponse().read().decode())
 
 if __name__ == "__main__":

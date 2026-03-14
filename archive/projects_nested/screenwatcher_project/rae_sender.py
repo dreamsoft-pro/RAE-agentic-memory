@@ -14,7 +14,7 @@ def send_to_rae():
         'Content-Type': 'application/json'
     }
     try:
-        conn.request("POST", "/v1/memory/store", json.dumps(payload), headers)
+        conn.request("POST", "/v2/memories/store", json.dumps(payload), headers)
         res = conn.getresponse()
         data = res.read()
         print(data.decode("utf-8"))

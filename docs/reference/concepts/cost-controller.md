@@ -218,7 +218,7 @@ CREATE TABLE cost_logs (
 
 ```bash
 # Set monthly budget
-curl -X PUT http://localhost:8000/v1/budgets \
+curl -X PUT http://localhost:8000/v2/budgets \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha" \
@@ -232,7 +232,7 @@ curl -X PUT http://localhost:8000/v1/budgets \
 
 ```bash
 # Get budget status
-curl http://localhost:8000/v1/budgets/current \
+curl http://localhost:8000/v2/budgets/current \
   -H "X-Tenant-ID: acme-corp" \
   -H "X-Project-ID: project-alpha"
 ```

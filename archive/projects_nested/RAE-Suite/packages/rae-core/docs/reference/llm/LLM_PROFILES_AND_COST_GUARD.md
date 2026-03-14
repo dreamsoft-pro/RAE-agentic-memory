@@ -166,7 +166,7 @@ await cost_service.log_cost(
 When budget exceeded:
 
 ```http
-POST /api/v1/memories
+POST /api/v2/memories
 X-Tenant-ID: tenant-123
 ...
 

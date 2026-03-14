@@ -513,13 +513,13 @@
 │                                                                                                                                                                                      │
 │ {"detail":"Not Found"}                                                                                                                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ "Not Found"? To dziwne. W main.py router pamięci ma prefiks /v1. Sprawdzę plik apps/memory_api/api/v1/memory.py, aby upewnić się co do dokładnej ścieżki endpointu.
+✦ "Not Found"? To dziwne. W main.py router pamięci ma prefiks /v1. Sprawdzę plik apps/memory_api/api/v2/memory.py, aby upewnić się co do dokładnej ścieżki endpointu.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  ReadFile apps/memory_api/api/v1/memory.py                                                                                                                                         │
+│ ✓  ReadFile apps/memory_api/api/v2/memory.py                                                                                                                                         │
 │                                                                                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ Zagadka wyjaśniona: prefiks routera to /memory, a prefiks w main.py to /v1, więc poprawny endpoint to /v1/memory/store. Wcześniej błędnie próbowałem /v1/memories.
+✦ Zagadka wyjaśniona: prefiks routera to /memory, a prefiks w main.py to /v1, więc poprawny endpoint to /v2/memories/store. Wcześniej błędnie próbowałem /v1/memories.
 
   Dodatkowo endpoint wymaga uwierzytelnienia. Sprawdzę implementację auth.verify_token, aby upewnić się, czy w profilu dev (gdzie ENABLE_API_KEY_AUTH powinno być False) mogę pominąć
   klucz API.
@@ -552,7 +552,7 @@
 ✦ Muszę dodać nagłówek X-Tenant-Id: default-tenant. Ponawiam curl z poprawną ścieżką i nagłówkiem.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v1/memory/store \                                                                                        │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v2/memories/store \                                                                                        │
 │                                                                                                                                                                                      │
 │ {"error":{"code":"500","message":"Storage error: column \"info_class\" of relation \"memories\" does not exist"}}                                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -778,7 +778,7 @@
 ✦ Świetnie, kolumny info_class i governance są już na miejscu. Ponawiam test curl.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v1/memory/store \                                                                                        │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v2/memories/store \                                                                                        │
 │                                                                                                                                                                                      │
 │ {"id":"a1cb07f4-25e6-4f88-911f-8c68ee285d10","message":"Memory stored successfully."}                                                                                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -3229,7 +3229,7 @@
 ✦ System posiada już strukturę punktacji opartą na wagach α (similarity), β (importance) i γ (recency). Domyślne wagi to: α=0.5, β=0.3, γ=0.2.
 
   Implementacja Fazy 4 (Self-improvement) będzie polegać na:
-   1. Nowym punkcie końcowym (Endpoint) `/v1/memory/feedback`, który pozwoli użytkownikowi (lub agentowi) ocenić trafność wyniku wyszukiwania.
+   1. Nowym punkcie końcowym (Endpoint) `/v2/memories/feedback`, który pozwoli użytkownikowi (lub agentowi) ocenić trafność wyniku wyszukiwania.
    2. Serwisie `TuningService`, który będzie analizował feedback i korygował wagi dla danego tenanta/projektu.
    3. Dynamicznym wstrzykiwaniu wag w RAECoreService.query_memories.
 
@@ -3397,7 +3397,7 @@
   Zapytanie do RAE o "Self-improvement Phase 4".
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell curl -s -X POST "http://localhost:8001/v1/memory/query" \  -H "Content-Type: application/json" \  -H "X-API-Key: secret" \  -H "X-Tenant-Id: 00000000-0000-0000-0000-00000… │
+│ ✓  Shell curl -s -X POST "http://localhost:8001/v2/memories/query" \  -H "Content-Type: application/json" \  -H "X-API-Key: secret" \  -H "X-Tenant-Id: 00000000-0000-0000-0000-00000… │
 │                                                                                                                                                                                      │
 │ {"results":[{"id":"34d905b3-0380-490d-9c9c-21d1672fd8b0","tenant_id":"00000000-0000-0000-0000-000000000000","content":"Zakończono Fazę 2 (DB Extension) wdrożenia Smart Black Box.   │
 │ Baza posiada kolumny info_class i governance. Zdefiniowano manifest Agentic Patterns (docs/contracts/AGENTIC_PATTERNS_MANIFEST.md). Następny krok: Faza 3 - Enforcement & Logic w    │
@@ -3519,7 +3519,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ✦ Skrypt bootstrapowy potwierdza: "Use 'search_memory' or 'web_fetch' tools via MCP".
 
-  Jako że działam bezpośrednio w CLI, moje "narzędzie" search_memory to po prostu wywołanie curl do /v1/memory/query.
+  Jako że działam bezpośrednio w CLI, moje "narzędzie" search_memory to po prostu wywołanie curl do /v2/memories/query.
 
   Zaczynamy Fazę 4 (Self-improvement):
 
@@ -3764,16 +3764,16 @@
 │ 95           return False                                                                                                                                                            │
 │ 96 +                                                                                                                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ Muszę teraz zaktualizować endpoint w apps/memory_api/api/v1/feedback.py, aby przekazywał nowe pola do serwisu.
+✦ Muszę teraz zaktualizować endpoint w apps/memory_api/api/v2/feedback.py, aby przekazywał nowe pola do serwisu.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  ReadFile apps/memory_api/api/v1/feedback.py                                                                                                                                       │
+│ ✓  ReadFile apps/memory_api/api/v2/feedback.py                                                                                                                                       │
 │                                                                                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ Aktualizuję apps/memory_api/api/v1/feedback.py.
+✦ Aktualizuję apps/memory_api/api/v2/feedback.py.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Edit apps/memory_api/api/v1/feedback.py:     success = await service.pr... =>     success = await service.pr...                                                                   │
+│ ✓  Edit apps/memory_api/api/v2/feedback.py:     success = await service.pr... =>     success = await service.pr...                                                                   │
 │                                                                                                                                                                                      │
 │ 34       memory_id=feedback.memory_id,                                                                                                                                               │
 │ 35       feedback_type=feedback.feedback_type,                                                                                                                                       │
@@ -4151,7 +4151,7 @@
   Krok 1: Zapisanie pamięci testowej na Node1.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -X POST http://localhost:8001/v1/memory/store \  -H 'Content-Type: application/json' \  -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -X POST http://localhost:8001/v2/memories/store \  -H 'Content-Type: application/json' \  -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000… │
 │                                                                                                                                                                                      │
 │   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current                                                                                                       │
 │                                  Dload  Upload  Total   Spent   Left   Speed                                                                                                         │
@@ -4160,7 +4160,7 @@
 ✦ Krok 2: Wykonanie zapytania i odebranie ID pamięci.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -X POST http://localhost:8001/v1/memory/query \  -H 'Content-Type: application/json' \  -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -X POST http://localhost:8001/v2/memories/query \  -H 'Content-Type: application/json' \  -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000… │
 │                                                                                                                                                                                      │
 │   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current                                                                                                       │
 │                                  Dload  Upload  Total   Spent   Left   Speed                                                                                                         │
@@ -4547,7 +4547,7 @@
 ✦ Teraz wykonuję zapytanie i sprawdzam logi, czy RAECoreService załadował te wagi.
 
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v1/memory/query -H 'Content-Type: application/json' -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000000… │
+│ ✓  Shell ssh operator@100.68.166.117 "curl -s -X POST http://localhost:8001/v2/memories/query -H 'Content-Type: application/json' -H 'X-Tenant-Id: 00000000-0000-0000-0000-0000000000… │
 │                                                                                                                                                                                      │
 │ {"event": "HTTP Request: GET http://qdrant:6333/collections \"HTTP/1.1 200 OK\""}                                                                                                    │
 │ {"event": "overall_health_check_successful", "level": "info", "logger": "apps.memory_api.observability.health_checks", "timestamp": "2026-01-17T23:48:12.159359Z"}                   │
@@ -5218,7 +5218,7 @@
 │ Changes not staged for commit:                                                                                                                                                       │
 │   (use "git add <file>..." to update what will be committed)                                                                                                                         │
 │   (use "git restore <file>..." to discard changes in working directory)                                                                                                              │
-│         modified:   apps/memory_api/api/v1/feedback.py                                                                                                                               │
+│         modified:   apps/memory_api/api/v2/feedback.py                                                                                                                               │
 │         modified:   apps/memory_api/main.py                                                                                                                                          │
 │         modified:   apps/memory_api/models/feedback.py                                                                                                                               │
 │         modified:   apps/memory_api/services/feedback_service.py                                                                                                                     │
@@ -5241,7 +5241,7 @@
 │ Changes to be committed:                                                                                                                                                             │
 │   (use "git restore --staged <file>..." to unstage)                                                                                                                                  │
 │         new file:   alembic/versions/a8e446ca7f97_phase4_create_feedback_table.py                                                                                                    │
-│         modified:   apps/memory_api/api/v1/feedback.py                                                                                                                               │
+│         modified:   apps/memory_api/api/v2/feedback.py                                                                                                                               │
 │         modified:   apps/memory_api/main.py                                                                                                                                          │
 │         modified:   apps/memory_api/models/feedback.py                                                                                                                               │
 │         new file:   apps/memory_api/routes/tuning.py                                                                                                                                 │
@@ -6154,18 +6154,18 @@
 │ tests/__pycache__/conftest.cpython-312-pytest-9.0.2.pyc                                                                                                                              │
 │ tests/api/__pycache__/                                                                                                                                                               │
 │ tests/api/__pycache__/__init__.cpython-312.pyc                                                                                                                                       │
-│ tests/api/v1/__pycache__/                                                                                                                                                            │
-│ tests/api/v1/__pycache__/__init__.cpython-312.pyc                                                                                                                                    │
-│ tests/api/v1/__pycache__/test_agent.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
-│ tests/api/v1/__pycache__/test_cache.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
-│ tests/api/v1/__pycache__/test_dashboard.cpython-312-pytest-9.0.2.pyc                                                                                                                 │
-│ tests/api/v1/__pycache__/test_event_triggers.cpython-312-pytest-9.0.2.pyc                                                                                                            │
-│ tests/api/v1/__pycache__/test_governance.cpython-312-pytest-9.0.2.pyc                                                                                                                │
-│ tests/api/v1/__pycache__/test_graph.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
-│ tests/api/v1/__pycache__/test_graph_enhanced.cpython-312-pytest-9.0.2.pyc                                                                                                            │
-│ tests/api/v1/__pycache__/test_memory.cpython-312-pytest-9.0.2.pyc                                                                                                                    │
-│ tests/api/v1/__pycache__/test_memory_coverage.cpython-312-pytest-9.0.2.pyc                                                                                                           │
-│ tests/api/v1/__pycache__/test_search_hybrid.cpython-312-pytest-9.0.2.pyc                                                                                                             │
+│ tests/api/v2/__pycache__/                                                                                                                                                            │
+│ tests/api/v2/__pycache__/__init__.cpython-312.pyc                                                                                                                                    │
+│ tests/api/v2/__pycache__/test_agent.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
+│ tests/api/v2/__pycache__/test_cache.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
+│ tests/api/v2/__pycache__/test_dashboard.cpython-312-pytest-9.0.2.pyc                                                                                                                 │
+│ tests/api/v2/__pycache__/test_event_triggers.cpython-312-pytest-9.0.2.pyc                                                                                                            │
+│ tests/api/v2/__pycache__/test_governance.cpython-312-pytest-9.0.2.pyc                                                                                                                │
+│ tests/api/v2/__pycache__/test_graph.cpython-312-pytest-9.0.2.pyc                                                                                                                     │
+│ tests/api/v2/__pycache__/test_graph_enhanced.cpython-312-pytest-9.0.2.pyc                                                                                                            │
+│ tests/api/v2/__pycache__/test_memory.cpython-312-pytest-9.0.2.pyc                                                                                                                    │
+│ tests/api/v2/__pycache__/test_memory_coverage.cpython-312-pytest-9.0.2.pyc                                                                                                           │
+│ tests/api/v2/__pycache__/test_search_hybrid.cpython-312-pytest-9.0.2.pyc                                                                                                             │
 │ tests/architecture/__pycache__/                                                                                                                                                      │
 │ tests/architecture/__pycache__/__init__.cpython-312.pyc                                                                                                                              │
 │ tests/architecture/__pycache__/test_architecture.cpython-312-pytest-9.0.2.pyc                                                                                                        │
@@ -8916,10 +8916,10 @@
 │ apps/memory_api/main.py                                                                                                                                                              │
 │ apps/memory_api/__pycache__/                                                                                                                                                         │
 │ apps/memory_api/__pycache__/main.cpython-311.pyc                                                                                                                                     │
-│ apps/memory_api/api/v1/                                                                                                                                                              │
-│ apps/memory_api/api/v1/feedback.py                                                                                                                                                   │
-│ apps/memory_api/api/v1/__pycache__/                                                                                                                                                  │
-│ apps/memory_api/api/v1/__pycache__/feedback.cpython-311.pyc                                                                                                                          │
+│ apps/memory_api/api/v2/                                                                                                                                                              │
+│ apps/memory_api/api/v2/feedback.py                                                                                                                                                   │
+│ apps/memory_api/api/v2/__pycache__/                                                                                                                                                  │
+│ apps/memory_api/api/v2/__pycache__/feedback.cpython-311.pyc                                                                                                                          │
 │ apps/memory_api/models/                                                                                                                                                              │
 │ apps/memory_api/models/feedback.py                                                                                                                                                   │
 │ apps/memory_api/models/__pycache__/                                                                                                                                                  │

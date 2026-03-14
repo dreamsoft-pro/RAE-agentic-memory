@@ -15,7 +15,7 @@ def global_discovery():
         }
         headers = {'X-Tenant-Id': 'screenwatcher', 'Content-Type': 'application/json'}
         try:
-            conn.request("POST", "/v1/memory/query", json.dumps(payload), headers)
+            conn.request("POST", "/v2/memories/query", json.dumps(payload), headers)
             res = conn.getresponse()
             results[q] = json.loads(res.read().decode("utf-8"))
         except Exception as e:

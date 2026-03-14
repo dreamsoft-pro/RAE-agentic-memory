@@ -15,7 +15,7 @@ def set_unified_mandate():
         'Content-Type': 'application/json'
     }
     try:
-        conn.request("POST", "/v1/memory/store", json.dumps(payload), headers)
+        conn.request("POST", "/v2/memories/store", json.dumps(payload), headers)
         res = conn.getresponse()
         print(f"Unified mandate stored: {res.read().decode('utf-8')}")
     except Exception as e:

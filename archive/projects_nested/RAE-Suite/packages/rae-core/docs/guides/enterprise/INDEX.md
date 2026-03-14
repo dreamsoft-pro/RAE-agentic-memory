@@ -450,7 +450,7 @@ groups:
 
 ```python
 # Real-time LLM cost tracking
-GET /api/v1/admin/costs/llm?period=today
+GET /api/v2/admin/costs/llm?period=today
 
 {
   "total_usd": 245.67,
@@ -505,7 +505,7 @@ GET /api/v1/admin/costs/llm?period=today
 
 4. **Budget Limits** - Set per-tenant spending limits
    ```python
-   PUT /api/v1/admin/tenants/{tenant_id}/budget
+   PUT /api/v2/admin/tenants/{tenant_id}/budget
    {
      "monthly_limit_usd": 1000.00,
      "alert_threshold_pct": 80

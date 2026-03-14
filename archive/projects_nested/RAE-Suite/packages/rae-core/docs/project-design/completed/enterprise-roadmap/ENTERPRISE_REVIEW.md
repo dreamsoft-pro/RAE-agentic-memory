@@ -101,14 +101,14 @@ Line 91: ## 📝 Recent Changes  <- Duplicate (from edit mistake)
 **Recommended Fix:**
 ```bash
 # Option 1: Run tests locally (if deps available)
-pytest tests/api/v1/test_governance.py -v
-pytest tests/api/v1/test_search_hybrid.py -v
+pytest tests/api/v2/test_governance.py -v
+pytest tests/api/v2/test_search_hybrid.py -v
 
 # Option 2: Trigger CI pipeline
 git push origin main  # Will run GitHub Actions
 
 # Option 3: Minimal verification
-python3 -m pytest tests/api/v1/ --collect-only  # Just check collection
+python3 -m pytest tests/api/v2/ --collect-only  # Just check collection
 ```
 **Fix Time:** 15 minutes (local) or 5 minutes (CI)
 
@@ -144,7 +144,7 @@ docker compose -f docker compose.lite.yml up -d
 curl http://localhost:8000/health
 
 # Test 3: Smoke test
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-Id: test" \
   -d '{"content":"test","source":"test","layer":"em","importance":0.5}'

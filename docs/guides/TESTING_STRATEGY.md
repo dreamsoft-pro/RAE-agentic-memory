@@ -113,8 +113,8 @@ def test_core_layer_isolation():
 # tests/contracts/test_api_contracts.py
 @pytest.mark.contract
 def test_memory_store_response_schema(client):
-    """Ensure /v1/memory/store maintains response schema"""
-    response = client.post("/v1/memory/store", json={...})
+    """Ensure /v2/memory/store maintains response schema"""
+    response = client.post("/v2/memory/store", json={...})
     assert "id" in response.json()
     assert "created_at" in response.json()
     # Ensures backward compatibility

@@ -147,7 +147,7 @@ curl -X DELETE http://localhost:8001/projects/my-tenant-project-name
 │    - File change callbacks          │
 │    - RAE client integration         │
 └─────────────┬───────────────────────┘
-              │ HTTP POST /v1/memory/store
+              │ HTTP POST /v2/memories/store
               │
 ┌─────────────▼───────────────────────┐
 │    RAE Memory API                   │
@@ -180,7 +180,7 @@ When a file changes:
 
 1. **File Read**: Content is read from disk
 2. **Payload Creation**: File path, content, and metadata are packaged
-3. **RAE API Call**: `POST /v1/memory/store` with:
+3. **RAE API Call**: `POST /v2/memories/store` with:
    - `content`: File contents
    - `source`: File path
    - `layer`: `ltm` (long-term memory)

@@ -164,7 +164,7 @@ curl -X POST http://localhost:8000/v1/graph/extract \
 
 ### 2. Hybrid Search (Memory Query with Graph)
 
-**Endpoint:** `POST /v1/memory/query`
+**Endpoint:** `POST /v2/memories/query`
 
 Standard memory query extended with graph traversal capabilities.
 
@@ -204,7 +204,7 @@ Standard memory query extended with graph traversal capabilities.
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -365,7 +365,7 @@ import httpx
 
 # 1. Store episodic memories
 for event in events:
-    httpx.post("http://localhost:8000/v1/memory/store", json={
+    httpx.post("http://localhost:8000/v2/memories/store", json={
         "content": event,
         "layer": "em",
         "project": "my-project"
@@ -407,7 +407,7 @@ Use hybrid search to provide rich context to AI agents:
 user_query = "How does authentication work in our system?"
 
 # Perform hybrid search
-response = httpx.post("http://localhost:8000/v1/memory/query", json={
+response = httpx.post("http://localhost:8000/v2/memories/query", json={
     "query_text": user_query,
     "k": 10,
     "use_graph": True,

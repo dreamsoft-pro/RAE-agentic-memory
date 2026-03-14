@@ -38,7 +38,7 @@ providers:
     supports_tools: true
 
   qwen:
-    endpoint: https://dashscope.aliyuncs.com/api/v1
+    endpoint: https://dashscope.aliyuncs.com/api/v2
     api_key_env: QWEN_API_KEY
     max_context: 32000
     supports_streaming: true

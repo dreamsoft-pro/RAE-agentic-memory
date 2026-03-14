@@ -14,10 +14,10 @@ If you're using any of the following endpoints, please migrate to the new v1 API
 
 | Old Endpoint (Deprecated) | New Endpoint (v2.0.0-enterprise) | Status |
 |---------------------------|----------------------------------|--------|
-| `POST /memory/add` | `POST /v1/memories/create` | ❌ Deprecated |
-| `POST /memory/store` | `POST /v1/memories/create` | ❌ Deprecated |
-| `GET /memory/query` | `POST /v1/search/hybrid` | ❌ Deprecated |
-| `POST /memory/reflect` | `POST /v1/reflections/generate` | ❌ Deprecated |
+| `POST /memory/add` | `POST /v2/memories/create` | ❌ Deprecated |
+| `POST /memory/store` | `POST /v2/memories/create` | ❌ Deprecated |
+| `GET /memory/query` | `POST /v2/search/hybrid` | ❌ Deprecated |
+| `POST /memory/reflect` | `POST /v2/reflections/generate` | ❌ Deprecated |
 
 ---
 
@@ -35,7 +35,7 @@ If you're using any of the following endpoints, please migrate to the new v1 API
 ### POST /memory/add
 
 **Deprecated in:** v2.0.0-enterprise
-**Replaced by:** `POST /v1/memories/create`
+**Replaced by:** `POST /v2/memories/create`
 
 **Old Request:**
 ```json
@@ -58,7 +58,7 @@ If you're using any of the following endpoints, please migrate to the new v1 API
 **Migration:**
 ```json
 // New API (v2.0.0-enterprise)
-POST /v1/memories/create
+POST /v2/memories/create
 
 Request:
 {
@@ -83,18 +83,18 @@ Response:
 ### POST /memory/store
 
 **Deprecated in:** v2.0.0-enterprise
-**Replaced by:** `POST /v1/memories/create`
+**Replaced by:** `POST /v2/memories/create`
 
 This was an alias for `/memory/add` with identical behavior.
 
-**Migration:** Use `POST /v1/memories/create` (same as above)
+**Migration:** Use `POST /v2/memories/create` (same as above)
 
 ---
 
 ### GET /memory/query
 
 **Deprecated in:** v2.0.0-enterprise
-**Replaced by:** `POST /v1/search/hybrid`
+**Replaced by:** `POST /v2/search/hybrid`
 
 **Old Request:**
 ```bash
@@ -117,7 +117,7 @@ GET /memory/query?q=authentication&layer=semantic
 **Migration:**
 ```json
 // New API (v2.0.0-enterprise)
-POST /v1/search/hybrid
+POST /v2/search/hybrid
 
 Request:
 {
@@ -154,7 +154,7 @@ Response:
 ### POST /memory/reflect
 
 **Deprecated in:** v2.0.0-enterprise
-**Replaced by:** `POST /v1/reflections/generate`
+**Replaced by:** `POST /v2/reflections/generate`
 
 **Old Request:**
 ```json
@@ -175,7 +175,7 @@ Response:
 **Migration:**
 ```json
 // New API (v2.0.0-enterprise)
-POST /v1/reflections/generate
+POST /v2/reflections/generate
 
 Request:
 {
@@ -254,10 +254,10 @@ python scripts/migrate_to_v2.py --execute
 
 ### Manual Migration Checklist
 
-- [ ] Update all `/memory/add` calls to `/v1/memories/create`
-- [ ] Update all `/memory/store` calls to `/v1/memories/create`
-- [ ] Update all `/memory/query` calls to `/v1/search/hybrid`
-- [ ] Update all `/memory/reflect` calls to `/v1/reflections/generate`
+- [ ] Update all `/memory/add` calls to `/v2/memories/create`
+- [ ] Update all `/memory/store` calls to `/v2/memories/create`
+- [ ] Update all `/memory/query` calls to `/v2/search/hybrid`
+- [ ] Update all `/memory/reflect` calls to `/v2/reflections/generate`
 - [ ] Update layer names (episodic → em, working → wm, etc.)
 - [ ] Add tenant_id and project to all requests
 - [ ] Update error handling for new response format

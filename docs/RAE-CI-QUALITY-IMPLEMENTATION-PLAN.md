@@ -534,7 +534,7 @@ if __name__ == "__main__":
 Move flaky test to quarantine directory.
 
 Usage:
-  python quarantine_test.py tests/api/v1/test_cache.py::test_flaky_function
+  python quarantine_test.py tests/api/v2/test_cache.py::test_flaky_function
 
 Part of RAE CI Quality Implementation - Iteration 2: Zero Flake
 """
@@ -546,7 +546,7 @@ from datetime import datetime
 
 def quarantine_test(nodeid: str, reason: str = "flaky"):
     """Move test to quarantine based on nodeid."""
-    # Parse nodeid: tests/api/v1/test_cache.py::test_function
+    # Parse nodeid: tests/api/v2/test_cache.py::test_function
     parts = nodeid.split("::")
     file_path = Path(parts[0])
 
@@ -688,7 +688,7 @@ pytest tests/quarantine/ -v
 find tests/quarantine -name "test_*.py"
 
 # Run specific quarantined test
-pytest tests/quarantine/api/v1/test_cache.py::test_flaky -v
+pytest tests/quarantine/api/v2/test_cache.py::test_flaky -v
 ```
 
 ## Current Status
@@ -2195,7 +2195,7 @@ RAE-agentic-memory/
     quarantine/                   # NOWY - Iteracja 2
       __init__.py
       README.md
-      api/v1/
+      api/v2/
       services/
     architecture/                 # Istniejący
     contracts/                    # Istniejący

@@ -220,8 +220,8 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 |----------|---------------------|---------------------|---------------|
 | /health | ✅ | ✅ | ✅ |
 | /docs | ❌ | ✅ | ✅ |
-| /v1/memory/store | ✅ | ✅ | ✅ |
-| /v1/memory/query | ✅ | ✅ | ✅ |
+| /v2/memories/store | ✅ | ✅ | ✅ |
+| /v2/memories/query | ✅ | ✅ | ✅ |
 
 **Verdict:** ✅ **Consistent** (smoke test doesn't need /docs check)
 

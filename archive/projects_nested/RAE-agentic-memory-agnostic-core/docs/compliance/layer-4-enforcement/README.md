@@ -197,7 +197,7 @@ class PolicyEngine:
 ### Request Interception
 
 ```python
-@router.post("/v1/memory/store")
+@router.post("/v2/memories/store")
 async def store_memory(request: MemoryStoreRequest):
     # 1. Apply guardrails
     validation = await policy_engine.validate_input(request.content)

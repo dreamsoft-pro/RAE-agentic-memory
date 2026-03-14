@@ -31,7 +31,7 @@ RAE enforces this via `TenantContextMiddleware` and specific memory layers (`epi
 ## 2. RAE as an Orchestrator (Not Just a Database)
 
 A database is passive; it waits for queries. RAE is active.
-Through the **Agent API** (`/v1/agent/execute`), RAE acts as an Orchestrator.
+Through the **Agent API** (`/v2/agent/execute`), RAE acts as an Orchestrator.
 
 *   **Passive Usage:** You ask: *"Give me documents about Project X."* (Standard RAG)
 *   **Active Usage (RAE):** You ask: *"Plan the migration for Project X."*

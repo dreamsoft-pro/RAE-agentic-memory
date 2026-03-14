@@ -23,7 +23,7 @@ A potem:
 
 w main.py globalnie dodajesz Depends(auth.verify_token) – super,
 
-ale w api/v1/memory.py router ma jeszcze dependencies=[Depends(get_api_key)].
+ale w api/v2/memory.py router ma jeszcze dependencies=[Depends(get_api_key)].
 
 Czyli:
 
@@ -91,7 +91,7 @@ model i algorytm decay istnieją, ale są „zawieszone w próżni” – nie ma
 
 3.4. Governance endpointy bez twardych zależności auth
 
-apps/memory_api/api/v1/governance.py:
+apps/memory_api/api/v2/governance.py:
 
 router ma tylko:
 

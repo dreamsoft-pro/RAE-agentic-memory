@@ -13,7 +13,7 @@ def query_rae(project_name):
         'Content-Type': 'application/json'
     }
     try:
-        conn.request("POST", "/v1/memory/query", json.dumps(payload), headers)
+        conn.request("POST", "/v2/memories/query", json.dumps(payload), headers)
         res = conn.getresponse()
         return json.loads(res.read().decode("utf-8"))
     except Exception as e:
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             'X-Tenant-Id': 'screenwatcher',
             'Content-Type': 'application/json'
         }
-        conn.request("POST", "/v1/memory/store", json.dumps(store_payload), headers)
+        conn.request("POST", "/v2/memories/store", json.dumps(store_payload), headers)
         res = conn.getresponse()
         print(f"Consolidation result: {res.read().decode('utf-8')}")
     else:

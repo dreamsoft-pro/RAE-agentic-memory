@@ -24,10 +24,10 @@ curl -H "Authorization: Bearer your-token"
 
 ### Store Memory
 
-**POST** `/v1/memory/store`
+**POST** `/v2/memory/store`
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memory/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -50,10 +50,10 @@ curl -X POST http://localhost:8000/v1/memory/store \
 
 ### Query Memory
 
-**POST** `/v1/memory/query`
+**POST** `/v2/memory/query`
 
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memory/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -85,10 +85,10 @@ curl -X POST http://localhost:8000/v1/memory/query \
 
 ### Delete Memory
 
-**DELETE** `/v1/memory/delete?memory_id={id}`
+**DELETE** `/v2/memory/delete?memory_id={id}`
 
 ```bash
-curl -X DELETE "http://localhost:8000/v1/memory/delete?memory_id=550e8400-e29b-41d4-a716-446655440000" \
+curl -X DELETE "http://localhost:8000/v2/memory/delete?memory_id=550e8400-e29b-41d4-a716-446655440000" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key"
 ```
@@ -97,10 +97,10 @@ curl -X DELETE "http://localhost:8000/v1/memory/delete?memory_id=550e8400-e29b-4
 
 ### Extract Knowledge Graph
 
-**POST** `/v1/graph/extract`
+**POST** `/v2/graph/extract`
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph/extract \
+curl -X POST http://localhost:8000/v2/graph/extract \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -114,10 +114,10 @@ curl -X POST http://localhost:8000/v1/graph/extract \
 
 ### Query Knowledge Graph
 
-**POST** `/v1/graph/query`
+**POST** `/v2/graph/query`
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph/query \
+curl -X POST http://localhost:8000/v2/graph/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -133,10 +133,10 @@ curl -X POST http://localhost:8000/v1/graph/query \
 
 ### Get Graph Statistics
 
-**GET** `/v1/graph/stats?tenant_id=demo-tenant&project=my-app`
+**GET** `/v2/graph/stats?tenant_id=demo-tenant&project=my-app`
 
 ```bash
-curl http://localhost:8000/v1/graph/stats?tenant_id=demo-tenant&project=my-app \
+curl http://localhost:8000/v2/graph/stats?tenant_id=demo-tenant&project=my-app \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key"
 ```
@@ -145,10 +145,10 @@ curl http://localhost:8000/v1/graph/stats?tenant_id=demo-tenant&project=my-app \
 
 ### Execute Agent Task
 
-**POST** `/v1/agent/execute`
+**POST** `/v2/agent/execute`
 
 ```bash
-curl -X POST http://localhost:8000/v1/agent/execute \
+curl -X POST http://localhost:8000/v2/agent/execute \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -180,10 +180,10 @@ curl -X POST http://localhost:8000/v1/agent/execute \
 
 ### Hybrid Search
 
-**POST** `/v1/search/hybrid`
+**POST** `/v2/search/hybrid`
 
 ```bash
-curl -X POST http://localhost:8000/v1/search/hybrid \
+curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -224,10 +224,10 @@ curl -X POST http://localhost:8000/v1/search/hybrid \
 
 ### Create Event Trigger
 
-**POST** `/v1/triggers/create`
+**POST** `/v2/triggers/create`
 
 ```bash
-curl -X POST http://localhost:8000/v1/triggers/create \
+curl -X POST http://localhost:8000/v2/triggers/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -254,10 +254,10 @@ curl -X POST http://localhost:8000/v1/triggers/create \
 
 ### Generate Reflections
 
-**POST** `/v1/reflections/generate`
+**POST** `/v2/reflections/generate`
 
 ```bash
-curl -X POST http://localhost:8000/v1/reflections/generate \
+curl -X POST http://localhost:8000/v2/reflections/generate \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -272,10 +272,10 @@ curl -X POST http://localhost:8000/v1/reflections/generate \
 
 ### Evaluate Search Results
 
-**POST** `/v1/evaluation/search`
+**POST** `/v2/evaluation/search`
 
 ```bash
-curl -X POST http://localhost:8000/v1/evaluation/search \
+curl -X POST http://localhost:8000/v2/evaluation/search \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -297,10 +297,10 @@ curl -X POST http://localhost:8000/v1/evaluation/search \
 
 ### Create Graph Snapshot
 
-**POST** `/v1/graph-management/snapshots`
+**POST** `/v2/graph-management/snapshots`
 
 ```bash
-curl -X POST http://localhost:8000/v1/graph-management/snapshots \
+curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
@@ -367,10 +367,10 @@ curl http://localhost:8000/health/live
 
 ### Dashboard Real-time Updates
 
-**WS** `/v1/dashboard/ws`
+**WS** `/v2/dashboard/ws`
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/v1/dashboard/ws?tenant_id=demo-tenant&project_id=my-app');
+const ws = new WebSocket('ws://localhost:8000/v2/dashboard/ws?tenant_id=demo-tenant&project_id=my-app');
 
 ws.onopen = () => {
   console.log('Connected to dashboard');
@@ -386,20 +386,20 @@ ws.onmessage = (event) => {
 
 ### Get Tenant Governance Stats
 
-**GET** `/v1/governance/tenant/{tenant_id}`
+**GET** `/v2/governance/tenant/{tenant_id}`
 
 ```bash
-curl http://localhost:8000/v1/governance/tenant/demo-tenant \
+curl http://localhost:8000/v2/governance/tenant/demo-tenant \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key"
 ```
 
 ### Get Budget Status
 
-**GET** `/v1/governance/tenant/{tenant_id}/budget`
+**GET** `/v2/governance/tenant/{tenant_id}/budget`
 
 ```bash
-curl http://localhost:8000/v1/governance/tenant/demo-tenant/budget \
+curl http://localhost:8000/v2/governance/tenant/demo-tenant/budget \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key"
 ```

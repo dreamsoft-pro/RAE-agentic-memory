@@ -59,7 +59,7 @@ Use this JSON file to:
 RAE Memory API v2.0-enterprise provides:
 
 ### Core Features (v1)
-- **Memory Management** (`/v1/memory/*`) - Store, query, delete memories
+- **Memory Management** (`/v2/memories/*`) - Store, query, delete memories
 - **Agent Operations** (`/v1/agent/*`) - Execute agent tasks with memory context
 - **Knowledge Graphs** (`/v1/graph/*`) - Build and query GraphRAG knowledge graphs
 - **Cache Management** (`/v1/cache/*`) - Context cache operations
@@ -94,10 +94,10 @@ All endpoints (except health checks) require authentication:
 
 ```bash
 # API Key
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v1/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memories/query
 
 # JWT Bearer Token
-curl -H "Authorization: Bearer your-token" http://localhost:8000/v1/memory/query
+curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/memories/query
 ```
 
 ## Common Headers
@@ -113,7 +113,7 @@ curl -H "Authorization: Bearer your-token" http://localhost:8000/v1/memory/query
 
 ### Store Memory
 ```bash
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v2/memories/store \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
@@ -122,7 +122,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 
 ### Query Memory
 ```bash
-curl -X POST http://localhost:8000/v1/memory/query \
+curl -X POST http://localhost:8000/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \

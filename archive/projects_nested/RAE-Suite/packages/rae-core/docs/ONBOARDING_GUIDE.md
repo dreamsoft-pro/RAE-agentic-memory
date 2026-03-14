@@ -110,17 +110,17 @@ with proper tenant isolation.
 Implement 3-layer architecture:
 - PreferenceRepository (CRUD operations)
 - PreferenceService (validation, business rules)
-- API endpoints at /api/v1/users/preferences
+- API endpoints at /api/v2/users/preferences
 
 ## Architecture Impact
 - Layers affected: Repository, Service, API
 - New files:
   - apps/memory_api/repositories/preference_repository.py
   - apps/memory_api/services/preference_service.py
-  - apps/memory_api/api/v1/preferences.py
+  - apps/memory_api/api/v2/preferences.py
   - apps/memory_api/models/preference.py
 - Modified files:
-  - apps/memory_api/api/v1/__init__.py (register router)
+  - apps/memory_api/api/v2/__init__.py (register router)
 - Dependencies: None (uses existing asyncpg, Pydantic)
 
 ## Implementation Plan
@@ -134,12 +134,12 @@ Implement 3-layer architecture:
 ## Code Structure
 Repository: apps/memory_api/repositories/preference_repository.py
 Service: apps/memory_api/services/preference_service.py
-API: apps/memory_api/api/v1/preferences.py
+API: apps/memory_api/api/v2/preferences.py
 Models: apps/memory_api/models/preference.py
 Tests:
   - apps/memory_api/tests/repositories/test_preference_repository.py
   - apps/memory_api/tests/services/test_preference_service.py
-  - apps/memory_api/tests/api/v1/test_preferences.py
+  - apps/memory_api/tests/api/v2/test_preferences.py
 
 ## Testing Strategy
 - Unit tests: PreferenceService (mock repository)
@@ -277,7 +277,7 @@ git commit -m "feat: add user preferences management
 Implements 3-layer architecture for user preferences:
 - PreferenceRepository for data access
 - PreferenceService for business logic
-- API endpoints at /api/v1/users/preferences
+- API endpoints at /api/v2/users/preferences
 
 Includes:
 - CRUD operations with tenant isolation

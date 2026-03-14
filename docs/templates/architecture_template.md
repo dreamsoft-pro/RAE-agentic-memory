@@ -134,7 +134,7 @@ class EntityName(BaseModel):
 
 ### API Contracts
 
-#### Endpoint: `POST /api/v1/resource`
+#### Endpoint: `POST /api/v2/resource`
 
 **Request:**
 

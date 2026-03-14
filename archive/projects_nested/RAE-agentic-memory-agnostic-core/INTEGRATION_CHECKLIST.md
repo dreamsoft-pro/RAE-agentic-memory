@@ -65,7 +65,7 @@ Before merging to `develop` or `main`, verify ALL of these:
 #### 2.1 File Locations (PROJECT_STRUCTURE.md)
 - [ ] Repository files in `apps/memory_api/repositories/`
 - [ ] Service files in `apps/memory_api/services/`
-- [ ] API routes in `apps/memory_api/api/v1/`
+- [ ] API routes in `apps/memory_api/api/v2/`
 - [ ] Models in `apps/memory_api/models/`
 - [ ] Tests mirror source structure exactly
 - [ ] Test files named `test_<module_name>.py`
