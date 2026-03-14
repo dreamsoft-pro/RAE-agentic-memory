@@ -36,6 +36,7 @@ class StoreMemoryRequestV2(BaseModel):
     memory_type: str | None = "text"
     ttl: int | None = None
     metadata: dict[str, Any] | None = None
+    human_label: str | None = None
     agent_id: str | None = "default"
     info_class: str | None = "internal"
     governance: dict[str, Any] | None = None
@@ -69,6 +70,7 @@ class MemoryResult(BaseModel):
     timestamp: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+    human_label: str | None = None
 
 
 class QueryMemoryResponseV2(BaseModel):
@@ -120,6 +122,7 @@ async def store_memory(
                 memory_type=request.memory_type,
                 ttl=request.ttl,
                 metadata=request.metadata,
+                human_label=request.human_label,
             )
             return StoreMemoryResponseV2(memory_id=memory_id)
         except Exception as e:

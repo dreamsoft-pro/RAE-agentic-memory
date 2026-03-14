@@ -552,7 +552,7 @@ class RAECoreService:
                     "security_policy_violation",
                     reason="RESTRICTED data blocked outside Working layer",
                     layer=layer_value,
-                    info_class=info_class,
+                    info_class=info_class, human_label=human_label,
                 )
                 raise SecurityPolicyViolationError(
                     f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
@@ -566,7 +566,7 @@ class RAECoreService:
                     "security_policy_violation",
                     reason="CONFIDENTIAL data blocked from Semantic layer",
                     layer=layer_value,
-                    info_class=info_class,
+                    info_class=info_class, human_label=human_label,
                 )
                 raise SecurityPolicyViolationError(
                     f"Security Policy Violation: CONFIDENTIAL data cannot be promoted to {layer_value} layer."
@@ -664,8 +664,9 @@ class RAECoreService:
         memory_type: Optional[str] = None,
         ttl: Optional[int] = None,
         info_class: str = "internal",
-        governance: Optional[dict] = None,
         metadata: Optional[dict] = None,
+        governance: Optional[dict] = None,
+        human_label: Optional[str] = None,
         agent_id: Optional[str] = None,
     ) -> str:
         """
@@ -762,7 +763,7 @@ class RAECoreService:
             memory_type=memory_type or "text",
             ttl=ttl,
             source=source,
-            info_class=info_class,
+            info_class=info_class, human_label=human_label,
             governance=governance,
         )
 
