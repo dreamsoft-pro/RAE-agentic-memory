@@ -22,6 +22,20 @@ class RAE_Enterprise_Foundation:
         self.project_name = RAEContextLocator.get_project_name()
         self.bridge = RAEMemoryBridge(project_name=module_name)
 
+    def verify_contract(self, operation_name: str, payload: Any):
+        """Hardware-coded validation of Hard Frames and Security Contracts."""
+        forbidden_patterns = ["vim", "nano", "ssh", "ftp", "htop"]
+        
+        # 1. No Interactive Commands Check
+        payload_str = str(payload).lower()
+        for pattern in forbidden_patterns:
+            if pattern in payload_str:
+                error_msg = f"CONTRACT VIOLATION: Forbidden interactive pattern '{pattern}' detected in {operation_name}."
+                self.logger.error(error_msg)
+                raise FatalEnterpriseError(error_msg)
+        
+        return True
+
 def audited_operation(operation_name: str, impact_level: str = "low"):
     """Decorator for auditing agentic operations with automatic context tracking."""
     def decorator(func: Callable):
@@ -55,6 +69,9 @@ async def _execute_with_audit(func, self_instance, op_name, impact, is_async, *a
     )
 
     try:
+        # Pre-execution Contract Validation
+        foundation.verify_contract(op_name, {"args": args, "kwargs": kwargs})
+        
         if is_async:
             result = await func(self_instance, *args, **kwargs)
         else:
