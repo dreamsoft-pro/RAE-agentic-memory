@@ -60,6 +60,7 @@ services:
       - rae-internal
 
   rae-api-dev:
+    build: .
     image: rae-memory:latest
     container_name: rae-api-dev
     restart: unless-stopped
@@ -98,9 +99,10 @@ services:
         condition: service_started
 
   rae-worker:
+    build: .
     image: rae-memory:latest
     container_name: rae-worker
-    command: bash -c "pip install --no-cache-dir mysql-connector-python && celery -A apps.memory_api.celery_app worker --loglevel=info"
+    command: bash -c "celery -A apps.memory_api.celery_app worker --loglevel=info"
     restart: unless-stopped
     environment:
       - PYTHONPATH=/app

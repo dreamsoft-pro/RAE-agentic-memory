@@ -17,3 +17,4 @@
 
 # For development, also install:
 # -r requirements-test.txt
+mysql-connector-python
