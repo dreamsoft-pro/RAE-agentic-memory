@@ -62,3 +62,7 @@ psycopg2-binary>=2.9.0
 # Native ONNX Support (Lightweight Embeddings)
 onnxruntime-gpu
 tokenizers>=0.15.0
+mysql-connector-python>=8.0.33
+psutil>=5.9.0
+mysql-connector-python>=8.0.33
+psutil>=5.9.0
