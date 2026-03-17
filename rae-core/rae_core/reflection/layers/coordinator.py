@@ -106,32 +106,38 @@ class ReflectionCoordinator:
                 }
             )
             
-            # Hybrid Vector Storage Support
+            # Hybrid Vector Storage Support - Executed in background to avoid DB locks
             if result["l4_cognitive"].get("status") == "success":
+                import asyncio
                 insight = result["l4_cognitive"]["insight"]
                 lesson_content = f"LESSON LEARNED: {insight['lesson']}"
                 
-                if store_callback:
-                    # Use the RAE-First Vectored Storage (Hybrid Search compatible)
-                    await store_callback(
-                        content=lesson_content,
-                        layer="reflective",
-                        tenant_id=tenant_id,
-                        agent_id=agent_id or "l4_sage",
-                        tags=insight.get("tags", []) + ["l4_lesson"],
-                        metadata={"confidence": insight.get("confidence"), "origin": "l4_cognitive"},
-                        project=payload.get("metadata", {}).get("project")
-                    )
-                else:
-                    # Fallback to SQL-only if no callback provided
-                    await self.storage.store_memory(
-                        content=lesson_content,
-                        layer="reflective",
-                        tenant_id=tenant_id,
-                        agent_id=agent_id or "l4_sage",
-                        tags=insight.get("tags", []) + ["l4_lesson"],
-                        metadata={"confidence": insight.get("confidence"), "origin": "l4_cognitive"},
-                        project=payload.get("metadata", {}).get("project")
-                    )
+                # Background storage task
+                async def store_lesson():
+                    try:
+                        if store_callback:
+                            await store_callback(
+                                content=lesson_content,
+                                layer="reflective",
+                                tenant_id=tenant_id,
+                                agent_id=agent_id or "l4_sage",
+                                tags=insight.get("tags", []) + ["l4_lesson"],
+                                metadata={"confidence": insight.get("confidence"), "origin": "l4_cognitive"},
+                                project=payload.get("metadata", {}).get("project")
+                            )
+                        else:
+                            await self.storage.store_memory(
+                                content=lesson_content,
+                                layer="reflective",
+                                tenant_id=tenant_id,
+                                agent_id=agent_id or "l4_sage",
+                                tags=insight.get("tags", []) + ["l4_lesson"],
+                                metadata={"confidence": insight.get("confidence"), "origin": "l4_cognitive"},
+                                project=payload.get("metadata", {}).get("project")
+                            )
+                    except Exception as e:
+                        logger.warning("failed_to_store_l4_lesson", error=str(e))
+
+                asyncio.create_task(store_lesson())
             
         return result
