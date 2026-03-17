@@ -16,6 +16,10 @@ from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services import pii_scrubber
 from apps.memory_api.services.rae_core_service import RAECoreService
+from rae_core.exceptions.base import (
+    ContractViolationError,
+    SecurityPolicyViolationError,
+)
 
 router = APIRouter(prefix="/v2/memories", tags=["Memory v2 (RAE-Core)"])
 logger = structlog.get_logger(__name__)
@@ -125,6 +129,9 @@ async def store_memory(
                 human_label=request.human_label,
             )
             return StoreMemoryResponseV2(memory_id=memory_id)
+        except (SecurityPolicyViolationError, ContractViolationError) as e:
+            logger.warning("memory_action_blocked", error=str(e), tenant_id=tenant_id)
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
             raise HTTPException(status_code=500, detail=str(e))
@@ -173,6 +180,7 @@ async def query_memories(
                         timestamp=ts,
                         tags=getattr(res, "tags", []),
                         metadata=getattr(res, "metadata", {}),
+                        human_label=getattr(res, "human_label", None),
                     )
                 )
 
@@ -207,12 +215,11 @@ async def list_memories(
             layer=layer,
         )
 
-        # Apply manual sort if needed (since underlying storage might not support it yet)
+        # Apply manual sort if needed
         if sort:
             try:
                 field, direction = sort.split(":")
                 reverse = direction.lower() == "desc"
-                # Map 'created_at' to 'timestamp' or use the field as is
                 sort_field = "created_at" if field == "created_at" else field
                 memories.sort(
                     key=lambda x: x.get(sort_field) or "", reverse=reverse
@@ -226,23 +233,17 @@ async def list_memories(
             if isinstance(metadata_val, str):
                 try:
                     import json
-
                     metadata_val = json.loads(metadata_val)
                 except Exception:
                     metadata_val = {}
 
-            # Handle created_at formatting
             ts = m.get("created_at")
             if hasattr(ts, "isoformat"):
                 ts = ts.isoformat()
 
             results.append(
                 MemoryResult(
-                    id=(
-                        m.get("id")
-                        if isinstance(m.get("id"), str)
-                        else str(m.get("id"))
-                    ),
+                    id=str(m.get("id")),
                     content=m.get("content", ""),
                     score=1.0,
                     layer=m.get("layer", "semantic"),
@@ -250,6 +251,7 @@ async def list_memories(
                     timestamp=ts,
                     tags=m.get("tags", []),
                     metadata=metadata_val,
+                    human_label=m.get("human_label"),
                 )
             )
 
@@ -258,6 +260,92 @@ async def list_memories(
         )
     except Exception as e:
         logger.error("list_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/stats")
+async def get_statistics(
+    project: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Get memory statistics across all layers."""
+    try:
+        stats = await rae_service.get_statistics(
+            tenant_id=str(tenant_id),
+            project=project,
+        )
+        return {"statistics": stats}
+    except Exception as e:
+        logger.error("get_statistics_failed", error=str(e), tenant_id=tenant_id)
+        raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
+
+
+@router.post("/consolidate")
+async def consolidate_memories(
+    project: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Trigger memory consolidation across layers."""
+    try:
+        results = await rae_service.consolidate_memories(
+            tenant_id=str(tenant_id),
+            project=project,
+        )
+        return {"message": "Consolidation completed", "results": results}
+    except Exception as e:
+        logger.error("consolidate_failed", error=str(e), tenant_id=tenant_id)
+        raise HTTPException(status_code=500, detail=f"Failed to consolidate: {str(e)}")
+
+
+@router.post("/reflections")
+async def generate_reflections(
+    project: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Generate reflections from memory patterns."""
+    try:
+        reflections = await rae_service.generate_reflections(
+            tenant_id=str(tenant_id),
+            project=project,
+        )
+        return {
+            "message": "Reflections generated",
+            "count": len(reflections),
+            "reflections": [
+                {
+                    "id": cast(Any, r).id,
+                    "content": cast(Any, r).content,
+                    "importance": cast(Any, r).importance,
+                    "tags": cast(Any, r).tags or [],
+                }
+                for r in reflections
+            ],
+        }
+    except Exception as e:
+        logger.error("generate_reflections_failed", error=str(e), tenant_id=tenant_id)
+        raise HTTPException(status_code=500, detail=f"Failed to generate reflections: {str(e)}")
+
+
+@router.get("/sessions/{session_id}")
+async def get_session_context(
+    session_id: str,
+    limit: int = Query(50, ge=1, le=1000),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Retrieves all memories associated with a specific session."""
+    try:
+        memories = await rae_service.get_session_context(
+            session_id=session_id,
+            tenant_id=str(tenant_id),
+            limit=limit,
+        )
+        return {"session_id": session_id, "memories": memories}
+    except Exception as e:
+        logger.error("get_session_context_failed", session_id=session_id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -273,17 +361,14 @@ async def get_memory(
         if not memory:
             raise HTTPException(status_code=404, detail="Memory not found")
 
-        # Handle stringified metadata from database
         metadata_val = memory.get("metadata", {})
         if isinstance(metadata_val, str):
             try:
                 import json
-
                 metadata_val = json.loads(metadata_val)
             except Exception:
                 metadata_val = {}
 
-        # Handle timestamp
         ts = memory.get("created_at")
         if hasattr(ts, "isoformat"):
             ts = ts.isoformat()
@@ -297,6 +382,7 @@ async def get_memory(
             timestamp=ts,
             tags=memory.get("tags", []),
             metadata=metadata_val,
+            human_label=memory.get("human_label"),
         )
     except HTTPException:
         raise
@@ -322,112 +408,3 @@ async def delete_memory(
     except Exception as e:
         logger.error("delete_memory_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/sessions/{session_id}")
-async def get_session_context(
-    session_id: str,
-    limit: int = Query(50, ge=1, le=1000),
-    tenant_id: UUID = Depends(get_and_verify_tenant_id),
-    rae_service: RAECoreService = Depends(get_rae_core_service),
-):
-    """Retrieves all memories associated with a specific session."""
-    try:
-        memories = await rae_service.get_session_context(
-            session_id=session_id,
-            tenant_id=str(tenant_id),
-            limit=limit,
-        )
-        return {"session_id": session_id, "memories": memories}
-    except Exception as e:
-        logger.error("get_session_context_failed", session_id=session_id, error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/consolidate")
-async def consolidate_memories(
-    project: str,
-    tenant_id: UUID = Depends(get_and_verify_tenant_id),
-    rae_service: RAECoreService = Depends(get_rae_core_service),
-):
-    """
-    Trigger memory consolidation across layers.
-    """
-    try:
-        results = await rae_service.consolidate_memories(
-            tenant_id=str(tenant_id),
-            project=project,
-        )
-
-        return {
-            "message": "Consolidation completed",
-            "results": results,
-        }
-
-    except Exception as e:
-        logger.error("consolidate_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to consolidate: {str(e)}"
-        ) from e
-
-
-@router.post("/reflections")
-async def generate_reflections(
-    project: str,
-    tenant_id: UUID = Depends(get_and_verify_tenant_id),
-    rae_service: RAECoreService = Depends(get_rae_core_service),
-):
-    """
-    Generate reflections from memory patterns.
-    """
-    try:
-        reflections = await rae_service.generate_reflections(
-            tenant_id=str(tenant_id),
-            project=project,
-        )
-
-        return {
-            "message": "Reflections generated",
-            "count": len(reflections),
-            "reflections": [
-                {
-                    "id": cast(Any, r).id,
-                    "content": cast(Any, r).content,
-                    "importance": cast(Any, r).importance,
-                    "tags": cast(Any, r).tags or [],
-                }
-                for r in reflections
-            ],
-        }
-
-    except Exception as e:
-        logger.error("generate_reflections_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate reflections: {str(e)}"
-        ) from e
-
-
-@router.get("/stats")
-async def get_statistics(
-    project: str,
-    tenant_id: UUID = Depends(get_and_verify_tenant_id),
-    rae_service: RAECoreService = Depends(get_rae_core_service),
-):
-    """
-    Get memory statistics across all layers.
-    """
-    try:
-        stats = await rae_service.get_statistics(
-            tenant_id=str(tenant_id),
-            project=project,
-        )
-
-        return {
-            "statistics": stats,
-        }
-
-    except Exception as e:
-        logger.error("get_statistics_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get statistics: {str(e)}"
-        ) from e
