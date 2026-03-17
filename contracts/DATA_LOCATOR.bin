@@ -1,16 +1,3 @@
-[MANDATORY DATA LOCATOR CONTRACT v1.0]
---------------------------------------------------
-MASTER_NODE: Node 1 (Lumina)
-DOCKER_ROOT: /mnt/extra_storage/docker-data
---------------------------------------------------
-PRIMARY_VOLUMES (Do NOT change or point elsewhere):
-- POSTGRES_DATA: rae-node-agent_postgres_data (1GB production memories)
-- QDRANT_DATA: rae-agentic-memory_qdrant_data (Vector storage)
-- REDIS_DATA: rae-agentic-memory_redis_data (Sync & Cache)
-- STATIC_DATA: /mnt/extra_storage/dreamsoft_factory/data (14GB assets)
-- LLM_MODELS: /home/ollama_storage (534GB capacity)
---------------------------------------------------
-VERIFICATION RULE: 
-Before any "docker compose up", agent MUST verify that RAE-Suite/docker-compose.yml 
-points EXACTLY to these volume names.
---------------------------------------------------
+version https://git-lfs.github.com/spec/v1
+oid sha256:99168c180944b9e4d84b2859b8063d2a64d723ed28409ca3047d71bd306adfd6
+size 828

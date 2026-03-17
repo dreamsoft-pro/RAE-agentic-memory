@@ -1,0 +1,7 @@
+nicegui
+httpx
+pypdf
+structlog
+python-dotenv
+trafilatura
+beautifulsoup4
