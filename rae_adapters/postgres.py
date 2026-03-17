@@ -221,6 +221,38 @@ class PostgreSQLStorage(IMemoryStorage):
             rows = await conn.fetch(sql, *params)
         return [self._row_to_dict(r) for r in rows if r]
 
+    async def store_reflection_audit(
+        self,
+        query_id: str,
+        tenant_id: str,
+        agent_id: str | None,
+        fsi_score: float,
+        final_decision: str,
+        l1_report: dict,
+        l2_report: dict,
+        l3_report: dict,
+        metadata: dict | None = None
+    ) -> bool:
+        pool = await self._get_pool()
+        sql = """
+            INSERT INTO reflection_audits (
+                id, query_id, tenant_id, agent_id, fsi_score, final_decision, 
+                l1_report, l2_report, l3_report, metadata
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        """
+        try:
+            async with pool.acquire() as conn:
+                await conn.execute(
+                    sql,
+                    uuid4(), query_id, tenant_id, agent_id, fsi_score, final_decision,
+                    json.dumps(l1_report), json.dumps(l2_report), json.dumps(l3_report),
+                    json.dumps(metadata or {})
+                )
+            return True
+        except Exception as e:
+            # We don't use logger here to keep adapter pure, but we could
+            return False
+
     async def close(self) -> None:
         if self._pool:
             await self._pool.close()

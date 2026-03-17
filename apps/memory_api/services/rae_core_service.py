@@ -25,7 +25,10 @@ from rae_adapters.redis import RedisCache
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
-from rae_core.exceptions.base import SecurityPolicyViolationError
+from rae_core.exceptions.base import (
+    ContractViolationError,
+    SecurityPolicyViolationError,
+)
 from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.database import IDatabaseProvider
 from rae_core.interfaces.reranking import IReranker
@@ -95,7 +98,10 @@ class RAECoreService:
         self.reflection_coordinator = ReflectionCoordinator(
             mode=settings.RAE_PROFILE if settings.RAE_PROFILE in ["standard", "advanced"] else "standard",
             enforce_hard_frames=True,
-            storage=self.postgres_adapter
+            storage=self.postgres_adapter,
+            llm_provider=get_llm_provider(settings),
+            llm_model=settings.RAE_LLM_MODEL_DEFAULT, # Agnostic model selection
+            strategy=settings.RAE_REFLECTION_STRATEGY
         )
 
         # New: RAERuntime for RAE-First flow (Use Engine for implicit capture policy enforcement)
@@ -228,11 +234,16 @@ class RAECoreService:
         # Vector
         if qdrant_client and not ignore_db:
             dim = self.embedding_provider.get_dimension()
+            # Dynamic Vector Name Mapping (System 41.0)
+            v_name = "dense" # Default for 384d (MiniLM)
+            if dim == 768:
+                v_name = "nomic"
+            
             self.qdrant_adapter = QdrantVectorStore(
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name,
+                vector_name=v_name,
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
@@ -681,6 +692,11 @@ class RAECoreService:
         if governance:
             tags = self._detect_agentic_patterns(governance, tags)
 
+        # 1. Context Resolution (Best Practice: Avoid 'default' pollution)
+        project_canonical = self._resolve_project_context(project)
+        agent_canonical = agent_id or "default"
+        metadata = metadata or {}
+
         # SYSTEM 93.1: Hard Frames 2.0 Contract Enforcement
         if "agent_decision" in tags or "operation_result" in tags or layer == "working":
             try:
@@ -693,9 +709,14 @@ class RAECoreService:
                 
                 # SYSTEM 93.3: Hallucination Prevention Context
                 # Inject actual source content for L1 Grounding verification
-                source_memories = await self.engine.search_memories(
-                    query=content, tenant_id=tenant_id, top_k=5
-                )
+                source_memories = []
+                try:
+                    source_memories = await self.engine.search_memories(
+                        query=content, tenant_id=tenant_id, top_k=5
+                    )
+                except Exception as e:
+                    logger.warning("grounding_search_failed", error=str(e))
+                
                 payload["retrieved_sources_content"] = [m["content"] for m in source_memories]
 
                 payload.update({
@@ -707,11 +728,17 @@ class RAECoreService:
 
                 # SYSTEM 93.4: Full Decision Provenance
                 # We link the decision to the specific memories that influenced it
-                validation_results = await self.reflection_coordinator.run_reflections(payload)
+                validation_results = await self.reflection_coordinator.run_and_store_reflections(
+                    payload, 
+                    tenant_id=tenant_id, 
+                    agent_id="oracle_auditor",
+                    store_callback=self.engine.store_memory # Bypass Hard Frames for generated lessons
+                )
                 
                 # PERMANENT AUDIT TRAIL
+                audit_name = human_label or f"Audit: {project_canonical}"
                 audit_content = (
-                    f"DECISION AUDIT: {name}\n"
+                    f"DECISION AUDIT: {audit_name}\n"
                     f"Decision: {payload['decision']}\n"
                     f"Confidence: {payload['confidence']}\n"
                     f"Reasoning: {payload['analysis'][:500]}\n"
@@ -726,14 +753,12 @@ class RAECoreService:
                     layer="reflective",
                     tags=["decision_provenance", "audit_log"],
                     metadata={
-                        "target_id": mid,
                         "evidence_ids": payload["retrieved_sources"],
                         "validation_full": validation_results
                     }
                 )
 
                 if validation_results.get("final_decision") == "blocked":
-                    from rae_core.exceptions.base import ContractViolationError
                     raise ContractViolationError(f"Decision Blocked by Oracle: {validation_results['block_reasons']}")
                 
                 metadata["audit_verified"] = True
@@ -741,12 +766,7 @@ class RAECoreService:
             except SecurityPolicyViolationError: raise
             except Exception as e: logger.warning("audit_failed", error=str(e))
 
-        # 3. Context Resolution (Best Practice: Avoid 'default' pollution)
-        project_canonical = self._resolve_project_context(project)
-        agent_canonical = agent_id or "default"
-        metadata = metadata or {}
-
-        # Store in RAEEngine
+            # Store in RAEEngine
         if layer == "sensory" and ttl is None:
             ttl = 86400  # 24 hours default for sensory layer
 

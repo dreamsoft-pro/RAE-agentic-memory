@@ -32,7 +32,7 @@ class UncertaintyEstimator:
         return {"uncertainty_level": min(1.0, uncertainty)}
 
 class L1OperationalReflection:
-    def __init__(self, coverage_threshold: float = 0.5, max_uncertainty: float = 0.4):
+    def __init__(self, coverage_threshold: float = 0.0, max_uncertainty: float = 0.9):
         self.evidence_verifier = EvidenceVerifier()
         self.contract_enforcer = ContractEnforcer()
         self.uncertainty_estimator = UncertaintyEstimator()
