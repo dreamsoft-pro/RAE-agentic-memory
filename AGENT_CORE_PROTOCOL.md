@@ -25,6 +25,10 @@
 - **Classification**: `RESTRICTED` data NEVER leaves the Working Memory layer without encryption.
 - **Reflective Extraction**: Use the Reflective Layer to extract *patterns* from private data, never the raw data itself.
 
+### 🛠️ 5. Technological Excellence
+- **Runtime**: ALL agents MUST use **Python 3.14+** for core execution. This ensures maximum performance for AI/Math tasks and leverages the latest security mitigations.
+- **Dependencies**: Always prefer the latest stable versions. Outdated dependencies are considered technical debt and security risks.
+
 ---
 
 ## 1. CORE MANDATES
