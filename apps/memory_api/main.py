@@ -44,12 +44,12 @@ from apps.memory_api.routes import (
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService
 
+logger = structlog.get_logger(__name__)
+
 # Setup OpenTelemetry (before app creation)
 if settings.OTEL_TRACES_ENABLED:
     setup_opentelemetry()
     instrument_libraries()
-else:
-    logger.info("opentelemetry_disabled", reason="OTEL_TRACES_ENABLED is False")
 
 
 @asynccontextmanager
@@ -143,9 +143,9 @@ async def lifespan(app: FastAPI):
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
     service = RAECoreService(
-        getattr(app.state, "pool", None),
+        settings,
         getattr(app.state, "qdrant_client", None),
-        getattr(app.state, "redis_client", None),
+        getattr(app.state, "pool", None),
     )
     await service.ainit()
     app.state.rae_core_service = service

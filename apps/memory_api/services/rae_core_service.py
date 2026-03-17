@@ -40,26 +40,59 @@ logger = structlog.get_logger(__name__)
 class RAECoreService:
     """
     Integration service for RAE-Core.
-
-    Manages RAEEngine and RAERuntime lifecycles.
     """
 
-    def __init__(self, settings: RAESettings, qdrant_client: Optional[Any] = None, postgres_pool: Optional[Any] = None) -> None:
+    def __init__(self, settings: RAESettings, qdrant_client: Any = None, postgres_pool: Any = None) -> None:
         self.settings = settings
         self.qdrant_client = qdrant_client
         self.postgres_pool = postgres_pool
         self.szubar_mode = False
+        
+        # Initialize basic manager
+        self.embedding_provider = EmbeddingManager(
+            default_provider=LocalEmbeddingProvider()
+        )
 
+    async def ainit(self) -> None:
+        """Asynchronous initialization of components."""
+        settings = self.settings
+        
         # 1. Initialize Adapters
-        self._init_adapters(settings, qdrant_client, postgres_pool)
+        ignore_db = settings.RAE_DB_MODE == "ignore"
+        self.cache_adapter = RedisCache(url=settings.REDIS_URL)
 
-        # 2. Initialize Providers
-        self._init_embedding_providers(settings)
+        if self.postgres_pool and not ignore_db:
+            self.postgres_adapter = PostgreSQLStorage(pool=self.postgres_pool)
+        else:
+            from rae_adapters.memory import InMemoryStorage
+            self.postgres_adapter = cast(IMemoryStorage, InMemoryStorage())
 
-        # 3. Initialize Engine & Runtime
-        self._init_engine(settings, postgres_pool)
+        if self.qdrant_client and not ignore_db:
+            dim = self.embedding_provider.get_dimension()
+            v_name = "nomic" if dim == 768 else "dense"
+            self.qdrant_adapter = QdrantVectorStore(
+                client=cast(Any, self.qdrant_client),
+                embedding_dim=dim,
+                distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
+                vector_name=v_name,
+            )
+        else:
+            from rae_adapters.memory import InMemoryVectorStore
+            self.qdrant_adapter = InMemoryVectorStore()
 
-        # New: Reflection Engine
+        # 2. Initalize Embedding Provider
+        if settings.RAE_EMBEDDING_BACKEND == "onnx":
+            self._register_onnx_provider(settings)
+
+        # 3. Initialize Engine
+        self.engine = RAEEngine(
+            memory_storage=self.postgres_adapter,
+            vector_store=self.qdrant_adapter,
+            embedding_provider=self.embedding_provider,
+            cache_provider=self.cache_adapter,
+        )
+
+        # 4. Initialize Reflection
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
         from rae_core.reflection.layers.coordinator import ReflectionCoordinator
 
@@ -73,46 +106,7 @@ class RAECoreService:
             strategy=settings.RAE_REFLECTION_STRATEGY
         )
 
-        # New: RAERuntime for RAE-First flow
-        self.runtime = RAERuntime(
-            cast(Any, self.engine), None
-        )
-
-    def _init_adapters(self, settings: RAESettings, qdrant_client: Any, postgres_pool: Any) -> None:
-        ignore_db = settings.RAE_DB_MODE == "ignore"
-
-        # Cache
-        self.cache_adapter = RedisCache(url=settings.REDIS_URL)
-
-        # Storage
-        if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
-        else:
-            from rae_adapters.memory import InMemoryStorage
-            self.postgres_adapter = cast(IMemoryStorage, InMemoryStorage())
-
-        # Vector
-        if qdrant_client and not ignore_db:
-            dim = self.embedding_provider.get_dimension() if hasattr(self, "embedding_provider") else 384
-            v_name = "dense"
-            if dim == 768: v_name = "nomic"
-            
-            self.qdrant_adapter = QdrantVectorStore(
-                client=cast(Any, qdrant_client),
-                embedding_dim=dim,
-                distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=v_name,
-            )
-        else:
-            from rae_adapters.memory import InMemoryVectorStore
-            self.qdrant_adapter = InMemoryVectorStore()
-
-    def _init_embedding_providers(self, settings: RAESettings) -> None:
-        self.embedding_provider = EmbeddingManager(
-            default_provider=LocalEmbeddingProvider()
-        )
-        if settings.RAE_EMBEDDING_BACKEND == "onnx":
-            self._register_onnx_provider(settings)
+        self.runtime = RAERuntime(cast(Any, self.engine), None)
 
     def _register_onnx_provider(self, settings: RAESettings) -> None:
         try:
@@ -126,19 +120,10 @@ class RAECoreService:
                     model_path=model_path, tokenizer_path=tokenizer_path, model_name=model_name, use_gpu=settings.RAE_USE_GPU
                 )
                 self.embedding_provider.register_provider(model_name, onnx_provider)
-                if settings.RAE_EMBEDDING_BACKEND == "onnx":
-                    self.embedding_provider._default_provider = onnx_provider
-                    self.embedding_provider.default_model_name = model_name
+                self.embedding_provider._default_provider = onnx_provider
+                self.embedding_provider.default_model_name = model_name
         except Exception as e:
             logger.warning("failed_to_register_onnx", error=str(e))
-
-    def _init_engine(self, settings: RAESettings, postgres_pool: Any) -> None:
-        self.engine = RAEEngine(
-            storage=self.postgres_adapter,
-            vector_store=self.qdrant_adapter,
-            embedding_provider=self.embedding_provider,
-            cache=self.cache_adapter,
-        )
 
     async def store_memory(
         self,
@@ -158,22 +143,19 @@ class RAECoreService:
         human_label: Optional[str] = None,
         agent_id: Optional[str] = None,
     ) -> str:
-        # 1. Enforcement Logic (ISO 27000)
         target_layer = layer or MemoryLayer.EPISODIC
         self._enforce_security_policy(info_class, target_layer)
 
-        # 2. Context Resolution
-        project_canonical = self._resolve_project_context(project)
+        project_canonical = project or "default"
         agent_canonical = agent_id or "default"
         metadata = metadata or {}
         tags = tags or []
 
-        # SYSTEM 93.1: Hard Frames 2.0 Contract Enforcement - Background Task
-        if "agent_decision" in tags or "operation_result" in tags or layer == "working":
+        # Background Audit
+        if "agent_decision" in tags or layer == "working":
             async def run_async_audit():
                 try:
                     payload = {"analysis": content}
-                    # Small search for context
                     sources = await self.engine.search_memories(query=content, tenant_id=tenant_id, top_k=3)
                     payload.update({
                         "retrieved_sources": [str(m["id"]) for m in sources],
@@ -188,7 +170,6 @@ class RAECoreService:
                         store_callback=self.engine.store_memory
                     )
                     
-                    # Store Audit Log
                     audit_name = human_label or f"Audit: {project_canonical}"
                     await self.engine.store_memory(
                         tenant_id=tenant_id, agent_id="oracle_auditor",
@@ -201,25 +182,11 @@ class RAECoreService:
 
             asyncio.create_task(run_async_audit())
 
-        # Main Path: Store in RAEEngine
         return await self.engine.store_memory(
-            tenant_id=tenant_id,
-            project=project_canonical,
-            content=content,
-            source=source,
-            importance=importance,
-            tags=tags,
-            layer=target_layer,
-            session_id=session_id,
-            memory_type=memory_type,
-            ttl=ttl,
-            metadata=metadata,
-            agent_id=agent_canonical,
+            tenant_id=tenant_id, project=project_canonical, content=content, source=source,
+            importance=importance, tags=tags, layer=target_layer, session_id=session_id,
+            memory_type=memory_type, ttl=ttl, metadata=metadata, agent_id=agent_canonical
         )
-
-    def _resolve_project_context(self, project: Optional[str]) -> str:
-        if project: return project
-        return "default"
 
     def _enforce_security_policy(self, info_class: str, layer: str) -> None:
         if info_class == "restricted" and layer != "working":
