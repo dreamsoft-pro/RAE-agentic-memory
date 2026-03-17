@@ -45,8 +45,11 @@ from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService
 
 # Setup OpenTelemetry (before app creation)
-setup_opentelemetry()
-instrument_libraries()
+if settings.OTEL_TRACES_ENABLED:
+    setup_opentelemetry()
+    instrument_libraries()
+else:
+    logger.info("opentelemetry_disabled", reason="OTEL_TRACES_ENABLED is False")
 
 
 @asynccontextmanager
