@@ -5,9 +5,9 @@ services:
     container_name: rae-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: rae
-      POSTGRES_PASSWORD: rae_password
-      POSTGRES_DB: rae
+      - POSTGRES_USER=rae
+      - POSTGRES_PASSWORD=rae_password
+      - POSTGRES_DB=rae
     ports:
       - "5432:5432"
     volumes:
@@ -115,6 +115,26 @@ services:
       - ./apps:/app/apps
       - ./rae_adapters:/app/rae_adapters
       - ./models:/app/models
+    networks:
+      - rae-internal
+    depends_on:
+      rae-api-dev:
+        condition: service_healthy
+
+  rae-mcp:
+    image: rae-memory:latest
+    container_name: rae-mcp
+    command: ["python3", "-m", "rae_mcp.server"]
+    restart: unless-stopped
+    environment:
+      - RAE_API_URL=http://rae-api-dev:8000
+      - RAE_API_KEY=test-key
+      - RAE_TENANT_ID=53717286-fe94-4c8f-baf9-c4d2758eb672
+      - RAE_PROJECT_ID=dreamsoft_factory
+      - PYTHONPATH=/app:/app/integrations/mcp/src
+    volumes:
+      - ./integrations/mcp/src/rae_mcp:/app/rae_mcp
+      - ./rae-core/rae_core:/app/rae_core
     networks:
       - rae-internal
     depends_on:

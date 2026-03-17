@@ -195,6 +195,9 @@ class RAECoreService:
     async def query_memories(self, tenant_id: str, project: str, query: str, k: int = 10, layers: Optional[list[str]] = None, filters: Optional[dict] = None) -> SearchResponse:
         return await self.engine.search_memories(query=query, tenant_id=tenant_id, top_k=k, layers=layers, filters=filters)
 
+    async def list_memories(self, tenant_id: str, limit: int = 50, offset: int = 0, project: Optional[str] = None, layer: Optional[str] = None) -> list[dict]:
+        return await self.engine.memory_storage.list_memories(tenant_id=tenant_id, limit=limit, offset=offset, project=project, layer=layer)
+
     async def get_memory(self, memory_id: str, tenant_id: str) -> Optional[dict]:
         return await self.engine.get_memory(memory_id, tenant_id)
 

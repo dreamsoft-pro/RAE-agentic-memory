@@ -128,7 +128,14 @@ async def store_memory(
                 metadata=request.metadata,
                 human_label=request.human_label,
             )
-            return StoreMemoryResponseV2(memory_id=memory_id)
+            
+            if memory_id is None:
+                return StoreMemoryResponseV2(
+                    memory_id="skipped", 
+                    message="Memory skipped (duplicate or filtered)"
+                )
+                
+            return StoreMemoryResponseV2(memory_id=str(memory_id))
         except (SecurityPolicyViolationError, ContractViolationError) as e:
             logger.warning("memory_action_blocked", error=str(e), tenant_id=tenant_id)
             raise HTTPException(status_code=400, detail=str(e))

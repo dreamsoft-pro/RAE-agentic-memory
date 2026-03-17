@@ -18,3 +18,4 @@
 # For development, also install:
 # -r requirements-test.txt
 mysql-connector-python
+mcp>=1.0.0
