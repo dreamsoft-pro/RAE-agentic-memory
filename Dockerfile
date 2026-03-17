@@ -1,55 +1,56 @@
-# Multi-stage build for RAE Memory API with GPU Support
-# Using 12.4.1-devel to ensure all libraries (cublas, cudnn) are present and keys are valid
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS base
+# STAGE 1: Builder
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS builder
 
-# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Install Python and system dependencies
 RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    curl \
-    git \
-    gcc \
-    g++ \
-    postgresql-client \
+    software-properties-common curl git gcc g++ \
     && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y \
-    python3.10 \
-    python3.10-dev \
-    python3.10-venv \
+    && apt-get update && apt-get install -y \
+    python3.14 python3.14-dev python3.14-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pip
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.14
+RUN ln -sf /usr/bin/python3.14 /usr/bin/python3
 
-# Set python3 default
-RUN ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python
-
-# Set working directory
 WORKDIR /app
 
-# Copy SDK and install
+# Install dependencies in a virtualenv
+RUN python3.14 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY sdk/python/rae_memory_sdk /app/sdk/python/rae_memory_sdk
-RUN pip install --no-cache-dir -e /app/sdk/python/rae_memory_sdk
+RUN pip install --no-cache-dir /app/sdk/python/rae_memory_sdk
 
-# Copy RAE Core and install
 COPY rae-core /app/rae-core
-RUN pip install --no-cache-dir -e /app/rae-core
+RUN pip install --no-cache-dir /app/rae-core
 
-# Copy RAE Adapters and install
 COPY rae_adapters /app/rae_adapters
-RUN pip install --no-cache-dir -e /app/rae_adapters
+RUN pip install --no-cache-dir /app/rae_adapters
 
-# Copy requirements
 COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt
 COPY apps/memory_api/requirements.txt /app/requirements.txt
-
-# Install dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# STAGE 2: Final Runtime
+FROM nvidia/cuda:12.4.1-base-ubuntu22.04 AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Only essential system libraries
+RUN apt-get update && apt-get install -y \
+    software-properties-common curl \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y python3.14 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy the virtualenv from builder
+COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code
 COPY alembic.ini /app/alembic.ini
@@ -57,10 +58,8 @@ COPY alembic /app/alembic
 COPY apps /app/apps
 COPY models /app/models
 
-# Create non-root user (with access to /app and video devices)
-RUN useradd -m -u 1000 appuser && \
-    usermod -aG video appuser && \
-    chown -R appuser:appuser /app
+# Non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
