@@ -3,7 +3,7 @@
 # This image is designed to have NO independent capabilities.
 # No curl, no wget, no git, no pip at runtime.
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # 1. Environment Setup
 ENV PYTHONDONTWRITEBYTECODE=1 \
