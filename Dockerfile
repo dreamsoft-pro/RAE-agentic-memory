@@ -1,5 +1,5 @@
 # STAGE 1: Builder
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:13.2.0-cudnn-devel-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -34,7 +34,7 @@ COPY apps/memory_api/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # STAGE 2: Final Runtime
-FROM nvidia/cuda:12.4.1-base-ubuntu22.04 AS runtime
+FROM nvidia/cuda:13.2.0-base-ubuntu22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
