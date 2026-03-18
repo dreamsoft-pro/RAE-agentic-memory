@@ -74,7 +74,7 @@ services:
       - REDIS_URL=redis://rae-redis:6379/0
       - QDRANT_HOST=rae-qdrant
       - RAE_API_KEY=test-key
-      - RAE_DB_MODE=migrate
+      - RAE_DB_MODE=ignore
       - PYTHONPATH=/app
       - OLLAMA_API_URL=http://ollama-dev:11434
     volumes:
@@ -135,6 +135,23 @@ services:
     volumes:
       - ./integrations/mcp/src/rae_mcp:/app/rae_mcp
       - ./rae-core/rae_core:/app/rae_core
+    networks:
+      - rae-internal
+    depends_on:
+      rae-api-dev:
+        condition: service_healthy
+
+  rae-portal:
+    image: rae-oracle:latest
+    container_name: rae-portal
+    restart: unless-stopped
+    ports:
+      - "8500:8080"
+    volumes:
+      - ./rae-portal:/app
+    environment:
+      - RAE_API_URL=http://rae-api-dev:8000
+      - RAE_TENANT_ID=66435998-b1d9-5521-9481-55a9fd10e014
     networks:
       - rae-internal
     depends_on:
