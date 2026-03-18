@@ -3,5 +3,5 @@
 # ONLY ALLOWED: Transport and Data Validation
 
 requests==2.31.0
-pydantic==2.5.3
+pydantic==2.12.5
 # rae-sdk (local install would happen here in real build)
