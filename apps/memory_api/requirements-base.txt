@@ -129,7 +129,7 @@ rpds-py==0.30.0
 rsa==4.9.1
 ruamel.yaml==0.19.1
 safety==3.7.0
-safety-schemas==0.0.16
+safety-schemas==0.0.18
 scipy==1.17.1
 shellingham==1.5.4
 six==1.17.0
