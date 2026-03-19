@@ -22,26 +22,7 @@ class RAESuitePortal:
         self.system_profile = "Detecting..."
         
         # Models Categorized by $ cost, versions and hardware warnings
-        self.model_options = {
-            # --- LOCAL / FREE ---
-            "ollama/qwen3.5:9b": "Local: QWEN 3.5 9B [GPU-needed]",
-            "ollama/deepseek-r1:14b": "Local: DeepSeek R1 14B [GPU-needed]",
-            "ollama/phi3": "Local: Phi-3 Mini (CPU-Friendly)",
-            
-            # --- CHAT GPT (v5.4 Stack) ---
-            "gpt-4o-mini": "$ GPT-4o-mini v5.4 (Fast)",
-            "gpt-4o": "$ GPT-4o v5.2 (Efficient)",
-            "gpt-5": "$$ GPT-5 v5.4 (Standard)",
-            "gpt-5-turbo": "$$ GPT-5-Turbo v5.4 (Balanced)",
-            "gpt-5.4-pro": "$$$ GPT-5.4 Pro (Max Brain)",
-            
-            # --- CLAUDE (v4.6 Stack) ---
-            "claude-4-6-haiku": "$ Claude 4.6 Haiku (Budget)",
-            "claude-4-0-sonnet": "$ Claude 4.0 Sonnet (Lite)",
-            "claude-4-6-sonnet": "$$ Claude 4.6 Sonnet (Smart)",
-            "claude-4-6-balanced": "$$ Claude 4.6 Balanced",
-            "claude-4-6-opus": "$$$ Claude 4.6 Opus (Elite)"
-        }
+        self.model_options = {'local_qwen_optimized': 'Local: QWEN 3.5 9B [Best]', 'local_phi': 'Local: Phi-3 Mini (Fast)', 'premium_openai': '$ GPT-4o-mini (Stable)', 'premium_anthropic': '284352 Claude 3.5 Sonnet'}
         
     async def detect_system(self):
         stats = await client.get_stats()
@@ -65,7 +46,7 @@ class RAESuitePortal:
             with ui.row().classes('items-center gap-6'):
                 self.model_select = ui.select(
                     options=self.model_options, 
-                    value="ollama/qwen3.5:9b", 
+                    value="local_qwen_optimized", 
                     label="Brain Selection"
                 ).classes("w-96").props('dark dense outlined color=white')
                 

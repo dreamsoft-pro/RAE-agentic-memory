@@ -442,7 +442,7 @@ class RAECoreService:
                     logger.warning("llm_call_failed", error=str(e))
                     # Fallback to direct context or raw answer
                     if search_results:
-                        llm_result = "Context Analysis: " + str(search_results[0].get("content", ""))[:500]
+                        llm_result = "" + str(search_results[0].get("content", ""))[:500]
                     else:
                         llm_result = f"I encountered an issue connecting to the model: {str(e)}. Please check system logs."
                 if not llm_result:
