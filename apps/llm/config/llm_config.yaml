@@ -1,46 +1,36 @@
-# LLM Orchestrator Configuration - QUANTUM STACK v2.0
+# LLM Orchestrator Configuration - QUANTUM STACK v2.1
 default_strategy: single
 
 models:
+  - id: local_qwen_optimized
+    provider: ollama
+    model_name: qwen3.5:9b-optimized
+    enabled: true
+    roles: [general, industrial, analytics]
+
   - id: local_qwen
     provider: ollama
     model_name: qwen3.5:9b
     enabled: true
-    roles: [general, writer, coding]
+    roles: [general]
 
-  - id: local_deepseek
+  - id: local_phi
     provider: ollama
-    model_name: deepseek-r1:8b
+    model_name: phi3
     enabled: true
-    roles: [auditor, reflection, reasoning]
-
-  - id: local_llama
-    provider: ollama
-    model_name: qwen2.5-coder:14b
-    enabled: true
-    roles: [general, smart]
-
-  - id: premium_anthropic
-    provider: anthropic
-    model_name: claude-3-5-sonnet-20241022
-    enabled: true
-    roles: [evaluator, high_impact]
+    roles: [fast]
 
   - id: premium_openai
     provider: openai
-    model_name: gpt-4o
+    model_name: gpt-4o-mini
     enabled: true
     roles: [evaluator, advanced_reasoning]
 
 strategies:
   default:
     mode: single
-    primary: local_qwen
+    primary: local_qwen_optimized
 
-  audit:
+  industrial:
     mode: single
-    primary: local_deepseek
-
-  evaluation_3_tier:
-    mode: consensus
-    models: [local_deepseek, premium_anthropic, premium_openai]
+    primary: local_qwen_optimized
