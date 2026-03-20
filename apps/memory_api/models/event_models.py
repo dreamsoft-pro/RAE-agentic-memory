@@ -35,6 +35,8 @@ class EventType(str, Enum):
     SEARCH_EXECUTED = "search_executed"
     QUERY_ANALYZED = "query_analyzed"
 
+    AGENT_INTERACTION = "agent_interaction"
+
     DRIFT_DETECTED = "drift_detected"
     QUALITY_DEGRADED = "quality_degraded"
 

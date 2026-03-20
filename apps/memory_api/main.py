@@ -11,6 +11,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
 from apps.memory_api.api.v2 import agent as agent_v2
+from apps.memory_api.api.v2 import bridge as bridge_v2
 from apps.memory_api.api.v2 import compliance as compliance_v2
 from apps.memory_api.api.v2 import feedback as feedback_v2
 from apps.memory_api.api.v2 import memory as memory_v2
@@ -286,6 +287,7 @@ app.include_router(health_router.router, tags=["System"])
 # API V2 (Consolidated)
 app.include_router(memory_v2.router)  # /v2/memories
 app.include_router(agent_v2.router)  # /v2/agent
+app.include_router(bridge_v2.router)  # /v2/bridge
 app.include_router(feedback_v2.router)  # /v2/feedback
 app.include_router(compliance_v2.router)  # /v2/compliance
 app.include_router(mesh_v2.router)  # /v2/mesh
