@@ -79,3 +79,41 @@ async def agent_interaction(
         actions_queued=0,
         message="A2A Interaction routed through bridge and captured in memory"
     )
+
+@router.post("/audit")
+async def semantic_audit(
+    payload: Dict[str, Any],
+    request: Request,
+    source_agent: str = "open-claw"
+):
+    """
+    Phase 3 Hard Frames: Semantic Firewall.
+    Analyzes the intent of the agent before allowing execution.
+    """
+    service: RAECoreService = request.app.state.rae_core_service
+    prompt = payload.get("prompt", "")
+    context = payload.get("context", "no_context")
+
+    # 1. Intent Analysis via Reflective Layer
+    is_safe = True
+    reason = "Intent matches project scope"
+
+    forbidden_keywords = ["private_key", "password", "hasło", "klucz", ".env", "secret"]
+    if any(kw in prompt.lower() for kw in forbidden_keywords):
+        is_safe = False
+        reason = "RESTRICTED data leak or credential access attempt detected"
+
+    # 2. Log the Audit Attempt
+    await service.engine.store_memory(
+        tenant_id="00000000-0000-0000-0000-000000000000",
+        agent_id=source_agent,
+        content=f"PHASE 3 AUDIT: {source_agent} prompt audit -> {is_safe}. Reason: {reason}",
+        layer="reflective",
+        tags=["phase3_audit", "firewall"],
+        metadata={"prompt_snippet": prompt[:100], "safe": is_safe, "reason": reason}
+    )
+
+    if not is_safe:
+        raise HTTPException(status_code=403, detail=f"Semantic Firewall Block: {reason}")
+
+    return {"status": "approved", "audit_id": str(uuid4()), "reason": reason}
