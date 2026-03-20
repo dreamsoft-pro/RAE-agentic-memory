@@ -125,6 +125,8 @@ services:
     image: rae-memory:latest
     container_name: rae-mcp
     command: ["python3", "-m", "rae_mcp.server"]
+    stdin_open: true
+    tty: true
     restart: unless-stopped
     environment:
       - RAE_API_URL=http://rae-api-dev:8000
