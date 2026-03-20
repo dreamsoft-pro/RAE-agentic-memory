@@ -1,20 +1,22 @@
-# LLM Providers Configuration - REPAIRED
+# LLM Provider Configuration - RAE SUITE SECURE STACK
 providers:
-  ollama:
-    endpoint: http://ollama-dev:11434
-    api_key_env: null
-    max_context: 8192
-    supports_streaming: true
-    supports_tools: false
-
   openai:
-    endpoint: https://api.openai.com/v1
     api_key_env: OPENAI_API_KEY
-    max_context: 128000
-    enabled: false
+    endpoint: https://api.openai.com/v1
 
   anthropic:
-    endpoint: https://api.anthropic.com
     api_key_env: ANTHROPIC_API_KEY
-    max_context: 200000
-    enabled: false
+
+  ollama:
+    endpoint: http://ollama-dev:11434
+
+  deepseek:
+    api_key_env: DEEPSEEK_API_KEY
+    endpoint: https://api.deepseek.com
+
+  gemini:
+    api_key_env: GEMINI_API_KEY
+
+  grok:
+    api_key_env: GROK_API_KEY
+    endpoint: https://api.x.ai/v1
