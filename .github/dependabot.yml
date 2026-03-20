@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 99
+    groups:
+      security-updates:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "pip"
+    directory: "/apps/memory_api"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 99
+    groups:
+      app-security:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10

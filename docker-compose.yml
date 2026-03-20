@@ -55,7 +55,7 @@ services:
     ports:
       - "11435:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - rae-agentic-memory_ollama_data:/root/.ollama
     networks:
       - rae-internal
 
@@ -66,6 +66,8 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8000"
+    env_file:
+      - ./rae-core/rae_core/.env
     environment:
       - POSTGRES_USER=rae
       - POSTGRES_PASSWORD=rae_password
@@ -83,6 +85,7 @@ services:
       - ./rae_adapters:/app/rae_adapters
       - ./alembic:/app/alembic
       - ./models:/app/models
+      - ./apps/llm/config:/app/apps/llm/config
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
       interval: 30s
@@ -143,6 +146,23 @@ services:
       rae-api-dev:
         condition: service_healthy
 
+  rae-portal:
+    image: rae-oracle:latest
+    container_name: rae-portal
+    restart: unless-stopped
+    ports:
+      - "8500:8080"
+    volumes:
+      - ./rae-portal:/app
+    environment:
+      - RAE_API_URL=http://rae-api-dev:8000
+      - RAE_TENANT_ID=66435998-b1d9-5521-9481-55a9fd10e014
+    networks:
+      - rae-internal
+    depends_on:
+      rae-api-dev:
+        condition: service_healthy
+
 networks:
   rae-internal:
     name: rae-internal
@@ -155,5 +175,5 @@ volumes:
     external: true
   rae-agentic-memory_qdrant_data:
     external: true
-  ollama_data:
+  rae-agentic-memory_ollama_data:
     external: true

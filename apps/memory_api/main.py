@@ -143,10 +143,11 @@ async def lifespan(app: FastAPI):
 
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
+    # SYSTEM FIX: Correct argument order (pool first, then qdrant, then redis)
     service = RAECoreService(
-        settings,
-        getattr(app.state, "qdrant_client", None),
         getattr(app.state, "pool", None),
+        getattr(app.state, "qdrant_client", None),
+        getattr(app.state, "redis_client", None),
     )
     await service.ainit()
     app.state.rae_core_service = service
