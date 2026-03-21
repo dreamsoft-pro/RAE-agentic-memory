@@ -18,26 +18,40 @@ class RAEMemoryBridge:
         self.project = project_name or RAEContextLocator.get_project_name()
         self.logger = logging.getLogger(f"RAE.Bridge.{self.project}")
 
-    def save_event(self, content: str, human_label: str = None, metadata: dict = None):
+    def save_event(self, content: str, human_label: str = None, metadata: dict = None, layer: str = "episodic"):
         """Asynchronously saves an event to RAE Memory."""
         if self.tenant_id == "00000000-0000-0000-0000-000000000000" and self.project == "unnamed_production_module":
-            # No context, no logging - prevent pollution
             return False
 
-        # Prepare payload immediately to capture current state
-        final_label = human_label or f"Log from {self.project}"
         payload = {
             "content": content,
             "project": self.project,
-            "human_label": final_label,
+            "human_label": human_label or f"[{self.project.upper()}] Operation Log",
+            "layer": layer,
             "metadata": metadata or {},
             "importance": 0.5
         }
         headers = {"X-Tenant-Id": self.tenant_id}
-
-        # Offload to background thread (Fire and Forget)
         self._executor.submit(self._send_request, payload, headers)
         return True
+
+    def log_decision(self, action: str, reasoning: str, payload: dict, layer: str = "reflective"):
+        """Synchronous, high-priority decision audit for ISO compliance."""
+        human_label = f"[{self.project.upper()}] Decision: {action.replace('_', ' ').title()}"
+        data = {
+            "content": f"{human_label}. Reasoning: {reasoning}",
+            "human_label": human_label,
+            "project": self.project,
+            "layer": layer,
+            "metadata": {
+                "audit_type": "iso_27001_compliance",
+                "action": action,
+                "context": payload,
+                "agent": self.project
+            }
+        }
+        headers = {"X-Tenant-Id": self.tenant_id}
+        return self._send_request(data, headers)
 
     def _send_request(self, payload: dict, headers: dict):
         """Internal synchronous sender for background execution."""
