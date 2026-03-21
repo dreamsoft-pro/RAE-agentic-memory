@@ -220,11 +220,11 @@ class BanditMonitor:
         # Check for outliers (> 3 std from mean)
         outliers = [r for r in rewards if abs(r - mean) > 3 * std]
 
-        if len(outliers) > len(rewards) * 0.1:  # > 10% outliers
+        if outliers:
             return MonitorAlert(
                 severity="warning",
                 category="reward_anomaly",
-                message=f"High outlier rate: {len(outliers) / len(rewards):.1%} of rewards",
+                message=f"Detected {len(outliers)} reward outliers (>3 std)",
                 metadata={
                     "outlier_count": len(outliers),
                     "total_count": len(rewards),

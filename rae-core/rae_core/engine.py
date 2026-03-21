@@ -1,5 +1,6 @@
 """RAE Engine - The Intelligent Memory Manifold."""
 
+import math
 from typing import Any
 
 import numpy as np
@@ -298,7 +299,13 @@ class RAEEngine:
                                 UUID(mid_str), tenant_id
                             )
                             if induced_mem:
-                                induced_mem_dict = dict(induced_mem) if not isinstance(induced_mem, dict) else induced_mem
+                                if isinstance(induced_mem, object) and hasattr(induced_mem, "to_dict"):
+                                    induced_mem_dict = induced_mem.to_dict()
+                                elif not isinstance(induced_mem, dict):
+                                    induced_mem_dict = dict(induced_mem)
+                                else:
+                                    induced_mem_dict = induced_mem
+
                                 induced_mem_dict["math_score"] = float(
                                     np.tanh(energy_map[mid_str])
                                 )
@@ -487,8 +494,6 @@ class RAEEngine:
             )
 
         vector_meta = kwargs.copy()
-        if "content" in vector_meta:
-            del vector_meta["content"]
 
         await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=vector_meta)
 

@@ -775,6 +775,24 @@ class InMemoryStorage(IMemoryStorage, IVectorStore):
                     # Simple substring search in content
                     content_lower = memory["content"].lower()
                     if query_lower in content_lower:
+                        # Apply filters if present
+                        filters = kwargs.get("filters")
+                        if filters:
+                            match = True
+                            for k, v in filters.items():
+                                if k == "tags":
+                                    query_tags = set(v) if isinstance(v, (list, tuple)) else {v}
+                                    mem_tags = set(memory.get("tags", []))
+                                    if not query_tags.issubset(mem_tags):
+                                        match = False
+                                        break
+                                    continue
+                                if memory.get(k) != v and memory.get("metadata", {}).get(k) != v:
+                                    match = False
+                                    break
+                            if not match:
+                                continue
+
                         # Calculate simple score based on position
                         score = 1.0 - (
                             content_lower.index(query_lower) / len(content_lower)
