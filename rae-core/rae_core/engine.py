@@ -401,6 +401,26 @@ class RAEEngine:
     async def store_memory(self, **kwargs):
         content = kwargs.get("content", "")
         tenant_id = kwargs.get("tenant_id")
+        project = kwargs.get("project", "default")
+        
+        # SYSTEM 92.4: Quality Guard at Ingestion (Autonomous Firewall)
+        if kwargs.get("validate") and content.strip():
+            logger.info("ingestion_quality_guard_active", project=project)
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    q_resp = await client.post(f"{self.settings.QUALITY_API_URL}/v2/quality/audit", json={
+                        "code": content,
+                        "project_id": project,
+                        "importance": "medium"
+                    })
+                    if q_resp.status_code == 200:
+                        verdict = q_resp.json()
+                        if verdict.get("verdict") == "REJECTED":
+                            logger.error("ingestion_rejected_by_quality_guard", reasoning=verdict.get("reasoning"))
+                            return None
+            except Exception as e:
+                logger.warning("quality_guard_bypass_due_to_error", error=str(e))
+
         # Ensure layer is set (default to episodic if not provided)
         if "layer" not in kwargs:
             kwargs["layer"] = "episodic"
