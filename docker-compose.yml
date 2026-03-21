@@ -80,6 +80,8 @@ services:
       - RAE_DB_MODE=migrate
       - PYTHONPATH=/app
       - OLLAMA_API_URL=http://ollama-dev:11434
+      - RAE_EMBEDDING_BACKEND=api
+      - RAE_EMBEDDING_MODEL=nomic-embed-text
     volumes:
       - ./rae-core/rae_core:/app/rae_core
       - ./apps:/app/apps

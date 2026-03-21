@@ -130,8 +130,9 @@ class RAECoreService:
             api_provider = LocalEmbeddingProvider()
             self.embedding_provider.register_provider("api", api_provider)
             self.embedding_provider._default_provider = api_provider
-            self.embedding_provider.default_model_name = "api"
-            logger.info("registered_api_embedding_provider")
+            # Important: set default_model_name to the actual model for proper vector space targeting
+            self.embedding_provider.default_model_name = settings.RAE_EMBEDDING_MODEL or "api"
+            logger.info("registered_api_embedding_provider", model=self.embedding_provider.default_model_name)
 
         # Register MCP
         if settings.RAE_EMBEDDING_BACKEND == "mcp":
@@ -228,11 +229,15 @@ class RAECoreService:
         # Vector
         if qdrant_client and not ignore_db:
             dim = self.embedding_provider.get_dimension()
+            
+            # Calibration: Use 'nomic' vector space for nomic models, 'dense' for others
+            v_name = "nomic" if "nomic" in (self.embedding_provider.default_model_name or "").lower() else "dense"
+            
             self.qdrant_adapter = QdrantVectorStore(
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name or "dense",
+                vector_name=v_name,
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
