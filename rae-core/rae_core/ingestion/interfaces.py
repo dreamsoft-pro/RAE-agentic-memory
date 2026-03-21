@@ -53,7 +53,7 @@ class IngestChunk:
 
 class ISegmenter(ABC):
     @abstractmethod
-    def segment(self, text: str, policy: str, signature: ContentSignature) -> tuple[List[IngestChunk], IngestAudit]:
+    async def segment(self, text: str, policy: str, signature: ContentSignature) -> tuple[List[IngestChunk], IngestAudit]:
         pass
 
 class ICompressor(ABC):

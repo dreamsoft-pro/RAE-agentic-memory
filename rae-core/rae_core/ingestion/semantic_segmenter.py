@@ -62,7 +62,7 @@ class SemanticRecursiveSegmenter:
             tokenizer_path=embedding_tokenizer_path
         ) 
 
-    def _semantic_split(self, text: str) -> List[str]:
+    async def _semantic_split(self, text: str) -> List[str]:
         """Performs the semantic splitting using RAE's NativeEmbeddingProvider."""
         sentences = re.split(f"({'|'.join(map(re.escape, self._semantic_separators))})", text)
         
@@ -85,8 +85,8 @@ class SemanticRecursiveSegmenter:
         if len(processed_sentences) <= 1:
             return [text] if text.strip() else []
         
-        # Generate embeddings using RAE's NativeEmbeddingProvider
-        embeddings = self._embedder.embed_text_batch(processed_sentences)
+        # Generate embeddings using RAE's NativeEmbeddingProvider (Now properly awaited)
+        embeddings = await self._embedder.embed_batch(processed_sentences)
         
         # Convert embeddings to numpy array for similarity calculation
         embeddings_np = np.array(embeddings)
@@ -102,7 +102,8 @@ class SemanticRecursiveSegmenter:
         current_chunk_sentences = [processed_sentences[0]]
         
         for i, sentence in enumerate(processed_sentences[1:]):
-            if similarities[i] < dynamic_threshold:
+            # Ensure we don't exceed similarities bounds
+            if i < len(similarities) and similarities[i] < dynamic_threshold:
                 final_semantic_chunks.append("".join(current_chunk_sentences))
                 current_chunk_sentences = []
             
@@ -114,7 +115,7 @@ class SemanticRecursiveSegmenter:
         return final_semantic_chunks
 
 
-    def segment(self, text: str, policy: str = "default", signature: Any = None) -> tuple[List[IngestChunk], IngestAudit]:
+    async def segment(self, text: str, policy: str = "default", signature: Any = None) -> tuple[List[IngestChunk], IngestAudit]:
         """
         Segments a given text using a two-stage hierarchical and semantic process.
         Returns a list of IngestChunk objects and an IngestAudit.
@@ -129,7 +130,7 @@ class SemanticRecursiveSegmenter:
                 if split.strip():
                     final_chunks.append(split)
             else:
-                semantic_chunks = self._semantic_split(split)
+                semantic_chunks = await self._semantic_split(split)
                 final_chunks.extend(semantic_chunks)
 
         # Create IngestChunk objects and an audit trail
@@ -160,17 +161,21 @@ class SemanticRecursiveSegmenter:
         if not separators or len(text) <= self._chunk_size:
             return [text] if text.strip() else []
 
-        separator = ""
+        separator = None
         for s in separators:
-            if s == "": # Fallback to character split
+            if s == "": # Character split fallback marker
                 separator = ""
                 break
             if s in text:
                 separator = s
                 break
         
-        if not separator: # If no suitable separator, return the whole text
+        if separator is None: 
             return [text] if text.strip() else []
+
+        # For character-level split, we take fixed-size slices
+        if separator == "":
+            return [text[i:i+self._chunk_size] for i in range(0, len(text), self._chunk_size)]
 
         splits = text.split(separator)
         structural_chunks = []

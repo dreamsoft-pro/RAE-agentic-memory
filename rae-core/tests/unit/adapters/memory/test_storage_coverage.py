@@ -133,3 +133,18 @@ class TestInMemoryStorageCoverage:
         """Test internal delete helper with None (should not raise)."""
         # Call the actual private method to test it
         storage._delete_memory_sync(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_search_memories_tags_mismatch(self, storage):
+        """Test search with tags that are not a subset of memory tags."""
+        await storage.store_memory(
+            content="c", layer="l", tenant_id="t", agent_id="a", tags=["t1", "t2"]
+        )
+        
+        # Filter with tag that doesn't exist in memory
+        results = await storage.search_memories(query="c", tenant_id="t", agent_id="a", filters={"tags": ["t3"]})
+        assert len(results) == 0
+        
+        # Filter with one existing and one non-existing tag
+        results = await storage.search_memories(query="c", tenant_id="t", agent_id="a", filters={"tags": ["t1", "t3"]})
+        assert len(results) == 0

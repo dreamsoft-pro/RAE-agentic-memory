@@ -27,7 +27,7 @@ class IngestSegmenter(ISegmenter):
         self.patterns = ingest_cfg.get("boundary_patterns", {})
         self.extraction_rules = ingest_cfg.get("extraction_rules", {})
 
-    def segment(self, text: str, policy: str, signature: ContentSignature) -> tuple[List[IngestChunk], IngestAudit]:
+    async def segment(self, text: str, policy: str, signature: ContentSignature) -> tuple[List[IngestChunk], IngestAudit]:
         # 1. Atomic Splitting
         if policy == "POLICY_LOG_STREAM":
             chunks = self._segment_log_entries(text)

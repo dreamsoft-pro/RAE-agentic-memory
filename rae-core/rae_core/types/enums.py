@@ -73,3 +73,23 @@ class OperationRiskLevel(str, Enum):
     MEDIUM = "medium"
     LOW = "low"
     NONE = "none"
+
+
+class TaskType(str, Enum):
+    """Types of tasks executed by agents."""
+
+    MEMORY_STORE = "memory_store"
+    MEMORY_RETRIEVE = "memory_retrieve"
+    SEARCH = "search"
+    REFLECTION = "reflection"
+    A2A = "a2a"
+    CONTEXT_SELECT = "context_select"
+    MEMORY_CONSOLIDATE = "memory_consolidate"
+
+
+class MathLevel(int, Enum):
+    """Abstraction levels for math engine (Tier 1-3)."""
+
+    L1 = 1
+    L2 = 2
+    L3 = 3

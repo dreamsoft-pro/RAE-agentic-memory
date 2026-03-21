@@ -75,7 +75,7 @@ class UniversalIngestPipeline:
         audit_trail.append(audit_3)
         
         # Stage 4: Content-Aware Segmentation (AFE happens here)
-        chunks, audit_4 = self.segmenter.segment(normalized_text, policy, signature)
+        chunks, audit_4 = await self.segmenter.segment(normalized_text, policy, signature)
         audit_trail.append(audit_4)
         
         # Attach hash to metadata for downstream dedup if needed

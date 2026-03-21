@@ -24,13 +24,17 @@ class MathLayerController:
     """
 
     def __init__(self, config: dict[str, Any] | Any | None = None):
-        self.config = config or {}
-        
-        # Normalize Pydantic model to dict
-        if hasattr(self.config, "model_dump"):
-            self.config = self.config.model_dump()
-        elif hasattr(self.config, "dict"):
-            self.config = self.config.dict()
+        # 1. Normalize config to a dictionary at the very beginning
+        raw_config = config or {}
+        if hasattr(raw_config, "model_dump"):
+            self.config = raw_config.model_dump()
+        elif hasattr(raw_config, "dict"):
+            self.config = raw_config.dict()
+        elif isinstance(raw_config, dict):
+            self.config = raw_config
+        else:
+            # Fallback for generic objects (e.g. SimpleNamespace or Mocks)
+            self.config = vars(raw_config) if hasattr(raw_config, "__dict__") else {}
             
         self.feature_extractor = FeatureExtractorV2()
 
@@ -87,8 +91,20 @@ class MathLayerController:
             params = {"resonance_factor": 1.5, "rerank_gate": 0.1}
             arms.append(create_arm(f"abstract_{i}", weights, params))
 
-        bandit_conf = self.config.get("bandit")
-        conf_obj = BanditConfig(**bandit_conf) if bandit_conf else BanditConfig()
+        bandit_conf = self.config.get("bandit", {})
+        
+        # Safe initialization of BanditConfig
+        if isinstance(bandit_conf, dict):
+            # Filter out keys that are not in BanditConfig dataclass
+            valid_keys = {"c", "context_bonus", "exploration_rate", "max_exploration_rate", 
+                          "degradation_threshold", "min_pulls_for_confidence", "save_frequency", "persistence_path"}
+            filtered_conf = {k: v for k, v in bandit_conf.items() if k in valid_keys}
+            conf_obj = BanditConfig(**filtered_conf)
+        elif isinstance(bandit_conf, BanditConfig):
+            conf_obj = bandit_conf
+        else:
+            conf_obj = BanditConfig()
+            
         return MultiArmedBandit(config=conf_obj, arms=arms)
 
     def compute_similarity(self, v1: list[float], v2: list[float]) -> float:
@@ -139,6 +155,30 @@ class MathLayerController:
         if "rerank_limit" not in result["_params"]:
             result["_params"]["rerank_limit"] = dynamic_limit
 
+        result["_arm_id"] = selected_arm.arm_id
+        return result
+
+    def get_scoring_params(self, query: str, default_limit: int = 300) -> dict[str, Any]:
+        """
+        Selects scoring params based on query context.
+        Similar to get_retrieval_weights but specifically for scoring.
+        """
+        features = self.feature_extractor.extract(query)
+        
+        # Support for legacy tests that mock .select
+        if hasattr(self.bandit, "select"):
+             selected_arm = self.bandit.select(features)
+        else:
+             selected_arm, _ = self.bandit.select_arm(features)
+             
+        self._last_selected_arm = selected_arm
+        
+        result = selected_arm.config["weights"].copy()
+        result["_params"] = selected_arm.config["params"].copy()
+        
+        if "rerank_limit" not in result["_params"]:
+            result["_params"]["rerank_limit"] = default_limit
+            
         result["_arm_id"] = selected_arm.arm_id
         return result
 

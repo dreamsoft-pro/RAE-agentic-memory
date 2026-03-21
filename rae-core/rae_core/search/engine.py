@@ -49,7 +49,17 @@ class EmeraldReranker(IReranker):
                     reranked.append((m_id, original_score, importance, audit_log))
                     continue
 
-                # ... (embedding logic) ...
+                # Semantic Scoring (Emerald Logic)
+                memory_emb = await self.embedding_provider.embed_text(
+                    memory.content, task_type="search_document"
+                )
+                
+                # Manual Cosine Similarity (No external dependencies needed here)
+                v1 = query_emb
+                v2 = memory_emb
+                dot = sum(a * b for a, b in zip(v1, v2))
+                mag1 = math.sqrt(sum(a * a for a in v1))
+                mag2 = math.sqrt(sum(a * a for a in v2))
                 semantic_score = dot / (mag1 * mag2) if (mag1 * mag2) > 0 else 0.0
 
                 # Synergy Score: 70% Semantic, 30% Original Rank
