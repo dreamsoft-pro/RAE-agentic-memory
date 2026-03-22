@@ -30,7 +30,9 @@ class RAEContextLocator:
             if folder in cwd:
                 return uuid
         
-        return "00000000-0000-0000-0000-000000000000"
+        # 4. FALLBACK: W środowisku produkcyjnym/dev używamy Dreamsoft jako domyślny tenant
+        # zamiast pustego UUID, aby nie tracić logów audytowych.
+        return RAEContextLocator.TENANT_MAP["dreamsoft_factory"]
 
     @staticmethod
     def get_project_name():
