@@ -27,18 +27,23 @@ class InfrastructureFactory:
         logger.info("initializing_infrastructure", profile=profile)
 
         # 1. Postgres Initialization
-        logger.info("connecting_postgres", host=settings.POSTGRES_HOST)
-        # Use DATABASE_URL if available (common in Lite/Docker), else individual fields
-        dsn = getattr(settings, "DATABASE_URL", None)
-        if dsn:
-            app.state.pool = await asyncpg.create_pool(dsn=dsn)
+        db_mode = getattr(settings, "RAE_DB_MODE", "standard")
+        if db_mode == "ignore":
+            logger.warning("skipping_postgres_initialization", reason="RAE_DB_MODE=ignore")
+            app.state.pool = None
         else:
-            app.state.pool = await asyncpg.create_pool(
-                host=settings.POSTGRES_HOST,
-                database=settings.POSTGRES_DB,
-                user=settings.POSTGRES_USER,
-                password=settings.POSTGRES_PASSWORD,
-            )
+            logger.info("connecting_postgres", host=settings.POSTGRES_HOST)
+            # Use DATABASE_URL if available (common in Lite/Docker), else individual fields
+            dsn = getattr(settings, "DATABASE_URL", None)
+            if dsn:
+                app.state.pool = await asyncpg.create_pool(dsn=dsn)
+            else:
+                app.state.pool = await asyncpg.create_pool(
+                    host=settings.POSTGRES_HOST,
+                    database=settings.POSTGRES_DB,
+                    user=settings.POSTGRES_USER,
+                    password=settings.POSTGRES_PASSWORD,
+                )
 
         # 2. Redis Initialization
         logger.info("connecting_redis", url=settings.REDIS_URL)
