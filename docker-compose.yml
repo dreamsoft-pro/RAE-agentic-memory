@@ -154,10 +154,10 @@ networks:
 
 volumes:
   rae-agentic-memory_postgres_data:
-    external: true
+    driver: local
   rae-agentic-memory_redis_data:
-    external: true
+    driver: local
   rae-agentic-memory_qdrant_data:
-    external: true
+    driver: local
   rae-agentic-memory_ollama_data:
-    external: true
+    driver: local
