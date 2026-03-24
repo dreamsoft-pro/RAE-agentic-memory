@@ -18,7 +18,7 @@ from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
 from .postgres import PostgreSQLStorage
 from .qdrant import QdrantVectorStore
-from .redis import RedisCache
+from .redis_cache import RedisAdapter as RedisCache
 from .sqlite.storage import SQLiteStorage
 from .sqlite.vector import SQLiteVectorStore
 
