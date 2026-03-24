@@ -1,0 +1,29 @@
+# RAE Memory - DEV HOTRELOAD OVERRIDE
+services:
+  rae-api-dev:
+    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - RAE_PROFILE=dev
+    volumes:
+      - ./rae-core/rae_core:/app/rae_core
+      - ./apps:/app/apps
+      - ./rae_adapters:/app/rae_adapters
+      - ./alembic:/app/alembic
+      - ./models:/app/models
+      - ./apps/llm/config:/app/apps/llm/config
+
+  rae-worker:
+    volumes:
+      - ./rae-core/rae_core:/app/rae_core
+      - ./apps:/app/apps
+      - ./rae_adapters:/app/rae_adapters
+      - ./models:/app/models
+
+  rae-mcp:
+    volumes:
+      - ./integrations/mcp/src/rae_mcp:/app/rae_mcp
+      - ./rae-core/rae_core:/app/rae_core
+
+  rae-portal:
+    volumes:
+      - ./rae-portal:/app
