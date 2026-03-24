@@ -21,7 +21,7 @@ from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
 from rae_adapters.postgres import PostgreSQLStorage
 from rae_adapters.qdrant import QdrantVectorStore
-from rae_adapters.redis import RedisCache
+from rae_adapters.redis_cache import RedisCache
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
