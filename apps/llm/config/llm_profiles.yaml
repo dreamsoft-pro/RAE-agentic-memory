@@ -15,3 +15,11 @@ llm_profiles:
       - llama3:8b
     max_cost_per_1k: 0.0
     description: "Default profile using local Ollama"
+
+  # Laptop profile - CPU Optimized
+  laptop:
+    candidates:
+      - phi3:latest
+      - deepseek-coder:1.3b
+    max_cost_per_1k: 0.0
+    description: "Resource-efficient profile for laptop usage"
