@@ -12,15 +12,24 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
 
 **Steps:**
 
-1.  **Clone the repository:**
+1.  **Clone & Configure:**
     ```bash
     git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
     cd RAE-agentic-memory
+    cp .env.example .env  # Add your API keys (OpenAI, Anthropic, etc.)
     ```
 
-2.  **Choose and Start your RAE Environment:**
+2.  **Build Your Stack:**
+    RAE is a complex ecosystem. Building images locally ensures all dependencies are correctly aligned with your architecture.
+    ```bash
+    docker compose build
+    ```
 
-RAE offers several Docker Compose profiles tailored to different use cases. This allows you to run multiple environments (like `dev` and `lite`) simultaneously without conflicts.
+3.  **Choose and Start your RAE Environment:**
+
+> **💡 Gold Standard Note:** As of System 3.2, all Docker volumes and networks are managed internally. No manual `docker volume create` is required.
+
+RAE offers several Docker Compose profiles tailored to different use cases:
 
 ### 1. Development Environment (Hot Reload)
 

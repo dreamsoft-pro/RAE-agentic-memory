@@ -98,16 +98,30 @@ RAE physically isolates agents in **Hard Frames**:
 
 ## 🚀 Quick Start
 
-```bash
-git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
-cd RAE-agentic-memory
+Get RAE up and running in 3 simple steps:
 
-# 1. Start Development Environment (Hot-Reload)
-docker compose --profile dev up -d
+1.  **Clone & Initialize**:
+    ```bash
+    git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
+    cd RAE-agentic-memory
+    cp .env.example .env  # Add your API keys here
+    ```
 
-# 2. Start Lite Environment (Minimal)
-docker compose --profile lite up -d
-```
+2.  **Build Images**:
+    ```bash
+    docker compose build
+    ```
+
+3.  **Launch Profile**:
+    ```bash
+    # For a lightweight, local-first experience:
+    docker compose --profile lite up -d
+
+    # For active development with Hot-Reload:
+    docker compose --profile dev up -d
+    ```
+
+*API available at http://localhost:8001 (Dev) or http://localhost:8008 (Lite).*
 
 ---
 
