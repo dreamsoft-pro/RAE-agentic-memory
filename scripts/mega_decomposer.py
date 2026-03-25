@@ -1,12 +1,15 @@
 # TIMESTAMP: 2026-02-23 13:20:00
 import subprocess
 import os
+from pathlib import Path
 import json
 import time
 import re
 import urllib.request
 
-OUT_DIR = '/mnt/extra_storage/RAE-agentic-memory/agent_hive/work_dir/components/'
+PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent))
+CLOUD_ROOT = PROJECT_ROOT.parent
+OUT_DIR = str(PROJECT_ROOT / 'agent_hive' / 'work_dir' / 'components') if 'OUT_DIR' in ['OUT_DIR', 'WORK_DIR'] else str(CLOUD_ROOT / 'dreamsoft_factory' / 'frontend')
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
 

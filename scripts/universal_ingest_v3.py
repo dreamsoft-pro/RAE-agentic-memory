@@ -6,7 +6,9 @@ from pathlib import Path
 # Config
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
-FRONTEND_ROOT = '/mnt/extra_storage/dreamsoft_factory/frontend/'
+PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent))
+CLOUD_ROOT = PROJECT_ROOT.parent
+FRONTEND_ROOT = str(PROJECT_ROOT / 'agent_hive' / 'work_dir' / 'components') if 'FRONTEND_ROOT' in ['OUT_DIR', 'WORK_DIR'] else str(CLOUD_ROOT / 'dreamsoft_factory' / 'frontend')
 CHUNK_SIZE = 2500  # Characters
 
 def chunk_text(text, size):

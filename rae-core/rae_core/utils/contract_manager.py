@@ -1,11 +1,16 @@
 import os
 import logging
+from pathlib import Path
 
 class ContractManager:
     """Loads and enforces binary hard contracts."""
     
-    def __init__(self, contracts_path="/mnt/extra_storage/RAE-agentic-memory/contracts"):
-        self.contracts_path = contracts_path
+    def __init__(self, contracts_path=None):
+        if contracts_path is None:
+            project_root = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent.parent.parent))
+            self.contracts_path = str(project_root / "contracts")
+        else:
+            self.contracts_path = contracts_path
         self.rules = {}
         self._load_contracts()
 

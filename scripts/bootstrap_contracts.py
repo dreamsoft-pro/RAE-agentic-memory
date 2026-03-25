@@ -1,5 +1,6 @@
 import sys
 import os
+from pathlib import Path
 import subprocess
 
 # Path setup
@@ -9,7 +10,7 @@ from rae_core.utils.contract_manager import ContractManager
 def verify_volumes():
     print("🛡️ Verifying Data Locator Contract...")
     try:
-        with open("/mnt/extra_storage/RAE-agentic-memory/docker-compose.yml", 'r') as f:
+        with open(str(Path(__file__).parent.parent / "docker-compose.yml"), 'r') as f:
             content = f.read()
             if "rae-node-agent_postgres_data" not in content:
                 print("❌ VIOLATION: POSTGRES_DATA volume is NOT pointing to rae-node-agent_postgres_data!")

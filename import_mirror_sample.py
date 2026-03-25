@@ -1,10 +1,11 @@
 import json
 import requests
 import os
+from pathlib import Path
 
 API_URL = "http://localhost:8001/v2/memories/"
 TENANT_ID = "53717286-fe94-4c8f-baf9-c4d2758eb672" # Dreamsoft
-SOURCE_FILE = "/mnt/extra_storage/RAE-Phoenix/runs/latest/chunks.enriched.jsonl"
+SOURCE_FILE = os.environ.get('RAE_SOURCE_FILE', str(Path(__file__).resolve().parent.parent / 'SOURCE_FILE_default'))
 
 def test_import():
     print("🚀 Starting Mirror Sample Import Test...")

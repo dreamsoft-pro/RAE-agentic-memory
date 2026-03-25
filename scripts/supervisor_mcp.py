@@ -1,5 +1,6 @@
 import time
 import os
+from pathlib import Path
 import subprocess
 import urllib.request
 import json
@@ -7,8 +8,10 @@ import json
 # Configuration
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
-WORK_DIR = '/mnt/extra_storage/RAE-agentic-memory/agent_hive/work_dir/components/'
-COMPOSE_DIR = '/mnt/extra_storage/RAE-agentic-memory/agent_hive/'
+PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent))
+CLOUD_ROOT = PROJECT_ROOT.parent
+WORK_DIR = str(PROJECT_ROOT / 'agent_hive' / 'work_dir' / 'components') if 'WORK_DIR' in ['OUT_DIR', 'WORK_DIR'] else str(CLOUD_ROOT / 'dreamsoft_factory' / 'frontend')
+COMPOSE_DIR = str(PROJECT_ROOT / 'agent_hive')
 
 def log_to_rae(msg, tags=[]):
     payload = {"content": f"[SUPERVISOR] {msg}", "layer": "reflective", "tags": ["supervisor_log"] + tags}
