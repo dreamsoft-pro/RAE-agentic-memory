@@ -282,11 +282,11 @@ async def store_memory(memory: Memory):
     await db.insert(memory)
 
     # Invalidate context cache
-    cache_key = f"rae:{memory.tenant_id}:{memory.project_id}:semantic:v2"
+    cache_key = f"rae:{memory.tenant_id}:{memory.project}:semantic:v2"
     await redis.delete(cache_key)
 
     # Invalidate query result caches for this project
-    pattern = f"query_results:{memory.tenant_id}:{memory.project_id}:*"
+    pattern = f"query_results:{memory.tenant_id}:{memory.project}:*"
     keys = await redis.keys(pattern)
     if keys:
         await redis.delete(*keys)
@@ -435,10 +435,10 @@ Identify and cache frequently accessed data:
 
 ```sql
 -- Find most queried projects
-SELECT tenant_id, project_id, COUNT(*) as query_count
+SELECT tenant_id, project, COUNT(*) as query_count
 FROM query_logs
 WHERE timestamp > NOW() - INTERVAL '7 days'
-GROUP BY tenant_id, project_id
+GROUP BY tenant_id, project
 ORDER BY query_count DESC
 LIMIT 100;
 ```

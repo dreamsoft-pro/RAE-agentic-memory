@@ -296,7 +296,7 @@ The codebase follows:
 
 ```python
 # Connection
-client = RAEClient(api_url, api_key, tenant_id, project_id)
+client = RAEClient(api_url, api_key, tenant_id, project)
 client.test_connection() -> bool
 
 # Statistics

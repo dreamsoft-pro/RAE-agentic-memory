@@ -19,18 +19,18 @@ class CivicRAEClient:
         api_url: str,
         api_key: str,
         tenant_id: str = CIVIC_TENANT_ID,
-        project_id: str = "civic-watchdog",
+        project: str = "civic-watchdog",
     ):
         self.api_url = api_url.rstrip("/")
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "X-Tenant-ID": tenant_id,
-            "X-Project-ID": project_id,
+            "X-Project-ID": project,
             "X-Agent-ID": "mozilla-civic-assistant",
             "Content-Type": "application/json",
         }
         self.tenant_id = tenant_id
-        self.project_id = project_id
+        self.project = project
         self.timeout = 180.0 
 
     async def check_connection(self) -> bool:
@@ -45,7 +45,7 @@ class CivicRAEClient:
     async def get_stats(self) -> Dict[str, Any]:
         try:
             async with httpx.AsyncClient(headers=self.headers, timeout=10.0) as client:
-                resp = await client.get(f"{self.api_url}/v2/memories/stats", params={"project": self.project_id})
+                resp = await client.get(f"{self.api_url}/v2/memories/stats", params={"project": self.project})
                 if resp.status_code == 200:
                     data = resp.json()
                     stats = data.get("statistics", {})
@@ -68,7 +68,7 @@ class CivicRAEClient:
         try:
             payload = {
                 "content": content,
-                "project": self.project_id,
+                "project": self.project,
                 "source": source,
                 "human_label": human_label,
                 "importance": 0.7,
@@ -92,7 +92,7 @@ class CivicRAEClient:
         try:
             payload = {
                 "query": query,
-                "project": self.project_id,
+                "project": self.project,
                 "mode": "procedural",
                 "stream": False
             }
@@ -110,7 +110,7 @@ class CivicRAEClient:
                 # Hybrid search fallback
                 resp_search = await client.post(f"{self.api_url}/v2/memories/query", json={
                     "query": query,
-                    "project": self.project_id,
+                    "project": self.project,
                     "k": 10
                 })
                 if resp_search.status_code == 200:
@@ -131,7 +131,7 @@ class CivicRAEClient:
         try:
             payload = {
                 "tenant_id": self.tenant_id,
-                "project": self.project_id,
+                "project": self.project,
                 "max_memories": 100,
                 "min_cluster_size": 2, # Smaller for demo
                 "enable_clustering": True

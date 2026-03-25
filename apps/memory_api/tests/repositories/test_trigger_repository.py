@@ -54,7 +54,7 @@ def trigger_repo(mock_pool):
 def sample_trigger_data():
     return {
         "tenant_id": "t-1",
-        "project_id": "p-1",
+        "project": "p-1",
         "rule_name": "Test Rule",
         "event_types": ["memory_created"],
         "conditions": [{"field": "importance", "operator": "gt", "value": 5}],

@@ -27,7 +27,7 @@ async def test_track_savings_positive(service, mock_repo):
 
         await service.track_savings(
             tenant_id="t1",
-            project_id="p1",
+            project="p1",
             model="gpt-4",
             predicted_tokens=1000,
             real_tokens=200,
@@ -47,7 +47,7 @@ async def test_track_savings_negative(service, mock_repo):
     # Should not log if real >= predicted
     await service.track_savings(
         tenant_id="t1",
-        project_id="p1",
+        project="p1",
         model="gpt-4",
         predicted_tokens=100,
         real_tokens=200,  # Worse than predicted

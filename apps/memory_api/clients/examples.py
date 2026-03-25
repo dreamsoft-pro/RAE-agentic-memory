@@ -25,7 +25,7 @@ async def basic_usage_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         # Create a memory
         memory = await client.create_memory(
@@ -56,7 +56,7 @@ async def advanced_configuration_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
         # Retry configuration
         max_retries=5,
         initial_backoff_ms=200,
@@ -101,7 +101,7 @@ async def error_handling_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         try:
             # This might fail
@@ -139,7 +139,7 @@ async def caching_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
         enable_cache=True,
         cache_ttl_seconds=300,
     ) as client:
@@ -174,7 +174,7 @@ async def semantic_memory_workflow():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         # 1. Create memory
         memory = await client.create_memory(
@@ -212,7 +212,7 @@ async def evaluation_workflow():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         # Define relevance judgments (ground truth)
         relevance_judgments = {
@@ -277,7 +277,7 @@ async def event_triggers_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         # Create trigger: Generate reflection when 50 memories created
         trigger = await client.create_trigger(
@@ -329,7 +329,7 @@ async def dashboard_monitoring_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
     ) as client:
         # Get dashboard metrics
         metrics = await client.get_dashboard_metrics(period="last_24h")
@@ -387,7 +387,7 @@ async def bulk_operations_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project",
+        project="example-project",
         max_connections=50,  # Higher connection pool for parallel requests
     ) as client:
         # Create multiple memories in parallel

@@ -34,7 +34,7 @@ async def test_get_all_nodes(mock_pool):
     ]
 
     repo = GraphRepository(pool)
-    nodes = await repo.get_all_nodes(tenant_id="tenant1", project_id="project1")
+    nodes = await repo.get_all_nodes(tenant_id="tenant1", project="project1")
 
     assert len(nodes) == 2
     assert nodes[0]["node_id"] == "node1"
@@ -62,7 +62,7 @@ async def test_get_all_edges(mock_pool):
     ]
 
     repo = GraphRepository(pool)
-    edges = await repo.get_all_edges(tenant_id="tenant1", project_id="project1")
+    edges = await repo.get_all_edges(tenant_id="tenant1", project="project1")
 
     assert len(edges) == 2
     assert edges[0]["relation"] == "RELATED_TO"
@@ -157,7 +157,7 @@ async def test_upsert_node_insert(mock_pool):
     repo = GraphRepository(pool)
     internal_id = await repo.upsert_node(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         node_id="node1",
         label="Label1",
         properties={"key": "value"},
@@ -176,7 +176,7 @@ async def test_upsert_node_update(mock_pool):
     repo = GraphRepository(pool)
     internal_id = await repo.upsert_node(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         node_id="existing_node",
         label="UpdatedLabel",
         properties={"updated": True},
@@ -195,7 +195,7 @@ async def test_create_node(mock_pool):
     repo = GraphRepository(pool)
     result = await repo.create_node(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         node_id="node1",
         label="Label1",
         properties={},
@@ -214,7 +214,7 @@ async def test_create_edge(mock_pool):
     repo = GraphRepository(pool)
     result = await repo.create_edge(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         source_node_internal_id=1,
         target_node_internal_id=2,
         relation="RELATED_TO",
@@ -233,7 +233,7 @@ async def test_get_node_internal_id(mock_pool):
 
     repo = GraphRepository(pool)
     internal_id = await repo.get_node_internal_id(
-        tenant_id="tenant1", project_id="project1", node_id="node1"
+        tenant_id="tenant1", project="project1", node_id="node1"
     )
 
     assert internal_id == 789
@@ -248,7 +248,7 @@ async def test_get_node_internal_id_not_found(mock_pool):
 
     repo = GraphRepository(pool)
     internal_id = await repo.get_node_internal_id(
-        tenant_id="tenant1", project_id="project1", node_id="nonexistent"
+        tenant_id="tenant1", project="project1", node_id="nonexistent"
     )
 
     assert internal_id is None
@@ -295,7 +295,7 @@ async def test_store_graph_triples(mock_pool):
     ]
 
     stats = await repo.store_graph_triples(
-        triples=triples, tenant_id="tenant1", project_id="project1"
+        triples=triples, tenant_id="tenant1", project="project1"
     )
 
     assert "nodes_created" in stats

@@ -23,7 +23,7 @@ async def main():
     client = MemoryClient(
         api_url="http://localhost:8000",
         tenant_id="my-tenant",
-        project_id="my-project",
+        project="my-project",
         api_key="your-api-key"  # Optional if auth disabled
     )
 
@@ -71,7 +71,7 @@ class MemoryClient:
         self,
         api_url: str,
         tenant_id: str,
-        project_id: str = None,
+        project: str = None,
         api_key: str = None
     )
 ```

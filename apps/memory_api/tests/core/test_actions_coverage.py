@@ -24,7 +24,7 @@ from apps.memory_api.core.state import (
 def real_state():
     return RAEState(
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         budget_state=BudgetState(
             remaining_cost_usd=100.0, remaining_tokens=100000, calls_remaining=100
         ),

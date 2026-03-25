@@ -13,7 +13,7 @@ Mathematical Background:
 Usage:
     state = RAEState(
         tenant_id="demo",
-        project_id="my-app",
+        project="my-app",
         working_context=WorkingContext(content=["memory 1", "memory 2"]),
         memory_state=MemoryState(...),
         budget_state=BudgetState(...),
@@ -258,7 +258,7 @@ class RAEState(BaseModel):
     Example:
         >>> state = RAEState(
         ...     tenant_id="demo",
-        ...     project_id="my-app",
+        ...     project="my-app",
         ...     working_context=WorkingContext(content=["memory 1"]),
         ...     budget_state=BudgetState(remaining_tokens=50000)
         ... )
@@ -269,7 +269,7 @@ class RAEState(BaseModel):
 
     # Identity
     tenant_id: str = Field(..., description="Tenant identifier")
-    project_id: str = Field(..., description="Project identifier")
+    project: str = Field(..., description="Project identifier")
     session_id: Optional[str] = Field(None, description="Optional session identifier")
 
     # Timestamp
@@ -297,7 +297,7 @@ class RAEState(BaseModel):
         """
         return {
             "tenant_id": self.tenant_id,
-            "project_id": self.project_id,
+            "project": self.project,
             "session_id": self.session_id,
             "timestamp": self.timestamp.isoformat(),
             "working_context": self.working_context.to_dict(),
@@ -328,7 +328,7 @@ class RAEState(BaseModel):
         """
         with tracer.start_as_current_span("rae.state.compare") as span:
             span.set_attribute("rae.tenant_id", self.tenant_id)
-            span.set_attribute("rae.project_id", self.project_id)
+            span.set_attribute("rae.project", self.project)
 
             delta = {
                 "token_delta": (
@@ -382,7 +382,7 @@ class RAEState(BaseModel):
         """
         with tracer.start_as_current_span("rae.state.validate") as span:
             span.set_attribute("rae.tenant_id", self.tenant_id)
-            span.set_attribute("rae.project_id", self.project_id)
+            span.set_attribute("rae.project", self.project)
 
             # Record current state metrics
             span.set_attribute(
@@ -477,7 +477,7 @@ class RAEState(BaseModel):
         logger.info(
             event,
             tenant_id=self.tenant_id,
-            project_id=self.project_id,
+            project=self.project,
             session_id=self.session_id,
             state=self.to_dict(),
         )

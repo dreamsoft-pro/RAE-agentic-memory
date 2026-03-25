@@ -51,7 +51,7 @@ class TestRequestApproval:
 
         result = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="read_memory",
             operation_description="Read memory for display",
             risk_level=OperationRiskLevel.low,
@@ -73,7 +73,7 @@ class TestRequestApproval:
 
         result = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="list_memories",
             operation_description="List memories",
             risk_level=OperationRiskLevel.none,
@@ -93,7 +93,7 @@ class TestRequestApproval:
 
         result = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="delete_memory",
             operation_description="Delete critical memory",
             risk_level=OperationRiskLevel.high,
@@ -116,7 +116,7 @@ class TestRequestApproval:
 
         result = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="delete_all_memories",
             operation_description="Delete all tenant memories",
             risk_level=OperationRiskLevel.critical,
@@ -142,7 +142,7 @@ class TestRequestApproval:
         # Test high risk timeout (48 hours)
         result_high = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="delete_memory",
             operation_description="Delete memory",
             risk_level=OperationRiskLevel.high,
@@ -157,7 +157,7 @@ class TestRequestApproval:
         # Test medium risk timeout (24 hours)
         result_medium = await approval_service.request_approval(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             operation_type="update_memory",
             operation_description="Update memory",
             risk_level=OperationRiskLevel.medium,

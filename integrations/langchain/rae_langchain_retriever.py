@@ -16,11 +16,11 @@ class _RAEAPIClient:
 
     def query(self, query: str, k: int = 4) -> List[Document]:
         """Queries the RAE API and returns a list of LangChain Documents."""
-        payload = {"query_text": query, "k": k}
+        payload = {"query": query, "k": k}
         try:
             with httpx.Client() as client:
                 response = client.post(
-                    f"{self.base_url}/memory/query", json=payload, headers=self.headers
+                    f"{self.base_url}/v2/memories/query", json=payload, headers=self.headers
                 )
                 response.raise_for_status()
 

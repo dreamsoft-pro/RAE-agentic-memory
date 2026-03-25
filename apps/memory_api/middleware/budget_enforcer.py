@@ -54,8 +54,8 @@ class BudgetEnforcementMiddleware(BaseHTTPMiddleware):
             rae_service = request.app.state.rae_core_service
             budget_service = BudgetService(rae_service)
 
-            # Try to get project_id from headers, then query params
-            project_id = (
+            # Try to get project from headers, then query params
+            project = (
                 request.headers.get("X-Project-ID")
                 or request.query_params.get("project")
                 or "default"
@@ -63,7 +63,7 @@ class BudgetEnforcementMiddleware(BaseHTTPMiddleware):
 
             # Check if budget is exceeded
             is_exceeded, remaining, limit = await budget_service.check_budget_exceeded(
-                tenant_id, project_id
+                tenant_id, project
             )
 
             if is_exceeded:

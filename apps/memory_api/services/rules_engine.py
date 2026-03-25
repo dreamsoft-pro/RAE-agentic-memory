@@ -80,7 +80,7 @@ class RulesEngine:
 
         # Fetch active trigger rules for this tenant/project
         triggers = await self._fetch_active_triggers(
-            event.tenant_id, event.project_id, event.event_type
+            event.tenant_id, event.project, event.event_type
         )
 
         if not triggers:
@@ -472,7 +472,7 @@ class RulesEngine:
                 attempt_number=attempt,
                 max_attempts=action_config.max_retries + 1,
                 tenant_id=trigger.tenant_id,
-                project_id=trigger.project_id,
+                project=trigger.project,
             )
 
             logger.info(
@@ -519,7 +519,7 @@ class RulesEngine:
                 attempt_number=attempt,
                 max_attempts=action_config.max_retries + 1,
                 tenant_id=trigger.tenant_id,
-                project_id=trigger.project_id,
+                project=trigger.project,
             )
 
             return execution
@@ -655,14 +655,14 @@ class RulesEngine:
     # ========================================================================
 
     async def _fetch_active_triggers(
-        self, tenant_id: str, project_id: str, event_type: EventType
+        self, tenant_id: str, project: str, event_type: EventType
     ) -> List[TriggerRule]:
         """
         Fetch active triggers matching event type.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             event_type: Event type
 
         Returns:

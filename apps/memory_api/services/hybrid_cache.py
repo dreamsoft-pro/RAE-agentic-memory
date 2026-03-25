@@ -61,7 +61,7 @@ class HybridSearchCache:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         filters: Optional[Dict[str, Any]] = None,
         timestamp: Optional[datetime] = None,
     ) -> str:
@@ -71,7 +71,7 @@ class HybridSearchCache:
         Args:
             query: Search query
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             filters: Optional search filters
             timestamp: Optional timestamp (defaults to now)
 
@@ -88,7 +88,7 @@ class HybridSearchCache:
         key_components = [
             query.lower().strip(),
             tenant_id,
-            project_id,
+            project,
             str(window_timestamp),
         ]
 
@@ -108,7 +108,7 @@ class HybridSearchCache:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         filters: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
@@ -117,13 +117,13 @@ class HybridSearchCache:
         Args:
             query: Search query
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             filters: Optional search filters
 
         Returns:
             Cached results or None if not found/expired
         """
-        cache_key = self._generate_cache_key(query, tenant_id, project_id, filters)
+        cache_key = self._generate_cache_key(query, tenant_id, project, filters)
 
         if cache_key in self._cache:
             result, expiry_time = self._cache[cache_key]
@@ -156,7 +156,7 @@ class HybridSearchCache:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         result: Dict[str, Any],
         filters: Optional[Dict[str, Any]] = None,
         ttl_seconds: Optional[int] = None,
@@ -167,7 +167,7 @@ class HybridSearchCache:
         Args:
             query: Search query
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             result: Search results to cache
             filters: Optional search filters
             ttl_seconds: Optional custom TTL (uses default if not specified)
@@ -176,7 +176,7 @@ class HybridSearchCache:
         if len(self._cache) >= self.max_cache_size:
             await self._evict_oldest()
 
-        cache_key = self._generate_cache_key(query, tenant_id, project_id, filters)
+        cache_key = self._generate_cache_key(query, tenant_id, project, filters)
         ttl = ttl_seconds or self.default_ttl
         expiry_time = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
@@ -190,18 +190,18 @@ class HybridSearchCache:
             cache_size=len(self._cache),
         )
 
-    async def invalidate(self, tenant_id: str, project_id: Optional[str] = None):
+    async def invalidate(self, tenant_id: str, project: Optional[str] = None):
         """
         Invalidate cache entries for a tenant/project.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Optional project identifier (invalidates all tenant if None)
+            project: Optional project identifier (invalidates all tenant if None)
         """
         # Build invalidation pattern
         pattern_components = [tenant_id]
-        if project_id:
-            pattern_components.append(project_id)
+        if project:
+            pattern_components.append(project)
 
         # Find keys to invalidate
         keys_to_remove = []
@@ -216,7 +216,7 @@ class HybridSearchCache:
         logger.info(
             "cache_invalidated",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             entries_removed=len(keys_to_remove),
         )
 

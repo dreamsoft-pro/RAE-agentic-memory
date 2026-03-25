@@ -76,7 +76,7 @@ class StoreMemoryResponse(BaseModel):
 
 
 class QueryMemoryRequest(BaseModel):
-    query_text: str
+    query: str
     k: int = 10
     filters: Optional[Dict[str, Any]] = None
 
@@ -120,7 +120,7 @@ class ApprovalRequest(BaseModel):
     """Request for human approval of high-risk operations."""
 
     tenant_id: str
-    project_id: str
+    project: str
     operation_type: str
     operation_description: str
     risk_level: OperationRiskLevel
@@ -173,7 +173,7 @@ class ContextCreationRequest(BaseModel):
     """Request to create decision context."""
 
     tenant_id: str
-    project_id: str
+    project: str
     query: str
     sources: List[Dict[str, Any]]
     metadata: Optional[Dict[str, Any]] = None
@@ -183,7 +183,7 @@ class DecisionRecordRequest(BaseModel):
     """Request to record a decision."""
 
     tenant_id: str
-    project_id: str
+    project: str
     context_id: str
     decision: str
     decision_type: str

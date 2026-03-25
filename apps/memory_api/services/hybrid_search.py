@@ -87,7 +87,7 @@ class HybridSearchService:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         top_k_vector: int = 5,
         graph_depth: int = 2,
         traversal_strategy: TraversalStrategy = TraversalStrategy.BFS,
@@ -109,7 +109,7 @@ class HybridSearchService:
         Args:
             query: Search query text
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             top_k_vector: Number of vector search results (default: 5)
             graph_depth: Maximum graph traversal depth (default: 2)
             traversal_strategy: BFS or DFS traversal (default: BFS)
@@ -125,7 +125,7 @@ class HybridSearchService:
         logger.info(
             "hybrid_search_started",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             query_length=len(query),
             use_graph=use_graph,
         )
@@ -135,7 +135,7 @@ class HybridSearchService:
 
         initial_state = RAEState(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             budget_state=BudgetState(
                 remaining_tokens=100000,  # Default budget
                 remaining_cost_usd=10.0,
@@ -151,7 +151,7 @@ class HybridSearchService:
             vector_results = await self._vector_search(
                 query=query,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 top_k=top_k_vector,
                 filters=filters,
             )
@@ -242,7 +242,7 @@ class HybridSearchService:
             start_node_ids = await self._map_memories_to_nodes(
                 memory_results=vector_results,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
             )
 
             logger.info("mapped_to_graph_nodes", start_nodes_count=len(start_node_ids))
@@ -264,7 +264,7 @@ class HybridSearchService:
             graph_nodes, graph_edges = await self._traverse_graph(
                 start_node_ids=start_node_ids,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 depth=graph_depth,
                 strategy=traversal_strategy,
             )
@@ -296,14 +296,14 @@ class HybridSearchService:
             logger.info(
                 "hybrid_search_completed",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 statistics=statistics,
             )
 
             # Update RAE state after search completes (MDP formulation: s_{t+1})
             final_state = RAEState(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 budget_state=BudgetState(
                     # Context tokens used (approximation)
                     remaining_tokens=initial_state.budget_state.remaining_tokens
@@ -341,7 +341,7 @@ class HybridSearchService:
             logger.exception(
                 "hybrid_search_failed",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 error=str(e),
             )
             raise RuntimeError(f"Hybrid search failed: {e}")
@@ -350,7 +350,7 @@ class HybridSearchService:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         top_k: int,
         filters: Optional[Dict[str, Any]],
     ) -> List[ScoredMemoryRecord]:
@@ -361,7 +361,7 @@ class HybridSearchService:
         Args:
             query: Search query
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             top_k: Number of results
             filters: Optional search filters
 
@@ -377,7 +377,7 @@ class HybridSearchService:
         query_filters = {
             "must": [
                 {"key": "tenant_id", "match": {"value": tenant_id}},
-                {"key": "project", "match": {"value": project_id}},
+                {"key": "project", "match": {"value": project}},
             ]
         }
 
@@ -496,7 +496,7 @@ class HybridSearchService:
 
         # Note: This is an additive search step.
         relevant_communities = await self._find_relevant_communities(
-            query, tenant_id, project_id
+            query, tenant_id, project
         )
 
         # Create synthetic memory records for these communities so they are included in the synthesis
@@ -576,7 +576,7 @@ class HybridSearchService:
             return []
 
     async def _find_relevant_communities(
-        self, query: str, tenant_id: str, project_id: str
+        self, query: str, tenant_id: str, project: str
     ) -> List[Dict]:
         """
         Find community nodes relevant to the query.
@@ -584,11 +584,11 @@ class HybridSearchService:
         Delegates to GraphRepository for database access.
         """
         return await self.graph_repository.find_relevant_communities(
-            query=query, tenant_id=tenant_id, project_id=project_id, limit=3
+            query=query, tenant_id=tenant_id, project=project, limit=3
         )
 
     async def _map_memories_to_nodes(
-        self, memory_results: List[ScoredMemoryRecord], tenant_id: str, project_id: str
+        self, memory_results: List[ScoredMemoryRecord], tenant_id: str, project: str
     ) -> List[str]:
         """
         Map memory content to knowledge graph nodes.
@@ -601,7 +601,7 @@ class HybridSearchService:
         Args:
             memory_results: Vector search results
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of node IDs to use as traversal starting points
@@ -617,7 +617,7 @@ class HybridSearchService:
             matched_nodes = await self.graph_repository.find_nodes_by_content_match(
                 content=memory.content,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 limit=5,
             )
             node_ids.extend(matched_nodes)
@@ -629,7 +629,7 @@ class HybridSearchService:
         self,
         start_node_ids: List[str],
         tenant_id: str,
-        project_id: str,
+        project: str,
         depth: int,
         strategy: TraversalStrategy,
     ) -> Tuple[List[GraphNode], List[GraphEdge]]:
@@ -641,7 +641,7 @@ class HybridSearchService:
         Args:
             start_node_ids: Starting node IDs
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             depth: Maximum traversal depth
             strategy: Traversal strategy (BFS or DFS)
 
@@ -650,11 +650,11 @@ class HybridSearchService:
         """
         if strategy == TraversalStrategy.BFS:
             return await self.graph_repository.traverse_graph_bfs(
-                start_node_ids, tenant_id, project_id, depth
+                start_node_ids, tenant_id, project, depth
             )
         else:
             return await self.graph_repository.traverse_graph_dfs(
-                start_node_ids, tenant_id, project_id, depth
+                start_node_ids, tenant_id, project, depth
             )
 
     async def _synthesize_context(

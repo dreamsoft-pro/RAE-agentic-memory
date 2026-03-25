@@ -175,13 +175,13 @@ Cost Tracking: {{ if .Values.config.enableCostTracking }}✅ Enabled{{ else }}�
      -d '{"content": "Hello from RAE!", "layer": "semantic"}'
 
 3. Search memories:
-   curl -X POST http://localhost:8080/v1/search/hybrid \
+   curl -X POST http://localhost:8080/v2/search/hybrid \
      -H "Content-Type: application/json" \
      -H "X-Tenant-ID: your-tenant" \
      -d '{"query": "Hello", "top_k": 5}'
 
 4. View governance dashboard:
-   curl http://localhost:8080/v1/governance/overview
+   curl http://localhost:8080/v2/compliance/overview
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

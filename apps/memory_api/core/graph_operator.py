@@ -20,7 +20,7 @@ Usage:
     operator = GraphUpdateOperator()
 
     # Load current graph
-    G_t = await load_graph(tenant_id, project_id)
+    G_t = await load_graph(tenant_id, project)
 
     # Observation: new memory with entities
     observation = {
@@ -165,7 +165,7 @@ class KnowledgeGraph:
         nodes: Dictionary of node_id -> GraphNode
         edges: Dictionary of edge_id -> GraphEdge
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         created_at: Graph creation timestamp
         last_updated: Last update timestamp
     """
@@ -173,7 +173,7 @@ class KnowledgeGraph:
     nodes: Dict[str, GraphNode] = field(default_factory=dict)
     edges: Dict[str, GraphEdge] = field(default_factory=dict)
     tenant_id: str = ""
-    project_id: str = ""
+    project: str = ""
     created_at: datetime = field(default_factory=datetime.now)
     last_updated: datetime = field(default_factory=datetime.now)
 
@@ -222,7 +222,7 @@ class KnowledgeGraph:
             "nodes": {node_id: node.to_dict() for node_id, node in self.nodes.items()},
             "edges": {edge_id: edge.to_dict() for edge_id, edge in self.edges.items()},
             "tenant_id": self.tenant_id,
-            "project_id": self.project_id,
+            "project": self.project,
             "created_at": self.created_at.isoformat(),
             "last_updated": self.last_updated.isoformat(),
             "node_count": len(self.nodes),
@@ -325,7 +325,7 @@ class GraphUpdateOperator:
 
             span.set_attribute("rae.graph.action_type", action_type.value)
             span.set_attribute("rae.tenant_id", graph.tenant_id)
-            span.set_attribute("rae.project_id", graph.project_id)
+            span.set_attribute("rae.project", graph.project)
             span.set_attribute("rae.graph.nodes_before", len(graph.nodes))
             span.set_attribute("rae.graph.edges_before", len(graph.edges))
 
@@ -479,7 +479,7 @@ class GraphUpdateOperator:
             spectral_gap = 0.0
 
             span.set_attribute("rae.tenant_id", latest_graph.tenant_id)
-            span.set_attribute("rae.project_id", latest_graph.project_id)
+            span.set_attribute("rae.project", latest_graph.project)
             span.set_attribute("rae.graph.node_count", len(latest_graph.nodes))
             span.set_attribute("rae.graph.edge_count", len(latest_graph.edges))
 

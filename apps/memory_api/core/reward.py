@@ -130,7 +130,7 @@ class RewardFunction:
         with tracer.start_as_current_span("rae.reward.compute") as span:
             span.set_attribute("rae.action.type", action.action_type.value)
             span.set_attribute("rae.tenant_id", state_after.tenant_id)
-            span.set_attribute("rae.project_id", state_after.project_id)
+            span.set_attribute("rae.project", state_after.project)
             span.set_attribute("rae.reward.lambda", self.lambda_)
             span.set_attribute("rae.reward.mu", self.mu)
             span.set_attribute("rae.reward.gamma", self.gamma)

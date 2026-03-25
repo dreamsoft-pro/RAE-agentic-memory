@@ -69,7 +69,7 @@ class DecisionContext(BaseModel):
 
     context_id: UUID = Field(default_factory=uuid4)
     tenant_id: str
-    project_id: str
+    project: str
 
     # Query that triggered context retrieval
     query: str
@@ -96,7 +96,7 @@ class DecisionRecord(BaseModel):
 
     decision_id: UUID = Field(default_factory=uuid4)
     tenant_id: str
-    project_id: str
+    project: str
 
     # Decision details
     decision_type: DecisionType
@@ -136,7 +136,7 @@ class ContextProvenanceService:
     async def create_decision_context(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         sources: List[ContextSource],
         metadata: Optional[Dict[str, Any]] = None,
@@ -146,7 +146,7 @@ class ContextProvenanceService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Query that triggered context retrieval
             sources: List of context sources
             metadata: Additional metadata
@@ -169,7 +169,7 @@ class ContextProvenanceService:
 
         context = DecisionContext(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             query=query,
             sources=sources,
             total_sources=len(sources),
@@ -196,7 +196,7 @@ class ContextProvenanceService:
     async def record_decision(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         decision_type: DecisionType,
         decision_description: str,
         context_id: UUID,
@@ -212,7 +212,7 @@ class ContextProvenanceService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             decision_type: Type of decision
             decision_description: Human-readable description
             context_id: ID of context used
@@ -236,7 +236,7 @@ class ContextProvenanceService:
 
         decision = DecisionRecord(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             decision_type=decision_type,
             decision_description=decision_description,
             context_id=context_id,

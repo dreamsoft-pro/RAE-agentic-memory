@@ -53,7 +53,7 @@ Client → POST /v2/memory/store → MemoryService
 
 The process of querying for memories is more complex and involves several steps:
 
-1.  A client sends a `POST` request to the `/v2/memory/query` endpoint.
+1.  A client sends a `POST` request to the `/v2/v2/memories/query` endpoint.
 2.  The query is vectorized using the same embedding model.
 3.  The vector store is searched for the most similar memories.
 4.  (Optional) The retrieved memories are re-ranked by the `reranker-service` to improve relevance.
@@ -62,7 +62,7 @@ The process of querying for memories is more complex and involves several steps:
 7.  The final set of memories and any generated reflections are returned to the client.
 
 ```
-Client → POST /v2/memory/query → MemoryService
+Client → POST /v2/v2/memories/query → MemoryService
   ├─ VectorStore.search()  (episodic/semantic)
   ├─ Reranker.rerank()     (optional)
   ├─ PIIScrubber.scrub()
@@ -114,7 +114,7 @@ Every memory retrieval operation automatically updates two critical tracking fie
 These fields are updated in batch operations for performance:
 
 ```
-Client → /v2/memory/query or /v2/agent/execute
+Client → /v2/v2/memories/query or /v2/agent/execute
   ├─ VectorStore.search()
   ├─ Results returned to client
   └─ MemoryRepository.update_memory_access_stats(memory_ids[])
@@ -122,8 +122,8 @@ Client → /v2/memory/query or /v2/agent/execute
 ```
 
 **Tracked Operations:**
-- `/v2/memory/query` - Standard vector search
-- `/v2/memory/query` with `use_graph=true` - Hybrid GraphRAG search
+- `/v2/v2/memories/query` - Standard vector search
+- `/v2/v2/memories/query` with `use_graph=true` - Hybrid GraphRAG search
 - `/v2/agent/execute` - Agent execution with memory retrieval
 
 **Implementation:** The batch update uses PostgreSQL's `ANY` array operator to avoid N+1 queries:

@@ -708,7 +708,7 @@
 │         self.synthetic_count = synthetic_count                                                                                                                                       │
 │         self.query_count = queries                                                                                                                                                   │
 │         self.tenant_id = "00000000-0000-0000-0000-000000000000"                                                                                                                      │
-│         self.project_id = "RAE-agentic-memory"                                                                                                                                       │
+│         self.project = "RAE-agentic-memory"                                                                                                                                       │
 │         self.szubar_reflections = 0                                                                                                                                                  │
 │         self.reflection_map: dict[str, list[str]] = {}                                                                                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

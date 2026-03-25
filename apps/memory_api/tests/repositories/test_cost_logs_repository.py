@@ -27,7 +27,7 @@ def mock_pool():
 def sample_log_params():
     return LogLLMCallParams(
         tenant_id="tenant-123",
-        project_id="project-456",
+        project="project-456",
         model="gpt-4o",
         provider="openai",
         operation="query",
@@ -213,7 +213,7 @@ async def test_get_recent_logs(mock_pool):
         {
             "id": "1",
             "tenant_id": "t",
-            "project_id": "p",
+            "project": "p",
             "model": "m",
             "provider": "pr",
             "operation": "op",

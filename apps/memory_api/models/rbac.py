@@ -121,21 +121,21 @@ class UserRole(BaseModel):
             return False
         return datetime.now(timezone.utc) > self.expires_at
 
-    def has_access_to_project(self, project_id: str) -> bool:
+    def has_access_to_project(self, project: str) -> bool:
         """Check if user has access to specific project"""
         # Empty list means access to all projects
         if not self.project_ids:
             return True
-        return project_id in self.project_ids
+        return project in self.project_ids
 
-    def can_perform(self, action: str, project_id: Optional[str] = None) -> bool:
+    def can_perform(self, action: str, project: Optional[str] = None) -> bool:
         """Check if user can perform action"""
         # Check expiration
         if self.is_expired():
             return False
 
         # Check project access
-        if project_id and not self.has_access_to_project(project_id):
+        if project and not self.has_access_to_project(project):
             return False
 
         # Check role permissions

@@ -54,7 +54,7 @@ print(f"Stored memory: {response.id}")
 
 # Query memories
 results = client.query(
-    query_text="user interface preferences",
+    query="user interface preferences",
     k=10
 )
 
@@ -112,7 +112,7 @@ print(f"Memory ID: {response.id}")
 
 ```python
 response = client.query(
-    query_text="authentication errors",
+    query="authentication errors",
     k=10
 )
 
@@ -127,7 +127,7 @@ for memory in response.results:
 ```python
 # Enable graph traversal for richer context
 response = client.query(
-    query_text="machine learning concepts",
+    query="machine learning concepts",
     k=5,
     use_graph=True,
     graph_depth=2,
@@ -157,7 +157,7 @@ print(response.message)
 ```python
 # Extract entities and relationships from memories
 result = client.extract_knowledge_graph(
-    project_id="project-1",
+    project="project-1",
     limit=50,
     min_confidence=0.5,
     auto_store=True
@@ -177,7 +177,7 @@ for triple in result['triples']:
 # Hybrid search combining vector + graph traversal
 result = client.query_graph(
     query="machine learning optimization techniques",
-    project_id="ml-project",
+    project="ml-project",
     top_k_vector=5,
     graph_depth=2,
     traversal_strategy="bfs"  # or "dfs"
@@ -192,7 +192,7 @@ print(f"\nSynthesized context:\n{result['synthesized_context']}")
 ### Graph Statistics
 
 ```python
-stats = client.get_graph_stats(project_id="project-1")
+stats = client.get_graph_stats(project="project-1")
 
 print(f"Total nodes: {stats['total_nodes']}")
 print(f"Total edges: {stats['total_edges']}")
@@ -205,7 +205,7 @@ print(f"Average edges per node: {stats['statistics']['avg_edges_per_node']}")
 ```python
 # Get important nodes using PageRank
 nodes = client.get_graph_nodes(
-    project_id="project-1",
+    project="project-1",
     limit=20,
     use_pagerank=True,
     min_pagerank_score=0.01
@@ -216,7 +216,7 @@ for node in nodes:
 
 # Get edges filtered by relation type
 edges = client.get_graph_edges(
-    project_id="project-1",
+    project="project-1",
     limit=50,
     relation="depends_on"
 )
@@ -227,7 +227,7 @@ edges = client.get_graph_edges(
 ```python
 # Extract subgraph starting from specific nodes
 subgraph = client.get_subgraph(
-    project_id="project-1",
+    project="project-1",
     node_ids=["node-id-1", "node-id-2"],
     depth=2
 )
@@ -326,7 +326,7 @@ print(f"Cache savings: ${stats['cache_savings_usd']:.2f}")
 
 # Cost breakdown by project
 for project in stats['by_project']:
-    print(f"  {project['project_id']}: ${project['cost_usd']:.2f}")
+    print(f"  {project['project']}: ${project['cost_usd']:.2f}")
 ```
 
 ### Budget Status
@@ -356,7 +356,7 @@ Request and track approval for high-risk operations:
 # Request approval for a critical operation
 approval = client.request_approval(
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
     operation_type="delete",
     operation_description="Delete user data from all memory layers",
     risk_level="high",
@@ -399,7 +399,7 @@ Track decision lineage from query to final decision:
 # Create decision context
 context = client.create_decision_context(
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
     query="Should we approve this loan application?",
     sources=[
         {
@@ -425,7 +425,7 @@ print(f"Quality metrics - Trust: {context['avg_trust']}, Relevance: {context['av
 # Record the decision
 decision = client.record_decision(
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
     context_id=context['context_id'],
     decision="Approve loan with $50,000 limit",
     decision_type="loan_approval",
@@ -616,13 +616,13 @@ async def main():
 
     # Query asynchronously
     results = await client.query_async(
-        query_text="async operations",
+        query="async operations",
         k=5
     )
 
     # GraphRAG async
     graph_result = await client.extract_knowledge_graph_async(
-        project_id="async-project",
+        project="async-project",
         limit=10
     )
 
@@ -652,7 +652,7 @@ client = RAEClient(
 )
 
 try:
-    response = client.query(query_text="test", k=10)
+    response = client.query(query="test", k=10)
 except httpx.HTTPStatusError as e:
     print(f"HTTP error: {e.response.status_code}")
     print(f"Response: {e.response.text}")
@@ -686,7 +686,7 @@ for i in range(5):
 
 # 2. Extract knowledge graph
 graph = client.extract_knowledge_graph(
-    project_id="demo",
+    project="demo",
     limit=10,
     auto_store=True
 )
@@ -695,7 +695,7 @@ print(f"Extracted {len(graph['triples'])} knowledge triples")
 # 3. Query with graph
 results = client.query_graph(
     query="user actions and tasks",
-    project_id="demo",
+    project="demo",
     top_k_vector=3,
     graph_depth=2
 )

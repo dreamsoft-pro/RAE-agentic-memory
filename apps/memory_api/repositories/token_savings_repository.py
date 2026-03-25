@@ -24,7 +24,7 @@ class TokenSavingsRepository:
         query = """
             INSERT INTO token_savings_log (
                 tenant_id,
-                project_id,
+                project,
                 request_id,
                 predicted_tokens,
                 real_tokens,
@@ -39,7 +39,7 @@ class TokenSavingsRepository:
             await self.pool.execute(
                 query,
                 entry.tenant_id,
-                entry.project_id,
+                entry.project,
                 entry.request_id,
                 entry.predicted_tokens,
                 entry.real_tokens,
@@ -59,7 +59,7 @@ class TokenSavingsRepository:
     async def get_savings_summary(
         self,
         tenant_id: str,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> SavingsSummary:
@@ -74,9 +74,9 @@ class TokenSavingsRepository:
         conditions = ["tenant_id = $1", "timestamp BETWEEN $2 AND $3"]
         params = [tenant_id, start_date, end_date]
 
-        if project_id:
-            params.append(project_id)
-            conditions.append(f"project_id = ${len(params)}")
+        if project:
+            params.append(project)
+            conditions.append(f"project = ${len(params)}")
 
         where_clause = " AND ".join(conditions)
 

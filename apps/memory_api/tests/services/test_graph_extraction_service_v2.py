@@ -47,7 +47,7 @@ async def test_extract_knowledge_graph_success(
     service, mock_rae_service, mock_llm_provider
 ):
     # Setup
-    project_id = "p-1"
+    project = "p-1"
     tenant_id = "t-1"
 
     # 1. Mock memories
@@ -79,7 +79,7 @@ async def test_extract_knowledge_graph_success(
     ]
 
     # Execute
-    result = await service.extract_knowledge_graph(project_id, tenant_id)
+    result = await service.extract_knowledge_graph(project, tenant_id)
 
     # Verify
     assert isinstance(result, GraphExtractionResult)
@@ -164,6 +164,6 @@ async def test_store_graph_triples(service, mock_graph_repo):
 
     # Check arguments passed to repo
     call_args = mock_graph_repo.store_graph_triples.call_args[1]
-    assert call_args["project_id"] == "p-1"
+    assert call_args["project"] == "p-1"
     assert len(call_args["triples"]) == 1
     assert call_args["triples"][0]["source"] == "a"  # normalized

@@ -4,7 +4,7 @@
   "tools": [
     {
       "name": "memory_query",
-      "endpoint": "/memory/query",
+      "endpoint": "/v2/memories/query",
       "method": "POST"
     },
     {

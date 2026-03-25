@@ -57,7 +57,7 @@ class SemanticSearchPipeline:
     async def search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         k: int = 10,
         enable_topic_matching: bool = True,
@@ -73,7 +73,7 @@ class SemanticSearchPipeline:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Search query
             k: Number of results
             enable_topic_matching: Enable stage 1
@@ -103,7 +103,7 @@ class SemanticSearchPipeline:
         if enable_topic_matching:
             stage1_results, topics = await self._stage1_topic_matching(
                 tenant_id,
-                project_id,
+                project,
                 query,
                 k * 3,  # Get more for filtering
             )
@@ -115,7 +115,7 @@ class SemanticSearchPipeline:
         # Stage 2: Term Normalization → Canonicalization
         if enable_canonicalization:
             stage2_results, canonical_terms = await self._stage2_canonicalization(
-                tenant_id, project_id, query, k * 2
+                tenant_id, project, query, k * 2
             )
             results.extend(stage2_results)
             statistics["stage2_results"] = len(stage2_results)
@@ -152,14 +152,14 @@ class SemanticSearchPipeline:
         return final_results, statistics
 
     async def _stage1_topic_matching(
-        self, tenant_id: str, project_id: str, query: str, k: int
+        self, tenant_id: str, project: str, query: str, k: int
     ) -> Tuple[List[SemanticNode], List[str]]:
         """
         Stage 1: Topic identification and vector search.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Search query
             k: Number of results
 
@@ -184,13 +184,13 @@ class SemanticSearchPipeline:
             """
             SELECT *
             FROM semantic_nodes
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
               AND embedding IS NOT NULL
             ORDER BY embedding <=> $3
             LIMIT $4
             """,
             tenant_id,
-            project_id,
+            project,
             query_embedding,
             k,
         )
@@ -202,14 +202,14 @@ class SemanticSearchPipeline:
         return results, topics
 
     async def _stage2_canonicalization(
-        self, tenant_id: str, project_id: str, query: str, k: int
+        self, tenant_id: str, project: str, query: str, k: int
     ) -> Tuple[List[SemanticNode], List[str]]:
         """
         Stage 2: Term normalization and canonicalization.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Search query
             k: Number of results
 
@@ -236,7 +236,7 @@ class SemanticSearchPipeline:
                 """
                 SELECT *
                 FROM semantic_nodes
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                   AND (
                     canonical_form ILIKE $3
                     OR label ILIKE $3
@@ -245,7 +245,7 @@ class SemanticSearchPipeline:
                 LIMIT $5
                 """,
                 tenant_id,
-                project_id,
+                project,
                 f"%{canonical}%",
                 canonical,
                 k,
@@ -397,7 +397,7 @@ class SemanticSearchPipeline:
         return SemanticNode(
             id=record["id"],
             tenant_id=record["tenant_id"],
-            project_id=record["project_id"],
+            project=record["project"],
             node_id=record["node_id"],
             label=record["label"],
             node_type=SemanticNodeType(record["node_type"]),

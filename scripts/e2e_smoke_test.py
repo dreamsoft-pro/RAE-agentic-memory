@@ -65,17 +65,17 @@ def run_test():
     time.sleep(wait_time)
 
     # 3. Query Memory
-    query_text = "Gdzie pracuje Adam?"
+    query = "Gdzie pracuje Adam?"
     query_payload = {
-        "query_text": query_text,
+        "query": query,
         "k": 5,
         "filters": {"tenant_id": TENANT_ID},
     }
 
-    log(f"Querying: '{query_text}'")
+    log(f"Querying: '{query}'")
     try:
         response = requests.post(
-            f"{API_URL}/v2/memory/query", headers=headers, json=query_payload
+            f"{API_URL}/v2/v2/memories/query", headers=headers, json=query_payload
         )
         response.raise_for_status()
         results = response.json().get("results", [])

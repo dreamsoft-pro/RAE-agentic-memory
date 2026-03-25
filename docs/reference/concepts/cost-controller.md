@@ -125,7 +125,7 @@ total = $0.0125
 class Budget:
     id: str
     tenant_id: str
-    project_id: str
+    project: str
     monthly_limit: float | None  # USD
     monthly_usage: float          # USD
     daily_limit: float | None     # USD
@@ -138,11 +138,11 @@ class Budget:
 The system checks budgets **before** making LLM calls:
 
 ```python
-async def check_budget(tenant_id: str, project_id: str, estimated_cost: float):
+async def check_budget(tenant_id: str, project: str, estimated_cost: float):
     """
     Raises HTTPException(402) if budget exceeded
     """
-    budget = await get_budget(tenant_id, project_id)
+    budget = await get_budget(tenant_id, project)
 
     # Check daily limit
     if budget.daily_limit and (budget.daily_usage + estimated_cost) > budget.daily_limit:
@@ -188,21 +188,21 @@ BUDGET_ALERT_EMAIL=admin@example.com
 CREATE TABLE budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
-    project_id UUID NOT NULL,
+    project UUID NOT NULL,
     monthly_limit DECIMAL(10, 2),
     monthly_usage DECIMAL(10, 2) DEFAULT 0,
     daily_limit DECIMAL(10, 2),
     daily_usage DECIMAL(10, 2) DEFAULT 0,
     last_usage_at TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(tenant_id, project_id)
+    UNIQUE(tenant_id, project)
 );
 
 -- Track individual costs
 CREATE TABLE cost_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
-    project_id UUID NOT NULL,
+    project UUID NOT NULL,
     model TEXT NOT NULL,
     input_tokens INT NOT NULL,
     output_tokens INT NOT NULL,
@@ -241,7 +241,7 @@ curl http://localhost:8000/v2/budgets/current \
 ```json
 {
   "tenant_id": "acme-corp",
-  "project_id": "project-alpha",
+  "project": "project-alpha",
   "monthly_limit": 500.00,
   "monthly_usage": 123.45,
   "monthly_remaining": 376.55,
@@ -331,11 +331,11 @@ LIMIT 30;
 ### 3. Implement Alerts
 
 ```python
-async def check_budget_alerts(tenant_id: str, project_id: str):
+async def check_budget_alerts(tenant_id: str, project: str):
     """
     Send alerts when approaching limits
     """
-    budget = await get_budget(tenant_id, project_id)
+    budget = await get_budget(tenant_id, project)
 
     # Alert at 80% usage
     if budget.monthly_usage / budget.monthly_limit > 0.8:

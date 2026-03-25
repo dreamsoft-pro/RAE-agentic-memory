@@ -18,14 +18,14 @@ RAE's core capabilities provide the foundational memory layer for Feniks, transf
 
 ### 1. Standardized Memory Protocol
 
-Feniks would interact with RAE using the standardized `/memory/store`, `/memory/query`, and `/memory/reflect` endpoints.
+Feniks would interact with RAE using the standardized `/memory/store`, `/v2/memories/query`, and `/memory/reflect` endpoints.
 
 *   **`/memory/store`**: Feniks would use this to store:
     *   **Code Snippets**: Relevant functions, classes, or modules it's currently analyzing.
     *   **Refactoring Decisions**: The proposed change, the rationale, and the outcome (accepted/rejected).
     *   **Coding Conventions**: Explicitly defined style guides or implicitly learned patterns.
     *   **Commit Messages**: Parsed commit messages to understand the intent behind code changes.
-*   **`/memory/query`**: Before proposing a refactoring, Feniks would query RAE for:
+*   **`/v2/memories/query`**: Before proposing a refactoring, Feniks would query RAE for:
     *   **Similar Refactorings**: Has this type of refactoring been done before in a similar context? What was the outcome?
     *   **Relevant Coding Styles**: What are the established conventions for this part of the codebase?
     *   **Historical Context**: What were the reasons for previous design choices in this area?

@@ -32,7 +32,7 @@ class UltimateSynergyRunner:
         self.benchmark_file = benchmark_file
         self.tenant_id = "00000000-0000-0000-0000-000000000000"
         self.agent_id = "oracle_v13"
-        self.project_id = "Ultimate-Synergy"
+        self.project = "Ultimate-Synergy"
         self.collection_name = "ultimate_verify"
         self.model_path = "/app/models/minilm/model.onnx"
         self.tokenizer_path = "/app/models/minilm/tokenizer.json"

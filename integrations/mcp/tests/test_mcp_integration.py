@@ -302,7 +302,7 @@ class TestMCPErrorHandling:
     @pytest.mark.asyncio
     async def test_search_memory_empty_query(self, mcp_client):
         """Test searching with empty query"""
-        # Empty query should now raise a 422 error as query_text must have at least 1 character
+        # Empty query should now raise a 422 error as query must have at least 1 character
         with pytest.raises(httpx.HTTPStatusError) as exc_info:
             await mcp_client.search_memory(query="", top_k=5)
         assert exc_info.value.response.status_code == 422

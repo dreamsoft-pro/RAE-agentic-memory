@@ -27,7 +27,7 @@ class Budget(BaseModel):
 
     id: str | UUID
     tenant_id: str | UUID
-    project_id: str
+    project: str
 
     @field_validator("id", "tenant_id", mode="before")
     @classmethod
@@ -94,33 +94,33 @@ class BudgetService:
         self.rae_service = rae_service
 
     async def get_or_create_budget(
-        self, tenant_id: str, project_id: str = "default"
+        self, tenant_id: str, project: str = "default"
     ) -> Budget:
         """
         Retrieves the budget for a tenant/project, creating a new one if needed.
         """
-        logger.info("get_or_create_budget", tenant_id=tenant_id, project_id=project_id)
+        logger.info("get_or_create_budget", tenant_id=tenant_id, project=project)
 
         # Try to fetch existing budget
         record = await self.rae_service.db.fetchrow(
             """
             SELECT * FROM budgets
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             """,
             tenant_id,
-            project_id,
+            project,
         )
 
         if not record:
             # Create new budget with default limits
             logger.info(
-                "creating_new_budget", tenant_id=tenant_id, project_id=project_id
+                "creating_new_budget", tenant_id=tenant_id, project=project
             )
             record = await self.rae_service.db.fetchrow(
                 """
                 INSERT INTO budgets (
                     tenant_id,
-                    project_id,
+                    project,
                     daily_limit_usd,
                     monthly_limit_usd,
                     daily_tokens_limit,
@@ -129,7 +129,7 @@ class BudgetService:
                 RETURNING *
                 """,
                 tenant_id,
-                project_id,
+                project,
                 None,
                 None,
                 None,
@@ -138,7 +138,7 @@ class BudgetService:
             logger.info(
                 "budget_created",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 budget_id=record["id"] if record else "unknown",
             )
 
@@ -148,13 +148,13 @@ class BudgetService:
         return Budget(**dict(record))
 
     async def check_budget_exceeded(
-        self, tenant_id: str, project_id: str = "default"
+        self, tenant_id: str, project: str = "default"
     ) -> Tuple[bool, float, float]:
         """
         Check if budget is exceeded for a tenant.
         Returns: (is_exceeded, remaining_budget, total_limit)
         """
-        budget = await self.get_or_create_budget(tenant_id, project_id)
+        budget = await self.get_or_create_budget(tenant_id, project)
 
         # Check monthly limit
         if budget.monthly_limit_usd is not None:
@@ -171,7 +171,7 @@ class BudgetService:
         return False, 999999.0, 999999.0
 
     async def check_budget(
-        self, tenant_id: str, project_id: str, cost_usd: float, tokens: int
+        self, tenant_id: str, project: str, cost_usd: float, tokens: int
     ) -> None:
         """
         Checks if a new cost and token usage is within the budget.
@@ -180,12 +180,12 @@ class BudgetService:
         logger.info(
             "check_budget",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             cost_usd=cost_usd,
             tokens=tokens,
         )
 
-        budget = await self.get_or_create_budget(tenant_id, project_id)
+        budget = await self.get_or_create_budget(tenant_id, project)
         now = datetime.now()
 
         # Resets (Safety check, usually handled by DB triggers)
@@ -227,13 +227,13 @@ class BudgetService:
                 )
 
     async def increment_usage(
-        self, tenant_id: str, project_id: str, usage: BudgetUsageIncrement
+        self, tenant_id: str, project: str, usage: BudgetUsageIncrement
     ) -> None:
         """Increments usage for USD and tokens."""
         logger.info(
             "increment_usage",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             cost_usd=usage.cost_usd,
             total_tokens=usage.total_tokens,
         )
@@ -248,23 +248,23 @@ class BudgetService:
                 monthly_tokens_used = monthly_tokens_used + $4,
                 last_usage_at = NOW(),
                 last_token_update_at = NOW()
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             """,
             tenant_id,
-            project_id,
+            project,
             usage.cost_usd,
             usage.total_tokens,
         )
 
     async def get_budget_status(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> Dict[str, Any]:
         """Returns current budget status including usage percentages."""
-        budget = await self.get_or_create_budget(tenant_id, project_id)
+        budget = await self.get_or_create_budget(tenant_id, project)
 
         return {
             "tenant_id": budget.tenant_id,
-            "project_id": budget.project_id,
+            "project": budget.project,
             "usd": {
                 "daily": {
                     "usage": float(budget.daily_usage_usd),
@@ -303,7 +303,7 @@ class BudgetService:
     async def set_budget_limits(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         daily_limit_usd: Optional[float] = None,
         monthly_limit_usd: Optional[float] = None,
         daily_tokens_limit: Optional[int] = None,
@@ -311,7 +311,7 @@ class BudgetService:
     ) -> Budget:
         """Updates budget limits."""
         # Ensure budget exists
-        await self.get_or_create_budget(tenant_id, project_id)
+        await self.get_or_create_budget(tenant_id, project)
 
         record = await self.rae_service.db.fetchrow(
             """
@@ -321,11 +321,11 @@ class BudgetService:
                 monthly_limit_usd = $4,
                 daily_tokens_limit = $5,
                 monthly_tokens_limit = $6
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             RETURNING *
             """,
             tenant_id,
-            project_id,
+            project,
             daily_limit_usd,
             monthly_limit_usd,
             daily_tokens_limit,

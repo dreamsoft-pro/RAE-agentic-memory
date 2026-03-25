@@ -62,7 +62,7 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
         result = await service.search(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             query=request.query,
             k=request.k,
             enable_vector=request.enable_vector_search,
@@ -123,7 +123,7 @@ async def analyze_query(
         analysis = await analyzer.analyze_intent(
             query=request.query,
             tenant_id=str(tenant_id),
-            project_id="default",  # Default project
+            project="default",  # Default project
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -156,12 +156,12 @@ async def explain_query_analysis(req: Request, request: QueryAnalysisRequest):
         analyzer = QueryAnalyzer()
         # In production, get from auth context
         tenant_id = "default"
-        project_id = "default"
+        project = "default"
 
         analysis = await analyzer.analyze_intent(
             query=request.query,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -253,12 +253,12 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
         # Analyze query
         # In production, get from auth context
         tenant_id = "default"
-        project_id = "default"
+        project = "default"
 
         analysis = await analyzer.analyze_intent(
             query=request.query,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -303,7 +303,7 @@ async def compare_search_strategies(
         # Execute with only vector
         vector_result = await service.search(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             query=request.query,
             k=request.k,
             enable_vector=True,
@@ -316,7 +316,7 @@ async def compare_search_strategies(
         # Execute with only semantic
         semantic_result = await service.search(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             query=request.query,
             k=request.k,
             enable_vector=False,
@@ -329,7 +329,7 @@ async def compare_search_strategies(
         # Execute with only fulltext
         fulltext_result = await service.search(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             query=request.query,
             k=request.k,
             enable_vector=False,
@@ -342,7 +342,7 @@ async def compare_search_strategies(
         # Execute hybrid
         hybrid_result = await service.search(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             query=request.query,
             k=request.k,
             enable_vector=True,
@@ -397,7 +397,7 @@ async def test_custom_weights(
     query: str,
     weights: Dict[str, float],
     tenant_id: str,
-    project_id: str,
+    project: str,
     k: int = 10,
     pool=Depends(get_pool),
 ):
@@ -421,7 +421,7 @@ async def test_custom_weights(
 
         result = await service.search(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             query=query,
             k=k,
             manual_weights=weights,

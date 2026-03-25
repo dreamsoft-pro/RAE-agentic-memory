@@ -149,7 +149,7 @@ search_results = {
 # Evaluate
 result = await eval_service.evaluate_search_results(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     relevance_judgments=relevance_judgments,
     search_results=search_results,
     metrics_to_compute=[
@@ -285,7 +285,7 @@ async def run_daily_evaluation():
     # Evaluate
     result = await eval_service.evaluate_search_results(
         tenant_id="system",
-        project_id="evaluation",
+        project="evaluation",
         relevance_judgments=relevance_judgments,
         search_results=search_results,
         metrics_to_compute=[MetricType.NDCG, MetricType.MRR]

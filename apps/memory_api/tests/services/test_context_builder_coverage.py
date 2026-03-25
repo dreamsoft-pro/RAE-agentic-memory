@@ -80,7 +80,7 @@ async def test_build_context_basic(
 
     context = await context_builder.build_context(
         tenant_id="t1",
-        project_id="p1",
+        project="p1",
         query="test query",
         recent_messages=[{"role": "user", "content": "hello"}],
     )
@@ -106,7 +106,7 @@ async def test_build_context_no_reflections(context_builder, mock_reflection_eng
 
     context = await context_builder.build_context(
         tenant_id="t1",
-        project_id="p1",
+        project="p1",
         query="test",
     )
 

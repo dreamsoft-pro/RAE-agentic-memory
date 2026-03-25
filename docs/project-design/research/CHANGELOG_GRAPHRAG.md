@@ -36,7 +36,7 @@
   - `GET /graph/edges` - List graph edges with filtering
   - `GET /graph/subgraph` - Extract subgraph from starting nodes
 
-- **Enhanced `/v2/memory/query` endpoint**:
+- **Enhanced `/v2/v2/memories/query` endpoint**:
   - Added `use_graph` parameter for hybrid search
   - Added `graph_depth` parameter for traversal control
   - Added `project` parameter for graph context
@@ -48,9 +48,9 @@
 - **New migration**: `37fcdedf6f6d_create_knowledge_graph_tables`
   - `knowledge_graph_nodes` table with UUID, tenant, project, label, properties
   - `knowledge_graph_edges` table with source, target, relation, properties
-  - Strategic indexes on tenant_id, project_id, node_id, relation
+  - Strategic indexes on tenant_id, project, node_id, relation
   - Foreign key constraints with CASCADE delete
-  - Unique constraint on (tenant_id, project_id, node_id)
+  - Unique constraint on (tenant_id, project, node_id)
 
 #### Data Models
 - **Extended `QueryMemoryRequest`**:
@@ -226,7 +226,7 @@ alembic upgrade head
 # No configuration changes required
 
 # 4. Verify installation
-curl http://localhost:8000/v2/graph/stats?project_id=test
+curl http://localhost:8000/v2/graph/stats?project=test
 
 # 5. (Optional) Run tests
 pytest tests/integration/test_graphrag.py -v

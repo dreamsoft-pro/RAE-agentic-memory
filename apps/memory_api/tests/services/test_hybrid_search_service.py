@@ -147,7 +147,7 @@ async def test_search_flow_uncached(service, mock_rae_service):
 
     result = await service.search(
         tenant_id="t-1",
-        project_id="p-1",
+        project="p-1",
         query="test query",
         k=5,
         enable_reranking=False,
@@ -404,7 +404,7 @@ async def test_search_with_manual_weights(service, mock_rae_service):
     manual_weights = {"vector": 1.0, "semantic": 0.0}
 
     result = await service.search(
-        tenant_id="t-1", project_id="p-1", query="test", manual_weights=manual_weights
+        tenant_id="t-1", project="p-1", query="test", manual_weights=manual_weights
     )
 
     # Should skip analysis

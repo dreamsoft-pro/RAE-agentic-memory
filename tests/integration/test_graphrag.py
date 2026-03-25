@@ -231,12 +231,12 @@ async def setup_test_memories(db_pool, test_tenant_id, test_project_id):
             test_project_id,
         )
         await conn.execute(
-            "DELETE FROM knowledge_graph_edges WHERE tenant_id = $1 AND project_id = $2",
+            "DELETE FROM knowledge_graph_edges WHERE tenant_id = $1 AND project = $2",
             test_tenant_id,
             test_project_id,
         )
         await conn.execute(
-            "DELETE FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project_id = $2",
+            "DELETE FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project = $2",
             test_tenant_id,
             test_project_id,
         )
@@ -265,7 +265,7 @@ async def test_graph_extraction_basic(
 
     # Perform extraction
     result = await graph_service.extract_knowledge_graph(
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
         limit=10,
         min_confidence=0.3,  # Lower threshold for testing
@@ -314,14 +314,14 @@ async def test_graph_storage(
 
     # Extract and store
     result = await graph_service.extract_knowledge_graph(
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
         limit=10,
         min_confidence=0.3,
     )
 
     storage_stats = await graph_service.store_graph_triples(
-        triples=result.triples, project_id=test_project_id, tenant_id=test_tenant_id
+        triples=result.triples, project=test_project_id, tenant_id=test_tenant_id
     )
 
     # Assertions
@@ -331,13 +331,13 @@ async def test_graph_storage(
     # Verify data in database
     async with db_pool.acquire() as conn:
         await conn.fetchval(
-            "SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project_id = $2",
+            "SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project = $2",
             test_tenant_id,
             test_project_id,
         )
 
         await conn.fetchval(
-            "SELECT COUNT(*) FROM knowledge_graph_edges WHERE tenant_id = $1 AND project_id = $2",
+            "SELECT COUNT(*) FROM knowledge_graph_edges WHERE tenant_id = $1 AND project = $2",
             test_tenant_id,
             test_project_id,
         )
@@ -368,7 +368,7 @@ async def test_hybrid_search(
     graph_service = GraphExtractionService(rae_service, graph_repo)
     graph_service.llm_provider = mock_llm
     extraction_result = await graph_service.extract_knowledge_graph(
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
         limit=10,
         min_confidence=0.3,
@@ -376,7 +376,7 @@ async def test_hybrid_search(
 
     await graph_service.store_graph_triples(
         triples=extraction_result.triples,
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
     )
 
@@ -401,7 +401,7 @@ async def test_hybrid_search(
     search_result = await hybrid_search.search(
         query="authentication bugs and fixes",
         tenant_id=test_tenant_id,
-        project_id=test_project_id,
+        project=test_project_id,
         top_k_vector=3,
         graph_depth=2,
         traversal_strategy=TraversalStrategy.BFS,
@@ -441,7 +441,7 @@ async def test_graph_traversal_depth(
     graph_service = GraphExtractionService(rae_service, graph_repo)
     graph_service.llm_provider = mock_llm
     extraction_result = await graph_service.extract_knowledge_graph(
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
         limit=10,
         min_confidence=0.3,
@@ -449,7 +449,7 @@ async def test_graph_traversal_depth(
 
     await graph_service.store_graph_triples(
         triples=extraction_result.triples,
-        project_id=test_project_id,
+        project=test_project_id,
         tenant_id=test_tenant_id,
     )
 
@@ -462,7 +462,7 @@ async def test_graph_traversal_depth(
     results_depth_1 = await hybrid_search.search(
         query="authentication",
         tenant_id=test_tenant_id,
-        project_id=test_project_id,
+        project=test_project_id,
         top_k_vector=3,
         graph_depth=1,
         use_graph=True,
@@ -471,7 +471,7 @@ async def test_graph_traversal_depth(
     results_depth_2 = await hybrid_search.search(
         query="authentication",
         tenant_id=test_tenant_id,
-        project_id=test_project_id,
+        project=test_project_id,
         top_k_vector=3,
         graph_depth=2,
         use_graph=True,

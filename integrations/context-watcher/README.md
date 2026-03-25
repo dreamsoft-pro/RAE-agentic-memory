@@ -81,7 +81,7 @@ Response:
 
 ```json
 {
-  "project_id": "my-tenant-project-name",
+  "project": "my-tenant-project-name",
   "message": "Started watching project 'my-tenant-project-name'."
 }
 ```
@@ -218,7 +218,7 @@ Register a new project to watch.
 
 ```json
 {
-  "project_id": "tenant-project-name",
+  "project": "tenant-project-name",
   "message": "Started watching project 'tenant-project-name'."
 }
 ```
@@ -242,7 +242,7 @@ List all watched projects.
 }
 ```
 
-### `DELETE /projects/{project_id}`
+### `DELETE /projects/{project}`
 
 Stop watching a project.
 
@@ -272,7 +272,7 @@ Proxy endpoint for storing memories directly (bypasses file watching).
 }
 ```
 
-### `POST /memory/query`
+### `POST /v2/memories/query`
 
 Proxy endpoint for querying memories.
 
@@ -282,7 +282,7 @@ Proxy endpoint for querying memories.
 
 ```json
 {
-  "query_text": "search query",
+  "query": "search query",
   "k": 10
 }
 ```

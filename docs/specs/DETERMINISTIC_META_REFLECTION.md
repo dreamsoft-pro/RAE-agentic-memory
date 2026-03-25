@@ -49,7 +49,7 @@ System 92.0 introduces **Deterministic Meta-Reflection**: a closed-loop architec
 *   **Pattern:** *Planning with Adaptability (Gulli Ch. 6)*.
 *   **Task:** Modify `planner.py` / `Orchestrator` prompt.
 *   **Logic:**
-    *   BEFORE `plan()`: Query `reflective` layer for `project_id`.
+    *   BEFORE `plan()`: Query `reflective` layer for `project`.
     *   IF `reflection` found: Append to `system_instructions`.
 
 ## 4. Success Metrics

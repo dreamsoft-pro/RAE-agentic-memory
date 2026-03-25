@@ -30,13 +30,13 @@ async def calculate_mrr():
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         for i, q in enumerate(queries):
-            query_text = q["query"]
+            query = q["query"]
             expected_ids = set(q["expected_source_ids"])  # IDs like 'log_00001'
 
             try:
                 resp = await client.post(
-                    f"{RAE_API_URL}/v2/memory/query",
-                    json={"query_text": query_text, "k": 10},
+                    f"{RAE_API_URL}/v2/v2/memories/query",
+                    json={"query": query, "k": 10},
                     headers={"X-Tenant-Id": TENANT_ID},
                 )
 

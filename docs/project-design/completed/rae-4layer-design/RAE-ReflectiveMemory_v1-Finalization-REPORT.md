@@ -161,7 +161,7 @@ static_context_block = f"CORE KNOWLEDGE...\n{semantic_context}\n..."
 context_builder = ContextBuilder(pool=request.app.state.pool, config=ContextConfig(...))
 working_memory = await context_builder.build_context(
     tenant_id=tenant_id,
-    project_id=req.project,
+    project=req.project,
     query=req.prompt,
 )
 static_context_block = working_memory.context_text  # Includes reflections!

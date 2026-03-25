@@ -23,7 +23,7 @@ async def agent_interaction(
     """
     service: RAECoreService = request.app.state.rae_core_service
     tenant_id = request.headers.get("X-Tenant-Id", "default")
-    project_id = request.headers.get("X-Project-Id", "default")
+    project = request.headers.get("X-Project-Id", "default")
     
     event_id = uuid4()
     if correlation_id is None:
@@ -34,7 +34,7 @@ async def agent_interaction(
         event_id=event_id,
         event_type=EventType.AGENT_INTERACTION,
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         source_service=source_agent,
         payload={
             "target_agent": target_agent,
@@ -57,7 +57,7 @@ async def agent_interaction(
             agent_id=source_agent,
             content=content_summary,
             layer="episodic",
-            project=project_id,
+            project=project,
             session_id=session_id,
             metadata={
                 "event_id": str(event_id),

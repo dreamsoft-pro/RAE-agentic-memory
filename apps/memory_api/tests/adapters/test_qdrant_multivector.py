@@ -57,7 +57,7 @@ async def test_add_vector_determines_name(qdrant_store, mock_qdrant_client):
         content="Multi-vector content",
         layer="episodic",
         tenant_id="t1",
-        project_id="p1",
+        project="p1",
     )
 
     # Embedding passed as a dictionary mapping name -> vector

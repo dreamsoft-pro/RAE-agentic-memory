@@ -152,7 +152,7 @@ async def test_drift_detection_no_data(drift_detector, mock_pool):
 
     result = await drift_detector.detect_drift(
         tenant_id="test",
-        project_id="test",
+        project="test",
         metric_name="search_score",  # Use recognized metric
         drift_type=DriftType.DATA_DRIFT,
         baseline_start=datetime.now(timezone.utc) - timedelta(days=14),

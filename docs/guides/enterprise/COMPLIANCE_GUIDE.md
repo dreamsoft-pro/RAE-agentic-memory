@@ -33,7 +33,7 @@ curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "operation_type": "data_deletion",
     "operation_description": "Delete all user memories for GDPR request",
     "risk_level": "critical",
@@ -136,7 +136,7 @@ curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "operation_type": "model_deployment",
     "operation_description": "Deploy GPT-4 to production environment",
     "risk_level": "high",
@@ -237,7 +237,7 @@ curl -X POST http://localhost:8000/v2/compliance/provenance/context \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "query": "What are the user'\''s dietary preferences?",
     "sources": [
       {
@@ -273,7 +273,7 @@ curl -X POST http://localhost:8000/v2/compliance/provenance/context \
 {
   "context_id": "660e8400-e29b-41d4-a716-446655440001",
   "tenant_id": "demo",
-  "project_id": "my-app",
+  "project": "my-app",
   "query": "What are the user's dietary preferences?",
   "sources_count": 2,
   "quality_metrics": {
@@ -311,7 +311,7 @@ curl -X POST http://localhost:8000/v2/compliance/provenance/decision \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "decision_type": "recommendation",
     "decision_description": "Recommend vegetarian restaurant",
     "context_id": "660e8400-e29b-41d4-a716-446655440001",
@@ -705,7 +705,7 @@ APPROVAL_ID=$(curl -X POST http://localhost:8000/v2/compliance/approvals \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "operation_type": "data_deletion",
     "operation_description": "GDPR erasure request for user_12345",
     "risk_level": "critical",
@@ -746,7 +746,7 @@ curl -X DELETE http://localhost:8000/v2/memory/delete \
 CONTEXT_ID=$(curl -X POST http://localhost:8000/v2/compliance/provenance/context \
   -d '{
     "tenant_id": "demo",
-    "project_id": "loan-approval",
+    "project": "loan-approval",
     "query": "Should we approve loan application #12345?",
     "sources": [
       {
@@ -763,7 +763,7 @@ CONTEXT_ID=$(curl -X POST http://localhost:8000/v2/compliance/provenance/context
 DECISION_ID=$(curl -X POST http://localhost:8000/v2/compliance/provenance/decision \
   -d '{
     "tenant_id": "demo",
-    "project_id": "loan-approval",
+    "project": "loan-approval",
     "decision_type": "classification",
     "decision_description": "Loan approval decision",
     "context_id": "'$CONTEXT_ID'",

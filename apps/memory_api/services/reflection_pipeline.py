@@ -153,7 +153,7 @@ class ReflectionPipeline:
         """
         with tracer.start_as_current_span("rae.reflection_pipeline.generate") as span:
             span.set_attribute("rae.tenant_id", request.tenant_id)
-            span.set_attribute("rae.project_id", request.project)
+            span.set_attribute("rae.project", request.project)
             span.set_attribute("rae.reflection.max_memories", request.max_memories)
             span.set_attribute(
                 "rae.reflection.min_cluster_size", request.min_cluster_size
@@ -228,7 +228,7 @@ class ReflectionPipeline:
                 try:
                     insight = await self._generate_cluster_insight(
                         tenant_id=request.tenant_id,
-                        project_id=request.project,
+                        project=request.project,
                         cluster_id=cluster_id,
                         memories=cluster_memories,
                         parent_reflection_id=request.parent_reflection_id,
@@ -254,7 +254,7 @@ class ReflectionPipeline:
                 try:
                     meta_insight = await self._generate_meta_insight(
                         tenant_id=request.tenant_id,
-                        project_id=request.project,
+                        project=request.project,
                         insights=insights,
                     )
                     all_reflections.append(meta_insight)
@@ -294,7 +294,7 @@ class ReflectionPipeline:
     async def _fetch_memories(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         limit: int,
         filters: Optional[Dict[str, Any]],
         since: Optional[datetime],
@@ -311,7 +311,7 @@ class ReflectionPipeline:
         # Use RAECoreService instead of direct pool access
         return await self.rae_service.list_memories(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             layer=layer,
             tags=tags,
             filters=query_filters,
@@ -484,7 +484,7 @@ class ReflectionPipeline:
     async def _generate_cluster_insight(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         cluster_id: str,
         memories: List[Dict[str, Any]],
         parent_reflection_id: Optional[UUID] = None,
@@ -547,7 +547,7 @@ class ReflectionPipeline:
             reflection = await reflection_repository.create_reflection(
                 pool=self.rae_service.postgres_pool,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 content=insight_text,
                 reflection_type=ReflectionType.INSIGHT,
                 priority=priority,
@@ -574,7 +574,7 @@ class ReflectionPipeline:
             raise
 
     async def _generate_meta_insight(
-        self, tenant_id: str, project_id: str, insights: List[ReflectionUnit]
+        self, tenant_id: str, project: str, insights: List[ReflectionUnit]
     ) -> ReflectionUnit:
         """Generate meta-insight from multiple insights"""
         logger.info("generating_meta_insight", insights=len(insights))
@@ -635,7 +635,7 @@ class ReflectionPipeline:
             reflection = await reflection_repository.create_reflection(
                 pool=self.rae_service.postgres_pool,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 content=meta_insight_text,
                 reflection_type=ReflectionType.META,
                 priority=priority,

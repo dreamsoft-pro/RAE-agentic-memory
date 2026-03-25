@@ -77,7 +77,7 @@ async def test_extract_semantic_nodes(semantic_extractor, mock_pool):
 
     # Method is extract_from_memories, not extract_nodes
     result = await semantic_extractor.extract_from_memories(
-        tenant_id="test", project_id="test", memory_ids=[uuid4()]
+        tenant_id="test", project="test", memory_ids=[uuid4()]
     )
 
     # Returns SemanticExtractionResult
@@ -107,7 +107,7 @@ async def test_semantic_search_3_stages(semantic_search, mock_pool):
     mock_record = {
         "id": uuid4(),
         "tenant_id": "test_tenant",
-        "project_id": "test_project",
+        "project": "test_project",
         "node_id": "machine_learning_001",
         "label": "machine learning",
         "node_type": "concept",
@@ -156,7 +156,7 @@ async def test_semantic_search_3_stages(semantic_search, mock_pool):
     # Execute 3-stage search
     results, statistics = await semantic_search.search(
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         query="machine learning neural networks",
         k=10,
         enable_topic_matching=True,

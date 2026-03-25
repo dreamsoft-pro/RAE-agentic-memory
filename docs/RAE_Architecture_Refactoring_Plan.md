@@ -448,7 +448,7 @@ class MemoryItem(BaseModel):
     
     # Metadata
     tenant_id: str
-    project_id: Optional[str] = None
+    project: Optional[str] = None
     source: Optional[str] = None  # "chatgpt", "claude", "user", etc.
     
     # Temporal
@@ -628,7 +628,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
                     layer TEXT NOT NULL,
                     memory_type TEXT NOT NULL,
                     tenant_id TEXT NOT NULL,
-                    project_id TEXT,
+                    project TEXT,
                     source TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT,
@@ -654,7 +654,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO memories 
-                (id, content, layer, memory_type, tenant_id, project_id,
+                (id, content, layer, memory_type, tenant_id, project,
                  source, created_at, updated_at, importance, decay_rate,
                  tags, related_ids, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -664,7 +664,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
                 memory.layer,
                 memory.memory_type,
                 memory.tenant_id,
-                memory.project_id,
+                memory.project,
                 memory.source,
                 memory.created_at.isoformat(),
                 memory.updated_at.isoformat() if memory.updated_at else None,
@@ -720,7 +720,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
             layer=row["layer"],
             memory_type=row["memory_type"],
             tenant_id=row["tenant_id"],
-            project_id=row["project_id"],
+            project=row["project"],
             source=row["source"],
             importance=row["importance"],
             decay_rate=row["decay_rate"],

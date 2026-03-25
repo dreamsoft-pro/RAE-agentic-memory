@@ -25,7 +25,7 @@ def get_ground_truth(url, api_key, tenant_id):
 
 
 def verify_precision(session, url, sample, api_key, tenant_id):
-    query_text = sample["content"]
+    query = sample["content"]
     sample_meta = sample.get("metadata", {})
 
     # Extract keys we want to filter by
@@ -36,7 +36,7 @@ def verify_precision(session, url, sample, api_key, tenant_id):
     filters = {k: v for k, v in filters.items() if v is not None}
 
     payload = {
-        "query_text": query_text,
+        "query": query,
         "k": 5,
         "project": "industrial_ultra_v3",
         "filters": filters,

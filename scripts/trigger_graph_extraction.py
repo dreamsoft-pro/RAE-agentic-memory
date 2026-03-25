@@ -31,7 +31,7 @@ async def main():
             try:
                 # Use a smaller limit for manual run
                 result = await service.extract_knowledge_graph(
-                    project_id="default",
+                    project="default",
                     tenant_id=tenant_id,
                     min_confidence=0.5,
                     limit=10,

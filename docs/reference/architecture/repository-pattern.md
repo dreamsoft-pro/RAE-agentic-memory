@@ -67,40 +67,40 @@ The `GraphRepository` provides all database operations for the knowledge graph.
 
 #### Node Operations
 ```python
-async def get_all_nodes(tenant_id: str, project_id: str) -> List[Dict[str, Any]]
+async def get_all_nodes(tenant_id: str, project: str) -> List[Dict[str, Any]]
 async def update_node_label(node_internal_id: int, new_label: str) -> bool
 async def delete_node(node_internal_id: int) -> bool
-async def upsert_node(tenant_id, project_id, node_id, label, properties) -> int
-async def create_node(tenant_id, project_id, node_id, label, properties) -> bool
-async def get_node_by_id(node_id, tenant_id, project_id) -> Optional[GraphNode]
-async def get_nodes_by_ids(node_ids, tenant_id, project_id) -> List[GraphNode]
-async def get_node_internal_id(tenant_id, project_id, node_id) -> Optional[int]
+async def upsert_node(tenant_id, project, node_id, label, properties) -> int
+async def create_node(tenant_id, project, node_id, label, properties) -> bool
+async def get_node_by_id(node_id, tenant_id, project) -> Optional[GraphNode]
+async def get_nodes_by_ids(node_ids, tenant_id, project) -> List[GraphNode]
+async def get_node_internal_id(tenant_id, project, node_id) -> Optional[int]
 ```
 
 #### Edge Operations
 ```python
-async def get_all_edges(tenant_id: str, project_id: str) -> List[Dict[str, Any]]
+async def get_all_edges(tenant_id: str, project: str) -> List[Dict[str, Any]]
 async def merge_node_edges(source_node_id: int, target_node_id: int) -> Dict[str, int]
 async def delete_node_edges(node_internal_id: int) -> int
-async def create_edge(tenant_id, project_id, source_id, target_id, relation, properties) -> bool
-async def get_edges_between_nodes(node_ids, tenant_id, project_id) -> List[GraphEdge]
+async def create_edge(tenant_id, project, source_id, target_id, relation, properties) -> bool
+async def get_edges_between_nodes(node_ids, tenant_id, project) -> List[GraphEdge]
 ```
 
 #### Batch Operations
 ```python
-async def store_graph_triples(triples, tenant_id, project_id) -> Dict[str, int]
+async def store_graph_triples(triples, tenant_id, project) -> Dict[str, int]
 ```
 
 #### Graph Traversal
 ```python
-async def traverse_graph_bfs(start_node_ids, tenant_id, project_id, max_depth) -> Tuple[List[GraphNode], List[GraphEdge]]
-async def traverse_graph_dfs(start_node_ids, tenant_id, project_id, max_depth) -> Tuple[List[GraphNode], List[GraphEdge]]
+async def traverse_graph_bfs(start_node_ids, tenant_id, project, max_depth) -> Tuple[List[GraphNode], List[GraphEdge]]
+async def traverse_graph_dfs(start_node_ids, tenant_id, project, max_depth) -> Tuple[List[GraphNode], List[GraphEdge]]
 ```
 
 #### Search Operations
 ```python
-async def find_relevant_communities(query, tenant_id, project_id, limit=3) -> List[Dict[str, Any]]
-async def find_nodes_by_content_match(content, tenant_id, project_id, limit=5) -> List[str]
+async def find_relevant_communities(query, tenant_id, project, limit=3) -> List[Dict[str, Any]]
+async def find_nodes_by_content_match(content, tenant_id, project, limit=5) -> List[str]
 ```
 
 ## Refactored Services
@@ -150,7 +150,7 @@ await conn.execute("INSERT INTO knowledge_graph_edges ...")
 stats = await self.graph_repo.store_graph_triples(
     triples=triple_dicts,
     tenant_id=tenant_id,
-    project_id=project_id
+    project=project
 )
 ```
 
@@ -170,8 +170,8 @@ nodes = await conn.fetch("SELECT id, label FROM knowledge_graph_nodes ...")
 edges = await conn.fetch("SELECT source_node_id, target_node_id ...")
 
 # After (Repository Pattern)
-nodes = await self.graph_repo.get_all_nodes(tenant_id, project_id)
-edges = await self.graph_repo.get_all_edges(tenant_id, project_id)
+nodes = await self.graph_repo.get_all_nodes(tenant_id, project)
+edges = await self.graph_repo.get_all_edges(tenant_id, project)
 ```
 
 ## Testing Strategy
@@ -188,7 +188,7 @@ async def test_get_all_nodes(mock_pool):
     conn.fetch.return_value = [{"id": 1, "node_id": "node1", "label": "Label1"}]
 
     repo = GraphRepository(pool)
-    nodes = await repo.get_all_nodes(tenant_id="tenant1", project_id="project1")
+    nodes = await repo.get_all_nodes(tenant_id="tenant1", project="project1")
 
     assert len(nodes) == 1
     conn.fetch.assert_called_once()
@@ -272,7 +272,7 @@ async with self.pool.acquire() as conn:
 Use batch methods for multiple operations:
 ```python
 # ✅ Good: Single transaction
-await repo.store_graph_triples(triples, tenant_id, project_id)
+await repo.store_graph_triples(triples, tenant_id, project)
 
 # ❌ Bad: Multiple round trips
 for triple in triples:

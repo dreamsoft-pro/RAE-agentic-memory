@@ -385,18 +385,18 @@ async def test_load_tenant_graph_no_db():
 
 @pytest.mark.asyncio
 async def test_load_tenant_graph_with_project_id(mock_graph_repo):
-    """Test loading graph with project_id filter"""
+    """Test loading graph with project filter"""
     service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
-    project_id = "proj-123"
+    project = "proj-123"
 
     mock_graph_repo.get_all_nodes.return_value = []
     mock_graph_repo.get_all_edges.return_value = []
 
-    await service.load_tenant_graph(tenant_id, project_id=project_id)
+    await service.load_tenant_graph(tenant_id, project=project)
 
-    # Verify Repo calls contained project_id
-    mock_graph_repo.get_all_nodes.assert_called_once_with(str(tenant_id), project_id)
+    # Verify Repo calls contained project
+    mock_graph_repo.get_all_nodes.assert_called_once_with(str(tenant_id), project)
 
 
 @pytest.mark.asyncio

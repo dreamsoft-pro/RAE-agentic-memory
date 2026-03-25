@@ -49,11 +49,11 @@ async def run_audit(benchmark_file: str):
     hits = 0
     
     for i, q in enumerate(data["queries"]):
-        query_text = q["query"]
+        query = q["query"]
         expected_doc_id = q["expected_source_ids"][0]
         
         results = await engine.search_memories(
-            query=query_text,
+            query=query,
             tenant_id=tenant_id,
             agent_id=agent_id,
             limit=10

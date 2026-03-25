@@ -75,7 +75,7 @@ if not st.session_state.comparison_mode:
     st.header("🔍 Single Query Inspector")
 
     # Query input
-    query_text = st.text_area(
+    query = st.text_area(
         "Query Text",
         placeholder="Enter your search query...",
         height=100,
@@ -130,7 +130,7 @@ if not st.session_state.comparison_mode:
 
     # Execute query
     if st.button("🚀 Execute Query", type="primary", use_container_width=True):
-        if not query_text.strip():
+        if not query.strip():
             st.warning("Please enter a query")
         else:
             try:
@@ -148,7 +148,7 @@ if not st.session_state.comparison_mode:
 
                     # Execute query
                     results = client.query_memory(
-                        query=query_text, top_k=top_k, use_rerank=use_rerank
+                        query=query, top_k=top_k, use_rerank=use_rerank
                     )
 
                     # Filter by tags if specified
@@ -162,7 +162,7 @@ if not st.session_state.comparison_mode:
 
                     # Store results
                     st.session_state.query_results = {
-                        "query": query_text,
+                        "query": query,
                         "results": results,
                         "top_k": top_k,
                         "use_rerank": use_rerank,
@@ -173,7 +173,7 @@ if not st.session_state.comparison_mode:
                     st.session_state.query_history.insert(
                         0,
                         {
-                            "query": query_text,
+                            "query": query,
                             "count": len(results),
                             "timestamp": pd.Timestamp.now(),
                         },

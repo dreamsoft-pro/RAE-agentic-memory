@@ -106,7 +106,7 @@ detector = DriftDetector(pool=db_pool)
 # Detect drift for a tenant
 drift_report = await detector.detect_drift(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     lookback_days=30
 )
 
@@ -229,7 +229,7 @@ analytics = AnalyticsService(pool=db_pool)
 # Get memory statistics
 stats = await analytics.get_memory_stats(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     start_date=datetime.now() - timedelta(days=30)
 )
 

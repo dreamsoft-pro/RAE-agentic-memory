@@ -74,18 +74,18 @@ class IndustrialFactory:
             
             # Create a query based on a unique anchor in the memory
             if "sn" in params:
-                query_text = f"Show me maintenance details for serial {params['sn']}"
+                query = f"Show me maintenance details for serial {params['sn']}"
             elif "job_id" in params:
-                query_text = f"What happened during {params['job_id']}?"
+                query = f"What happened during {params['job_id']}?"
             elif "uuid" in params:
-                query_text = f"Trace request {params['uuid']}"
+                query = f"Trace request {params['uuid']}"
             else:
                 # Semantic query from content
                 words = m["content"].split()
-                query_text = " ".join(words[2:min(8, len(words))])
+                query = " ".join(words[2:min(8, len(words))])
 
             queries.append({
-                "query": query_text,
+                "query": query,
                 "expected_source_ids": [m["id"]], # This is the original DOC id
                 "category": category
             })

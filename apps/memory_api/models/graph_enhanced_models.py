@@ -53,7 +53,7 @@ class EnhancedGraphNode(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Core identification
     node_id: str = Field(..., max_length=255, description="Canonical node identifier")
@@ -88,7 +88,7 @@ class EnhancedGraphEdge(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Core relationship
     source_node_id: UUID
@@ -178,7 +178,7 @@ class GraphSnapshot(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Snapshot metadata
     snapshot_name: str = Field(..., max_length=255)
@@ -216,7 +216,7 @@ class GraphTraversal(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Traversal parameters
     start_node_id: UUID
@@ -277,7 +277,7 @@ class CreateGraphNodeRequest(BaseModel):
     """Request to create a graph node"""
 
     tenant_id: str
-    project_id: str
+    project: str
     node_id: str = Field(..., max_length=255)
     label: str = Field(..., max_length=255)
     properties: Dict[str, Any] = Field(default_factory=dict)
@@ -287,7 +287,7 @@ class CreateGraphEdgeRequest(BaseModel):
     """Request to create a graph edge"""
 
     tenant_id: str
-    project_id: str
+    project: str
     source_node_id: UUID
     target_node_id: UUID
     relation: str = Field(..., max_length=255)
@@ -308,7 +308,7 @@ class TraverseGraphRequest(BaseModel):
     """Request for temporal graph traversal"""
 
     tenant_id: str
-    project_id: str
+    project: str
     start_node_id: UUID
 
     # Traversal parameters
@@ -354,7 +354,7 @@ class FindPathRequest(BaseModel):
     """Request to find path between two nodes"""
 
     tenant_id: str
-    project_id: str
+    project: str
     start_node_id: UUID
     end_node_id: UUID
 
@@ -389,7 +389,7 @@ class DetectCycleRequest(BaseModel):
     """Request to detect cycle"""
 
     tenant_id: str
-    project_id: str
+    project: str
     source_node_id: UUID
     target_node_id: UUID
     max_depth: int = Field(50, gt=0, le=100)
@@ -406,7 +406,7 @@ class CreateSnapshotRequest(BaseModel):
     """Request to create graph snapshot"""
 
     tenant_id: str
-    project_id: str
+    project: str
     snapshot_name: str = Field(..., max_length=255)
     description: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
@@ -444,7 +444,7 @@ class GetNodeMetricsRequest(BaseModel):
     """Request to get node metrics"""
 
     tenant_id: str
-    project_id: str
+    project: str
     node_id: UUID
 
 
@@ -461,7 +461,7 @@ class FindConnectedNodesRequest(BaseModel):
     """Request to find nodes connected to a given node"""
 
     tenant_id: str
-    project_id: str
+    project: str
     node_id: UUID
     max_depth: int = Field(5, gt=0, le=10)
 
@@ -480,7 +480,7 @@ class GraphStatistics(BaseModel):
     """Aggregated statistics for a knowledge graph"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Counts
     total_nodes: int = Field(0, ge=0)
@@ -507,7 +507,7 @@ class GetGraphStatisticsRequest(BaseModel):
     """Request to get graph statistics"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
 
 class GetGraphStatisticsResponse(BaseModel):
@@ -555,7 +555,7 @@ class BatchCreateNodesRequest(BaseModel):
     """Request to create multiple nodes"""
 
     tenant_id: str
-    project_id: str
+    project: str
     nodes: List[Dict[str, Any]] = Field(..., min_length=1, max_length=1000)
 
 
@@ -563,7 +563,7 @@ class BatchCreateEdgesRequest(BaseModel):
     """Request to create multiple edges"""
 
     tenant_id: str
-    project_id: str
+    project: str
     edges: List[CreateGraphEdgeRequest] = Field(..., min_length=1, max_length=1000)
 
 

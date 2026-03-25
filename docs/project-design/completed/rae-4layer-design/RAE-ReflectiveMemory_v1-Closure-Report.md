@@ -110,7 +110,7 @@ This report documents the **complete finalization effort** that transformed Refl
 - **`reflection_v2_models.py`** - Fixed dataclass field order error:
   - Problem: `NameError: name 'patch' is not defined` causing 38 test failures
   - Cause: Required fields after optional fields (Python dataclass rule)
-  - Solution: Moved `tenant_id`, `project_id` before optional fields
+  - Solution: Moved `tenant_id`, `project` before optional fields
   - Result: All imports work, tests pass
 
 ---

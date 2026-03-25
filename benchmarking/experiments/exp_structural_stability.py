@@ -39,7 +39,7 @@ class StructuralStabilityExperiment:
     def __init__(self, output_dir: Path):
         self.output_dir = output_dir
         self.tenant_id = "exp_structural_stability"
-        self.project_id = "exp_project"
+        self.project = "exp_project"
         self.pool = None
 
         # Metrics
@@ -98,7 +98,7 @@ class StructuralStabilityExperiment:
                     0.5,
                     "ltm",
                     [prefix],
-                    self.project_id,
+                    self.project,
                 )
                 memory_ids.append(str(row["id"]))
 

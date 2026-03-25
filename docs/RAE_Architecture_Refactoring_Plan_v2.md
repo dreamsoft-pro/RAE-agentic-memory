@@ -837,7 +837,7 @@ class PostgresMemoryStorage(IMemoryStorage):
                 layer=memory.layer.value,
                 memory_type=memory.memory_type.value,
                 tenant_id=memory.tenant_id,
-                project_id=memory.project_id,
+                project=memory.project,
                 source=memory.source,
                 importance=memory.importance,
                 decay_rate=memory.decay_rate,
@@ -1067,7 +1067,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
                     layer TEXT NOT NULL,
                     memory_type TEXT NOT NULL,
                     tenant_id TEXT NOT NULL DEFAULT 'local',
-                    project_id TEXT,
+                    project TEXT,
                     source TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT,
@@ -1108,7 +1108,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
                 INSERT OR REPLACE INTO memories 
-                (id, content, layer, memory_type, tenant_id, project_id,
+                (id, content, layer, memory_type, tenant_id, project,
                  source, created_at, updated_at, importance, decay_rate,
                  tags, related_ids, metadata, sync_version)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
@@ -1119,7 +1119,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
                 memory.layer.value if isinstance(memory.layer, MemoryLayer) else memory.layer,
                 memory.memory_type.value if isinstance(memory.memory_type, MemoryType) else memory.memory_type,
                 memory.tenant_id,
-                memory.project_id,
+                memory.project,
                 memory.source,
                 memory.created_at.isoformat(),
                 datetime.utcnow().isoformat(),
@@ -1257,7 +1257,7 @@ class SQLiteMemoryStorage(IMemoryStorage):
             layer=MemoryLayer(row["layer"]),
             memory_type=MemoryType(row["memory_type"]),
             tenant_id=row["tenant_id"],
-            project_id=row["project_id"],
+            project=row["project"],
             source=row["source"],
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]) if row["updated_at"] else None,

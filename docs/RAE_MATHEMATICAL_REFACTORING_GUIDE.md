@@ -791,7 +791,7 @@ class RAEState(BaseModel):
     Usage:
         state = RAEState(
             tenant_id="demo",
-            project_id="my-app",
+            project="my-app",
             working_context=WorkingContext(content=["memory 1", "memory 2"]),
             memory_state=MemoryState(...),
             budget_state=BudgetState(...),
@@ -807,7 +807,7 @@ class RAEState(BaseModel):
 
     # Identity
     tenant_id: str = Field(..., description="Tenant identifier")
-    project_id: str = Field(..., description="Project identifier")
+    project: str = Field(..., description="Project identifier")
     session_id: Optional[str] = Field(None, description="Optional session identifier")
 
     # Timestamp
@@ -829,7 +829,7 @@ class RAEState(BaseModel):
         """Serialize state to dictionary"""
         return {
             "tenant_id": self.tenant_id,
-            "project_id": self.project_id,
+            "project": self.project,
             "session_id": self.session_id,
             "timestamp": self.timestamp.isoformat(),
             "working_context": self.working_context.to_dict(),
@@ -902,7 +902,7 @@ async def search(
     self,
     query: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     top_k_vector: int = 5,
     graph_depth: int = 2,
     traversal_strategy: TraversalStrategy = TraversalStrategy.BFS,
@@ -916,7 +916,7 @@ async def search(
 
     initial_state = RAEState(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         budget_state=BudgetState(
             remaining_tokens=100000,  # Default budget
             remaining_cost_usd=10.0,
@@ -934,7 +934,7 @@ async def search(
     # NEW: Update state after search completes
     final_state = RAEState(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         budget_state=BudgetState(
             remaining_tokens=initial_state.budget_state.remaining_tokens - statistics.get("context_length", 0),
             remaining_cost_usd=initial_state.budget_state.remaining_cost_usd  # No LLM cost yet
@@ -971,11 +971,11 @@ def test_rae_state_creation():
     """Test basic state creation"""
     state = RAEState(
         tenant_id="test",
-        project_id="test-project"
+        project="test-project"
     )
 
     assert state.tenant_id == "test"
-    assert state.project_id == "test-project"
+    assert state.project == "test-project"
     assert state.is_valid()
 
 
@@ -983,7 +983,7 @@ def test_budget_exhaustion():
     """Test budget constraint checking"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=0)
     )
 
@@ -995,13 +995,13 @@ def test_state_comparison():
     """Test state delta computation"""
     state1 = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=100000)
     )
 
     state2 = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=95000),
         timestamp=datetime.now()
     )
@@ -1016,7 +1016,7 @@ def test_state_serialization():
     """Test state can be serialized to dict"""
     state = RAEState(
         tenant_id="test",
-        project_id="test"
+        project="test"
     )
 
     state_dict = state.to_dict()
@@ -1627,7 +1627,7 @@ class ActionExecutor:
         # Call existing retrieval service
         memories = await retrieve_memories(
             tenant_id=state.tenant_id,
-            project_id=state.project_id,
+            project=state.project,
             k=k,
             layer="episodic",
             pool=context.get("pool")
@@ -1658,7 +1658,7 @@ class ActionExecutor:
         result = await search_service.search(
             query=context.get("query", ""),
             tenant_id=state.tenant_id,
-            project_id=state.project_id,
+            project=state.project,
             top_k_vector=k,
             use_graph=use_graph
         )
@@ -1762,7 +1762,7 @@ class ActionExecutor:
 
         request = GenerateReflectionRequest(
             tenant_id=state.tenant_id,
-            project=state.project_id,
+            project=state.project,
             max_memories=action.parameters.get("max_memories", 100),
             min_cluster_size=action.parameters.get("min_cluster_size", 5)
         )
@@ -1844,7 +1844,7 @@ def test_action_preconditions():
     # Valid state
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=100)
         )
@@ -1855,7 +1855,7 @@ def test_action_preconditions():
     # Invalid state (no episodic memories)
     empty_state = RAEState(
         tenant_id="test",
-        project_id="test"
+        project="test"
     )
 
     assert not action.is_valid_for_state(empty_state)
@@ -1872,7 +1872,7 @@ def test_action_cost_estimation():
 
     state = RAEState(
         tenant_id="test",
-        project_id="test"
+        project="test"
     )
     state.working_context.token_count = 2000
 
@@ -1900,7 +1900,7 @@ async def test_action_executor():
     # Create state with large context
     state = RAEState(
         tenant_id="test",
-        project_id="test"
+        project="test"
     )
     state.working_context.content = ["memory 1", "memory 2", "memory 3"]
     state.working_context.importance_scores = [0.9, 0.5, 0.3]
@@ -2758,13 +2758,13 @@ def test_reward_computation():
 
     state_before = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=100000)
     )
 
     state_after = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=99000)  # Used 1000 tokens
     )
 
@@ -2791,8 +2791,8 @@ def test_high_quality_high_reward():
     """Test that high quality actions get high reward"""
     reward_fn = RewardFunction()
 
-    state_before = RAEState(tenant_id="test", project_id="test")
-    state_after = RAEState(tenant_id="test", project_id="test")
+    state_before = RAEState(tenant_id="test", project="test")
+    state_after = RAEState(tenant_id="test", project="test")
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
 
@@ -2817,7 +2817,7 @@ def test_metrics_tracker():
     tracker = MetricsTracker()
 
     # Record some transitions
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
     action = RetrieveEpisodicAction(parameters={"k": 10})
     reward_fn = RewardFunction()
 
@@ -3251,7 +3251,7 @@ async def search(
     self,
     query: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     top_k_vector: int = 5,
     graph_depth: int = 2,
     use_information_bottleneck: bool = True,  # NEW parameter
@@ -3546,7 +3546,7 @@ class KnowledgeGraph:
     nodes: Dict[str, GraphNode]
     edges: Dict[str, GraphEdge]
     tenant_id: str
-    project_id: str
+    project: str
     created_at: datetime
     last_updated: datetime
 
@@ -3587,7 +3587,7 @@ class GraphUpdateOperator:
         operator = GraphUpdateOperator()
 
         # Load current graph
-        G_t = await load_graph(tenant_id, project_id)
+        G_t = await load_graph(tenant_id, project)
 
         # Observation: new memory with entities
         observation = {
@@ -4057,7 +4057,7 @@ def create_test_graph() -> KnowledgeGraph:
             )
         },
         tenant_id="test",
-        project_id="test",
+        project="test",
         created_at=datetime.now(),
         last_updated=datetime.now()
     )

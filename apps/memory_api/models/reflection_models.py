@@ -109,7 +109,7 @@ class ReflectionUnit(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Content
     content: str = Field(..., description="Reflection content/text")
@@ -192,7 +192,7 @@ class ReflectionRelationship(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Relationship
     source_reflection_id: UUID = Field(..., description="Source reflection ID")
@@ -234,7 +234,7 @@ class ReflectionCluster(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Cluster identification
     cluster_id: str = Field(..., description="Cluster identifier")
@@ -320,7 +320,7 @@ class QueryReflectionsRequest(BaseModel):
     tenant_id: str = Field(..., min_length=1, max_length=255)
 
     # Query parameters
-    query_text: Optional[str] = Field(
+    query: Optional[str] = Field(
         None, min_length=1, max_length=1024, description="Semantic query text"
     )
     k: int = Field(10, gt=0, le=100, description="Number of results to return")
@@ -423,7 +423,7 @@ class ReflectionStatistics(BaseModel):
     """Statistics for reflections in a project"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Counts
     total_reflections: int = 0
@@ -451,7 +451,7 @@ class ReflectionUsageLog(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Reflection reference
     reflection_id: UUID
@@ -460,7 +460,7 @@ class ReflectionUsageLog(BaseModel):
     usage_type: str = Field(
         ..., description="Type of usage: query, api_call, agent_execution, etc."
     )
-    query_text: Optional[str] = Field(
+    query: Optional[str] = Field(
         None, description="Query that retrieved this reflection"
     )
 

@@ -92,7 +92,7 @@ state = RAEState(
         avg_degree=4.0
     ),
     tenant_id="tenant_123",
-    project_id="project_456",
+    project="project_456",
     session_id="session_789"
 )
 ```
@@ -492,7 +492,7 @@ graph = KnowledgeGraph(
         )
     },
     tenant_id="tenant_123",
-    project_id="project_456"
+    project="project_456"
 )
 ```
 

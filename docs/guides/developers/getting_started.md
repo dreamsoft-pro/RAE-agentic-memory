@@ -112,7 +112,7 @@ curl -X POST http://localhost:8000/v2/memory/store \
 And then query for it:
 
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RAE_ACCESS_TOKEN" \
   -H "X-Tenant-ID: getting-started-tenant" \

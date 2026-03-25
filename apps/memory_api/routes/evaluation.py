@@ -82,7 +82,7 @@ async def evaluate_search_results(
 
         result = await service.evaluate_search_results(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             relevance_judgments=request.relevance_judgments,
             search_results=request.search_results,
             metrics_to_compute=request.metrics_to_compute,
@@ -178,7 +178,7 @@ async def detect_drift(request: DetectDriftRequest, pool=Depends(get_pool)):
 
         result = await detector.detect_drift(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             metric_name=request.metric_name,
             drift_type=request.drift_type,
             baseline_start=request.baseline_start,
@@ -288,7 +288,7 @@ async def create_ab_test(
         req_any = cast(Any, request)
         test_record = await repo.create_test(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             test_name=request.test_name,
             description=request.description,
             hypothesis=req_any.hypothesis,
@@ -422,7 +422,7 @@ async def get_quality_metrics(
 
         quality_metrics = QualityMetrics(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             period_start=request.period_start,
             period_end=request.period_end,
         )
@@ -481,7 +481,7 @@ async def get_quality_thresholds():
 async def run_benchmark_suite(
     suite_name: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     repo: BenchmarkRepository = Depends(get_benchmark_repo),
 ):
     """
@@ -495,7 +495,7 @@ async def run_benchmark_suite(
     try:
         # Find suite by name
         suites = await repo.list_suites(
-            tenant_id=tenant_id, project_id=project_id, status="active"
+            tenant_id=tenant_id, project=project, status="active"
         )
         suite = next((s for s in suites if s["suite_name"] == suite_name), None)
 
@@ -509,7 +509,7 @@ async def run_benchmark_suite(
         execution = await repo.create_execution(
             suite_id=suite["id"],
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             triggered_by="api",
         )
 
@@ -541,7 +541,7 @@ async def run_benchmark_suite(
 @router.get("/benchmark/suites")
 async def list_benchmark_suites(
     tenant_id: str,
-    project_id: str,
+    project: str,
     repo: BenchmarkRepository = Depends(get_benchmark_repo),
 ):
     """
@@ -551,7 +551,7 @@ async def list_benchmark_suites(
     """
     try:
         suites = await repo.list_suites(
-            tenant_id=tenant_id, project_id=project_id, status="active"
+            tenant_id=tenant_id, project=project, status="active"
         )
 
         # Format response

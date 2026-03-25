@@ -58,7 +58,7 @@ def verify_implicit_capture():
     print("\n🔍 Auditing RAE Memory for Implicit Trace...")
 
     query_payload = {
-        "query_text": session_id,  # Search for the session ID itself
+        "query": session_id,  # Search for the session ID itself
         "project": "verification-agent",
         "k": 5,
     }

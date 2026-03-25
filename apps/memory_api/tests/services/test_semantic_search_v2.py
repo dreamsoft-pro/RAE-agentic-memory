@@ -48,7 +48,7 @@ def sample_node_record():
     return {
         "id": uuid4(),
         "tenant_id": "tenant1",
-        "project_id": "project1",
+        "project": "project1",
         "node_id": "node1",
         "label": "Test Node",
         "node_type": "concept",
@@ -91,7 +91,7 @@ async def test_search_stage1_only(
     # Act
     results, stats = await semantic_search_service.search(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         query="test query",
         k=5,
         enable_topic_matching=True,
@@ -118,7 +118,7 @@ async def test_search_stage2_only(
     # Act
     results, stats = await semantic_search_service.search(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         query="test query",
         k=5,
         enable_topic_matching=False,
@@ -155,7 +155,7 @@ async def test_search_stage3_reranking(
     # Act
     results, stats = await semantic_search_service.search(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         query="test query",
         k=5,
         enable_topic_matching=True,
@@ -182,7 +182,7 @@ async def test_filters(semantic_search_service, mock_pool, sample_node_record):
     # Act
     results, stats = await semantic_search_service.search(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         query="test query",
         k=5,
         enable_topic_matching=True,
@@ -215,7 +215,7 @@ async def test_deduplication(semantic_search_service, mock_pool, sample_node_rec
     # Act
     results, stats = await semantic_search_service.search(
         tenant_id="tenant1",
-        project_id="project1",
+        project="project1",
         query="test query",
         k=5,
         enable_topic_matching=True,
@@ -232,7 +232,7 @@ async def test_empty_results(semantic_search_service, mock_pool):
     mock_pool.fetch.return_value = []
 
     results, stats = await semantic_search_service.search(
-        tenant_id="tenant1", project_id="project1", query="test query"
+        tenant_id="tenant1", project="project1", query="test query"
     )
 
     assert len(results) == 0
@@ -245,7 +245,7 @@ async def test_reranking_logic(semantic_search_service):
     node1 = SemanticNode(
         id=uuid4(),
         tenant_id="t",
-        project_id="p",
+        project="p",
         node_id="n1",
         label="1",
         node_type="concept",
@@ -264,7 +264,7 @@ async def test_reranking_logic(semantic_search_service):
     node2 = SemanticNode(
         id=uuid4(),
         tenant_id="t",
-        project_id="p",
+        project="p",
         node_id="n2",
         label="2",
         node_type="concept",
@@ -303,7 +303,7 @@ async def test_filter_by_domain(semantic_search_service, mock_pool, sample_node_
     # Act
     results, _ = await semantic_search_service.search(
         tenant_id="t",
-        project_id="p",
+        project="p",
         query="q",
         enable_topic_matching=True,
         enable_canonicalization=False,

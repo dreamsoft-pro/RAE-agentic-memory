@@ -46,13 +46,13 @@ class LatencyProfiler:
         self.results: List[Dict[str, Any]] = []
 
     async def profile_single_query(
-        self, query_text: str, tenant_id: str, top_k: int = 5, num_runs: int = 100
+        self, query: str, tenant_id: str, top_k: int = 5, num_runs: int = 100
     ) -> Dict:
         """
         Profile a single query multiple times
 
         Args:
-            query_text: The search query
+            query: The search query
             tenant_id: Tenant identifier
             top_k: Number of results to retrieve
             num_runs: Number of times to run the query
@@ -60,7 +60,7 @@ class LatencyProfiler:
         Returns:
             Dict with latency statistics
         """
-        print(f"\n🔍 Profiling query: '{query_text}'")
+        print(f"\n🔍 Profiling query: '{query}'")
         print(f"   Runs: {num_runs}")
         print(f"   Top-k: {top_k}")
 
@@ -71,7 +71,7 @@ class LatencyProfiler:
         for i in range(num_runs):
             # Measure embedding generation
             embed_start = time.perf_counter()
-            query_embedding = self.embedding_service.generate_embeddings([query_text])[
+            query_embedding = self.embedding_service.generate_embeddings([query])[
                 0
             ]
             embed_time = time.perf_counter() - embed_start
@@ -98,7 +98,7 @@ class LatencyProfiler:
         search_np = np.array(search_times)
 
         stats: Dict[str, Any] = {
-            "query": query_text,
+            "query": query,
             "num_runs": num_runs,
             "total_latency": {
                 "mean": float(np.mean(latencies_np)),
@@ -167,11 +167,11 @@ class LatencyProfiler:
         all_profiles = []
 
         for idx, query_data in enumerate(queries, 1):
-            query_text = query_data["query"]
-            print(f"\n[{idx}/{len(queries)}] Processing: {query_text[:50]}...")
+            query = query_data["query"]
+            print(f"\n[{idx}/{len(queries)}] Processing: {query[:50]}...")
 
             profile = await self.profile_single_query(
-                query_text=query_text, tenant_id=tenant_id, num_runs=num_runs_per_query
+                query=query, tenant_id=tenant_id, num_runs=num_runs_per_query
             )
 
             profile["query_index"] = idx
@@ -303,7 +303,7 @@ async def main():
         if args.query:
             # Profile single query
             stats = await profiler.profile_single_query(
-                query_text=args.query,
+                query=args.query,
                 tenant_id="latency_profile_tenant",
                 top_k=args.top_k,
                 num_runs=args.runs,

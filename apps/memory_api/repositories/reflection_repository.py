@@ -43,7 +43,7 @@ logger = structlog.get_logger(__name__)
 async def create_reflection(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     content: str,
     reflection_type: ReflectionType,
     priority: int,
@@ -63,7 +63,7 @@ async def create_reflection(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         content: Reflection content
         reflection_type: Type of reflection
         priority: Priority level (1-5)
@@ -83,7 +83,7 @@ async def create_reflection(
     logger.info(
         "create_reflection",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         reflection_type=reflection_type,
         priority=priority,
     )
@@ -112,7 +112,7 @@ async def create_reflection(
     record = await pool.fetchrow(
         """
         INSERT INTO reflections (
-            tenant_id, project_id, content, type, priority,
+            tenant_id, project, content, type, priority,
             score, novelty_score, importance_score, utility_score, confidence_score,
             parent_reflection_id, depth_level,
             source_memory_ids, source_reflection_ids,
@@ -129,7 +129,7 @@ async def create_reflection(
         RETURNING *
         """,
         tenant_id,
-        project_id,
+        project,
         content,
         reflection_type.value,
         priority,
@@ -188,7 +188,7 @@ async def get_reflection_by_id(
 async def query_reflections(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     query_embedding: Optional[List[float]] = None,
     k: int = 10,
     reflection_types: Optional[List[ReflectionType]] = None,
@@ -205,7 +205,7 @@ async def query_reflections(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         query_embedding: Optional query embedding for semantic search
         k: Number of results to return
         reflection_types: Filter by reflection types
@@ -222,14 +222,14 @@ async def query_reflections(
     logger.info(
         "query_reflections",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         k=k,
         has_embedding=query_embedding is not None,
     )
 
     # Build query conditions
-    conditions = ["tenant_id = $1", "project_id = $2"]
-    params: List[Any] = [tenant_id, project_id]
+    conditions = ["tenant_id = $1", "project = $2"]
+    params: List[Any] = [tenant_id, project]
     param_idx = 3
 
     if reflection_types:
@@ -339,7 +339,7 @@ async def get_child_reflections(
 async def create_reflection_relationship(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     source_reflection_id: UUID,
     target_reflection_id: UUID,
     relation_type: ReflectionRelationType,
@@ -354,7 +354,7 @@ async def create_reflection_relationship(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         source_reflection_id: Source reflection ID
         target_reflection_id: Target reflection ID
         relation_type: Type of relationship
@@ -396,7 +396,7 @@ async def create_reflection_relationship(
     record = await pool.fetchrow(
         """
         INSERT INTO reflection_relationships (
-            tenant_id, project_id,
+            tenant_id, project,
             source_reflection_id, target_reflection_id,
             relation_type, strength, confidence,
             supporting_evidence
@@ -404,7 +404,7 @@ async def create_reflection_relationship(
         RETURNING *
         """,
         tenant_id,
-        project_id,
+        project,
         source_reflection_id,
         target_reflection_id,
         relation_type.value,
@@ -571,7 +571,7 @@ async def get_reflection_graph(
 
 
 async def get_reflection_statistics(
-    pool: asyncpg.Pool, tenant_id: str, project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project: str
 ) -> ReflectionStatistics:
     """
     Get reflection statistics for a project.
@@ -579,19 +579,19 @@ async def get_reflection_statistics(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
 
     Returns:
         ReflectionStatistics
     """
     record = await pool.fetchrow(
-        "SELECT * FROM reflection_statistics WHERE tenant_id = $1 AND project_id = $2",
+        "SELECT * FROM reflection_statistics WHERE tenant_id = $1 AND project = $2",
         tenant_id,
-        project_id,
+        project,
     )
 
     if not record:
-        return ReflectionStatistics(tenant_id=tenant_id, project_id=project_id)
+        return ReflectionStatistics(tenant_id=tenant_id, project=project)
 
     return ReflectionStatistics(**dict(record))
 
@@ -599,10 +599,10 @@ async def get_reflection_statistics(
 async def log_reflection_usage(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     reflection_id: UUID,
     usage_type: str,
-    query_text: Optional[str] = None,
+    query: Optional[str] = None,
     relevance_score: Optional[float] = None,
     rank_position: Optional[int] = None,
     user_id: Optional[str] = None,
@@ -615,10 +615,10 @@ async def log_reflection_usage(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         reflection_id: Reflection ID
         usage_type: Type of usage
-        query_text: Optional query text
+        query: Optional query text
         relevance_score: Optional relevance score
         rank_position: Optional rank position
         user_id: Optional user ID
@@ -633,18 +633,18 @@ async def log_reflection_usage(
     record = await pool.fetchrow(
         """
         INSERT INTO reflection_usage_log (
-            tenant_id, project_id, reflection_id,
-            usage_type, query_text,
+            tenant_id, project, reflection_id,
+            usage_type, query,
             relevance_score, rank_position,
             user_id, session_id, metadata
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
         """,
         tenant_id,
-        project_id,
+        project,
         reflection_id,
         usage_type,
-        query_text,
+        query,
         relevance_score,
         rank_position,
         user_id,
@@ -685,7 +685,7 @@ def _record_to_reflection_unit(record) -> ReflectionUnit:
     return ReflectionUnit(
         id=record["id"],
         tenant_id=record["tenant_id"],
-        project_id=record["project_id"],
+        project=record["project"],
         content=record["content"],
         summary=record.get("summary"),
         type=ReflectionType(record["type"]),
@@ -716,7 +716,7 @@ def _record_to_reflection_relationship(record) -> ReflectionRelationship:
     return ReflectionRelationship(
         id=record["id"],
         tenant_id=record["tenant_id"],
-        project_id=record["project_id"],
+        project=record["project"],
         source_reflection_id=record["source_reflection_id"],
         target_reflection_id=record["target_reflection_id"],
         relation_type=ReflectionRelationType(record["relation_type"]),

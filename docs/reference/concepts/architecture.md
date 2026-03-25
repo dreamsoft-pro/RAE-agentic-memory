@@ -240,7 +240,7 @@ await qdrant.scroll(collection, filters)
 CREATE TABLE memories (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
-    project_id UUID,
+    project UUID,
     layer TEXT NOT NULL,
     content TEXT NOT NULL,
     embedding vector(1536),
@@ -340,7 +340,7 @@ def prune_working_memory():
 
 ```
 1. Client Request
-   POST /v2/memory/query
+   POST /v2/v2/memories/query
    {
      "query": "...",
      "top_k": 10,

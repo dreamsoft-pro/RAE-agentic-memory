@@ -134,7 +134,7 @@ class EvaluationResult(BaseModel):
 
     evaluation_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Metrics
     metrics: List[MetricScore] = Field(default_factory=list)
@@ -237,7 +237,7 @@ class DriftMonitor(BaseModel):
 
     monitor_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # What to monitor
     metric_name: str = Field(..., description="Metric to monitor for drift")
@@ -303,7 +303,7 @@ class ABTestResult(BaseModel):
 
     test_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Test configuration
     test_name: str
@@ -343,7 +343,7 @@ class QualityMetrics(BaseModel):
     """
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Retrieval quality
     avg_mrr: float = Field(0.0, ge=0.0, le=1.0)
@@ -385,7 +385,7 @@ class QualityAlert(BaseModel):
 
     alert_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Alert details
     alert_type: str = Field(..., description="Type of quality issue")
@@ -419,7 +419,7 @@ class EvaluateSearchRequest(BaseModel):
     """Request to evaluate search results"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Ground truth
     relevance_judgments: List[RelevanceJudgment] = Field(..., min_length=1)
@@ -447,7 +447,7 @@ class DetectDriftRequest(BaseModel):
     """Request to detect distribution drift"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # What to analyze
     metric_name: str
@@ -475,7 +475,7 @@ class CreateABTestRequest(BaseModel):
     """Request to create A/B test"""
 
     tenant_id: str
-    project_id: str
+    project: str
     test_name: str
     description: Optional[str] = None
 
@@ -500,7 +500,7 @@ class GetQualityMetricsRequest(BaseModel):
     """Request to get quality metrics"""
 
     tenant_id: str
-    project_id: str
+    project: str
     period_start: datetime
     period_end: datetime
 
@@ -554,7 +554,7 @@ class BenchmarkResult(BaseModel):
     benchmark_id: UUID
     suite_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Results
     metrics: List[MetricScore]

@@ -125,7 +125,7 @@ POST /api/v2/projects
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "sprawa-2025-001",
+  "project": "sprawa-2025-001",
   "name": "Sprawa: XYZ vs. ABC - odszkodowanie",
   "metadata": {
     "client_name": "Jan Kowalski (powód)",
@@ -147,7 +147,7 @@ POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "sprawa-2025-001",  # WYMAGANE - bez tego API zwróci błąd
+  "project": "sprawa-2025-001",  # WYMAGANE - bez tego API zwróci błąd
   "content": "Spotkanie z klientem - ustalenia co do strategii procesowej",
   "metadata": {
     "type": "meeting_notes",
@@ -172,15 +172,15 @@ POST /api/v2/memories
 #### Poziom 1: Izolacja Bazodanowa
 
 ```sql
--- ✅ POPRAWNIE - Każde zapytanie zawiera tenant_id I project_id
+-- ✅ POPRAWNIE - Każde zapytanie zawiera tenant_id I project
 SELECT * FROM memories
 WHERE tenant_id = 'kancelaria-kowalski'
-  AND project_id = 'sprawa-2025-001'
+  AND project = 'sprawa-2025-001'
   AND id = '12345'
 
--- ❌ NIEMOŻLIWE - Zapytania bez project_id są odrzucane
+-- ❌ NIEMOŻLIWE - Zapytania bez project są odrzucane
 SELECT * FROM memories WHERE tenant_id = 'kancelaria-kowalski'
--- Błąd: "project_id is required for professional services"
+-- Błąd: "project is required for professional services"
 ```
 
 #### Poziom 2: Izolacja API
@@ -203,7 +203,7 @@ POST /api/v2/memories/search
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "sprawa-2025-001",
+  "project": "sprawa-2025-001",
   "query": "odszkodowanie precedens",
   "limit": 10
 }
@@ -272,7 +272,7 @@ data_retention:
 
 ```python
 # Usunięcie wszystkich danych osoby po zakończeniu sprawy
-DELETE /api/v2/tenants/{tenant_id}/projects/{project_id}/data-subjects/{subject_id}
+DELETE /api/v2/tenants/{tenant_id}/projects/{project}/data-subjects/{subject_id}
 
 # Przykład:
 DELETE /api/v2/tenants/kancelaria-kowalski/projects/sprawa-2025-001/data-subjects/jan-kowalski
@@ -288,7 +288,7 @@ DELETE /api/v2/tenants/kancelaria-kowalski/projects/sprawa-2025-001/data-subject
 
 ```python
 # Eksport wszystkich danych klienta
-GET /api/v2/tenants/{tenant_id}/projects/{project_id}/export
+GET /api/v2/tenants/{tenant_id}/projects/{project}/export
 
 # Zwraca JSON z:
 # - Wszystkimi memories
@@ -318,7 +318,7 @@ POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "sprawa-2025-001",
+  "project": "sprawa-2025-001",
   "content": "Rozmowa z klientem o strategii obrony",
   "metadata": {
     "privileged": true,              # CHRONIONE tajemnicą zawodową
@@ -377,7 +377,7 @@ NOTIFY_BEFORE_DELETION_DAYS=30
 {
   "timestamp": "2025-12-06T14:23:45.123Z",
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "sprawa-2025-001",
+  "project": "sprawa-2025-001",
   "user_id": "jan.nowak@kancelaria.pl",
   "user_role": "attorney",
   "action": "memory.read",
@@ -401,20 +401,20 @@ NOTIFY_BEFORE_DELETION_DAYS=30
 
 ```python
 # Raport wszystkich dostępów do sprawy
-GET /api/v2/admin/audit-logs?project_id=sprawa-2025-001&from=2025-01-01&to=2025-12-31
+GET /api/v2/admin/audit-logs?project=sprawa-2025-001&from=2025-01-01&to=2025-12-31
 
 # Raport dostępów konkretnego użytkownika
 GET /api/v2/admin/audit-logs?user_id=jan.nowak@kancelaria.pl
 
 # Eksport do CSV dla audytorów
-GET /api/v2/admin/audit-logs/export?format=csv&project_id=sprawa-2025-001
+GET /api/v2/admin/audit-logs/export?format=csv&project=sprawa-2025-001
 ```
 
 **Typowe pytania audytorów:**
 
 | Pytanie | Zapytanie API | Odpowiedź |
 |---------|---------------|-----------|
-| "Kto miał dostęp do tej sprawy?" | `GET /audit-logs?project_id=X&action=*.read` | Lista użytkowników + timestamp |
+| "Kto miał dostęp do tej sprawy?" | `GET /audit-logs?project=X&action=*.read` | Lista użytkowników + timestamp |
 | "Kiedy dokument został zmodyfikowany?" | `GET /audit-logs?resource_id=Y&action=memory.update` | Historia zmian |
 | "Czy były nieautoryzowane próby dostępu?" | `GET /audit-logs?status=forbidden` | Lista prób + IP |
 | "Jakie dane były eksportowane?" | `GET /audit-logs?action=data.export` | Lista eksportów |
@@ -440,7 +440,7 @@ POST /api/v2/memories
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "baza-wiedzy",
+  "project": "baza-wiedzy",
   "content": "Wyrok SN z 2024-05-15: Odszkodowanie za naruszenie dóbr osobistych...",
   "metadata": {
     "type": "case_law",
@@ -457,7 +457,7 @@ POST /api/v2/memories/search
 
 {
   "tenant_id": "kancelaria-kowalski",
-  "project_id": "baza-wiedzy",  # Szukamy w bazie wiedzy
+  "project": "baza-wiedzy",  # Szukamy w bazie wiedzy
   "query": "odszkodowanie dobra osobiste precedens",
   "limit": 10
 }
@@ -480,7 +480,7 @@ for event in events:
     POST /api/v2/memories
     {
         "tenant_id": "kancelaria-kowalski",
-        "project_id": "sprawa-2025-001",
+        "project": "sprawa-2025-001",
         "content": event["event"],
         "metadata": {
             "type": "case_event",
@@ -490,7 +490,7 @@ for event in events:
     }
 
 # Odtworzenie timeline
-GET /api/v2/memories?project_id=sprawa-2025-001&sort=metadata.date&type=case_event
+GET /api/v2/memories?project=sprawa-2025-001&sort=metadata.date&type=case_event
 ```
 
 ### Wykrywanie Konfliktów Interesów
@@ -535,7 +535,7 @@ POST /api/v2/memories/search
 
 {
   "tenant_id": "firma-audit-abc",
-  "project_id": "audyt-klient-xyz-2025",
+  "project": "audyt-klient-xyz-2025",
   "query": "ryzyko istotne kontrola wewnętrzna",
   "filters": {
     "metadata.risk_level": ["high", "critical"],
@@ -544,7 +544,7 @@ POST /api/v2/memories/search
 }
 
 # Generowanie raportu ryzyk
-GET /api/v2/projects/{project_id}/risk-report
+GET /api/v2/projects/{project}/risk-report
 ```
 
 ### Raportowanie (dla Księgowych)
@@ -553,10 +553,10 @@ GET /api/v2/projects/{project_id}/risk-report
 
 ```python
 # Eksport wszystkich operacji księgowych
-GET /api/v2/projects/{project_id}/export?type=accounting_operations&format=xlsx
+GET /api/v2/projects/{project}/export?type=accounting_operations&format=xlsx
 
 # Filtrowanie per okres
-GET /api/v2/memories?project_id=klient-abc&from=2025-01-01&to=2025-03-31&type=transaction
+GET /api/v2/memories?project=klient-abc&from=2025-01-01&to=2025-03-31&type=transaction
 ```
 
 ## 🛠️ Instalacja i Konfiguracja
@@ -620,7 +620,7 @@ BACKUP_ENCRYPTION=true
 
 ```python
 # Dodanie prawnika do sprawy
-POST /api/v2/projects/{project_id}/access
+POST /api/v2/projects/{project}/access
 
 {
   "user_id": "jan.nowak@kancelaria.pl",
@@ -648,7 +648,7 @@ POST /api/v2/projects/{project_id}/access
    ```
 2. Poproś partnera o przyznanie dostępu:
    ```bash
-   POST /api/v2/projects/{project_id}/access
+   POST /api/v2/projects/{project}/access
    ```
 
 #### Problem: Conflict check zwraca false positive

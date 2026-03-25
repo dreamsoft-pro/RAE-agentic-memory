@@ -22,7 +22,7 @@ class ABTestRepository:
     async def create_test(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         test_name: str,
         variant_a_config: Dict[str, Any],
         variant_b_config: Dict[str, Any],
@@ -44,7 +44,7 @@ class ABTestRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO ab_tests (
-                    tenant_id, project_id, test_name, description, hypothesis,
+                    tenant_id, project, test_name, description, hypothesis,
                     variant_a_name, variant_a_config, variant_b_name, variant_b_config,
                     traffic_split, min_sample_size, confidence_level,
                     primary_metric, secondary_metrics, created_by, tags, metadata
@@ -53,7 +53,7 @@ class ABTestRepository:
                 RETURNING *
                 """,
                 tenant_id,
-                project_id,
+                project,
                 test_name,
                 description,
                 hypothesis,
@@ -83,7 +83,7 @@ class ABTestRepository:
     async def list_tests(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -94,12 +94,12 @@ class ABTestRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM ab_tests
-                    WHERE tenant_id = $1 AND project_id = $2 AND status = $3
+                    WHERE tenant_id = $1 AND project = $2 AND status = $3
                     ORDER BY created_at DESC
                     LIMIT $4 OFFSET $5
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     status,
                     limit,
                     offset,
@@ -108,12 +108,12 @@ class ABTestRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM ab_tests
-                    WHERE tenant_id = $1 AND project_id = $2
+                    WHERE tenant_id = $1 AND project = $2
                     ORDER BY created_at DESC
                     LIMIT $3 OFFSET $4
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     limit,
                     offset,
                 )
@@ -168,11 +168,11 @@ class ABTestRepository:
         self,
         test_id: UUID,
         tenant_id: str,
-        project_id: str,
+        project: str,
         variant: str,
         metric_values: Dict[str, Any],
         query_id: Optional[UUID] = None,
-        query_text: Optional[str] = None,
+        query: Optional[str] = None,
         session_id: Optional[str] = None,
         retrieved_count: Optional[int] = None,
         relevance_labels: Optional[List[int]] = None,
@@ -185,8 +185,8 @@ class ABTestRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO ab_test_results (
-                    test_id, tenant_id, project_id, variant,
-                    metric_values, query_id, query_text, session_id,
+                    test_id, tenant_id, project, variant,
+                    metric_values, query_id, query, session_id,
                     retrieved_count, relevance_labels, execution_time_ms,
                     user_feedback, metadata
                 )
@@ -195,11 +195,11 @@ class ABTestRepository:
                 """,
                 test_id,
                 tenant_id,
-                project_id,
+                project,
                 variant,
                 metric_values,
                 query_id,
-                query_text,
+                query,
                 session_id,
                 retrieved_count,
                 relevance_labels or [],
@@ -266,7 +266,7 @@ class BenchmarkRepository:
     async def create_suite(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         suite_name: str,
         test_queries: List[Dict[str, Any]],
         evaluation_criteria: Dict[str, Any],
@@ -287,7 +287,7 @@ class BenchmarkRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO benchmark_suites (
-                    tenant_id, project_id, suite_name, description, version,
+                    tenant_id, project, suite_name, description, version,
                     test_queries, evaluation_criteria, expected_results,
                     timeout_seconds, parallel_execution, retry_on_failure,
                     is_baseline, total_queries, created_by, tags, metadata
@@ -296,7 +296,7 @@ class BenchmarkRepository:
                 RETURNING *
                 """,
                 tenant_id,
-                project_id,
+                project,
                 suite_name,
                 description,
                 version,
@@ -325,7 +325,7 @@ class BenchmarkRepository:
     async def list_suites(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         status: Optional[str] = None,
         is_baseline: Optional[bool] = None,
         limit: int = 50,
@@ -333,8 +333,8 @@ class BenchmarkRepository:
     ) -> List[Dict[str, Any]]:
         """List benchmark suites for a tenant/project."""
         async with self.pool.acquire() as conn:
-            conditions = ["tenant_id = $1", "project_id = $2"]
-            params: List[Any] = [tenant_id, project_id]
+            conditions = ["tenant_id = $1", "project = $2"]
+            params: List[Any] = [tenant_id, project]
             param_idx = 3
 
             if status:
@@ -376,7 +376,7 @@ class BenchmarkRepository:
         self,
         suite_id: UUID,
         tenant_id: str,
-        project_id: str,
+        project: str,
         triggered_by: str = "manual",
         execution_label: Optional[str] = None,
         git_commit_hash: Optional[str] = None,
@@ -389,7 +389,7 @@ class BenchmarkRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO benchmark_executions (
-                    suite_id, tenant_id, project_id, execution_label,
+                    suite_id, tenant_id, project, execution_label,
                     triggered_by, git_commit_hash, config_snapshot,
                     baseline_execution_id, metadata
                 )
@@ -398,7 +398,7 @@ class BenchmarkRepository:
                 """,
                 suite_id,
                 tenant_id,
-                project_id,
+                project,
                 execution_label,
                 triggered_by,
                 git_commit_hash,
@@ -506,7 +506,7 @@ class BenchmarkRepository:
         self,
         suite_id: Optional[UUID] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -525,9 +525,9 @@ class BenchmarkRepository:
                 conditions.append(f"tenant_id = ${param_idx}")
                 params.append(tenant_id)
                 param_idx += 1
-            if project_id:
-                conditions.append(f"project_id = ${param_idx}")
-                params.append(project_id)
+            if project:
+                conditions.append(f"project = ${param_idx}")
+                params.append(project)
                 param_idx += 1
             if status:
                 conditions.append(f"status = ${param_idx}")

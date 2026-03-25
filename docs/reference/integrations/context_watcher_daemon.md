@@ -158,7 +158,7 @@ ignore_patterns = [
 
 **Methods**:
 - `store_file_memory(file_path)`: Read file and store in RAE
-- `query_memory(query_text, k)`: Query RAE for memories
+- `query_memory(query, k)`: Query RAE for memories
 - `delete_memory(memory_id)`: Delete a memory
 
 **Configuration**:
@@ -175,7 +175,7 @@ ignore_patterns = [
 - `GET /projects`: List watched projects
 - `DELETE /projects/{id}`: Unregister project
 - `POST /memory/store`: Proxy to RAE API
-- `POST /memory/query`: Proxy to RAE API
+- `POST /v2/memories/query`: Proxy to RAE API
 - `DELETE /memory/delete`: Proxy to RAE API
 
 **Port**: 8001 (configurable)
@@ -278,7 +278,7 @@ curl -X POST http://localhost:8001/projects \
 **Response**:
 ```json
 {
-  "project_id": "my-team-my-project",
+  "project": "my-team-my-project",
   "message": "Started watching project 'my-team-my-project'."
 }
 ```
@@ -380,7 +380,7 @@ Register a new project directory to watch.
 **Response**:
 ```json
 {
-  "project_id": "tenant-project-name",
+  "project": "tenant-project-name",
   "message": "Started watching project 'tenant-project-name'."
 }
 ```
@@ -422,12 +422,12 @@ List all currently watched projects.
 
 ---
 
-### `DELETE /projects/{project_id}`
+### `DELETE /projects/{project}`
 
 Stop watching a project.
 
 **Path Parameters**:
-- `project_id` (string, required): Project ID to unregister
+- `project` (string, required): Project ID to unregister
 
 **Response**:
 ```json
@@ -464,7 +464,7 @@ Proxy endpoint for storing memory directly (bypasses file watching).
 
 ---
 
-### `POST /memory/query`
+### `POST /v2/memories/query`
 
 Proxy endpoint for querying memories.
 
@@ -474,7 +474,7 @@ Proxy endpoint for querying memories.
 **Request Body**:
 ```json
 {
-  "query_text": "search query",
+  "query": "search query",
   "k": 10
 }
 ```
@@ -687,7 +687,7 @@ livenessProbe:
    ```
 3. Validate API key:
    ```bash
-   curl -H "X-API-Key: your-key" http://localhost:8000/v2/memory/query
+   curl -H "X-API-Key: your-key" http://localhost:8000/v2/v2/memories/query
    ```
 4. Check network connectivity (if remote):
    ```bash
@@ -854,8 +854,8 @@ curl -X POST http://localhost:8001/projects \
 npm run build
 
 # Query memories later
-curl -X POST "http://localhost:8001/memory/query?tenant_id=ci-system" \
-  -d '{"query_text": "build errors", "k": 5}'
+curl -X POST "http://localhost:8001/v2/memories/query?tenant_id=ci-system" \
+  -d '{"query": "build errors", "k": 5}'
 ```
 
 ---

@@ -53,7 +53,7 @@ Supported event types (from `EventType` enum):
 class TriggerRule:
     trigger_id: str
     tenant_id: str
-    project_id: str
+    project: str
     name: str
     description: str
     event_type: EventType
@@ -161,7 +161,7 @@ event = Event(
     event_type=EventType.MEMORY_CREATED,
     timestamp=datetime.now(timezone.utc),
     tenant_id="tenant-123",
-    project_id="default",
+    project="default",
     payload={
         "memory_id": "mem-456",
         "importance": 0.95,
@@ -191,7 +191,7 @@ repo = TriggerRepository(pool)
 
 trigger = await repo.create_trigger(
     tenant_id="tenant-123",
-    project_id="default",
+    project="default",
     name="Budget alert",
     event_type=EventType.BUDGET_EXCEEDED,
     condition={

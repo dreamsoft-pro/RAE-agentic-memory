@@ -27,7 +27,7 @@ class TestRAEClient:
             api_url="http://test-api:8000",
             api_key="test-key",
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
         )
 
     @pytest.fixture
@@ -43,7 +43,7 @@ class TestRAEClient:
         assert client.api_url == "http://test-api:8000"
         assert client.api_key == "test-key"
         assert client.tenant_id == "test-tenant"
-        assert client.project_id == "test-project"
+        assert client.project == "test-project"
         assert client.headers["X-API-Key"] == "test-key"
         assert client.headers["X-Tenant-Id"] == "test-tenant"
 
@@ -145,7 +145,7 @@ class TestRAEClient:
         assert isinstance(results, list)
         mock_request.assert_called_once()
         call_kwargs = mock_request.call_args[1]
-        assert call_kwargs["json"]["query_text"] == "test query"
+        assert call_kwargs["json"]["query"] == "test query"
         assert call_kwargs["json"]["k"] == 5
 
     @patch("httpx.Client.request")

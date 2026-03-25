@@ -61,7 +61,7 @@ Create a new memory entry.
 }}
 ```
 
-### POST /v2/memory/query
+### POST /v2/v2/memories/query
 Query memories with hybrid search.
 
 ### POST /v2/memory/reflection

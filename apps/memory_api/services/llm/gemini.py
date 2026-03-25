@@ -24,7 +24,7 @@ class GeminiProvider(LLMProvider):
             try:
                 import google.auth
 
-                credentials, project_id = google.auth.default()
+                credentials, project = google.auth.default()
                 genai.configure(credentials=credentials)
             except Exception as e:
                 raise ValueError(f"GEMINI_API_KEY is not set and ADC failed: {e}")

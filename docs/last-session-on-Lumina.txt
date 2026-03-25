@@ -3340,7 +3340,7 @@
        * Jeśli w config są wagi math_weights, przekazanie ich do engine.search_memories.
 
    2. Nowy endpoint `/v1/feedback`:
-       * Przyjmuje memory_id, query_text i score (-1 lub 1).
+       * Przyjmuje memory_id, query i score (-1 lub 1).
        * Zapisuje feedback w nowej tabeli memory_feedback.
 
    3. Tuning (Background Task):
@@ -3554,7 +3554,7 @@
 │ 21 +         'memory_feedback',                                                                                                                                                      │
 │ 22 +         sa.Column('id', sa.UUID(), nullable=False),                                                                                                                             │
 │ 23 +         sa.Column('tenant_id', sa.String(length=255), nullable=False),                                                                                                          │
-│ 24 +         sa.Column('query_text', sa.Text(), nullable=False),                                                                                                                     │
+│ 24 +         sa.Column('query', sa.Text(), nullable=False),                                                                                                                     │
 │ 25 +         sa.Column('memory_id', sa.UUID(), nullable=False),                                                                                                                      │
 │ 26 +         sa.Column('score', sa.Float(), nullable=False),  # -1 to 1                                                                                                              │
 │ 27 +         sa.Column('weights_snapshot', sa.JSON(), nullable=True),  # Snapshot of alpha, beta, gamma during query                                                                 │
@@ -3600,7 +3600,7 @@
 │ ✓  ReadFile apps/memory_api/models/feedback.py                                                                                                                                       │
 │                                                                                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ Model jest bardzo prosty. Rozszerzę go o pola potrzebne do Tuningu (query_text, weights).
+✦ Model jest bardzo prosty. Rozszerzę go o pola potrzebne do Tuningu (query, weights).
 
   Zmieniam apps/memory_api/models/feedback.py.
 
@@ -3618,7 +3618,7 @@
 │ 11 +     score: Optional[float] = Field(                                                                                                                                             │
 │ 12 +         None, description="Numeric score from -1.0 to 1.0 (derived from type if missing)"                                                                                       │
 │ 13 +     )                                                                                                                                                                           │
-│ 14 +     query_text: Optional[str] = Field(                                                                                                                                          │
+│ 14 +     query: Optional[str] = Field(                                                                                                                                          │
 │ 15 +         None, description="The query that triggered this result"                                                                                                                │
 │ 16 +     )                                                                                                                                                                           │
 │ 17       comment: Optional[str] = Field(None, description="Optional comment")                                                                                                        │
@@ -3677,7 +3677,7 @@
 │ 31       feedback_type: str,                                                                                                                                                         │
 │ 32       comment: Optional[str] = None,                                                                                                                                              │
 │ 33 +     score: Optional[float] = None,                                                                                                                                              │
-│ 34 +     query_text: Optional[str] = None,                                                                                                                                           │
+│ 34 +     query: Optional[str] = None,                                                                                                                                           │
 │ 35 +     weights_snapshot: Optional[dict] = None,                                                                                                                                    │
 │ 36 +     metadata: Optional[dict] = None,                                                                                                                                            │
 │ 37   ) -> bool:                                                                                                                                                                      │
@@ -3729,7 +3729,7 @@
 │ 68 +                                                                                                                                                                                 │
 │ 69 +         sql = """                                                                                                                                                               │
 │ 70 +             INSERT INTO memory_feedback (                                                                                                                                       │
-│ 71 +                 id, tenant_id, query_text, memory_id, score,                                                                                                                    │
+│ 71 +                 id, tenant_id, query, memory_id, score,                                                                                                                    │
 │ 72 +                 weights_snapshot, metadata                                                                                                                                      │
 │ 73 +             ) VALUES ($1, $2, $3, $4, $5, $6, $7)                                                                                                                               │
 │ 74 +         """                                                                                                                                                                     │
@@ -3737,7 +3737,7 @@
 │ 76 +             sql,                                                                                                                                                                │
 │ 77 +             uuid4(),                                                                                                                                                            │
 │ 78 +             tenant_id,                                                                                                                                                          │
-│ 79 +             query_text or "unknown",                                                                                                                                            │
+│ 79 +             query or "unknown",                                                                                                                                            │
 │ 80 +             UUID(memory_id),                                                                                                                                                    │
 │ 81 +             score,                                                                                                                                                              │
 │ 82 +             weights_snapshot or {},                                                                                                                                             │
@@ -3779,7 +3779,7 @@
 │ 35       feedback_type=feedback.feedback_type,                                                                                                                                       │
 │ 36       comment=feedback.comment,                                                                                                                                                   │
 │ 37 +     score=feedback.score,                                                                                                                                                       │
-│ 38 +     query_text=feedback.query_text,                                                                                                                                             │
+│ 38 +     query=feedback.query,                                                                                                                                             │
 │ 39 +     weights_snapshot=feedback.weights_snapshot,                                                                                                                                 │
 │ 40 +     metadata=feedback.metadata,                                                                                                                                                 │
 │ 41   )                                                                                                                                                                               │
@@ -4482,7 +4482,7 @@
 │ 66                                                                                                                                                                                   │
 │ 67       sql = """                                                                                                                                                                   │
 │ ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ │
-│ 77           query_text or "unknown",                                                                                                                                                │
+│ 77           query or "unknown",                                                                                                                                                │
 │ 78           UUID(memory_id),                                                                                                                                                        │
 │ 79           score,                                                                                                                                                                  │
 │ 79 -         weights_snapshot or {},                                                                                                                                                 │
@@ -4524,7 +4524,7 @@
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ ✓  Shell ssh operator@100.68.166.117 "docker exec rae-postgres psql -U rae -d rae -c 'SELECT * FROM memory_feedback ORDER BY created_at DESC LIMIT 1;'" [current working directory … │
 │                                                                                                                                                                                      │
-│                   id                  |              tenant_id               | query_text |              memory_id               | score |             weights_snapshot              │
+│                   id                  |              tenant_id               | query |              memory_id               | score |             weights_snapshot              │
 │ |          created_at          | metadata                                                                                                                                            │
 │ --------------------------------------+--------------------------------------+------------+--------------------------------------+-------+------------------------------------------ │
 │ -+------------------------------+----------                                                                                                                                          │
@@ -4900,7 +4900,7 @@
 │ 22         """                                                                                                                                                                       │
 │ 23         # 1. Fetch feedback history from DB                                                                                                                                       │
 │ 24         sql = """                                                                                                                                                                 │
-│ 25             SELECT query_text, score, weights_snapshot                                                                                                                            │
+│ 25             SELECT query, score, weights_snapshot                                                                                                                            │
 │ 26             FROM memory_feedback                                                                                                                                                  │
 │ 27             WHERE tenant_id = $1                                                                                                                                                  │
 │ 28             ORDER BY created_at DESC                                                                                                                                              │

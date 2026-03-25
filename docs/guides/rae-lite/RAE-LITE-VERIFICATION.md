@@ -221,7 +221,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 | /health | ✅ | ✅ | ✅ |
 | /docs | ❌ | ✅ | ✅ |
 | /v2/memory/store | ✅ | ✅ | ✅ |
-| /v2/memory/query | ✅ | ✅ | ✅ |
+| /v2/v2/memories/query | ✅ | ✅ | ✅ |
 
 **Verdict:** ✅ **Consistent** (smoke test doesn't need /docs check)
 

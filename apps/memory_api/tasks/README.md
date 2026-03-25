@@ -55,7 +55,7 @@ This keeps the API fast and responsive while performing heavy operations in the 
 
 ### 1. Graph Extraction (Lazy)
 
-**Task:** `extract_graph_lazy(memory_id, tenant_id, project_id)`
+**Task:** `extract_graph_lazy(memory_id, tenant_id, project)`
 
 **Purpose:** Extract knowledge graph triples from memory content asynchronously.
 
@@ -79,7 +79,7 @@ This keeps the API fast and responsive while performing heavy operations in the 
 task = extract_graph_lazy.delay(
     memory_id="mem_123",
     tenant_id="tenant_456",
-    project_id="project_789"
+    project="project_789"
 )
 
 # Check status
@@ -220,7 +220,7 @@ Day 30: strength = 0.21  # Nearly forgotten
 
 ### 7. Entity Resolution (Batch)
 
-**Task:** `resolve_entities_batch(tenant_id, project_id)`
+**Task:** `resolve_entities_batch(tenant_id, project)`
 
 **Purpose:** Find and merge duplicate entities in knowledge graph.
 
@@ -249,7 +249,7 @@ Aliases: ["NYC", "New York City"]
 
 ### 8. Community Detection
 
-**Task:** `detect_communities(tenant_id, project_id)`
+**Task:** `detect_communities(tenant_id, project)`
 
 **Purpose:** Detect communities (clusters) in knowledge graph.
 
@@ -272,7 +272,7 @@ Aliases: ["NYC", "New York City"]
 
 ### 9. Context Cache Rebuild
 
-**Task:** `rebuild_context_cache_task(tenant_id, project_id)`
+**Task:** `rebuild_context_cache_task(tenant_id, project)`
 
 **Purpose:** Rebuild context cache for faster queries.
 
@@ -453,7 +453,7 @@ logger.info(
     "graph_extraction_started",
     memory_id=memory_id,
     tenant_id=tenant_id,
-    project_id=project_id
+    project=project
 )
 ```
 

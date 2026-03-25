@@ -393,7 +393,7 @@ async def require_permission(
     request: Request,
     tenant_id: UUID,
     action: str,
-    project_id: Optional[str] = None,
+    project: Optional[str] = None,
 ) -> bool:
     """
     Check if user has specific permission to perform action.
@@ -402,7 +402,7 @@ async def require_permission(
         request: FastAPI request object
         tenant_id: Tenant ID
         action: Action to check (e.g., "memories:write", "users:delete")
-        project_id: Optional project ID for project-scoped permissions
+        project: Optional project ID for project-scoped permissions
 
     Returns:
         True if permission granted
@@ -452,10 +452,10 @@ async def require_permission(
         )
 
     # Check if can perform action
-    if not user_role.can_perform(action, project_id):
+    if not user_role.can_perform(action, project):
         denial_reason = f"Role {user_role.role.value} cannot perform {action}"
-        if project_id and not user_role.has_access_to_project(project_id):
-            denial_reason = f"No access to project {project_id}"
+        if project and not user_role.has_access_to_project(project):
+            denial_reason = f"No access to project {project}"
 
         await rbac_service.log_access(
             tenant_id=tenant_id,

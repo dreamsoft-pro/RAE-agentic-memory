@@ -276,7 +276,7 @@ Key columns in the `memories` table:
 CREATE TABLE memories (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,          -- Multi-tenancy isolation
-    project_id UUID NOT NULL,
+    project UUID NOT NULL,
 
     layer TEXT NOT NULL,               -- 'stm', 'ltm', 'em', 'rm'
     memory_type TEXT NOT NULL,         -- 'sensory', 'episodic', etc.

@@ -47,7 +47,7 @@ async def test_load_graph_uses_repository(mock_dependencies):
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1", tenant_id="tenant1"
+        project="project1", tenant_id="tenant1"
     )
 
     # Verify graph structure
@@ -57,10 +57,10 @@ async def test_load_graph_uses_repository(mock_dependencies):
 
     # Verify repository was called
     mock_graph_repo.get_all_nodes.assert_called_once_with(
-        tenant_id="tenant1", project_id="project1"
+        tenant_id="tenant1", project="project1"
     )
     mock_graph_repo.get_all_edges.assert_called_once_with(
-        tenant_id="tenant1", project_id="project1"
+        tenant_id="tenant1", project="project1"
     )
 
 
@@ -89,7 +89,7 @@ async def test_load_graph_with_disconnected_edges(mock_dependencies):
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1", tenant_id="tenant1"
+        project="project1", tenant_id="tenant1"
     )
 
     # Should only add valid edges
@@ -119,7 +119,7 @@ async def test_store_super_node_uses_repository(mock_dependencies):
         community_id=1,
         summary=summary,
         member_node_ids=[1, 2, 3],
-        project_id="project1",
+        project="project1",
         tenant_id="tenant1",
     )
 
@@ -129,7 +129,7 @@ async def test_store_super_node_uses_repository(mock_dependencies):
     # Verify call parameters
     call_args = mock_graph_repo.upsert_node.call_args
     assert call_args.kwargs["tenant_id"] == "tenant1"
-    assert call_args.kwargs["project_id"] == "project1"
+    assert call_args.kwargs["project"] == "project1"
     assert call_args.kwargs["node_id"] == "community_project1_1"
     assert call_args.kwargs["label"] == "Community: Python Development Community"
 
@@ -160,7 +160,7 @@ async def test_run_community_detection_insufficient_nodes(mock_dependencies):
 
     # Should complete without processing
     await service.run_community_detection_and_summarization(
-        project_id="project1", tenant_id="tenant1"
+        project="project1", tenant_id="tenant1"
     )
 
     # Verify upsert was not called (no communities created)
@@ -257,7 +257,7 @@ async def test_process_community_workflow(mock_dependencies):
         community_id=5,
         node_ids=node_ids,
         graph=graph,
-        project_id="project1",
+        project="project1",
         tenant_id="tenant1",
     )
 
@@ -281,7 +281,7 @@ async def test_empty_graph_handling(mock_dependencies):
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1", tenant_id="tenant1"
+        project="project1", tenant_id="tenant1"
     )
 
     assert len(graph.nodes) == 0

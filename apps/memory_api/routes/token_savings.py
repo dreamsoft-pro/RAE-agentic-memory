@@ -19,7 +19,7 @@ def get_savings_service(request: Request) -> TokenSavingsService:
 @router.get("/metrics/savings", response_model=SavingsSummary)
 async def get_savings_summary(
     request: Request,
-    project_id: Optional[str] = None,
+    project: Optional[str] = None,
     period: str = Query("30d", description="Period for summary: 24h, 7d, 30d"),
     service: TokenSavingsService = Depends(get_savings_service),
 ):
@@ -38,7 +38,7 @@ async def get_savings_summary(
         start_date = now - timedelta(days=30)
 
     return await service.get_summary(
-        tenant_id=tenant_id, project_id=project_id, start_date=start_date, end_date=now
+        tenant_id=tenant_id, project=project, start_date=start_date, end_date=now
     )
 
 

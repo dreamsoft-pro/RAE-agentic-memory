@@ -27,14 +27,14 @@ All API endpoints (except health checks) require authentication via API key or J
 
 Include API key in request headers:
 ```bash
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/v2/memories/query
 ```
 
 ### JWT Authentication
 
 Include JWT token in Authorization header:
 ```bash
-curl -H "Authorization: Bearer your-jwt-token" http://localhost:8000/v2/memory/query
+curl -H "Authorization: Bearer your-jwt-token" http://localhost:8000/v2/v2/memories/query
 ```
 
 ## Common Headers
@@ -67,7 +67,7 @@ Base path: `/v2/memory`
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/v2/memory/store` | Store new memory |
-| POST | `/v2/memory/query` | Query memories with vector search |
+| POST | `/v2/v2/memories/query` | Query memories with vector search |
 | DELETE | `/v2/memory/delete` | Delete memory by ID |
 | POST | `/v2/memory/rebuild-reflections` | Trigger reflection rebuild |
 | GET | `/v2/memory/reflection-stats` | Get reflection statistics |

@@ -72,7 +72,7 @@ async def create_node(
         repo = rae_service.enhanced_graph_repo
         node = await repo.create_node(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             node_id=request.node_id,
             label=request.label,
             properties=request.properties,
@@ -89,7 +89,7 @@ async def create_node(
 @router.get("/nodes/{node_id}/metrics", response_model=GetNodeMetricsResponse)
 async def get_node_metrics(
     tenant_id: str,
-    project_id: str,
+    project: str,
     node_id: str,
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -104,7 +104,7 @@ async def get_node_metrics(
         repo = rae_service.enhanced_graph_repo
 
         node_uuid = UUID(node_id)
-        metrics = await repo.get_node_metrics(tenant_id, project_id, node_uuid)
+        metrics = await repo.get_node_metrics(tenant_id, project, node_uuid)
 
         return GetNodeMetricsResponse(
             node_id=node_uuid,
@@ -131,7 +131,7 @@ async def find_connected_nodes(
         repo = rae_service.enhanced_graph_repo
         connected = await repo.find_connected_nodes(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             node_id=request.node_id,
             max_depth=request.max_depth,
         )
@@ -169,7 +169,7 @@ async def create_edge(
         # Optional: Check for cycles before creating edge
         cycle_result = await repo.detect_cycle(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             source_node_id=request.source_node_id,
             target_node_id=request.target_node_id,
         )
@@ -181,7 +181,7 @@ async def create_edge(
 
         edge = await repo.create_edge(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             source_node_id=request.source_node_id,
             target_node_id=request.target_node_id,
             relation=request.relation,
@@ -322,7 +322,7 @@ async def traverse_graph(
 
         nodes, edges = await repo.traverse_temporal(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             start_node_id=request.start_node_id,
             algorithm=request.algorithm,
             max_depth=request.max_depth,
@@ -395,7 +395,7 @@ async def find_shortest_path(
 
         path = await repo.find_shortest_path(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             start_node_id=request.start_node_id,
             end_node_id=request.end_node_id,
             at_timestamp=request.at_timestamp,
@@ -450,7 +450,7 @@ async def detect_cycle(
 
         result = await repo.detect_cycle(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             source_node_id=request.source_node_id,
             target_node_id=request.target_node_id,
             max_depth=request.max_depth,
@@ -494,7 +494,7 @@ async def create_snapshot(
 
         snapshot_id = await repo.create_snapshot(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             snapshot_name=request.snapshot_name,
             description=request.description,
             created_by=request.created_by,
@@ -551,7 +551,7 @@ async def get_snapshot(
 @router.get("/snapshots", response_model=List[GraphSnapshot])
 async def list_snapshots(
     tenant_id: str,
-    project_id: str,
+    project: str,
     limit: int = 10,
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -560,7 +560,7 @@ async def list_snapshots(
         repo = rae_service.enhanced_graph_repo
 
         snapshots = await repo.list_snapshots(
-            tenant_id=tenant_id, project_id=project_id, limit=limit
+            tenant_id=tenant_id, project=project, limit=limit
         )
 
         return snapshots
@@ -627,7 +627,7 @@ async def get_graph_statistics(
         repo = rae_service.enhanced_graph_repo
 
         statistics = await repo.get_graph_statistics(
-            tenant_id=request.tenant_id, project_id=request.project_id
+            tenant_id=request.tenant_id, project=request.project
         )
 
         logger.info(
@@ -665,7 +665,7 @@ async def batch_create_nodes(
 
         successful, errors = await repo.batch_create_nodes(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             nodes=request.nodes,
         )
 
@@ -707,7 +707,7 @@ async def batch_create_edges(
             try:
                 edge = await repo.create_edge(
                     tenant_id=request.tenant_id,
-                    project_id=request.project_id,
+                    project=request.project,
                     source_node_id=edge_req.source_node_id,
                     target_node_id=edge_req.target_node_id,
                     relation=edge_req.relation,

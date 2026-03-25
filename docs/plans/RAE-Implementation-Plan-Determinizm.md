@@ -24,7 +24,7 @@ Osiągnięcie wskaźnika **MRR (Mean Reciprocal Rank) = 1.0** we wszystkich benc
 **Cel:** Redukcja szumu semantycznego poprzez bezwzględne filtry ontologiczne.
 
 1.  **FKS Perfect Hashing:**
-    *   Implementacja algorytmu Fredman-Knot-Szemerédi dla kluczowych identyfikatorów (agent_id, project_id, tags).
+    *   Implementacja algorytmu Fredman-Knot-Szemerédi dla kluczowych identyfikatorów (agent_id, project, tags).
     *   Gwarancja dostępu $O(1)$ bez kolizji dla "krytycznych trafień".
 2.  **Filtry Blooma dla Tagów:**
     *   Dodanie bitowego filtra Blooma do każdego artefaktu pamięci.

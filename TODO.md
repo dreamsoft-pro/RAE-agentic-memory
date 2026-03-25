@@ -136,7 +136,7 @@
 - [ ] **apps/memory_api/services/hybrid_search.py:319** - connected_components=1,   TODO: compute from graph
 - [ ] **apps/memory_api/api/v2/agent.py:61** - cost_estimate=0.0,   TODO: Real cost from Action object
 - [ ] **apps/memory_api/api/v2/compliance.py:126** - Add remaining provenance and policy endpoints if needed by tests
-- [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
+- [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project="default",   TODO: Get actual projects
 - [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context

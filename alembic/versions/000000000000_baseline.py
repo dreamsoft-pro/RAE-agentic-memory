@@ -185,7 +185,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("project_id", sa.String(), nullable=False),
+        sa.Column("project", sa.String(), nullable=False),
         sa.Column("monthly_limit", sa.Float(), nullable=True),
         sa.Column("monthly_usage", sa.Float(), server_default="0.0", nullable=False),
         sa.Column("daily_limit", sa.Float(), nullable=True),
@@ -197,7 +197,7 @@ def upgrade():
             nullable=True,
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("tenant_id", "project_id", name="uq_tenant_project_budget"),
+        sa.UniqueConstraint("tenant_id", "project", name="uq_tenant_project_budget"),
         if_not_exists=True,
     )
 
@@ -244,7 +244,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("project_id", sa.String(), nullable=False),
+        sa.Column("project", sa.String(), nullable=False),
         sa.Column("request_id", sa.String(), nullable=True),
         sa.Column("predicted_tokens", sa.Integer(), server_default="0", nullable=True),
         sa.Column("real_tokens", sa.Integer(), server_default="0", nullable=True),
@@ -274,7 +274,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("project_id", sa.String(), nullable=False),
+        sa.Column("project", sa.String(), nullable=False),
         sa.Column("node_id", sa.String(), nullable=False),
         sa.Column("label", sa.String(), nullable=False),
         sa.Column("properties", postgresql.JSONB(), server_default="{}", nullable=True),
@@ -292,12 +292,12 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
-            "tenant_id", "project_id", "node_id", name="uq_tenant_project_node"
+            "tenant_id", "project", "node_id", name="uq_tenant_project_node"
         ),
         if_not_exists=True,
     )
     op.create_index(
-        "idx_kg_nodes_tp", "knowledge_graph_nodes", ["tenant_id", "project_id"]
+        "idx_kg_nodes_tp", "knowledge_graph_nodes", ["tenant_id", "project"]
     )
 
     op.create_table(
@@ -309,7 +309,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("project_id", sa.String(), nullable=False),
+        sa.Column("project", sa.String(), nullable=False),
         sa.Column("source_node_id", postgresql.UUID(), nullable=False),
         sa.Column("target_node_id", postgresql.UUID(), nullable=False),
         sa.Column("relation", sa.String(), nullable=False),
@@ -335,7 +335,7 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
             "tenant_id",
-            "project_id",
+            "project",
             "source_node_id",
             "target_node_id",
             "relation",

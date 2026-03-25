@@ -57,7 +57,7 @@ class EntityResolutionService:
         self.similarity_threshold_high = 0.95
         self.similarity_threshold_low = 0.85
 
-    async def run_clustering_and_merging(self, project_id: str, tenant_id: str):
+    async def run_clustering_and_merging(self, project: str, tenant_id: str):
         """
         Main entry point for entity resolution.
 
@@ -68,11 +68,11 @@ class EntityResolutionService:
         4. Execute merges in database
         """
         logger.info(
-            "starting_entity_resolution", project_id=project_id, tenant_id=tenant_id
+            "starting_entity_resolution", project=project, tenant_id=tenant_id
         )
 
         # Fetch nodes from database
-        nodes = await self._fetch_nodes(project_id, tenant_id)
+        nodes = await self._fetch_nodes(project, tenant_id)
         if len(nodes) < 2:
             logger.info("not_enough_nodes_for_clustering", count=len(nodes))
             return
@@ -105,9 +105,9 @@ class EntityResolutionService:
             if len(group_nodes) < 2:
                 continue
 
-            await self._process_group(group_nodes, project_id, tenant_id)
+            await self._process_group(group_nodes, project, tenant_id)
 
-    async def _process_group(self, nodes: List[Dict], project_id: str, tenant_id: str):
+    async def _process_group(self, nodes: List[Dict], project: str, tenant_id: str):
         """
         Process a group of similar nodes.
 
@@ -127,7 +127,7 @@ class EntityResolutionService:
                 "janitor_approved_merge", names=names, canonical=decision.canonical_name
             )
             await self._merge_nodes(
-                nodes, project_id, tenant_id, canonical_name=decision.canonical_name
+                nodes, project, tenant_id, canonical_name=decision.canonical_name
             )
         else:
             logger.info(
@@ -166,7 +166,7 @@ class EntityResolutionService:
     async def _merge_nodes(
         self,
         nodes: List[Dict],
-        project_id: str,
+        project: str,
         tenant_id: str,
         canonical_name: Optional[str] = None,
     ):
@@ -181,7 +181,7 @@ class EntityResolutionService:
 
         Args:
             nodes: List of nodes to merge
-            project_id: Project identifier
+            project: Project identifier
             tenant_id: Tenant identifier
             canonical_name: Optional canonical name for merged entity
         """
@@ -227,17 +227,17 @@ class EntityResolutionService:
             target_id=target_node["id"],
         )
 
-    async def _fetch_nodes(self, project_id: str, tenant_id: str) -> List[Dict]:
+    async def _fetch_nodes(self, project: str, tenant_id: str) -> List[Dict]:
         """
         Fetch all nodes for a project using repository pattern.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             tenant_id: Tenant identifier
 
         Returns:
             List of node dictionaries
         """
         return await self.graph_repo.get_all_nodes(
-            tenant_id=tenant_id, project_id=project_id
+            tenant_id=tenant_id, project=project
         )

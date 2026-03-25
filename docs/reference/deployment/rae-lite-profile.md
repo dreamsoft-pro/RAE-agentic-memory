@@ -138,7 +138,7 @@ curl -X POST http://localhost:8000/v2/memories/create \
 ### Query Memory
 
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -d '{

@@ -35,7 +35,7 @@ async def main():
         
         node_db_uuid = uuid.uuid4()
         await conn.execute("""
-            INSERT INTO knowledge_graph_nodes (id, tenant_id, project_id, node_id, label, properties)
+            INSERT INTO knowledge_graph_nodes (id, tenant_id, project, node_id, label, properties)
             VALUES ($1, $2, $3, $4, $5, $6)
         """, node_db_uuid, TENANT_ID, PROJECT_ID, str(m_id), symbol_name, json.dumps({'kind': kind, 'source': 'angularjs'}))
         
@@ -56,7 +56,7 @@ async def main():
             target_node_uuid = symbol_to_node.get(d)
             if target_node_uuid:
                 await conn.execute("""
-                    INSERT INTO knowledge_graph_edges (id, tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                    INSERT INTO knowledge_graph_edges (id, tenant_id, project, source_node_id, target_node_id, relation, properties)
                     VALUES ($1, $2, $3, $4, $5, 'DEPENDS_ON', '{}')
                 """, uuid.uuid4(), TENANT_ID, PROJECT_ID, source_node_uuid, target_node_uuid)
                 edges_created += 1

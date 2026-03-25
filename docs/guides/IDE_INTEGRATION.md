@@ -469,14 +469,14 @@ For IDEs without native MCP support, you can integrate RAE through HTTP API call
    def search_memory(query, top_k=5):
        """Search RAE memory."""
        response = requests.post(
-           f"{RAE_API_URL}/v2/memory/query",
+           f"{RAE_API_URL}/v2/v2/memories/query",
            headers={
                "Content-Type": "application/json",
                "X-API-Key": RAE_API_KEY,
                "X-Project-Id": PROJECT_ID,
                "X-Tenant-Id": TENANT_ID,
            },
-           json={"query_text": query, "k": top_k},
+           json={"query": query, "k": top_k},
        )
        return response.json()
 
@@ -542,12 +542,12 @@ vnoremap <leader>rs :!curl -X POST http://localhost:8000/v2/memory/store \
   -d '{"content": "<C-R>\"", "source": "vim", "layer": "episodic"}'<CR>
 
 " Search RAE memory (prompt for query)
-nnoremap <leader>rq :!curl -X POST http://localhost:8000/v2/memory/query \
+nnoremap <leader>rq :!curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -H "X-Project-Id: my-project" \
   -H "X-Tenant-Id: my-tenant" \
-  -d '{"query_text": "<query>", "k": 5}'<CR>
+  -d '{"query": "<query>", "k": 5}'<CR>
 ```
 
 **Usage**:
@@ -584,12 +584,12 @@ M.search_memory = function()
   local query = vim.fn.input("Search RAE: ")
 
   local cmd = string.format(
-    'curl -s -X POST http://localhost:8000/v2/memory/query ' ..
+    'curl -s -X POST http://localhost:8000/v2/v2/memories/query ' ..
     '-H "Content-Type: application/json" ' ..
     '-H "X-API-Key: your-api-key" ' ..
     '-H "X-Project-Id: my-project" ' ..
     '-H "X-Tenant-Id: my-tenant" ' ..
-    '-d \'{"query_text": "%s", "k": 5}\'',
+    '-d \'{"query": "%s", "k": 5}\'',
     query:gsub('"', '\\"')
   )
 
@@ -774,10 +774,10 @@ Create `RAE.sublime-build`:
 
 1. **Check RAE API performance**:
    ```bash
-   time curl -X POST http://localhost:8000/v2/memory/query \
+   time curl -X POST http://localhost:8000/v2/v2/memories/query \
      -H "Content-Type: application/json" \
      -H "X-API-Key: your-key" \
-     -d '{"query_text":"test","k":5}'
+     -d '{"query":"test","k":5}'
    ```
 
 2. **Reduce search `top_k`**:

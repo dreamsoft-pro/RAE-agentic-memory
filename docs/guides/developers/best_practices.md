@@ -15,7 +15,7 @@ This section provides recommendations and best practices for effectively using t
 
 ## 2. Prompt Engineering for Memory Retrieval
 
-*   **Clear Queries**: Formulate clear and concise `query_text` when retrieving memories. The better your query, the more relevant the results.
+*   **Clear Queries**: Formulate clear and concise `query` when retrieving memories. The better your query, the more relevant the results.
 *   **Leverage Filters**: Use the `filters` parameter in your queries to narrow down the search space. For example, filter by `tags` or `layer` to retrieve specific types of memories.
 *   **Iterative Retrieval**: For complex tasks, consider an iterative retrieval approach where initial queries inform subsequent, more refined queries.
 

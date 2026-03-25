@@ -56,7 +56,7 @@ class ConnectionManager:
         # Subscriptions: {connection_id: WebSocketSubscription}
         self.subscriptions: Dict[str, WebSocketSubscription] = {}
 
-        # Tenant/project mapping: {(tenant_id, project_id): Set[connection_id]}
+        # Tenant/project mapping: {(tenant_id, project): Set[connection_id]}
         self.tenant_connections: Dict[tuple, Set[str]] = {}
 
         logger.info("connection_manager_initialized")
@@ -65,7 +65,7 @@ class ConnectionManager:
         self,
         websocket: WebSocket,
         tenant_id: str,
-        project_id: str,
+        project: str,
         event_types: Optional[List[DashboardEventType]] = None,
     ) -> str:
         """
@@ -74,7 +74,7 @@ class ConnectionManager:
         Args:
             websocket: WebSocket connection
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             event_types: Event types to subscribe to
 
         Returns:
@@ -91,14 +91,14 @@ class ConnectionManager:
         subscription = WebSocketSubscription(
             subscription_id=uuid4(),
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             subscribed_events=event_types or list(DashboardEventType),
             update_interval_seconds=5,
         )
         self.subscriptions[connection_id] = subscription
 
         # Map tenant/project to connection
-        key = (tenant_id, project_id)
+        key = (tenant_id, project)
         if key not in self.tenant_connections:
             self.tenant_connections[key] = set()
         self.tenant_connections[key].add(connection_id)
@@ -107,7 +107,7 @@ class ConnectionManager:
             "websocket_connected",
             connection_id=connection_id,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
         )
 
         # Send subscription confirmation
@@ -137,7 +137,7 @@ class ConnectionManager:
 
         # Remove from tenant mapping
         if subscription:
-            key = (subscription.tenant_id, subscription.project_id)
+            key = (subscription.tenant_id, subscription.project)
             if key in self.tenant_connections:
                 self.tenant_connections[key].discard(connection_id)
                 if not self.tenant_connections[key]:
@@ -149,16 +149,16 @@ class ConnectionManager:
 
         logger.info("websocket_disconnected", connection_id=connection_id)
 
-    async def broadcast_to_tenant(self, tenant_id: str, project_id: str, message: Dict):
+    async def broadcast_to_tenant(self, tenant_id: str, project: str, message: Dict):
         """
         Broadcast message to all connections for a tenant/project.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             message: Message to broadcast
         """
-        key = (tenant_id, project_id)
+        key = (tenant_id, project)
         connection_ids = self.tenant_connections.get(key, set())
 
         # Filter by event type subscription
@@ -284,7 +284,7 @@ class DashboardWebSocketService:
         self,
         websocket: WebSocket,
         tenant_id: str,
-        project_id: str,
+        project: str,
         event_types: Optional[List[DashboardEventType]] = None,
     ) -> str:
         """
@@ -293,14 +293,14 @@ class DashboardWebSocketService:
         Args:
             websocket: WebSocket connection
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             event_types: Event types to subscribe to
 
         Returns:
             Connection ID
         """
         return await self.connection_manager.connect(
-            websocket, tenant_id, project_id, event_types
+            websocket, tenant_id, project, event_types
         )
 
     def handle_disconnection(self, connection_id: str):
@@ -319,7 +319,7 @@ class DashboardWebSocketService:
     async def broadcast_memory_created(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         memory_id: UUID,
         content: str,
         importance: float,
@@ -328,7 +328,7 @@ class DashboardWebSocketService:
         message = WebSocketMessage(
             event_type=DashboardEventType.MEMORY_CREATED,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             payload={
                 "memory_id": str(memory_id),
                 "content": content[:200],  # Truncate
@@ -337,13 +337,13 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.model_dump()
+            tenant_id, project, message.model_dump()
         )
 
     async def broadcast_reflection_generated(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         reflection_id: UUID,
         content: str,
         score: float,
@@ -352,7 +352,7 @@ class DashboardWebSocketService:
         message = WebSocketMessage(
             event_type=DashboardEventType.REFLECTION_GENERATED,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             payload={
                 "reflection_id": str(reflection_id),
                 "content": content[:200],
@@ -361,28 +361,28 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.model_dump()
+            tenant_id, project, message.model_dump()
         )
 
     async def broadcast_semantic_node_created(
-        self, tenant_id: str, project_id: str, node_id: UUID, label: str, node_type: str
+        self, tenant_id: str, project: str, node_id: UUID, label: str, node_type: str
     ):
         """Broadcast semantic node creation event."""
         message = WebSocketMessage(
             event_type=DashboardEventType.SEMANTIC_NODE_CREATED,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             payload={"node_id": str(node_id), "label": label, "node_type": node_type},
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.model_dump()
+            tenant_id, project, message.model_dump()
         )
 
     async def broadcast_quality_alert(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         severity: str,
         title: str,
         description: str,
@@ -392,7 +392,7 @@ class DashboardWebSocketService:
         alert_message = AlertMessage(
             event_type=DashboardEventType.QUALITY_ALERT,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             severity=severity,
             title=title,
             description=description,
@@ -400,13 +400,13 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, alert_message.model_dump()
+            tenant_id, project, alert_message.model_dump()
         )
 
     async def broadcast_drift_detected(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         drift_severity: str,
         drift_magnitude: float,
@@ -416,7 +416,7 @@ class DashboardWebSocketService:
         alert_message = AlertMessage(
             event_type=DashboardEventType.DRIFT_DETECTED,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             severity=drift_severity,
             title=f"Drift Detected: {metric_name}",
             description=f"Distribution drift detected with magnitude {drift_magnitude:.3f}",
@@ -429,13 +429,13 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, alert_message.model_dump()
+            tenant_id, project, alert_message.model_dump()
         )
 
     async def broadcast_trigger_fired(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         trigger_id: UUID,
         trigger_name: str,
         event_type: str,
@@ -445,7 +445,7 @@ class DashboardWebSocketService:
         message = WebSocketMessage(
             event_type=DashboardEventType.TRIGGER_FIRED,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             payload={
                 "trigger_id": str(trigger_id),
                 "trigger_name": trigger_name,
@@ -455,7 +455,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.model_dump()
+            tenant_id, project, message.model_dump()
         )
 
     # ========================================================================
@@ -467,27 +467,27 @@ class DashboardWebSocketService:
         while True:
             try:
                 # Collect metrics for each tenant/project with active connections
-                for (tenant_id, project_id), conn_ids in list(
+                for (tenant_id, project), conn_ids in list(
                     self.connection_manager.tenant_connections.items()
                 ):
                     if not conn_ids:
                         continue
 
                     # Collect metrics
-                    metrics = await self._collect_system_metrics(tenant_id, project_id)
+                    metrics = await self._collect_system_metrics(tenant_id, project)
 
                     # Check if metrics changed significantly
-                    key = (tenant_id, project_id)
+                    key = (tenant_id, project)
                     cached = self._cached_metrics.get(key)
 
                     if self._metrics_changed_significantly(cached, metrics):
                         # Broadcast update
                         message = MetricsUpdateMessage(
-                            tenant_id=tenant_id, project_id=project_id, metrics=metrics
+                            tenant_id=tenant_id, project=project, metrics=metrics
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
-                            tenant_id, project_id, message.model_dump()
+                            tenant_id, project, message.model_dump()
                         )
 
                         # Update cache
@@ -504,7 +504,7 @@ class DashboardWebSocketService:
                 await asyncio.sleep(5)
 
     async def _collect_system_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> SystemMetrics:
         """
         Collect system metrics for a tenant/project.
@@ -520,7 +520,7 @@ class DashboardWebSocketService:
                 GROUP BY layer
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
 
             counts = {r["layer"]: r["count"] for r in layer_counts}
@@ -621,31 +621,31 @@ class DashboardWebSocketService:
         while True:
             try:
                 # Check health for each tenant/project with active connections
-                for (tenant_id, project_id), conn_ids in list(
+                for (tenant_id, project), conn_ids in list(
                     self.connection_manager.tenant_connections.items()
                 ):
                     if not conn_ids:
                         continue
 
                     # Check health
-                    health = await self._check_system_health(tenant_id, project_id)
+                    health = await self._check_system_health(tenant_id, project)
 
                     # Check if health status changed
-                    key = (tenant_id, project_id)
+                    key = (tenant_id, project)
                     cached = self._cached_health.get(key)
 
                     if cached and health.overall_status != cached.overall_status:
                         # Broadcast health change
                         message = HealthChangeMessage(
                             tenant_id=tenant_id,
-                            project_id=project_id,
+                            project=project,
                             old_status=cached.overall_status,
                             new_status=health.overall_status,
                             reason=f"System health changed to {health.overall_status.value}",
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
-                            tenant_id, project_id, message.model_dump()
+                            tenant_id, project, message.model_dump()
                         )
 
                     # Update cache
@@ -662,14 +662,14 @@ class DashboardWebSocketService:
                 await asyncio.sleep(10)
 
     async def _check_system_health(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> SystemHealth:
         """
         Check system health for a tenant/project.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             SystemHealth

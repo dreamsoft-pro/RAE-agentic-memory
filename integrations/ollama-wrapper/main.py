@@ -31,11 +31,11 @@ def chat(
             "X-Tenant-Id": settings.RAE_TENANT_ID,
             "X-API-Key": settings.RAE_API_KEY,
         }
-        payload = {"query_text": prompt, "k": 5}
+        payload = {"query": prompt, "k": 5}
 
         with httpx.Client() as client:
             response = client.post(
-                f"{settings.RAE_API_URL}/v2/memory/query", json=payload, headers=headers
+                f"{settings.RAE_API_URL}/v2/v2/memories/query", json=payload, headers=headers
             )
             response.raise_for_status()
 

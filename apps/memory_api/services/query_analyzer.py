@@ -132,7 +132,7 @@ class QueryAnalyzer:
         self,
         query: str,
         tenant_id: str,
-        project_id: str,
+        project: str,
         context: Optional[List[str]] = None,
         user_preferences: Optional[Dict[str, Any]] = None,
     ) -> QueryAnalysis:

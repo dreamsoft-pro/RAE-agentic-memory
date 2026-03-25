@@ -35,7 +35,7 @@ class TestReflectiveMemoryFlags:
         # Act
         reflections = await context_builder._retrieve_reflections(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
+            project="test_project",
             query="test query",
         )
 
@@ -72,7 +72,7 @@ class TestReflectiveMemoryFlags:
         # Act
         reflections = await context_builder._retrieve_reflections(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
+            project="test_project",
             query="test query",
         )
 
@@ -105,15 +105,15 @@ class TestReflectiveMemoryMode:
         # Act
         await context_builder._retrieve_reflections(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
+            project="test_project",
             query="test query",
         )
 
         # Assert
         mock_reflection_engine.query_reflections.assert_called_once_with(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
-            query_text="test query",
+            project="test_project",
+            query="test query",
             k=3,  # Lite mode limit
             min_importance=0.5,
         )
@@ -137,15 +137,15 @@ class TestReflectiveMemoryMode:
         # Act
         await context_builder._retrieve_reflections(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
+            project="test_project",
             query="test query",
         )
 
         # Assert
         mock_reflection_engine.query_reflections.assert_called_once_with(
             tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-            project_id="test_project",
-            query_text="test query",
+            project="test_project",
+            query="test query",
             k=5,  # Full mode limit
             min_importance=0.5,
         )
@@ -166,7 +166,7 @@ class TestDreamingEnabled:
         # Act
         results = await worker.run_dreaming_cycle(
             tenant_id=str(UUID("00000000-0000-0000-0000-000000000001")),
-            project_id="test_project",
+            project="test_project",
         )
 
         # Assert
@@ -199,7 +199,7 @@ class TestDreamingEnabled:
         # Act
         results = await dreaming_worker.run_dreaming_cycle(
             tenant_id=str(UUID("00000000-0000-0000-0000-000000000001")),
-            project_id="test_project",
+            project="test_project",
         )
 
         # Assert - dreaming attempted to fetch memories
@@ -223,7 +223,7 @@ class TestSummarizationEnabled:
         # Act
         result = await worker.summarize_session(
             tenant_id=str(UUID("00000000-0000-0000-0000-000000000001")),
-            project_id="test_project",
+            project="test_project",
             session_id=uuid4(),
         )
 
@@ -259,7 +259,7 @@ class TestSummarizationEnabled:
         # Act
         result = await worker.summarize_session(
             tenant_id=str(UUID("00000000-0000-0000-0000-000000000001")),
-            project_id="test-project",
+            project="test-project",
             session_id=uuid4(),
             min_events=1,
         )

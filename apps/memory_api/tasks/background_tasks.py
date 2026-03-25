@@ -331,7 +331,7 @@ def extract_graph_lazy(
 
                 # Extract graph
                 result = await service.extract_knowledge_graph(
-                    project_id="default",  # Default project for lazy extraction
+                    project="default",  # Default project for lazy extraction
                     tenant_id=tenant_id,
                     min_confidence=0.7,  # Higher threshold for background processing
                     limit=50,
@@ -342,7 +342,7 @@ def extract_graph_lazy(
                 if result.triples:
                     storage_stats = await service.store_graph_triples(
                         triples=result.triples,
-                        project_id="default",
+                        project="default",
                         tenant_id=tenant_id,
                     )
                     logger.info(
@@ -416,7 +416,7 @@ def process_graph_extraction_queue():
 
 
 @celery_app.task
-def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "default"):
+def run_entity_resolution_task(project: str = "default", tenant_id: str = "default"):
     """
     Periodic task for Pillar 1: Entity Resolution.
     Clusters and merges duplicate nodes.
@@ -425,14 +425,14 @@ def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "de
     async def main():
         async with rae_context() as rae_service:
             service = EntityResolutionService(rae_service=rae_service)
-            await service.run_clustering_and_merging(project_id, tenant_id)
+            await service.run_clustering_and_merging(project, tenant_id)
 
     asyncio.run(main())
 
 
 @celery_app.task
 def run_community_detection_task(
-    project_id: str = "default", tenant_id: str = "default"
+    project: str = "default", tenant_id: str = "default"
 ):
     """
     Periodic task for Pillar 2: Community Detection & Summarization.
@@ -443,7 +443,7 @@ def run_community_detection_task(
         async with rae_context() as rae_service:
             service = CommunityDetectionService(rae_service=rae_service)
             await service.run_community_detection_and_summarization(
-                project_id, tenant_id
+                project, tenant_id
             )
 
     asyncio.run(main())
@@ -631,7 +631,7 @@ def run_maintenance_cycle_task(self):
 
 
 @celery_app.task
-def run_dreaming_task(tenant_id: str, project_id: str = "default"):
+def run_dreaming_task(tenant_id: str, project: str = "default"):
     """
     Run dreaming cycle for a specific tenant/project.
 
@@ -655,7 +655,7 @@ def run_dreaming_task(tenant_id: str, project_id: str = "default"):
             worker = DreamingWorker(rae_service=rae_service)
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=settings.DREAMING_LOOKBACK_HOURS,
                 min_importance=settings.DREAMING_MIN_IMPORTANCE,
                 max_samples=settings.DREAMING_MAX_SAMPLES,

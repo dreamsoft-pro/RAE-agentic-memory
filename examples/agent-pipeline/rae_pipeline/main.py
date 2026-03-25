@@ -6,11 +6,11 @@ from tqdm import tqdm
 
 
 class RAEAPISetup:
-    def __init__(self, base_url, tenant_id, api_key, project_id):
+    def __init__(self, base_url, tenant_id, api_key, project):
         self.base_url = f"{base_url}/v1"
         self.tenant_id = tenant_id
         self.api_key = api_key
-        self.project_id = project_id
+        self.project = project
         self.headers = {"X-Tenant-Id": self.tenant_id, "X-API-Key": self.api_key}
 
     def _make_request(self, method, endpoint, **kwargs):
@@ -34,14 +34,14 @@ class RAEAPISetup:
         payload = {
             "content": content,
             "layer": layer,
-            "project": self.project_id,
+            "project": self.project,
             "source": "cli-setup-script",
             "tags": tags,
         }
         return self._make_request("POST", "/memory/store", json=payload)
 
     def trigger_reflection_rebuild(self):
-        payload = {"project": self.project_id, "tenant_id": self.tenant_id}
+        payload = {"project": self.project, "tenant_id": self.tenant_id}
         return self._make_request("POST", "/memory/rebuild-reflections", json=payload)
 
     def trigger_cache_rebuild(self):
@@ -50,7 +50,7 @@ class RAEAPISetup:
     def execute_agent(self, prompt):
         payload = {
             "tenant_id": self.tenant_id,
-            "project": self.project_id,
+            "project": self.project,
             "prompt": prompt,
         }
         return self._make_request("POST", "/agent/execute", json=payload)

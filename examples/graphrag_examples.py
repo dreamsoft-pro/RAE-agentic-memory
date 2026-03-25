@@ -69,7 +69,7 @@ async def example_basic_extraction():
         "POST",
         "/v2/graph/extract",
         json={
-            "project_id": PROJECT_ID,
+            "project": PROJECT_ID,
             "limit": 50,
             "min_confidence": 0.5,
             "auto_store": True,
@@ -103,9 +103,9 @@ async def example_hybrid_search():
 
     result = await rae_request(
         "POST",
-        "/v2/memory/query",
+        "/v2/v2/memories/query",
         json={
-            "query_text": query,
+            "query": query,
             "k": 5,
             "use_graph": True,
             "graph_depth": 2,
@@ -145,7 +145,7 @@ async def example_advanced_graph_query():
         "/v2/graph/query",
         json={
             "query": "payment module dependencies and relationships",
-            "project_id": PROJECT_ID,
+            "project": PROJECT_ID,
             "top_k_vector": 5,
             "graph_depth": 3,
             "traversal_strategy": "bfs",
@@ -177,9 +177,9 @@ async def example_graph_statistics():
     """
     print("=== Example 4: Graph Statistics ===\n")
 
-    stats = await rae_request("GET", f"/v2/graph/stats?project_id={PROJECT_ID}")
+    stats = await rae_request("GET", f"/v2/graph/stats?project={PROJECT_ID}")
 
-    print(f"Project: {stats['project_id']}")
+    print(f"Project: {stats['project']}")
     print(f"Total nodes: {stats['total_nodes']}")
     print(f"Total edges: {stats['total_edges']}")
     print(f"Average edges per node: {stats['statistics']['avg_edges_per_node']}")
@@ -201,7 +201,7 @@ async def example_subgraph_exploration():
     print("=== Example 5: Subgraph Exploration ===\n")
 
     # First, get some nodes
-    stats = await rae_request("GET", f"/v2/graph/nodes?project_id={PROJECT_ID}&limit=3")
+    stats = await rae_request("GET", f"/v2/graph/nodes?project={PROJECT_ID}&limit=3")
 
     if stats:
         node_ids = [node["node_id"] for node in stats[:2]]
@@ -211,7 +211,7 @@ async def example_subgraph_exploration():
 
         result = await rae_request(
             "GET",
-            f"/v2/graph/subgraph?project_id={PROJECT_ID}&node_ids={node_ids_str}&depth=2",
+            f"/v2/graph/subgraph?project={PROJECT_ID}&node_ids={node_ids_str}&depth=2",
         )
 
         print(f"Nodes in subgraph: {result['statistics']['nodes_found']}")
@@ -240,7 +240,7 @@ async def example_hierarchical_reflection():
     result = await rae_request(
         "POST",
         "/v2/graph/reflection/hierarchical",
-        json={"project_id": PROJECT_ID, "bucket_size": 10, "max_episodes": 100},
+        json={"project": PROJECT_ID, "bucket_size": 10, "max_episodes": 100},
     )
 
     print(f"Processed {result['episodes_processed']} episodes")
@@ -279,7 +279,7 @@ async def example_incremental_updates():
         "POST",
         "/v2/graph/extract",
         json={
-            "project_id": PROJECT_ID,
+            "project": PROJECT_ID,
             "limit": 10,  # Only process recent memories
             "min_confidence": 0.5,
             "auto_store": True,
@@ -306,9 +306,9 @@ async def example_ai_agent_integration():
     # Get rich context using hybrid search
     context_result = await rae_request(
         "POST",
-        "/v2/memory/query",
+        "/v2/v2/memories/query",
         json={
-            "query_text": user_question,
+            "query": user_question,
             "k": 5,
             "use_graph": True,
             "graph_depth": 2,
@@ -353,7 +353,7 @@ async def example_dependency_analysis():
         "/v2/graph/query",
         json={
             "query": f"{target_entity} dependencies and dependents",
-            "project_id": PROJECT_ID,
+            "project": PROJECT_ID,
             "top_k_vector": 3,
             "graph_depth": 3,
             "traversal_strategy": "bfs",
@@ -400,7 +400,7 @@ async def example_confidence_filtering():
             "POST",
             "/v2/graph/extract",
             json={
-                "project_id": PROJECT_ID,
+                "project": PROJECT_ID,
                 "limit": 50,
                 "min_confidence": threshold,
                 "auto_store": False,  # Don't store, just analyze

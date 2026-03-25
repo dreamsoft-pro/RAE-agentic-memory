@@ -77,7 +77,7 @@ Create a Postman environment with these variables:
       "enabled": true
     },
     {
-      "key": "project_id",
+      "key": "project",
       "value": "my-app",
       "enabled": true
     },
@@ -108,7 +108,7 @@ Create a Postman environment with these variables:
       "enabled": true
     },
     {
-      "key": "project_id",
+      "key": "project",
       "value": "production",
       "enabled": true
     },
@@ -189,7 +189,7 @@ pm.environment.set("last_memory_id", pm.response.json().memory_id);
 ```json
 {
   "tenant_id": "{{tenant_id}}",
-  "query_text": "python learning",
+  "query": "python learning",
   "k": 10
 }
 ```
@@ -219,7 +219,7 @@ pm.test("Results have relevance scores", function () {
 ```json
 {
   "tenant_id": "{{tenant_id}}",
-  "project_id": "{{project_id}}",
+  "project": "{{project}}",
   "rule_name": "Auto Reflection",
   "event_types": ["memory_created"],
   "conditions": {

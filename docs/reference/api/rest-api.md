@@ -50,15 +50,15 @@ curl -X POST http://localhost:8000/v2/memory/store \
 
 ### Query Memory
 
-**POST** `/v2/memory/query`
+**POST** `/v2/v2/memories/query`
 
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-api-key" \
   -d '{
-    "query_text": "What are user UI preferences?",
+    "query": "What are user UI preferences?",
     "k": 10,
     "filters": {
       "tags": ["preference"]
@@ -189,7 +189,7 @@ curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "X-API-Key: your-api-key" \
   -d '{
     "tenant_id": "demo-tenant",
-    "project_id": "my-app",
+    "project": "my-app",
     "query": "authentication best practices",
     "k": 10,
     "enable_vector_search": true,
@@ -281,7 +281,7 @@ curl -X POST http://localhost:8000/v2/evaluation/search \
   -H "X-API-Key: your-api-key" \
   -d '{
     "tenant_id": "demo-tenant",
-    "project_id": "my-app",
+    "project": "my-app",
     "relevance_judgments": {
       "query1": {
         "mem1": 2,
@@ -306,7 +306,7 @@ curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -H "X-API-Key: your-api-key" \
   -d '{
     "tenant_id": "demo-tenant",
-    "project_id": "my-app",
+    "project": "my-app",
     "description": "Daily backup",
     "metadata": {
       "reason": "scheduled_backup"
@@ -370,7 +370,7 @@ curl http://localhost:8000/health/live
 **WS** `/v2/dashboard/ws`
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/v2/dashboard/ws?tenant_id=demo-tenant&project_id=my-app');
+const ws = new WebSocket('ws://localhost:8000/v2/dashboard/ws?tenant_id=demo-tenant&project=my-app');
 
 ws.onopen = () => {
   console.log('Connected to dashboard');

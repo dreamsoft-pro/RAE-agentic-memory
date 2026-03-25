@@ -30,7 +30,7 @@ async def test_check_budget(budget_service, mock_rae_service):
     mock_rae_service.postgres_pool.fetchrow.return_value = {
         "id": "b1",
         "tenant_id": "t1",
-        "project_id": "p1",
+        "project": "p1",
         "monthly_limit_usd": 10.0,
         "monthly_usage_usd": 5.0,
         "daily_limit_usd": 1.0,
@@ -54,7 +54,7 @@ async def test_check_budget_fail(budget_service, mock_rae_service):
     mock_rae_service.postgres_pool.fetchrow.return_value = {
         "id": "b1",
         "tenant_id": "t1",
-        "project_id": "p1",
+        "project": "p1",
         "monthly_limit_usd": 10.0,
         "monthly_usage_usd": 5.0,
         "daily_limit_usd": 1.0,

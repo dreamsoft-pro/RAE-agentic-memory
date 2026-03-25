@@ -60,7 +60,7 @@ async def main():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="your-tenant",
-        project_id="your-project"
+        project="your-project"
     ) as client:
         # Create memory
         memory = await client.create_memory(
@@ -87,7 +87,7 @@ async with RAEAPIClient(
     base_url="http://localhost:8000",
     api_key="your-api-key",
     tenant_id="your-tenant",
-    project_id="your-project",
+    project="your-project",
 
     # Retry configuration
     max_retries=5,

@@ -145,7 +145,7 @@ async def test_summarize_session_success(mock_pool, mock_settings, mock_rae_serv
 
     result = await worker.summarize_session(
         tenant_id="tenant1",
-        project_id="proj1",
+        project="proj1",
         session_id=session_id_val,
         min_events=10,
     )
@@ -164,7 +164,7 @@ async def test_summarize_session_insufficient_events(
     worker = SummarizationWorker(rae_service=mock_rae_service)
 
     result = await worker.summarize_session(
-        tenant_id="tenant1", project_id="proj1", session_id=uuid4(), min_events=10
+        tenant_id="tenant1", project="proj1", session_id=uuid4(), min_events=10
     )
 
     assert result is None
@@ -177,7 +177,7 @@ async def test_summarize_session_disabled(mock_pool, mock_settings, mock_rae_ser
     worker = SummarizationWorker(rae_service=mock_rae_service)
 
     result = await worker.summarize_session(
-        tenant_id="tenant1", project_id="proj1", session_id=uuid4()
+        tenant_id="tenant1", project="proj1", session_id=uuid4()
     )
 
     assert result is None
@@ -197,7 +197,7 @@ async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_servic
     ]
 
     summaries = await worker.summarize_long_sessions(
-        tenant_id="tenant1", project_id="proj1", event_threshold=100
+        tenant_id="tenant1", project="proj1", event_threshold=100
     )
 
     # Verify results
@@ -231,7 +231,7 @@ async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service
     ]
     mock_rae_service.list_memories.return_value = records
 
-    results = await worker.run_dreaming_cycle(tenant_id="tenant1", project_id="proj1")
+    results = await worker.run_dreaming_cycle(tenant_id="tenant1", project="proj1")
 
     assert len(results) == 1
     assert results[0]["reflection_id"] == "ref1"
@@ -242,7 +242,7 @@ async def test_dreaming_cycle_disabled(mock_pool, mock_settings, mock_rae_servic
     mock_settings.DREAMING_ENABLED = False
     worker = DreamingWorker(rae_service=mock_rae_service)
 
-    results = await worker.run_dreaming_cycle(tenant_id="t1", project_id="p1")
+    results = await worker.run_dreaming_cycle(tenant_id="t1", project="p1")
     assert results == []
 
 
@@ -255,7 +255,7 @@ async def test_dreaming_cycle_insufficient_memories(
 
     mock_pool._test_conn.fetch.return_value = []  # No memories
 
-    results = await worker.run_dreaming_cycle(tenant_id="t1", project_id="p1")
+    results = await worker.run_dreaming_cycle(tenant_id="t1", project="p1")
     assert results == []
 
 

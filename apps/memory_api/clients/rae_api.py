@@ -38,7 +38,7 @@ class RAEAPIClient:
         base_url: str,
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         **client_kwargs,
     ):
         """
@@ -48,25 +48,25 @@ class RAEAPIClient:
             base_url: Base URL for RAE API
             api_key: API key for authentication
             tenant_id: Default tenant ID
-            project_id: Default project ID
+            project: Default project ID
             **client_kwargs: Additional arguments for RAEClient
         """
         self.client = RAEClient(
             base_url=base_url,
             api_key=api_key,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             **client_kwargs,
         )
 
         self.tenant_id = tenant_id
-        self.project_id = project_id
+        self.project = project
 
         logger.info(
             "rae_api_client_initialized",
             base_url=base_url,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
         )
 
     async def close(self):
@@ -92,7 +92,7 @@ class RAEAPIClient:
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a new memory.
@@ -103,14 +103,14 @@ class RAEAPIClient:
             tags: Optional tags
             metadata: Optional metadata
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Created memory
         """
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project": project_id or self.project_id,
+            "project": project or self.project,
             "content": content,
             "importance": importance,
             "tags": tags or [],
@@ -129,7 +129,7 @@ class RAEAPIClient:
         k: int = 10,
         filters: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Search memories.
@@ -139,14 +139,14 @@ class RAEAPIClient:
             k: Number of results
             filters: Optional filters
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Search results
         """
         params = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project": project_id or self.project_id,
+            "project": project or self.project,
             "query": query,
             "k": k,
         }
@@ -166,7 +166,7 @@ class RAEAPIClient:
         cluster_id: Optional[str] = None,
         reflection_type: str = "insight",
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate reflection from memories.
@@ -176,14 +176,14 @@ class RAEAPIClient:
             cluster_id: Cluster ID to reflect on
             reflection_type: Type of reflection
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Generated reflection
         """
         data: Dict[str, Any] = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "reflection_type": reflection_type,
         }
 
@@ -202,13 +202,13 @@ class RAEAPIClient:
     async def list_reflections(
         self,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         limit: int = 100,
     ) -> Dict[str, Any]:
         """List reflections."""
         params = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "limit": limit,
         }
 
@@ -222,7 +222,7 @@ class RAEAPIClient:
         self,
         memory_id: UUID,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Extract semantic nodes from memory.
@@ -230,14 +230,14 @@ class RAEAPIClient:
         Args:
             memory_id: Memory ID
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Extraction result
         """
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "memory_id": str(memory_id),
         }
 
@@ -248,7 +248,7 @@ class RAEAPIClient:
         query: str,
         k: int = 10,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         3-stage semantic search.
@@ -257,14 +257,14 @@ class RAEAPIClient:
             query: Search query
             k: Number of results
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Search results
         """
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "query": query,
             "k": k,
         }
@@ -282,7 +282,7 @@ class RAEAPIClient:
         node_type: str,
         properties: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -314,7 +314,7 @@ class RAEAPIClient:
         weight: float = 1.0,
         confidence: float = 0.8,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -344,7 +344,7 @@ class RAEAPIClient:
         algorithm: str = "bfs",
         max_depth: int = 3,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -378,7 +378,7 @@ class RAEAPIClient:
         weight_profile: str = "balanced",
         enable_reranking: bool = True,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Hybrid multi-strategy search.
@@ -389,14 +389,14 @@ class RAEAPIClient:
             weight_profile: Weight profile (balanced, quality_focused, speed_focused)
             enable_reranking: Enable LLM re-ranking
             tenant_id: Tenant ID override
-            project_id: Project ID override
+            project: Project ID override
 
         Returns:
             Search results
         """
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "query": query,
             "k": k,
             "weight_profile": weight_profile,
@@ -432,12 +432,12 @@ class RAEAPIClient:
         search_results: Dict,
         metrics: Optional[List[str]] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Evaluate search results."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "relevance_judgments": relevance_judgments,
             "search_results": search_results,
             "metrics_to_compute": metrics or ["mrr", "ndcg", "precision", "recall"],
@@ -454,12 +454,12 @@ class RAEAPIClient:
         current_start: datetime,
         current_end: datetime,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Detect distribution drift."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "metric_name": metric_name,
             "drift_type": drift_type,
             "baseline_start": baseline_start.isoformat(),
@@ -482,13 +482,13 @@ class RAEAPIClient:
         condition_group: Optional[Dict] = None,
         priority: int = 5,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         created_by: str = "api_client",
     ) -> Dict[str, Any]:
         """Create event trigger."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "rule_name": rule_name,
             "condition": {
                 "event_types": event_types,
@@ -507,12 +507,12 @@ class RAEAPIClient:
         payload: Dict,
         tags: Optional[List[str]] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Emit custom event."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "event_type": event_type,
             "payload": payload,
             "tags": tags or [],
@@ -523,13 +523,13 @@ class RAEAPIClient:
     async def list_triggers(
         self,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         limit: int = 100,
     ) -> Dict[str, Any]:
         """List triggers."""
         params = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "limit": limit,
         }
 
@@ -543,12 +543,12 @@ class RAEAPIClient:
         self,
         period: str = "last_24h",
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Get dashboard metrics."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "period": period,
         }
 
@@ -558,13 +558,13 @@ class RAEAPIClient:
         self,
         visualization_type: str,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """Get visualization data."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "visualization_type": visualization_type,
             **kwargs,
         }
@@ -574,13 +574,13 @@ class RAEAPIClient:
     async def get_system_health(
         self,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         include_sub_components: bool = True,
     ) -> Dict[str, Any]:
         """Get system health."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
+            "project": project or self.project,
             "include_sub_components": include_sub_components,
         }
 

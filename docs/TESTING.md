@@ -651,7 +651,7 @@ Comprehensive smoke test for the minimal deployment profile (`docker compose.lit
 - ✅ Docker Compose YAML syntax validation
 - ✅ Service startup and health checks
 - ✅ API availability and responsiveness
-- ✅ Core endpoint functionality (`/health`, `/v2/memory/store`, `/v2/memory/query`)
+- ✅ Core endpoint functionality (`/health`, `/v2/memory/store`, `/v2/v2/memories/query`)
 - ✅ All 4 services running (API, PostgreSQL, Qdrant, Redis)
 
 **Usage:**
@@ -667,7 +667,7 @@ Comprehensive smoke test for the minimal deployment profile (`docker compose.lit
 # ✅ API is ready
 # ✅ Health check passed
 # ✅ POST /v2/memory/store passed
-# ✅ POST /v2/memory/query passed
+# ✅ POST /v2/v2/memories/query passed
 # ✅ RAE Lite Profile smoke test PASSED
 ```
 
@@ -867,7 +867,7 @@ def sample_event():
         event_id=uuid4(),
         event_type=EventType.MEMORY_CREATED,
         tenant_id="test",
-        project_id="test",
+        project="test",
         payload={"importance": 0.9}
     )
 ```

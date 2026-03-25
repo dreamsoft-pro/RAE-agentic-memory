@@ -310,7 +310,7 @@ Krok 2 — Zapytanie federacyjne (bez embeddingów)
 RAE-Server dostaje:
 
 {
-  "query_text": "...",
+  "query": "...",
   "intent": "reflection | lookup | planning",
   "constraints": {
     "time_range": "...",
@@ -745,7 +745,7 @@ ReflectiveTrace
 - timestamp
 
 FederatedQuery
-- query_text
+- query
 - intent
 - constraints
 

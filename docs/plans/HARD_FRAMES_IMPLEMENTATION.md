@@ -136,7 +136,7 @@ VS Code / Cursor nie mogą mieć własnych kluczy API.
     Każdy kontener:
     *   Jest izolowany od Internetu.
     *   Widzi RAE Kernel.
-    *   Jego akcje (Thought, Tool Call, Final Answer) są **automatycznie logowane** w bazie RAE z odpowiednim `session_id` i `project_id`.
+    *   Jego akcje (Thought, Tool Call, Final Answer) są **automatycznie logowane** w bazie RAE z odpowiednim `session_id` i `project`.
 
 3.  **Weryfikacja Działania:**
     Aby sprawdzić, co robią agenci, zapytaj RAE (z poziomu Dashboardu lub CLI):

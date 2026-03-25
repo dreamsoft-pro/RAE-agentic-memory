@@ -237,7 +237,7 @@ class TestGraphExtractionService:
         extraction_service.rae_service.list_memories = AsyncMock(return_value=[])
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1", tenant_id="tenant1", limit=10
+            project="proj1", tenant_id="tenant1", limit=10
         )
 
         # Verify result structure matches actual GraphExtractionResult contract
@@ -263,7 +263,7 @@ class TestGraphExtractionService:
         )
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
+            project="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
         )
 
         assert result.statistics["memories_processed"] == 1
@@ -299,7 +299,7 @@ class TestGraphExtractionService:
         )
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
+            project="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
         )
 
         # Should only include triples with confidence >= 0.5
@@ -319,7 +319,7 @@ class TestGraphExtractionService:
         )
 
         result = await extraction_service.store_graph_triples(
-            triples=triples, project_id="proj1", tenant_id="tenant1"
+            triples=triples, project="proj1", tenant_id="tenant1"
         )
 
         assert result["nodes_created"] >= 0
@@ -347,7 +347,7 @@ class TestGraphExtractionService:
 
         with pytest.raises(RuntimeError, match="Graph extraction failed"):
             await extraction_service.extract_knowledge_graph(
-                project_id="proj1", tenant_id="tenant1"
+                project="proj1", tenant_id="tenant1"
             )
 
 
@@ -400,7 +400,7 @@ class TestGraphExtractionIntegration:
 
         # Execute extraction
         result = await extraction_service.extract_knowledge_graph(
-            project_id="test-project",
+            project="test-project",
             tenant_id="test-tenant",
             limit=50,
             min_confidence=0.8,

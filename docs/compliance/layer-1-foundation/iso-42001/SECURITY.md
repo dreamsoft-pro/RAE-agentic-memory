@@ -168,7 +168,7 @@ async def get_overview(
   "event": "memory_accessed",
   "user_id": "uuid",
   "tenant_id": "uuid",
-  "resource": "/v2/memory/query",
+  "resource": "/v2/v2/memories/query",
   "timestamp": "2025-11-28T10:00:00Z",
   "result": "success"
 }

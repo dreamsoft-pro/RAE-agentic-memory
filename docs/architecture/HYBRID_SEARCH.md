@@ -408,7 +408,7 @@ search_service = HybridSearchService(pool=db_pool)
 
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="authentication best practices",
     k=10,
     enable_vector=True,
@@ -434,7 +434,7 @@ from datetime import datetime, timedelta
 
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="recent security issues",
     k=5,
     temporal_filter=datetime.now() - timedelta(days=7),  # Last 7 days
@@ -451,7 +451,7 @@ result = await search_service.search(
 # Override automatic weight calculation (for power users)
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="system architecture",
     k=10,
     manual_weights={
@@ -489,7 +489,7 @@ CREATE INDEX idx_kg_nodes_name ON knowledge_graph_nodes(name);
 CREATE INDEX idx_memories_fts ON memories USING GIN (to_tsvector('english', content));
 
 -- Filtering
-CREATE INDEX idx_memories_tenant_project ON memories(tenant_id, project_id);
+CREATE INDEX idx_memories_tenant_project ON memories(tenant_id, project);
 CREATE INDEX idx_memories_created_at ON memories(created_at DESC);
 CREATE INDEX idx_memories_importance ON memories(importance DESC);
 ```

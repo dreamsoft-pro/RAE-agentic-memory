@@ -58,7 +58,7 @@ class GraphTopologyEngine:
         return G
 
     async def prove_paths(
-        self, start_node_ids: List[str], tenant_id: str, project_id: str, depth: int = 2
+        self, start_node_ids: List[str], tenant_id: str, project: str, depth: int = 2
     ) -> List[Dict[str, Any]]:
         """
         Find and prove significant paths from start nodes within the subgraph.
@@ -67,7 +67,7 @@ class GraphTopologyEngine:
         """
         # 1. Fetch Subgraph (BFS)
         nodes, edges = await self.graph_repository.traverse_graph_bfs(
-            start_node_ids, tenant_id, project_id, depth
+            start_node_ids, tenant_id, project, depth
         )
 
         if not nodes:
@@ -155,7 +155,7 @@ class GraphTopologyEngine:
         return sorted(proven_paths, key=lambda x: x["confidence"], reverse=True)
 
     async def get_central_concepts(
-        self, start_node_ids: List[str], tenant_id: str, project_id: str, depth: int = 2
+        self, start_node_ids: List[str], tenant_id: str, project: str, depth: int = 2
     ) -> List[GraphNode]:
         """
         Identify central concepts in the subgraph surrounding the start nodes.
@@ -163,7 +163,7 @@ class GraphTopologyEngine:
         """
         # 1. Fetch Subgraph
         nodes, edges = await self.graph_repository.traverse_graph_bfs(
-            start_node_ids, tenant_id, project_id, depth
+            start_node_ids, tenant_id, project, depth
         )
 
         if not nodes:

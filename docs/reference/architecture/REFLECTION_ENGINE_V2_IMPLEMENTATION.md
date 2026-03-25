@@ -95,7 +95,7 @@ class ReflectionContext:
 
     # Session context
     tenant_id: str
-    project_id: str
+    project: str
     session_id: Optional[UUID] = None
 
     # Optional context
@@ -189,7 +189,7 @@ context = ReflectionContext(
     task_description="Fetch customer order history",
     task_goal="Retrieve all orders for customer analysis",
     tenant_id="tenant-123",
-    project_id="default"
+    project="default"
 )
 
 # Generate reflection
@@ -208,7 +208,7 @@ result = await engine.generate_reflection(context)
 stored = await engine.store_reflection(
     result=result,
     tenant_id="tenant-123",
-    project_id="default"
+    project="default"
 )
 
 # Returns: {'reflection_id': 'uuid-123', 'strategy_id': 'uuid-456'}
@@ -250,7 +250,7 @@ context = ReflectionContext(
     task_description="Semantic search for user query",
     task_goal="Find relevant documents quickly",
     tenant_id="tenant-123",
-    project_id="default"
+    project="default"
 )
 
 result = await engine.generate_reflection(context)
@@ -273,8 +273,8 @@ Retrieve stored reflections for learning:
 # Query reflections by importance
 reflections = await engine.query_reflections(
     tenant_id="tenant-123",
-    project_id="default",
-    query_text="database optimization",
+    project="default",
+    query="database optimization",
     k=5,
     min_importance=0.7,
     tags=["performance", "database"]
@@ -409,12 +409,12 @@ context = ReflectionContext(
     error=error_info if error else None,
     task_description="User's task",
     tenant_id=tenant_id,
-    project_id=project_id
+    project=project
 )
 
 # Generate and store reflection
 result = await engine.generate_reflection(context)
-await engine.store_reflection(result, tenant_id, project_id)
+await engine.store_reflection(result, tenant_id, project)
 ```
 
 ### 2. From Background Workers
@@ -437,12 +437,12 @@ context = ReflectionContext(
     outcome=OutcomeType.PARTIAL,  # Exploratory
     task_description="Analyzing patterns in recent memories",
     tenant_id=tenant_id,
-    project_id=project_id
+    project=project
 )
 
 # Generate reflection
 result = await engine.generate_reflection(context)
-await engine.store_reflection(result, tenant_id, project_id)
+await engine.store_reflection(result, tenant_id, project)
 ```
 
 ### 3. From API Endpoints
@@ -453,7 +453,7 @@ Expose reflection generation via API:
 # POST /api/v2/reflections/generate
 {
   "tenant_id": "tenant-123",
-  "project_id": "default",
+  "project": "default",
   "events": [
     {"event_type": "tool_call", "content": "...", ...},
     {"event_type": "error_event", "content": "...", ...}
@@ -487,7 +487,7 @@ The engine emits structured logs for monitoring:
 logger.info(
     "reflection_generation_started",
     tenant_id=context.tenant_id,
-    project_id=context.project_id,
+    project=context.project,
     outcome=context.outcome.value,
     event_count=len(context.events)
 )
@@ -544,7 +544,7 @@ async def test_reflection_generation_failure():
             error_message="Timeout"
         ),
         tenant_id="test-tenant",
-        project_id="test-project"
+        project="test-project"
     )
 
     result = await engine.generate_reflection(context)
@@ -651,15 +651,15 @@ class ReflectionEngineV2:
         self,
         result: ReflectionResult,
         tenant_id: str,
-        project_id: str,
+        project: str,
         session_id: Optional[UUID] = None
     ) -> Dict[str, str]
 
     async def query_reflections(
         self,
         tenant_id: str,
-        project_id: str,
-        query_text: Optional[str] = None,
+        project: str,
+        query: Optional[str] = None,
         k: int = 5,
         min_importance: float = 0.5,
         tags: Optional[List[str]] = None
