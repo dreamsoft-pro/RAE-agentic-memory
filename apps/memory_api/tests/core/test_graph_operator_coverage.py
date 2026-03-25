@@ -22,7 +22,7 @@ def graph_operator():
 
 @pytest.fixture
 def empty_graph():
-    return KnowledgeGraph(tenant_id="test", project_id="test")
+    return KnowledgeGraph(tenant_id="test", project="test")
 
 
 @pytest.mark.unit

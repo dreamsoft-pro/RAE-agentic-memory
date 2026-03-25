@@ -77,7 +77,7 @@ API_KEY=your-secret-api-key
 
 # Request example
 curl -H "X-API-Key: your-secret-api-key" \
-     https://api.example.com/memory/query
+     https://api.example.com/v2/memories/query
 ```
 
 **Configuration:**
@@ -101,7 +101,7 @@ SECRET_KEY=your-jwt-secret-key
 
 # Request example
 curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
-     https://api.example.com/memory/query
+     https://api.example.com/v2/memories/query
 ```
 
 **Configuration:**

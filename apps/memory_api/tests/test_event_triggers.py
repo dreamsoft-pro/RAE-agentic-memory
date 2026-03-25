@@ -44,7 +44,7 @@ def sample_event():
         event_id=uuid4(),
         event_type=EventType.MEMORY_CREATED,
         tenant_id="test",
-        project_id="test",
+        project="test",
         source_service="api",
         payload={"importance": 0.9, "memory_count": 55},
     )
@@ -202,7 +202,7 @@ async def test_rate_limiting(rules_engine, mock_pool):
     trigger = TriggerRule(
         trigger_id=uuid4(),
         tenant_id="test",
-        project_id="test",
+        project="test",
         rule_name="test",
         condition=TriggerCondition(
             event_types=[EventType.MEMORY_CREATED], max_executions_per_hour=5
@@ -230,7 +230,7 @@ async def test_cooldown_period(rules_engine):
     trigger = TriggerRule(
         trigger_id=uuid4(),
         tenant_id="test",
-        project_id="test",
+        project="test",
         rule_name="test",
         condition=TriggerCondition(
             event_types=[EventType.MEMORY_CREATED], cooldown_seconds=60
@@ -255,7 +255,7 @@ async def test_execute_action(rules_engine, sample_event, mock_pool):
     trigger = TriggerRule(
         trigger_id=uuid4(),
         tenant_id="test",
-        project_id="test",
+        project="test",
         rule_name="test",
         condition=TriggerCondition(event_types=[EventType.MEMORY_CREATED]),
         actions=[],
@@ -321,7 +321,7 @@ async def test_workflow_execution(rules_engine, mock_pool):
     # Create workflow request
     workflow = CreateWorkflowRequest(
         tenant_id="test",
-        project_id="test",
+        project="test",
         workflow_name="Test Workflow",
         description="Multi-step workflow with dependencies",
         steps=[step1, step2, step3],

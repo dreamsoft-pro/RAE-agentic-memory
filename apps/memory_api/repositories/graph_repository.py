@@ -34,7 +34,7 @@ class GraphRepository:
         self.pool = pool
 
     async def traverse_graph_bfs(
-        self, start_node_ids: List[str], tenant_id: str, project_id: str, max_depth: int
+        self, start_node_ids: List[str], tenant_id: str, project: str, max_depth: int
     ) -> Tuple[List[GraphNode], List[GraphEdge]]:
         """
         Perform breadth-first search graph traversal using recursive CTE.
@@ -45,7 +45,7 @@ class GraphRepository:
         Args:
             start_node_ids: Node IDs to start traversal from
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             max_depth: Maximum depth to traverse (0 = start nodes only)
 
         Returns:
@@ -65,7 +65,7 @@ class GraphRepository:
                         0 as depth
                     FROM knowledge_graph_nodes n
                     WHERE n.tenant_id = $1
-                    AND n.project_id = $2
+                    AND n.project = $2
                     AND n.node_id = ANY($3)
 
                     UNION
@@ -82,7 +82,7 @@ class GraphRepository:
                     JOIN knowledge_graph_nodes n ON e.target_node_id = n.id
                     WHERE gt.depth < $4
                     AND n.tenant_id = $1
-                    AND n.project_id = $2
+                    AND n.project = $2
                 )
                 SELECT * FROM (
                     SELECT DISTINCT ON (id) * FROM graph_traverse
@@ -91,7 +91,7 @@ class GraphRepository:
                 ORDER BY depth, id;
                 """,
                 tenant_id,
-                project_id,
+                project,
                 start_node_ids,
                 max_depth,
             )
@@ -119,7 +119,7 @@ class GraphRepository:
                 logger.warning(
                     "bfs_traversal_no_nodes_found",
                     tenant_id=tenant_id,
-                    project_id=project_id,
+                    project=project,
                     start_node_ids=start_node_ids,
                 )
                 return [], []
@@ -128,13 +128,13 @@ class GraphRepository:
             edges = await self.get_edges_between_nodes(
                 node_ids=[str(node.id) for node in nodes],
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
             )
 
             logger.info(
                 "bfs_traversal_completed",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 nodes_found=len(nodes),
                 edges_found=len(edges),
                 max_depth=max_depth,
@@ -143,7 +143,7 @@ class GraphRepository:
             return nodes, edges
 
     async def traverse_graph_dfs(
-        self, start_node_ids: List[str], tenant_id: str, project_id: str, max_depth: int
+        self, start_node_ids: List[str], tenant_id: str, project: str, max_depth: int
     ) -> Tuple[List[GraphNode], List[GraphEdge]]:
         """
         Perform depth-first search graph traversal.
@@ -155,7 +155,7 @@ class GraphRepository:
         Args:
             start_node_ids: Node IDs to start traversal from
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             max_depth: Maximum depth to traverse
 
         Returns:
@@ -164,11 +164,11 @@ class GraphRepository:
         # For now, DFS uses same implementation as BFS
         # Future enhancement: implement true iterative DFS with stack
         return await self.traverse_graph_bfs(
-            start_node_ids, tenant_id, project_id, max_depth
+            start_node_ids, tenant_id, project, max_depth
         )
 
     async def get_edges_between_nodes(
-        self, node_ids: List[str], tenant_id: str, project_id: str
+        self, node_ids: List[str], tenant_id: str, project: str
     ) -> List[GraphEdge]:
         """
         Retrieve all edges connecting nodes in the given set.
@@ -176,7 +176,7 @@ class GraphRepository:
         Args:
             node_ids: Internal node IDs to find edges between
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of edges where both source and target are in node_ids
@@ -192,12 +192,12 @@ class GraphRepository:
                     e.properties
                 FROM knowledge_graph_edges e
                 WHERE e.tenant_id = $1
-                AND e.project_id = $2
+                AND e.project = $2
                 AND e.source_node_id::text = ANY($3)
                 AND e.target_node_id::text = ANY($3)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_ids,
             )
 
@@ -220,7 +220,7 @@ class GraphRepository:
             return edges
 
     async def get_node_by_id(
-        self, node_id: str, tenant_id: str, project_id: str
+        self, node_id: str, tenant_id: str, project: str
     ) -> Optional[GraphNode]:
         """
         Retrieve a single node by its node_id.
@@ -228,7 +228,7 @@ class GraphRepository:
         Args:
             node_id: The node identifier
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             GraphNode if found, None otherwise
@@ -243,11 +243,11 @@ class GraphRepository:
                     properties
                 FROM knowledge_graph_nodes
                 WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND node_id = $3
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_id,
             )
 
@@ -263,7 +263,7 @@ class GraphRepository:
             )
 
     async def get_nodes_by_ids(
-        self, node_ids: List[str], tenant_id: str, project_id: str
+        self, node_ids: List[str], tenant_id: str, project: str
     ) -> List[GraphNode]:
         """
         Retrieve multiple nodes by their node_ids.
@@ -271,7 +271,7 @@ class GraphRepository:
         Args:
             node_ids: List of node identifiers
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of found GraphNodes
@@ -286,11 +286,11 @@ class GraphRepository:
                     properties
                 FROM knowledge_graph_nodes
                 WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND node_id = ANY($3)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_ids,
             )
 
@@ -306,7 +306,7 @@ class GraphRepository:
             ]
 
     async def find_relevant_communities(
-        self, query: str, tenant_id: str, project_id: str, limit: int = 3
+        self, query: str, tenant_id: str, project: str, limit: int = 3
     ) -> List[Dict[str, Any]]:
         """
         Find community nodes (Super-Nodes) relevant to the query using keyword matching.
@@ -314,7 +314,7 @@ class GraphRepository:
         Args:
             query: Search query for keyword matching
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             limit: Maximum number of communities to return
 
         Returns:
@@ -325,7 +325,7 @@ class GraphRepository:
                 """
                 SELECT id, label, properties
                 FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                 AND (properties->>'type') = 'community'
                 AND (
                     label ILIKE '%' || $3 || '%'
@@ -335,14 +335,14 @@ class GraphRepository:
                 LIMIT $4
                 """,
                 tenant_id,
-                project_id,
+                project,
                 query,
                 limit,
             )
             return [dict(r) for r in records]
 
     async def find_nodes_by_content_match(
-        self, content: str, tenant_id: str, project_id: str, limit: int = 5
+        self, content: str, tenant_id: str, project: str, limit: int = 5
     ) -> List[str]:
         """
         Find graph nodes whose labels match content using fuzzy text matching.
@@ -353,7 +353,7 @@ class GraphRepository:
         Args:
             content: Text content to search for matching entities
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             limit: Maximum number of nodes to return
 
         Returns:
@@ -368,7 +368,7 @@ class GraphRepository:
                 SELECT DISTINCT node_id
                 FROM knowledge_graph_nodes
                 WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND (
                     $3 ILIKE '%' || label || '%'
                     OR label ILIKE '%' || $3 || '%'
@@ -376,7 +376,7 @@ class GraphRepository:
                 LIMIT $4
                 """,
                 tenant_id,
-                project_id,
+                project,
                 content_sample,
                 limit,
             )
@@ -386,7 +386,7 @@ class GraphRepository:
     async def create_node(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         node_id: str,
         label: str,
         properties: Dict[str, Any],
@@ -396,7 +396,7 @@ class GraphRepository:
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             node_id: Unique node identifier
             label: Node label
             properties: Node properties as dictionary (will be stored as JSONB)
@@ -415,13 +415,13 @@ class GraphRepository:
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_nodes
-                (id, tenant_id, project_id, node_id, label, properties)
+                (id, tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-                ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
+                ON CONFLICT (tenant_id, project, node_id) DO NOTHING
                 """,
                 new_id,
                 tenant_id,
-                project_id,
+                project,
                 node_id,
                 label,
                 properties_json,
@@ -432,7 +432,7 @@ class GraphRepository:
     async def create_edge(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         source_node_internal_id: int,
         target_node_internal_id: int,
         relation: str,
@@ -443,7 +443,7 @@ class GraphRepository:
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             source_node_internal_id: Internal database ID of source node
             target_node_internal_id: Internal database ID of target node
             relation: Relationship type
@@ -463,13 +463,13 @@ class GraphRepository:
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_edges
-                (id, tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                (id, tenant_id, project, source_node_id, target_node_id, relation, properties)
                 VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                 ON CONFLICT DO NOTHING
                 """,
                 new_id,
                 tenant_id,
-                project_id,
+                project,
                 source_node_internal_id,
                 target_node_internal_id,
                 relation,
@@ -479,14 +479,14 @@ class GraphRepository:
             return bool(result == "INSERT 0 1")
 
     async def get_node_internal_id(
-        self, tenant_id: str, project_id: str, node_id: str
+        self, tenant_id: str, project: str, node_id: str
     ) -> Optional[int]:
         """
         Get internal database ID for a node by its node_id.
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             node_id: The node identifier
 
         Returns:
@@ -496,17 +496,17 @@ class GraphRepository:
             record = await conn.fetchrow(
                 """
                 SELECT id FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
+                WHERE tenant_id = $1 AND project = $2 AND node_id = $3
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_id,
             )
 
             return record["id"] if record else None
 
     async def store_graph_triples(
-        self, triples: List[Dict[str, Any]], tenant_id: str, project_id: str
+        self, triples: List[Dict[str, Any]], tenant_id: str, project: str
     ) -> Dict[str, int]:
         """
         Store multiple graph triples (nodes and edges) in a single transaction.
@@ -519,7 +519,7 @@ class GraphRepository:
         Args:
             triples: List of triple dictionaries with keys: source, target, relation, confidence, metadata
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             Dictionary with counts: {"nodes_created": int, "edges_created": int}
@@ -553,7 +553,7 @@ class GraphRepository:
                     # Create source node
                     node_created = await self.create_node(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project=project,
                         node_id=source,
                         label=source,
                         properties=metadata,
@@ -564,7 +564,7 @@ class GraphRepository:
                     # Create target node
                     node_created = await self.create_node(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project=project,
                         node_id=target,
                         label=target,
                         properties=metadata,
@@ -574,11 +574,11 @@ class GraphRepository:
 
                     # Get internal node IDs
                     source_internal_id = await self.get_node_internal_id(
-                        tenant_id=tenant_id, project_id=project_id, node_id=source
+                        tenant_id=tenant_id, project=project, node_id=source
                     )
 
                     target_internal_id = await self.get_node_internal_id(
-                        tenant_id=tenant_id, project_id=project_id, node_id=target
+                        tenant_id=tenant_id, project=project, node_id=target
                     )
 
                     # Create edge if both nodes exist
@@ -587,7 +587,7 @@ class GraphRepository:
 
                         edge_created = await self.create_edge(
                             tenant_id=tenant_id,
-                            project_id=project_id,
+                            project=project,
                             source_node_internal_id=source_internal_id,
                             target_node_internal_id=target_internal_id,
                             relation=relation,
@@ -598,7 +598,7 @@ class GraphRepository:
 
         logger.info(
             "graph_triples_stored",
-            project_id=project_id,
+            project=project,
             tenant_id=tenant_id,
             nodes_created=nodes_created,
             edges_created=edges_created,
@@ -607,7 +607,7 @@ class GraphRepository:
         return {"nodes_created": nodes_created, "edges_created": edges_created}
 
     async def get_all_nodes(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[Dict[str, Any]]:
         """
         Retrieve all nodes for a project.
@@ -616,7 +616,7 @@ class GraphRepository:
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of node dictionaries with id, node_id, label
@@ -626,15 +626,15 @@ class GraphRepository:
                 """
                 SELECT id, node_id, label, properties
                 FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
             return [dict(r) for r in records]
 
     async def get_all_edges(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[Dict[str, Any]]:
         """
         Retrieve all edges for a project.
@@ -643,7 +643,7 @@ class GraphRepository:
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of edge dictionaries with source_node_id, target_node_id, relation
@@ -653,10 +653,10 @@ class GraphRepository:
                 """
                 SELECT source_node_id, target_node_id, relation, properties
                 FROM knowledge_graph_edges
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
             return [dict(r) for r in records]
 
@@ -808,7 +808,7 @@ class GraphRepository:
     async def upsert_node(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         node_id: str,
         label: str,
         properties: Dict[str, Any],
@@ -821,7 +821,7 @@ class GraphRepository:
 
         Args:
             tenant_id: Tenant identifier for data isolation
-            project_id: Project identifier
+            project: Project identifier
             node_id: Unique node identifier
             label: Node label
             properties: Node properties as dictionary
@@ -839,9 +839,9 @@ class GraphRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO knowledge_graph_nodes
-                (id, tenant_id, project_id, node_id, label, properties)
+                (id, tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-                ON CONFLICT (tenant_id, project_id, node_id)
+                ON CONFLICT (tenant_id, project, node_id)
                 DO UPDATE SET
                     label = EXCLUDED.label,
                     properties = EXCLUDED.properties
@@ -849,7 +849,7 @@ class GraphRepository:
                 """,
                 technical_id,
                 tenant_id,
-                project_id,
+                project,
                 node_id,
                 label,
                 properties_json,
@@ -860,7 +860,7 @@ class GraphRepository:
             logger.info(
                 "node_upserted",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 node_id=node_id,
                 internal_id=internal_id,
             )

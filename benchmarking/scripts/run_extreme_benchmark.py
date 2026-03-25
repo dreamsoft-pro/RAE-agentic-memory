@@ -89,7 +89,7 @@ class ExtremeBenchmarkRunner(RAEBenchmarkRunner):
                             m.get("metadata", {}).get("importance", 0.5),
                             "ltm",
                             m.get("tags", []),
-                            self.project_id,
+                            self.project,
                             emb_str,
                         )
                     )
@@ -172,7 +172,7 @@ class ExtremeBenchmarkRunner(RAEBenchmarkRunner):
         assert self.benchmark_data is not None
         response = await rae_service.query_memories(
             tenant_id=self.tenant_id,
-            project=self.project_id,
+            project=self.project,
             query=query_data["query"],
             k=self.benchmark_data["config"].get("top_k", 10),
         )

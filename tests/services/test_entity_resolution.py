@@ -42,12 +42,12 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
         graph_repository=mock_graph_repo,
     )
 
-    nodes = await service._fetch_nodes(project_id="project1", tenant_id="tenant1")
+    nodes = await service._fetch_nodes(project="project1", tenant_id="tenant1")
 
     assert len(nodes) == 2
     assert nodes[0]["label"] == "Entity1"
     mock_graph_repo.get_all_nodes.assert_called_once_with(
-        tenant_id="tenant1", project_id="project1"
+        tenant_id="tenant1", project="project1"
     )
 
 
@@ -75,7 +75,7 @@ async def test_merge_nodes_with_canonical_name(mock_dependencies):
 
     await service._merge_nodes(
         nodes=nodes,
-        project_id="project1",
+        project="project1",
         tenant_id="tenant1",
         canonical_name="Apple Inc.",
     )
@@ -111,7 +111,7 @@ async def test_merge_nodes_without_canonical_name(mock_dependencies):
     nodes = [{"id": 1, "label": "Short"}, {"id": 2, "label": "Much Longer Label"}]
 
     await service._merge_nodes(
-        nodes=nodes, project_id="project1", tenant_id="tenant1", canonical_name=None
+        nodes=nodes, project="project1", tenant_id="tenant1", canonical_name=None
     )
 
     # Should pick node with longest label (id=2)
@@ -135,7 +135,7 @@ async def test_merge_nodes_empty_list(mock_dependencies):
 
     # Should handle empty list gracefully
     await service._merge_nodes(
-        nodes=[], project_id="project1", tenant_id="tenant1", canonical_name="Test"
+        nodes=[], project="project1", tenant_id="tenant1", canonical_name="Test"
     )
 
     # No repository methods should be called
@@ -159,7 +159,7 @@ async def test_run_clustering_with_insufficient_nodes(mock_dependencies):
         graph_repository=mock_graph_repo,
     )
 
-    await service.run_clustering_and_merging(project_id="project1", tenant_id="tenant1")
+    await service.run_clustering_and_merging(project="project1", tenant_id="tenant1")
 
     # ML service should not be called
     mock_ml_client.resolve_entities.assert_not_called()
@@ -192,7 +192,7 @@ async def test_process_group_with_merge_approval(mock_dependencies):
     nodes = [{"id": 1, "label": "Python"}, {"id": 2, "label": "Python Language"}]
 
     await service._process_group(
-        nodes=nodes, project_id="project1", tenant_id="tenant1"
+        nodes=nodes, project="project1", tenant_id="tenant1"
     )
 
     # Verify merge was called with canonical name
@@ -228,7 +228,7 @@ async def test_process_group_with_merge_rejection(mock_dependencies):
     nodes = [{"id": 1, "label": "Java"}, {"id": 2, "label": "Java Island"}]
 
     await service._process_group(
-        nodes=nodes, project_id="project1", tenant_id="tenant1"
+        nodes=nodes, project="project1", tenant_id="tenant1"
     )
 
     # Verify merge was NOT called

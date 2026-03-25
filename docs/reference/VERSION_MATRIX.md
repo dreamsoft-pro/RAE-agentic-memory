@@ -69,7 +69,7 @@ Components in active development, not recommended for production use.
 
 **Breaking Changes:**
 - Refactored Repository/DAO pattern (DI-based architecture)
-- New Reflection API (`project` instead of `project_id`)
+- New Reflection API (`project` instead of `project`)
 - GraphExtractionService requires `graph_repo` parameter
 - HybridSearchService requires `graph_repo` + `pool` parameters
 - Deprecated old MCP endpoints
@@ -245,7 +245,7 @@ service = HybridSearchService(graph_repo, db_pool)
 ```python
 request = GenerateReflectionRequest(
     tenant_id="...",
-    project_id="...",  # old field name
+    project="...",  # old field name
     memory_ids=[...],
     created_by="..."
 )
@@ -320,7 +320,7 @@ The following APIs/features are deprecated and will be removed in v3.0.0:
 - ❌ Old MCP endpoints in `/memory/add`, `/memory/store`
 - ❌ `datetime.utcnow()` (replace with `datetime.now(datetime.UTC)`)
 - ❌ Direct pool passing to services (use Repository pattern)
-- ❌ `project_id` field (use `project` instead)
+- ❌ `project` field (use `project` instead)
 
 ### Migration Timeline
 

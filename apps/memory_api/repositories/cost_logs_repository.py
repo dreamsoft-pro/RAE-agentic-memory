@@ -32,7 +32,7 @@ class LLMCallLog(BaseModel):
 
     id: str
     tenant_id: str
-    project_id: str
+    project: str
 
     # LLM Metadata
     model: str
@@ -72,7 +72,7 @@ class LogLLMCallParams(BaseModel):
     """Parameters for logging an LLM API call"""
 
     tenant_id: str
-    project_id: str
+    project: str
     model: str
     provider: str
     operation: str
@@ -98,7 +98,7 @@ class CostStatistics(BaseModel):
     """Aggregated cost statistics for a time period"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Call counts
     total_calls: int
@@ -161,7 +161,7 @@ async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
     Example:
         log_id = await log_llm_call(pool, LogLLMCallParams(
             tenant_id="tenant-123",
-            project_id="project-456",
+            project="project-456",
             model="gpt-4o-mini",
             provider="openai",
             operation="query",
@@ -176,7 +176,7 @@ async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
     logger.info(
         "log_llm_call",
         tenant_id=params.tenant_id,
-        project_id=params.project_id,
+        project=params.project,
         model=params.model,
         operation=params.operation,
         input_tokens=params.input_tokens,
@@ -190,7 +190,7 @@ async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
             """
             INSERT INTO cost_logs (
                 tenant_id,
-                project_id,
+                project,
                 model,
                 provider,
                 operation,
@@ -210,7 +210,7 @@ async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
             RETURNING id
             """,
             params.tenant_id,
-            params.project_id,
+            params.project,
             params.model,
             params.provider,
             params.operation,
@@ -245,7 +245,7 @@ async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
 async def get_cost_statistics(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     period_start: datetime,
     period_end: datetime,
 ) -> CostStatistics:
@@ -257,7 +257,7 @@ async def get_cost_statistics(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         period_start: Start of period (inclusive)
         period_end: End of period (inclusive)
 
@@ -279,7 +279,7 @@ async def get_cost_statistics(
     logger.info(
         "get_cost_statistics",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         period_start=period_start,
         period_end=period_end,
     )
@@ -304,12 +304,12 @@ async def get_cost_statistics(
             AVG(latency_ms) as avg_latency_ms
         FROM cost_logs
         WHERE tenant_id = $1
-          AND project_id = $2
+          AND project = $2
           AND timestamp >= $3
           AND timestamp <= $4
         """,
         tenant_id,
-        project_id,
+        project,
         period_start,
         period_end,
     )
@@ -326,7 +326,7 @@ async def get_cost_statistics(
 
     stats = CostStatistics(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         total_calls=total_calls,
         successful_calls=record["successful_calls"] or 0,
         failed_calls=record["failed_calls"] or 0,
@@ -357,7 +357,7 @@ async def get_cost_statistics(
     return stats
 
 
-async def get_daily_cost(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> float:
+async def get_daily_cost(pool: asyncpg.Pool, tenant_id: str, project: str) -> float:
     """
     Gets total cost for current day (UTC).
 
@@ -366,7 +366,7 @@ async def get_daily_cost(pool: asyncpg.Pool, tenant_id: str, project_id: str) ->
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
 
     Returns:
         Total cost in USD for today
@@ -377,13 +377,13 @@ async def get_daily_cost(pool: asyncpg.Pool, tenant_id: str, project_id: str) ->
     today_end = datetime.now(timezone.utc)
 
     stats = await get_cost_statistics(
-        pool, tenant_id, project_id, today_start, today_end
+        pool, tenant_id, project, today_start, today_end
     )
     return stats.total_cost_usd
 
 
 async def get_monthly_cost(
-    pool: asyncpg.Pool, tenant_id: str, project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project: str
 ) -> float:
     """
     Gets total cost for current month (UTC).
@@ -393,7 +393,7 @@ async def get_monthly_cost(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
 
     Returns:
         Total cost in USD for current month
@@ -403,12 +403,12 @@ async def get_monthly_cost(
     month_end = now
 
     stats = await get_cost_statistics(
-        pool, tenant_id, project_id, month_start, month_end
+        pool, tenant_id, project, month_start, month_end
     )
     return stats.total_cost_usd
 
 
-async def get_daily_tokens(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> int:
+async def get_daily_tokens(pool: asyncpg.Pool, tenant_id: str, project: str) -> int:
     """
     Gets total tokens used for current day (UTC).
 
@@ -417,7 +417,7 @@ async def get_daily_tokens(pool: asyncpg.Pool, tenant_id: str, project_id: str) 
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
 
     Returns:
         Total tokens (input + output) for today
@@ -428,13 +428,13 @@ async def get_daily_tokens(pool: asyncpg.Pool, tenant_id: str, project_id: str) 
     today_end = datetime.now(timezone.utc)
 
     stats = await get_cost_statistics(
-        pool, tenant_id, project_id, today_start, today_end
+        pool, tenant_id, project, today_start, today_end
     )
     return stats.total_tokens
 
 
 async def get_monthly_tokens(
-    pool: asyncpg.Pool, tenant_id: str, project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project: str
 ) -> int:
     """
     Gets total tokens used for current month (UTC).
@@ -444,7 +444,7 @@ async def get_monthly_tokens(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
 
     Returns:
         Total tokens (input + output) for current month
@@ -454,7 +454,7 @@ async def get_monthly_tokens(
     month_end = now
 
     stats = await get_cost_statistics(
-        pool, tenant_id, project_id, month_start, month_end
+        pool, tenant_id, project, month_start, month_end
     )
     return stats.total_tokens
 
@@ -462,7 +462,7 @@ async def get_monthly_tokens(
 async def get_model_breakdown(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     period_start: datetime,
     period_end: datetime,
 ) -> List[ModelBreakdown]:
@@ -474,7 +474,7 @@ async def get_model_breakdown(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         period_start: Start of period
         period_end: End of period
 
@@ -493,7 +493,7 @@ async def get_model_breakdown(
     logger.info(
         "get_model_breakdown",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         period_start=period_start,
         period_end=period_end,
     )
@@ -510,7 +510,7 @@ async def get_model_breakdown(
             AVG(latency_ms) as avg_latency_ms
         FROM cost_logs
         WHERE tenant_id = $1
-          AND project_id = $2
+          AND project = $2
           AND timestamp >= $3
           AND timestamp <= $4
           AND error = FALSE
@@ -518,7 +518,7 @@ async def get_model_breakdown(
         ORDER BY total_cost_usd DESC
         """,
         tenant_id,
-        project_id,
+        project,
         period_start,
         period_end,
     )
@@ -546,7 +546,7 @@ async def get_model_breakdown(
 async def get_cache_savings(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     period_start: datetime,
     period_end: datetime,
 ) -> Dict[str, Any]:
@@ -558,7 +558,7 @@ async def get_cache_savings(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         period_start: Start of period
         period_end: End of period
 
@@ -577,7 +577,7 @@ async def get_cache_savings(
     logger.info(
         "get_cache_savings",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         period_start=period_start,
         period_end=period_end,
     )
@@ -592,13 +592,13 @@ async def get_cache_savings(
             AVG(total_cost_usd) as avg_cost_per_call
         FROM cost_logs
         WHERE tenant_id = $1
-          AND project_id = $2
+          AND project = $2
           AND timestamp >= $3
           AND timestamp <= $4
           AND error = FALSE
         """,
         tenant_id,
-        project_id,
+        project,
         period_start,
         period_end,
     )
@@ -637,7 +637,7 @@ async def get_cache_savings(
 async def get_recent_logs(
     pool: asyncpg.Pool,
     tenant_id: str,
-    project_id: str,
+    project: str,
     limit: int = 100,
     include_errors: bool = True,
 ) -> List[LLMCallLog]:
@@ -647,7 +647,7 @@ async def get_recent_logs(
     Args:
         pool: Database connection pool
         tenant_id: Tenant identifier
-        project_id: Project identifier
+        project: Project identifier
         limit: Maximum number of logs to return (default 100)
         include_errors: Whether to include failed calls (default True)
 
@@ -657,7 +657,7 @@ async def get_recent_logs(
     logger.info(
         "get_recent_logs",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         limit=limit,
         include_errors=include_errors,
     )
@@ -669,13 +669,13 @@ async def get_recent_logs(
         SELECT *
         FROM cost_logs
         WHERE tenant_id = $1
-          AND project_id = $2
+          AND project = $2
           {error_filter}
         ORDER BY timestamp DESC
         LIMIT $3
         """,  # nosec
         tenant_id,
-        project_id,
+        project,
         limit,
     )
 

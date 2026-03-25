@@ -22,7 +22,7 @@ def upgrade():
         "memory_feedback",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("tenant_id", sa.UUID(), nullable=False),
-        sa.Column("query_text", sa.Text(), nullable=False),
+        sa.Column("query", sa.Text(), nullable=False),
         sa.Column("memory_id", sa.UUID(), nullable=False),
         sa.Column("score", sa.Float(), nullable=False),  # -1 to 1
         sa.Column(

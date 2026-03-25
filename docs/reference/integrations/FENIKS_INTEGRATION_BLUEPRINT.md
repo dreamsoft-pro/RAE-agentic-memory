@@ -362,8 +362,8 @@ class EnhancedRAEClient(RAEClient):
 
     def query_reflections(
         self,
-        project_id: str,
-        query_text: str,
+        project: str,
+        query: str,
         layer: str = "semantic",
         top_k: int = 10
     ) -> List[Dict[str, Any]]:
@@ -371,23 +371,23 @@ class EnhancedRAEClient(RAEClient):
         Query RAE for relevant reflections.
 
         Args:
-            project_id: Project identifier
-            query_text: Natural language query
+            project: Project identifier
+            query: Natural language query
             layer: Memory layer (episodic, working, semantic, ltm)
             top_k: Number of results
 
         Returns:
             List of reflections with relevance scores
         """
-        log.info(f"Querying RAE reflections: project={project_id}, layer={layer}")
+        log.info(f"Querying RAE reflections: project={project}, layer={layer}")
 
         try:
             response = self._make_request(
                 method="POST",
-                endpoint="/v2/memory/query",
+                endpoint="/v2/v2/memories/query",
                 data={
-                    "query_text": query_text,
-                    "project_id": project_id,
+                    "query": query,
+                    "project": project,
                     "layer": layer,
                     "k": top_k
                 }
@@ -514,8 +514,8 @@ class EnhancedRAEClient(RAEClient):
         try:
             # Query RAE for similar reflections
             similar = self.query_reflections(
-                project_id=local_reflection.project_id,
-                query_text=local_reflection.content,
+                project=local_reflection.project,
+                query=local_reflection.content,
                 layer="semantic",
                 top_k=5
             )
@@ -655,7 +655,7 @@ class EnhancedRAEClient(RAEClient):
         payload = {
             "refactor_id": refactor_decision.id,
             "refactor_type": refactor_decision.type,
-            "project_id": refactor_decision.project_id,
+            "project": refactor_decision.project,
             "outcome_status": outcome.get("status"),  # success, failure, partial
             "test_results": outcome.get("test_results"),
             "metrics_delta": outcome.get("metrics", {}),

@@ -36,7 +36,7 @@ async def test_llm_evaluator_evaluate_success():
         execution_time_ms=1000,
         task_goal="Find answer",
         tenant_id=str(uuid.uuid4()),
-        project_id="default",
+        project="default",
     )
 
     # Run evaluation
@@ -77,7 +77,7 @@ async def test_llm_evaluator_evaluate_failure():
         execution_time_ms=1000,
         task_goal="Find answer",
         tenant_id=str(uuid.uuid4()),
-        project_id="default",
+        project="default",
     )
 
     # Run evaluation
@@ -113,7 +113,7 @@ async def test_llm_evaluator_fallback():
             error_category=ErrorCategory.TOOL_ERROR, error_message="Tool failed"
         ),
         tenant_id=str(uuid.uuid4()),
-        project_id="default",
+        project="default",
     )
 
     # Run evaluation

@@ -89,7 +89,7 @@ def store(
 
 @app.command()
 def query(
-    query_text: str = typer.Argument(..., help="The search query."),
+    query: str = typer.Argument(..., help="The search query."),
     tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
     project: str = typer.Option("default", "--project", "-p", help="The project ID."),
     k: int = typer.Option(10, help="Number of results to return."),
@@ -102,8 +102,8 @@ def query(
         "X-Session-Id": session_id,
         "X-Project-ID": project,
     }
-    payload = {"query_text": query_text, "k": k}
-    url = f"{_get_api_url()}/v2/memory/query"
+    payload = {"query": query, "k": k}
+    url = f"{_get_api_url()}/v2/v2/memories/query"
     try:
         r = requests.post(url, json=payload, headers=headers)
         r.raise_for_status()

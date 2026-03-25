@@ -211,7 +211,7 @@ class TestHybridSearchService:
             result = await hybrid_search.search(
                 query="test query",
                 tenant_id="tenant1",
-                project_id="proj1",
+                project="proj1",
                 use_graph=False,
             )
 
@@ -236,7 +236,7 @@ class TestHybridSearchService:
             result = await hybrid_search.search(
                 query="test query",
                 tenant_id="tenant1",
-                project_id="proj1",
+                project="proj1",
                 use_graph=True,
             )
 
@@ -299,7 +299,7 @@ class TestHybridSearchService:
             result = await hybrid_search.search(
                 query="test query",
                 tenant_id="tenant1",
-                project_id="proj1",
+                project="proj1",
                 use_graph=True,
                 graph_depth=2,
                 traversal_strategy=TraversalStrategy.BFS,
@@ -350,7 +350,7 @@ class TestHybridSearchService:
 
         # Use repository directly since _traverse_bfs was removed
         result = await hybrid_search.graph_repository.traverse_graph_bfs(
-            start_node_ids=["A"], tenant_id="tenant1", project_id="proj1", max_depth=2
+            start_node_ids=["A"], tenant_id="tenant1", project="proj1", max_depth=2
         )
 
         # Check if result is a tuple or dict/list
@@ -403,7 +403,7 @@ class TestHybridSearchService:
 
             with pytest.raises(RuntimeError, match="Hybrid search failed"):
                 await hybrid_search.search(
-                    query="test", tenant_id="tenant1", project_id="proj1"
+                    query="test", tenant_id="tenant1", project="proj1"
                 )
 
     async def test_traversal_depth_limits(self, hybrid_search, mock_pool):
@@ -446,7 +446,7 @@ class TestHybridSearchService:
 
         # Use repository directly since _traverse_bfs was removed
         result = await hybrid_search.graph_repository.traverse_graph_bfs(
-            start_node_ids=["A"], tenant_id="tenant1", project_id="proj1", max_depth=2
+            start_node_ids=["A"], tenant_id="tenant1", project="proj1", max_depth=2
         )
 
         # Check if result is a tuple or other structure
@@ -540,7 +540,7 @@ class TestHybridSearchIntegration:
             result = await hybrid_search.search(
                 query="authentication service",
                 tenant_id="test-tenant",
-                project_id="test-project",
+                project="test-project",
                 top_k_vector=5,
                 graph_depth=2,
                 use_graph=True,
@@ -576,18 +576,18 @@ class TestHybridSearchWithRealDatabase:
         import json
 
         tenant_id = "test-tenant-bfs"
-        project_id = "test-project-bfs"
+        project = "test-project-bfs"
 
         async with db_pool.acquire() as conn:
             # Insert test graph: A -> B -> C
             node_a_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeA",
                 "Node A",
                 json.dumps({}),
@@ -595,12 +595,12 @@ class TestHybridSearchWithRealDatabase:
 
             node_b_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeB",
                 "Node B",
                 json.dumps({}),
@@ -608,12 +608,12 @@ class TestHybridSearchWithRealDatabase:
 
             node_c_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeC",
                 "Node C",
                 json.dumps({}),
@@ -622,11 +622,11 @@ class TestHybridSearchWithRealDatabase:
             # Create edges: A -> B -> C
             await conn.execute(
                 """
-                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                INSERT INTO knowledge_graph_edges (tenant_id, project, source_node_id, target_node_id, relation, properties)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_a_id,
                 node_b_id,
                 "CONNECTS_TO",
@@ -635,11 +635,11 @@ class TestHybridSearchWithRealDatabase:
 
             await conn.execute(
                 """
-                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                INSERT INTO knowledge_graph_edges (tenant_id, project, source_node_id, target_node_id, relation, properties)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_b_id,
                 node_c_id,
                 "LEADS_TO",
@@ -654,7 +654,7 @@ class TestHybridSearchWithRealDatabase:
         nodes, edges = await repo.traverse_graph_bfs(
             start_node_ids=["NodeA"],
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             max_depth=2,
         )
 
@@ -681,18 +681,18 @@ class TestHybridSearchWithRealDatabase:
         import json
 
         tenant_id = "test-tenant-dfs"
-        project_id = "test-project-dfs"
+        project = "test-project-dfs"
 
         async with db_pool.acquire() as conn:
             # Create a diamond-shaped graph: A -> B, A -> C, B -> D, C -> D
             node_a_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeA",
                 "Node A",
                 json.dumps({}),
@@ -700,12 +700,12 @@ class TestHybridSearchWithRealDatabase:
 
             node_b_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeB",
                 "Node B",
                 json.dumps({}),
@@ -713,12 +713,12 @@ class TestHybridSearchWithRealDatabase:
 
             node_c_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeC",
                 "Node C",
                 json.dumps({}),
@@ -726,12 +726,12 @@ class TestHybridSearchWithRealDatabase:
 
             node_d_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "NodeD",
                 "Node D",
                 json.dumps({}),
@@ -740,7 +740,7 @@ class TestHybridSearchWithRealDatabase:
             # Create edges
             await conn.execute(
                 """
-                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                INSERT INTO knowledge_graph_edges (tenant_id, project, source_node_id, target_node_id, relation, properties)
                 VALUES
                     ($1, $2, $3, $4, 'LINKS', $6),
                     ($1, $2, $3, $5, 'LINKS', $6),
@@ -748,7 +748,7 @@ class TestHybridSearchWithRealDatabase:
                     ($1, $2, $5, $7, 'LINKS', $6)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_a_id,
                 node_b_id,
                 node_c_id,
@@ -764,7 +764,7 @@ class TestHybridSearchWithRealDatabase:
         nodes, edges = await repo.traverse_graph_dfs(
             start_node_ids=["NodeA"],
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             max_depth=2,
         )
 
@@ -784,7 +784,7 @@ class TestHybridSearchWithRealDatabase:
         import json
 
         tenant_id = "test-tenant-depth"
-        project_id = "test-project-depth"
+        project = "test-project-depth"
 
         async with db_pool.acquire() as conn:
             # Create chain of 5 nodes
@@ -792,12 +792,12 @@ class TestHybridSearchWithRealDatabase:
             for node_name in ["A", "B", "C", "D", "E"]:
                 node_id = await conn.fetchval(
                     """
-                    INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                    INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                     VALUES ($1, $2, $3, $4, $5)
                     RETURNING id
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     f"Node{node_name}",
                     f"Node {node_name}",
                     json.dumps({}),
@@ -810,11 +810,11 @@ class TestHybridSearchWithRealDatabase:
             ):
                 await conn.execute(
                     """
-                    INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                    INSERT INTO knowledge_graph_edges (tenant_id, project, source_node_id, target_node_id, relation, properties)
                     VALUES ($1, $2, $3, $4, $5, $6)
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     node_ids[source],
                     node_ids[target],
                     "NEXT",
@@ -829,7 +829,7 @@ class TestHybridSearchWithRealDatabase:
         nodes, edges = await repo.traverse_graph_bfs(
             start_node_ids=["NodeA"],
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             max_depth=2,
         )
 
@@ -856,19 +856,19 @@ class TestHybridSearchWithRealDatabase:
         import json
 
         tenant_id = "test-tenant-hybrid"
-        project_id = "test-project-hybrid"
+        project = "test-project-hybrid"
 
         # Setup: Create test graph
         async with db_pool.acquire() as conn:
             # Create service architecture graph
             service_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "UserService",
                 "User Service",
                 json.dumps({"type": "service"}),
@@ -876,12 +876,12 @@ class TestHybridSearchWithRealDatabase:
 
             auth_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "AuthModule",
                 "Authentication Module",
                 json.dumps({"type": "module"}),
@@ -889,12 +889,12 @@ class TestHybridSearchWithRealDatabase:
 
             db_id = await conn.fetchval(
                 """
-                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                INSERT INTO knowledge_graph_nodes (tenant_id, project, node_id, label, properties)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 "PostgreSQL",
                 "PostgreSQL Database",
                 json.dumps({"type": "database"}),
@@ -903,13 +903,13 @@ class TestHybridSearchWithRealDatabase:
             # Create edges
             await conn.execute(
                 """
-                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                INSERT INTO knowledge_graph_edges (tenant_id, project, source_node_id, target_node_id, relation, properties)
                 VALUES
                     ($1, $2, $3, $4, 'USES', $6),
                     ($1, $2, $4, $5, 'STORES_IN', $6)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 service_id,
                 auth_id,
                 db_id,
@@ -960,7 +960,7 @@ class TestHybridSearchWithRealDatabase:
             result = await service.search(
                 query="authentication service",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 top_k_vector=5,
                 graph_depth=2,
                 use_graph=True,

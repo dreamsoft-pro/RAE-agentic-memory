@@ -35,7 +35,7 @@ tracer = get_tracer(__name__)
 
 class ApprovalRequestV2(BaseModel):
     tenant_id: UUID
-    project_id: str
+    project: str
     operation_type: str
     operation_description: str
     risk_level: OperationRiskLevel
@@ -69,7 +69,7 @@ async def request_approval(
         service = HumanApprovalService(pool)
         result = await service.request_approval(
             tenant_id=str(request.tenant_id),
-            project_id=request.project_id,
+            project=request.project,
             operation_type=request.operation_type,
             operation_description=request.operation_description,
             risk_level=request.risk_level,

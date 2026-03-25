@@ -21,7 +21,7 @@ class TokenSavingsService:
     async def track_savings(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         model: str,
         predicted_tokens: int,
         real_tokens: int,
@@ -49,7 +49,7 @@ class TokenSavingsService:
 
         entry = TokenSavingsEntry(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             request_id=request_id,
             predicted_tokens=predicted_tokens,
             real_tokens=real_tokens,
@@ -70,12 +70,12 @@ class TokenSavingsService:
     async def get_summary(
         self,
         tenant_id: str,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> SavingsSummary:
         return await self.repository.get_savings_summary(
-            tenant_id, project_id, start_date, end_date
+            tenant_id, project, start_date, end_date
         )
 
     async def get_timeseries(self, tenant_id: str) -> list[dict]:

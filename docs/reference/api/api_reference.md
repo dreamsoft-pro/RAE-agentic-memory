@@ -94,10 +94,10 @@ All endpoints (except health checks) require authentication:
 
 ```bash
 # API Key
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/v2/memories/query
 
 # JWT Bearer Token
-curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/memory/query
+curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/v2/memories/query
 ```
 
 ## Common Headers
@@ -122,11 +122,11 @@ curl -X POST http://localhost:8000/v2/memory/store \
 
 ### Query Memory
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
-  -d '{"query_text": "user preferences", "k": 10}'
+  -d '{"query": "user preferences", "k": 10}'
 ```
 
 ### Hybrid Search
@@ -135,7 +135,7 @@ curl -X POST http://localhost:8000/v2/search/hybrid \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -H "X-API-Key: your-key" \
-  -d '{"tenant_id": "demo-tenant", "project_id": "my-app", "query": "authentication", "k": 10}'
+  -d '{"tenant_id": "demo-tenant", "project": "my-app", "query": "authentication", "k": 10}'
 ```
 
 ## Error Handling

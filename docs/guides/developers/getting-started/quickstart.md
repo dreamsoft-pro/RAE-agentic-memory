@@ -131,7 +131,7 @@ async def main():
     client = MemoryClient(
         api_url="http://localhost:8000",
         tenant_id="quickstart-demo",
-        project_id="my-first-project"
+        project="my-first-project"
     )
 
     # Store a memory
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 ### Semantic Search
 
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: quickstart-demo" \
   -H "X-Project-ID: my-first-project" \

@@ -236,12 +236,12 @@ def validate_tenant_id(tenant_id: Optional[str]) -> Optional[str]:
     return tenant_id
 
 
-def validate_project_id(project_id: Optional[str]) -> Optional[str]:
+def validate_project_id(project: Optional[str]) -> Optional[str]:
     """
     Validate project ID.
 
     Args:
-        project_id: Project ID to validate
+        project: Project ID to validate
 
     Returns:
         Validated project ID or None
@@ -249,24 +249,24 @@ def validate_project_id(project_id: Optional[str]) -> Optional[str]:
     Raises:
         HTTPException: If project ID is invalid
     """
-    if not project_id:
+    if not project:
         return None
 
-    project_id = project_id.strip()
+    project = project.strip()
 
-    if len(project_id) > 100:
+    if len(project) > 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Project ID too long"
         )
 
     # Allow alphanumeric, hyphens, underscores
-    if not re.match(r"^[a-zA-Z0-9_-]+$", project_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", project):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project ID contains invalid characters",
         )
 
-    return project_id
+    return project
 
 
 def validate_limit(limit: Optional[int], max_limit: int = 100) -> int:

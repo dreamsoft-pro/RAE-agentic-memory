@@ -23,7 +23,7 @@ async def test_dreaming_worker_basic_cycle(mock_pool, mock_env_and_settings):
     """Test basic dreaming cycle generates reflections from high-importance memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     # Enable dreaming
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
@@ -53,7 +53,7 @@ async def test_dreaming_worker_basic_cycle(mock_pool, mock_env_and_settings):
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -76,7 +76,7 @@ async def test_dreaming_worker_basic_cycle(mock_pool, mock_env_and_settings):
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,
                 max_samples=20,
@@ -104,7 +104,7 @@ async def test_dreaming_worker_disabled(mock_pool):
         # Run dreaming cycle
         results = await worker.run_dreaming_cycle(
             tenant_id=tenant_id,
-            project_id="default",
+            project="default",
             lookback_hours=24,
         )
 
@@ -118,7 +118,7 @@ async def test_dreaming_worker_insufficient_memories(mock_pool, mock_env_and_set
     """Test that dreaming skips when there are insufficient memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -131,7 +131,7 @@ async def test_dreaming_worker_insufficient_memories(mock_pool, mock_env_and_set
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -151,7 +151,7 @@ async def test_dreaming_worker_insufficient_memories(mock_pool, mock_env_and_set
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,
             )
@@ -166,7 +166,7 @@ async def test_dreaming_worker_lookback_window(mock_pool, mock_env_and_settings)
     """Test that dreaming only considers memories within lookback window."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -190,7 +190,7 @@ async def test_dreaming_worker_lookback_window(mock_pool, mock_env_and_settings)
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -213,7 +213,7 @@ async def test_dreaming_worker_lookback_window(mock_pool, mock_env_and_settings)
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,
             )
@@ -232,7 +232,7 @@ async def test_dreaming_worker_importance_filter(mock_pool, mock_env_and_setting
     """Test that dreaming only considers high-importance memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -256,7 +256,7 @@ async def test_dreaming_worker_importance_filter(mock_pool, mock_env_and_setting
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -279,7 +279,7 @@ async def test_dreaming_worker_importance_filter(mock_pool, mock_env_and_setting
             # Run with importance threshold
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,  # Filter out low-importance
                 max_samples=20,
@@ -301,7 +301,7 @@ async def test_dreaming_worker_max_samples_limit(mock_pool, mock_env_and_setting
     """Test that dreaming respects max_samples limit."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -327,7 +327,7 @@ async def test_dreaming_worker_max_samples_limit(mock_pool, mock_env_and_setting
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -350,7 +350,7 @@ async def test_dreaming_worker_max_samples_limit(mock_pool, mock_env_and_setting
             # Run with max_samples limit
             await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,
                 max_samples=10,  # Limit to 10 samples
@@ -367,7 +367,7 @@ async def test_dreaming_worker_error_handling(mock_pool, mock_env_and_settings):
     """Test that dreaming worker handles reflection generation errors gracefully."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -380,7 +380,7 @@ async def test_dreaming_worker_error_handling(mock_pool, mock_env_and_settings):
                     "importance": 0.8,
                     "layer": "episodic",
                     "tenant_id": tenant_id,
-                    "project": project_id,
+                    "project": project,
                     "created_at": datetime.now(timezone.utc),
                     "metadata": {},
                     "tags": [],
@@ -409,7 +409,7 @@ async def test_dreaming_worker_error_handling(mock_pool, mock_env_and_settings):
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
             )
 
@@ -423,7 +423,7 @@ async def test_dreaming_worker_no_recent_memories(mock_pool, mock_env_and_settin
     """Test dreaming when there are no recent memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
-    project_id = "default"
+    project = "default"
 
     with patch("apps.memory_api.config.settings.REFLECTIVE_MEMORY_ENABLED", True):
         with patch("apps.memory_api.config.settings.DREAMING_ENABLED", True):
@@ -437,7 +437,7 @@ async def test_dreaming_worker_no_recent_memories(mock_pool, mock_env_and_settin
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 lookback_hours=24,
                 min_importance=0.6,
             )

@@ -255,7 +255,7 @@ async def db_pool(postgres_container):
                 CREATE TABLE IF NOT EXISTS token_savings_log (
                     id SERIAL PRIMARY KEY,
                     tenant_id VARCHAR(255) NOT NULL,
-                    project_id VARCHAR(255) NOT NULL,
+                    project VARCHAR(255) NOT NULL,
                     request_id VARCHAR(255),
                     predicted_tokens INTEGER NOT NULL,
                     real_tokens INTEGER NOT NULL,
@@ -286,12 +286,12 @@ async def db_pool(postgres_container):
                 CREATE TABLE IF NOT EXISTS knowledge_graph_nodes (
                     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     tenant_id VARCHAR(255) NOT NULL,
-                    project_id VARCHAR(255) NOT NULL,
+                    project VARCHAR(255) NOT NULL,
                     node_id VARCHAR(255) NOT NULL,
                     label VARCHAR(500) NOT NULL,
                     properties JSONB,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(tenant_id, project_id, node_id)
+                    UNIQUE(tenant_id, project, node_id)
                 );
             """
             )
@@ -301,13 +301,13 @@ async def db_pool(postgres_container):
                 CREATE TABLE IF NOT EXISTS knowledge_graph_edges (
                     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     tenant_id VARCHAR(255) NOT NULL,
-                    project_id VARCHAR(255) NOT NULL,
+                    project VARCHAR(255) NOT NULL,
                     source_node_id UUID REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
                     target_node_id UUID REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
                     relation VARCHAR(255) NOT NULL,
                     properties JSONB,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(tenant_id, project_id, source_node_id, target_node_id, relation)
+                    UNIQUE(tenant_id, project, source_node_id, target_node_id, relation)
                 );
             """
             )

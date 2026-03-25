@@ -117,7 +117,7 @@ class ReflectionContext:
 
     # Session context (required fields must come before optional fields)
     tenant_id: str
-    project_id: str
+    project: str
 
     # Optional fields
     error: Optional[ErrorInfo] = None
@@ -255,7 +255,7 @@ class GenerateReflectionV2Request(BaseModel):
     """Request model for generating reflection v2"""
 
     tenant_id: str = Field(..., min_length=1, max_length=255)
-    project_id: str = Field(..., min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
     session_id: Optional[UUID] = None
 
     # Events
@@ -294,10 +294,10 @@ class QueryReflectionsV2Request(BaseModel):
     """Request model for querying reflections with enhanced filtering"""
 
     tenant_id: str = Field(..., min_length=1, max_length=255)
-    project_id: str = Field(..., min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
 
     # Query
-    query_text: Optional[str] = None
+    query: Optional[str] = None
     k: int = Field(default=5, gt=0, le=20)
 
     # Filters

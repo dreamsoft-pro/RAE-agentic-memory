@@ -8,7 +8,7 @@ from uuid import UUID
 
 
 async def check_permission(
-    user_id: str, tenant_id: UUID, action: str, project_id: Optional[str] = None
+    user_id: str, tenant_id: UUID, action: str, project: Optional[str] = None
 ) -> tuple[bool, Optional[str]]:
     """
     Check if user has permission to perform action.
@@ -28,8 +28,8 @@ async def check_permission(
     if user_role.is_expired():
         return False, "Role assignment has expired"
 
-    if project_id and not user_role.has_access_to_project(project_id):
-        return False, f"No access to project {project_id}"
+    if project and not user_role.has_access_to_project(project):
+        return False, f"No access to project {project}"
 
     if not user_role.can_perform(action):
         return False, f"Role {user_role.role.value} cannot perform {action}"
@@ -38,7 +38,7 @@ async def check_permission(
 
 
 async def require_permission(
-    user_id: str, tenant_id: UUID, action: str, project_id: Optional[str] = None
+    user_id: str, tenant_id: UUID, action: str, project: Optional[str] = None
 ):
     """
     Decorator/function to require permission.
@@ -46,7 +46,7 @@ async def require_permission(
     """
     from fastapi import HTTPException, status
 
-    allowed, reason = await check_permission(user_id, tenant_id, action, project_id)
+    allowed, reason = await check_permission(user_id, tenant_id, action, project)
 
     if not allowed:
         raise HTTPException(

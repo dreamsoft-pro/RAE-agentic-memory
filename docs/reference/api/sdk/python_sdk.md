@@ -47,9 +47,9 @@ except Exception as e:
     print(f"Error storing memory: {e}")
 
 # --- Query memories ---
-query_text = "What are the user's communication preferences?"
+query = "What are the user's communication preferences?"
 try:
-    query_results = client.query(query_text=query_text, k=3)
+    query_results = client.query(query=query, k=3)
     print("\nQuery Results:")
     for result in query_results.results:
         print(f"- ID: {result.id}, Score: {result.score:.2f}, Content: {result.content[:50]}...")

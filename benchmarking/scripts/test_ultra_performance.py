@@ -23,13 +23,13 @@ async def test_accuracy():
     results = []
     async with httpx.AsyncClient(timeout=60.0) as client:
         for i, q in enumerate(queries):
-            query_text = q["query"]
+            query = q["query"]
 
             start_time = time.time()
             try:
                 await client.post(
-                    f"{RAE_API_URL}/v2/memory/query",
-                    json={"query_text": query_text, "k": 10},
+                    f"{RAE_API_URL}/v2/v2/memories/query",
+                    json={"query": query, "k": 10},
                     headers={"X-Tenant-Id": TENANT_ID},
                 )
 

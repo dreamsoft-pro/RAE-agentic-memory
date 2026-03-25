@@ -129,10 +129,10 @@ def test_graph_state():
 @pytest.mark.unit
 def test_rae_state_creation():
     """Test basic RAEState creation"""
-    state = RAEState(tenant_id="test", project_id="test-project")
+    state = RAEState(tenant_id="test", project="test-project")
 
     assert state.tenant_id == "test"
-    assert state.project_id == "test-project"
+    assert state.project == "test-project"
     assert state.is_valid()
 
     # Check defaults initialized
@@ -146,7 +146,7 @@ def test_rae_state_with_full_initialization():
     """Test RAEState with all components initialized"""
     state = RAEState(
         tenant_id="test",
-        project_id="test-project",
+        project="test-project",
         session_id="session-123",
         working_context=WorkingContext(
             content=["memory 1", "memory 2"],
@@ -173,7 +173,7 @@ def test_rae_state_validation_budget_exhausted():
     """Test RAEState validation with exhausted budget"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=0),  # Exhausted
     )
 
@@ -183,7 +183,7 @@ def test_rae_state_validation_budget_exhausted():
 @pytest.mark.unit
 def test_rae_state_validation_negative_tokens():
     """Test RAEState validation with negative token count"""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     # Manually set invalid value (in real usage, this shouldn't happen)
     state.working_context.token_count = -100
@@ -196,7 +196,7 @@ def test_rae_state_comparison():
     """Test state delta computation via compare()"""
     state1 = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         timestamp=datetime.now(),
         budget_state=BudgetState(remaining_tokens=100000, remaining_cost_usd=10.0),
         working_context=WorkingContext(content=["memory 1"], token_count=50),
@@ -206,7 +206,7 @@ def test_rae_state_comparison():
     # Simulate state after action
     state2 = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         timestamp=datetime.now() + timedelta(milliseconds=500),
         budget_state=BudgetState(remaining_tokens=95000, remaining_cost_usd=9.5),
         working_context=WorkingContext(
@@ -231,7 +231,7 @@ def test_rae_state_serialization():
     """Test RAEState can be fully serialized to dict"""
     state = RAEState(
         tenant_id="test",
-        project_id="test-project",
+        project="test-project",
         session_id="session-123",
         working_context=WorkingContext(content=["memory 1"], token_count=50),
         budget_state=BudgetState(remaining_tokens=50000),
@@ -242,7 +242,7 @@ def test_rae_state_serialization():
 
     # Check all components present
     assert state_dict["tenant_id"] == "test"
-    assert state_dict["project_id"] == "test-project"
+    assert state_dict["project"] == "test-project"
     assert state_dict["session_id"] == "session-123"
     assert "timestamp" in state_dict
     assert "working_context" in state_dict
@@ -260,7 +260,7 @@ def test_rae_state_serialization():
 @pytest.mark.unit
 def test_rae_state_log_state():
     """Test state logging doesn't raise errors"""
-    state = RAEState(tenant_id="test", project_id="test-project")
+    state = RAEState(tenant_id="test", project="test-project")
 
     # Should not raise
     state.log_state("test_event")
@@ -303,10 +303,10 @@ def test_working_context_empty_importance():
 def test_state_comparison_time_delta():
     """Test state comparison correctly calculates time delta"""
     t1 = datetime.now()
-    state1 = RAEState(tenant_id="test", project_id="test", timestamp=t1)
+    state1 = RAEState(tenant_id="test", project="test", timestamp=t1)
 
     t2 = t1 + timedelta(seconds=2)
-    state2 = RAEState(tenant_id="test", project_id="test", timestamp=t2)
+    state2 = RAEState(tenant_id="test", project="test", timestamp=t2)
 
     delta = state2.compare(state1)
 
@@ -345,18 +345,18 @@ def test_memory_layer_none_values():
 def test_rae_state_identity_fields():
     """Test RAEState identity fields (tenant, project, session)"""
     state = RAEState(
-        tenant_id="tenant-123", project_id="project-456", session_id="session-789"
+        tenant_id="tenant-123", project="project-456", session_id="session-789"
     )
 
     assert state.tenant_id == "tenant-123"
-    assert state.project_id == "project-456"
+    assert state.project == "project-456"
     assert state.session_id == "session-789"
 
 
 @pytest.mark.unit
 def test_rae_state_validation_mismatched_importance_scores():
     """Test RAEState validation warns on mismatched content and importance scores."""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     state.working_context.content = ["item1", "item2"]
     state.working_context.importance_scores = [0.5]  # Mismatched length
@@ -368,7 +368,7 @@ def test_rae_state_validation_mismatched_importance_scores():
 @pytest.mark.unit
 def test_rae_state_validation_negative_memory_count():
     """Test RAEState validation fails with negative memory layer count."""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     # Manually set an invalid negative count
     state.memory_state.episodic.count = -5

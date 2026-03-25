@@ -165,7 +165,7 @@ Content-Type: application/json
 X-Tenant-Id: tenant-1
 
 {
-  "query_text": "user interface preferences",
+  "query": "user interface preferences",
   "k": 10,
   "project": "project-1",
   "use_graph": false,
@@ -190,7 +190,7 @@ Content-Type: application/json
 X-Tenant-Id: tenant-1
 
 {
-  "query_text": "machine learning concepts",
+  "query": "machine learning concepts",
   "k": 5,
   "project": "project-1",
   "use_graph": true,
@@ -345,7 +345,7 @@ This enterprise endpoint orchestrates:
 6. Cost tracking and governance
 
 ```http
-POST /v1/agent/execute
+POST /v2/agent/execute
 Content-Type: application/json
 X-Tenant-Id: tenant-1
 
@@ -412,7 +412,7 @@ Content-Type: application/json
 X-Tenant-Id: tenant-1
 
 {
-  "project_id": "project-1",
+  "project": "project-1",
   "limit": 50,
   "min_confidence": 0.5,
   "auto_store": true
@@ -452,7 +452,7 @@ Content-Type: application/json
 X-Tenant-Id: tenant-1
 
 {
-  "project_id": "project-1",
+  "project": "project-1",
   "bucket_size": 10,
   "max_episodes": 100
 }
@@ -461,7 +461,7 @@ X-Tenant-Id: tenant-1
 **Response:**
 ```json
 {
-  "project_id": "project-1",
+  "project": "project-1",
   "summary": "Comprehensive hierarchical summary...",
   "episodes_processed": 100
 }
@@ -474,14 +474,14 @@ X-Tenant-Id: tenant-1
 Get comprehensive statistics about the knowledge graph.
 
 ```http
-GET /v1/graph/stats?project_id=project-1
+GET /v1/graph/stats?project=project-1
 X-Tenant-Id: tenant-1
 ```
 
 **Response:**
 ```json
 {
-  "project_id": "project-1",
+  "project": "project-1",
   "tenant_id": "tenant-1",
   "total_nodes": 247,
   "total_edges": 412,
@@ -500,12 +500,12 @@ X-Tenant-Id: tenant-1
 Retrieve graph nodes with optional PageRank filtering for large graphs.
 
 ```http
-GET /v1/graph/nodes?project_id=project-1&limit=100&use_pagerank=true&min_pagerank_score=0.01
+GET /v1/graph/nodes?project=project-1&limit=100&use_pagerank=true&min_pagerank_score=0.01
 X-Tenant-Id: tenant-1
 ```
 
 **Query Parameters:**
-- `project_id` (required) - Project identifier
+- `project` (required) - Project identifier
 - `limit` (default: 100) - Maximum nodes to return
 - `use_pagerank` (default: false) - Enable PageRank filtering
 - `min_pagerank_score` (default: 0.0) - Minimum PageRank threshold
@@ -533,12 +533,12 @@ X-Tenant-Id: tenant-1
 Retrieve graph edges with optional filtering by relation type.
 
 ```http
-GET /v1/graph/edges?project_id=project-1&limit=100&relation=prefers
+GET /v1/graph/edges?project=project-1&limit=100&relation=prefers
 X-Tenant-Id: tenant-1
 ```
 
 **Query Parameters:**
-- `project_id` (required) - Project identifier
+- `project` (required) - Project identifier
 - `limit` (default: 100) - Maximum edges to return
 - `relation` (optional) - Filter by relation type
 
@@ -571,7 +571,7 @@ X-Tenant-Id: tenant-1
 
 {
   "query": "machine learning optimization techniques",
-  "project_id": "project-1",
+  "project": "project-1",
   "top_k_vector": 5,
   "graph_depth": 2,
   "traversal_strategy": "bfs"
@@ -623,12 +623,12 @@ X-Tenant-Id: tenant-1
 Retrieve a subgraph starting from specific nodes.
 
 ```http
-GET /v1/graph/subgraph?project_id=project-1&node_ids=uuid1,uuid2&depth=2
+GET /v1/graph/subgraph?project=project-1&node_ids=uuid1,uuid2&depth=2
 X-Tenant-Id: tenant-1
 ```
 
 **Query Parameters:**
-- `project_id` (required) - Project identifier
+- `project` (required) - Project identifier
 - `node_ids` (required) - Comma-separated node IDs
 - `depth` (default: 1) - Maximum traversal depth
 
@@ -713,7 +713,7 @@ The Governance API provides enterprise-grade cost tracking, budget management, a
 Get system-wide cost overview across all tenants (admin only).
 
 ```http
-GET /v1/governance/overview?days=30
+GET /v2/compliance/overview?days=30
 ```
 
 **Query Parameters:**
@@ -754,7 +754,7 @@ GET /v1/governance/overview?days=30
 Get comprehensive governance statistics for a specific tenant.
 
 ```http
-GET /v1/governance/tenant/{tenant_id}?days=30
+GET /v2/compliance/tenant/{tenant_id}?days=30
 ```
 
 **Query Parameters:**
@@ -774,7 +774,7 @@ GET /v1/governance/tenant/{tenant_id}?days=30
   "period_end": "2025-11-23T00:00:00Z",
   "by_project": [
     {
-      "project_id": "project-1",
+      "project": "project-1",
       "calls": 3200,
       "cost_usd": 258.40,
       "tokens": 1740000
@@ -813,7 +813,7 @@ GET /v1/governance/tenant/{tenant_id}?days=30
 Get current budget status and projections for a tenant.
 
 ```http
-GET /v1/governance/tenant/{tenant_id}/budget
+GET /v2/compliance/tenant/{tenant_id}/budget
 ```
 
 **Response:**
@@ -1134,7 +1134,7 @@ Content-Type: application/json
 
 ## Hybrid Search API
 
-Base path: `/v1/search`
+Base path: `/v2/search`
 
 The Hybrid Search API provides multi-strategy search with dynamic weighting, query analysis, and result fusion.
 
@@ -1143,12 +1143,12 @@ The Hybrid Search API provides multi-strategy search with dynamic weighting, que
 Execute hybrid multi-strategy search.
 
 ```http
-POST /v1/search/hybrid
+POST /v2/search/hybrid
 Content-Type: application/json
 
 {
   "tenant_id": "tenant-1",
-  "project_id": "production",
+  "project": "production",
   "query": "authentication system architecture",
   "k": 20,
   "enable_vector_search": true,
@@ -1176,7 +1176,7 @@ Content-Type: application/json
 Analyze query intent and get recommended weights.
 
 ```http
-POST /v1/search/analyze
+POST /v2/search/analyze
 Content-Type: application/json
 
 {
@@ -1191,12 +1191,12 @@ Content-Type: application/json
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/v1/search/analyze/explain` | Get detailed query analysis |
-| GET | `/v1/search/weights/profiles` | Get weight profiles |
-| GET | `/v1/search/weights/profiles/{profile_name}` | Get specific profile |
-| POST | `/v1/search/weights/calculate` | Calculate dynamic weights |
-| POST | `/v1/search/compare` | Compare search strategies |
-| POST | `/v1/search/test/weights` | Test custom weights |
+| POST | `/v2/search/analyze/explain` | Get detailed query analysis |
+| GET | `/v2/search/weights/profiles` | Get weight profiles |
+| GET | `/v2/search/weights/profiles/{profile_name}` | Get specific profile |
+| POST | `/v2/search/weights/calculate` | Calculate dynamic weights |
+| POST | `/v2/search/compare` | Compare search strategies |
+| POST | `/v2/search/test/weights` | Test custom weights |
 
 **Weight Profiles:** `balanced`, `quality`, `speed`, `comprehensive`, `exploratory`
 
@@ -1511,7 +1511,7 @@ Content-Type: application/json
 X-Tenant-Id: tenant-1
 
 {
-  "project_id": "project-1",
+  "project": "project-1",
   "operation_type": "delete_memory",
   "operation_description": "Bulk deletion of user data",
   "risk_level": "high",
@@ -1675,7 +1675,7 @@ client = RAEClient(
     api_url="http://localhost:8000",
     api_key="your-api-key",
     tenant_id="tenant-1",
-    project_id="project-1"
+    project="project-1"
 )
 
 # Store a memory
@@ -1688,13 +1688,13 @@ memory_id = await client.store(
 
 # Query memories (vector search)
 results = await client.query(
-    query_text="user preferences",
+    query="user preferences",
     k=10
 )
 
 # Query with graph traversal (hybrid search)
 results = await client.query(
-    query_text="machine learning concepts",
+    query="machine learning concepts",
     k=5,
     use_graph=True,
     graph_depth=2
@@ -1736,16 +1736,16 @@ This documentation now accurately reflects the **complete** RAE Memory API v2.0 
 
 **Core APIs:**
 - **Memory API** (6 endpoints) - `/v2/memories/*` - Core storage and retrieval
-- **Agent API** (1 endpoint) - `/v1/agent/execute` - Agent orchestration
+- **Agent API** (1 endpoint) - `/v2/agent/execute` - Agent orchestration
 - **Graph API** (7 endpoints) - `/v1/graph/*` - Basic GraphRAG operations
 - **Cache API** (1 endpoint) - `/v1/cache/rebuild` - Cache management
-- **Governance API** (3 endpoints) - `/v1/governance/*` - Cost tracking and budgets
+- **Governance API** (3 endpoints) - `/v2/compliance/*` - Cost tracking and budgets
 - **Health API** (4 endpoints) - `/health*`, `/metrics` - System monitoring
 
 **Enterprise APIs (NEW - v2.0):**
 - **Event Triggers API** (18 endpoints) - `/v1/triggers/*` - Automation and workflows
 - **Reflections API** (8 endpoints) - `/v1/reflections/*` - Hierarchical reflections
-- **Hybrid Search API** (10 endpoints) - `/v1/search/*` - Multi-strategy search
+- **Hybrid Search API** (10 endpoints) - `/v2/search/*` - Multi-strategy search
 - **Evaluation API** (12 endpoints) - `/v1/evaluation/*` - Quality metrics and drift
 - **Dashboard API** (7 endpoints) - `/v1/dashboard/*` - Real-time monitoring
 - **Graph Management API** (19 endpoints) - `/v1/graph/manage/*` - Advanced graph ops

@@ -20,7 +20,7 @@ async def track_request_cost(
     input_tokens: int,
     output_tokens: int,
     tenant_id: str,
-    project_id: str = "default",
+    project: str = "default",
 ):
     """
     Calculates cost and increments budget usage.
@@ -51,7 +51,7 @@ async def track_request_cost(
         )
 
         await BudgetService(rae_service).increment_usage(
-            tenant_id=tenant_id, project_id=project_id, usage=usage
+            tenant_id=tenant_id, project=project, usage=usage
         )
 
         logger.info(

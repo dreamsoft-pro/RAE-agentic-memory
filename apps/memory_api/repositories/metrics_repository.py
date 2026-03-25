@@ -30,7 +30,7 @@ class MetricsRepository:
     async def record_metric(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         value: float,
         dimensions: Optional[Dict[str, Any]] = None,
@@ -42,7 +42,7 @@ class MetricsRepository:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             metric_name: Metric name (e.g., 'memory_count', 'search_quality_mrr')
             value: Metric value
             dimensions: Optional dimensions for filtering
@@ -57,7 +57,7 @@ class MetricsRepository:
             SELECT record_metric($1, $2, $3, $4, $5, $6)
             """,
             tenant_id,
-            project_id,
+            project,
             metric_name,
             value,
             json.dumps(dimensions) if dimensions else "{}",
@@ -69,7 +69,7 @@ class MetricsRepository:
     async def record_metrics_batch(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metrics: List[Tuple[str, float, Optional[Dict], Optional[List[str]]]],
     ) -> int:
         """
@@ -81,7 +81,7 @@ class MetricsRepository:
             values.append(
                 (
                     tenant_id,
-                    project_id,
+                    project,
                     metric_name,
                     value,
                     json.dumps(dimensions) if dimensions else "{}",
@@ -94,7 +94,7 @@ class MetricsRepository:
         await self.db.executemany(
             """
             INSERT INTO metrics_timeseries (
-                tenant_id, project_id, metric_name, value,
+                tenant_id, project, metric_name, value,
                 dimensions, tags, timestamp, metric_type
             )
             SELECT $1, $2, $3, $4, $5::jsonb, $6, $7,
@@ -117,7 +117,7 @@ class MetricsRepository:
     async def get_timeseries(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         start_time: datetime,
         end_time: datetime,
@@ -133,7 +133,7 @@ class MetricsRepository:
                 SELECT * FROM get_metric_timeseries($1, $2, $3, $4, $5, $6::interval)
                 """,
                 tenant_id,
-                project_id,
+                project,
                 metric_name,
                 start_time,
                 end_time,
@@ -147,13 +147,13 @@ class MetricsRepository:
                     live_val = await self.db.fetchval(
                         "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)",
                         tenant_id,
-                        project_id,
+                        project,
                     )
                 elif metric_name == "reflection_count":
                     live_val = await self.db.fetchval(
                         "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
                         tenant_id,
-                        project_id,
+                        project,
                     )
 
                 if live_val and live_val > 0:
@@ -178,14 +178,14 @@ class MetricsRepository:
                     COUNT(*)::INTEGER AS data_points
                 FROM metrics_timeseries
                 WHERE tenant_id = $1
-                    AND project_id = $2
+                    AND project = $2
                     AND metric_name = $3
                     AND timestamp BETWEEN $4 AND $5
                 GROUP BY date_trunc('hour', timestamp)
                 ORDER BY date_trunc('hour', timestamp) ASC
                 """,
                 tenant_id,
-                project_id,
+                project,
                 metric_name,
                 start_time,
                 end_time,
@@ -194,7 +194,7 @@ class MetricsRepository:
         return [dict(r) for r in records]
 
     async def get_latest_metric_value(
-        self, tenant_id: str, project_id: str, metric_name: str
+        self, tenant_id: str, project: str, metric_name: str
     ) -> Optional[float]:
         """
         Get the most recent value for a metric.
@@ -204,13 +204,13 @@ class MetricsRepository:
             SELECT value
             FROM metrics_timeseries
             WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND metric_name = $3
             ORDER BY timestamp DESC
             LIMIT 1
             """,
             tenant_id,
-            project_id,
+            project,
             metric_name,
         )
 
@@ -219,7 +219,7 @@ class MetricsRepository:
     async def get_metric_statistics(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         start_time: datetime,
         end_time: datetime,
@@ -238,12 +238,12 @@ class MetricsRepository:
                 STDDEV(value) AS stddev_value
             FROM metrics_timeseries
             WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND metric_name = $3
                 AND timestamp BETWEEN $4 AND $5
             """,
             tenant_id,
-            project_id,
+            project,
             metric_name,
             start_time,
             end_time,
@@ -252,21 +252,21 @@ class MetricsRepository:
         return dict(stats) if stats else {}
 
     async def get_available_metrics(
-        self, tenant_id: Optional[str] = None, project_id: Optional[str] = None
+        self, tenant_id: Optional[str] = None, project: Optional[str] = None
     ) -> List[str]:
         """
         Get list of available metrics.
         """
-        if tenant_id and project_id:
+        if tenant_id and project:
             records = await self.db.fetch(
                 """
                 SELECT DISTINCT metric_name
                 FROM metrics_timeseries
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                 ORDER BY metric_name
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
         elif tenant_id:
             records = await self.db.fetch(
@@ -326,7 +326,7 @@ class MetricsRepository:
     async def get_metrics_by_dimensions(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         dimensions: Dict[str, Any],
         start_time: datetime,
@@ -340,14 +340,14 @@ class MetricsRepository:
             SELECT timestamp, value, dimensions, tags
             FROM metrics_timeseries
             WHERE tenant_id = $1
-                AND project_id = $2
+                AND project = $2
                 AND metric_name = $3
                 AND timestamp BETWEEN $4 AND $5
                 AND dimensions @> $6::jsonb
             ORDER BY timestamp DESC
             """,
             tenant_id,
-            project_id,
+            project,
             metric_name,
             start_time,
             end_time,

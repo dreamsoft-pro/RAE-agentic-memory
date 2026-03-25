@@ -32,7 +32,7 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
     """
     # Arrange: Create test episodic memories
     tenant_id = "test-tenant-extraction"
-    project_id = "test-project-extraction"
+    project = "test-project-extraction"
 
     mock_memories = [
         {
@@ -62,14 +62,14 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
 
     # Act
     memories = await service._fetch_episodic_memories(
-        project_id=project_id, tenant_id=tenant_id, limit=10
+        project=project, tenant_id=tenant_id, limit=10
     )
 
     # Assert
     assert len(memories) == 2
     assert memories == mock_memories
     mock_rae_service.list_memories.assert_called_once_with(
-        tenant_id=tenant_id, layer="episodic", project=project_id, limit=10
+        tenant_id=tenant_id, layer="episodic", project=project, limit=10
     )
 
 
@@ -81,7 +81,7 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
     """
     # Arrange
     tenant_id = "test-tenant-triples"
-    project_id = "test-project-triples"
+    project = "test-project-triples"
 
     mock_rae_service = AsyncMock(spec=RAECoreService)
     graph_repo = GraphRepository(db_pool)
@@ -115,7 +115,7 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
 
     # Act: Store triples
     result = await service.store_graph_triples(
-        triples=triples, project_id=project_id, tenant_id=tenant_id
+        triples=triples, project=project, tenant_id=tenant_id
     )
 
     # Assert: Check statistics
@@ -130,11 +130,11 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
             """
             SELECT node_id, label, properties
             FROM knowledge_graph_nodes
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             ORDER BY node_id
             """,
             tenant_id,
-            project_id,
+            project,
         )
 
         assert len(nodes) == 5
@@ -162,11 +162,11 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
             FROM knowledge_graph_edges e
             JOIN knowledge_graph_nodes src ON e.source_node_id = src.id
             JOIN knowledge_graph_nodes tgt ON e.target_node_id = tgt.id
-            WHERE e.tenant_id = $1 AND e.project_id = $2
+            WHERE e.tenant_id = $1 AND e.project = $2
             ORDER BY e.relation
             """,
             tenant_id,
-            project_id,
+            project,
         )
 
         assert len(edges) == 3
@@ -199,7 +199,7 @@ async def test_store_triples_handles_duplicates_gracefully(db_pool, use_real_db)
     """
     # Arrange
     tenant_id = "test-tenant-duplicates"
-    project_id = "test-project-duplicates"
+    project = "test-project-duplicates"
 
     mock_rae_service = AsyncMock(spec=RAECoreService)
     graph_repo = GraphRepository(db_pool)
@@ -215,11 +215,11 @@ async def test_store_triples_handles_duplicates_gracefully(db_pool, use_real_db)
 
     # Act: Store the same triple twice
     result1 = await service.store_graph_triples(
-        triples=[triple], project_id=project_id, tenant_id=tenant_id
+        triples=[triple], project=project, tenant_id=tenant_id
     )
 
     result2 = await service.store_graph_triples(
-        triples=[triple], project_id=project_id, tenant_id=tenant_id
+        triples=[triple], project=project, tenant_id=tenant_id
     )
 
     # Assert: First insert creates nodes and edge, second insert creates nothing
@@ -239,7 +239,7 @@ async def test_graph_repository_jsonb_serialization(db_pool, use_real_db):
     """
     # Arrange
     tenant_id = "test-tenant-jsonb"
-    project_id = "test-project-jsonb"
+    project = "test-project-jsonb"
 
     repo = GraphRepository(db_pool)
 
@@ -253,7 +253,7 @@ async def test_graph_repository_jsonb_serialization(db_pool, use_real_db):
     # Act: Create node with complex properties
     created = await repo.create_node(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         node_id="test_node",
         label="TestEntity",
         properties=complex_metadata,
@@ -266,10 +266,10 @@ async def test_graph_repository_jsonb_serialization(db_pool, use_real_db):
         node = await conn.fetchrow(
             """
             SELECT properties FROM knowledge_graph_nodes
-            WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
+            WHERE tenant_id = $1 AND project = $2 AND node_id = $3
             """,
             tenant_id,
-            project_id,
+            project,
             "test_node",
         )
 
@@ -294,14 +294,14 @@ async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
     """
     # Arrange
     tenant_id = "test-tenant-internal-id"
-    project_id = "test-project-internal-id"
+    project = "test-project-internal-id"
 
     repo = GraphRepository(db_pool)
 
     # Create a node
     await repo.create_node(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         node_id="entity_1",
         label="Entity",
         properties={"name": "Test Entity"},
@@ -309,7 +309,7 @@ async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
 
     # Act: Get internal ID
     internal_id = await repo.get_node_internal_id(
-        tenant_id=tenant_id, project_id=project_id, node_id="entity_1"
+        tenant_id=tenant_id, project=project, node_id="entity_1"
     )
 
     # Assert
@@ -318,7 +318,7 @@ async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
 
     # Try to get non-existent node
     non_existent_id = await repo.get_node_internal_id(
-        tenant_id=tenant_id, project_id=project_id, node_id="non_existent"
+        tenant_id=tenant_id, project=project, node_id="non_existent"
     )
 
     assert non_existent_id is None
@@ -335,7 +335,7 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     """
     # Arrange
     tenant_id = "test-tenant-e2e"
-    project_id = "test-project-e2e"
+    project = "test-project-e2e"
 
     # Mock RAE service returns
     mock_rae_service = AsyncMock(spec=RAECoreService)
@@ -362,14 +362,14 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
             target="auth_bug",  # Will be normalized to "auth bug"
             relation="REPORTED",
             confidence=0.95,
-            metadata={"project": project_id},
+            metadata={"project": project},
         ),
         GraphTriple(
             source="alice",
             target="auth_bug",  # Will be normalized to "auth bug"
             relation="FIXED",
             confidence=0.95,
-            metadata={"project": project_id},
+            metadata={"project": project},
         ),
     ]
 
@@ -377,7 +377,7 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     graph_repo = GraphRepository(db_pool)
     service = GraphExtractionService(mock_rae_service, graph_repo)
     result = await service.store_graph_triples(
-        triples=mock_triples, project_id=project_id, tenant_id=tenant_id
+        triples=mock_triples, project=project, tenant_id=tenant_id
     )
 
     # Assert: Verify complete workflow
@@ -388,10 +388,10 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     graph_repo = GraphRepository(db_pool)
 
     # Verify nodes exist (use normalized names)
-    john_id = await graph_repo.get_node_internal_id(tenant_id, project_id, "john")
-    alice_id = await graph_repo.get_node_internal_id(tenant_id, project_id, "alice")
+    john_id = await graph_repo.get_node_internal_id(tenant_id, project, "john")
+    alice_id = await graph_repo.get_node_internal_id(tenant_id, project, "alice")
     bug_id = await graph_repo.get_node_internal_id(
-        tenant_id, project_id, "auth bug"
+        tenant_id, project, "auth bug"
     )  # Normalized from "auth_bug"
 
     assert john_id is not None
@@ -403,11 +403,11 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
         edges = await conn.fetch(
             """
             SELECT relation FROM knowledge_graph_edges
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             ORDER BY relation
             """,
             tenant_id,
-            project_id,
+            project,
         )
 
         relations = [e["relation"] for e in edges]

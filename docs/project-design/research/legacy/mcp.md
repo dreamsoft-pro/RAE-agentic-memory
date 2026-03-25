@@ -16,7 +16,7 @@ If you're using any of the following endpoints, please migrate to the new v1 API
 |---------------------------|----------------------------------|--------|
 | `POST /memory/add` | `POST /v2/memories/create` | ❌ Deprecated |
 | `POST /memory/store` | `POST /v2/memories/create` | ❌ Deprecated |
-| `GET /memory/query` | `POST /v2/search/hybrid` | ❌ Deprecated |
+| `GET /v2/memories/query` | `POST /v2/search/hybrid` | ❌ Deprecated |
 | `POST /memory/reflect` | `POST /v2/reflections/generate` | ❌ Deprecated |
 
 ---
@@ -91,14 +91,14 @@ This was an alias for `/memory/add` with identical behavior.
 
 ---
 
-### GET /memory/query
+### GET /v2/memories/query
 
 **Deprecated in:** v2.0.0-enterprise
 **Replaced by:** `POST /v2/search/hybrid`
 
 **Old Request:**
 ```bash
-GET /memory/query?q=authentication&layer=semantic
+GET /v2/memories/query?q=authentication&layer=semantic
 ```
 
 **Old Response:**
@@ -256,7 +256,7 @@ python scripts/migrate_to_v2.py --execute
 
 - [ ] Update all `/memory/add` calls to `/v2/memories/create`
 - [ ] Update all `/memory/store` calls to `/v2/memories/create`
-- [ ] Update all `/memory/query` calls to `/v2/search/hybrid`
+- [ ] Update all `/v2/memories/query` calls to `/v2/search/hybrid`
 - [ ] Update all `/memory/reflect` calls to `/v2/reflections/generate`
 - [ ] Update layer names (episodic → em, working → wm, etc.)
 - [ ] Add tenant_id and project to all requests

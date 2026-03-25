@@ -38,14 +38,14 @@ def sample_memories():
             content="Test memory 1",
             layer="episodic",
             tenant_id="tenant1",
-            project_id="proj1",
+            project="proj1",
         ),
         MemoryRecord(
             id="mem2",
             content="Test memory 2",
             layer="episodic",
             tenant_id="tenant1",
-            project_id="proj1",
+            project="proj1",
         ),
     ]
 
@@ -138,7 +138,7 @@ class TestPGVectorStore:
                     "content": "Test memory 1",
                     "layer": "episodic",
                     "tenant_id": "tenant1",
-                    "project_id": "proj1",
+                    "project": "proj1",
                     "score": 0.95,
                     "metadata": {},
                     "chunk_index": 0,

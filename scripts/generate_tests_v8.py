@@ -161,10 +161,10 @@ async def test_query_memory_success(mock_app_state_pool, mock_vector_store, mock
 
     mock_vector_store.query.return_value = [record]
 
-    payload = {"query_text": "test query", "k": 1}
+    payload = {"query": "test query", "k": 1}
 
     response = client.post(
-        "/v2/memory/query",
+        "/v2/v2/memories/query",
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"}
     )
@@ -200,7 +200,7 @@ async def test_check_budget():
     mock_pool.fetchrow = AsyncMock()
 
     mock_pool.fetchrow.return_value = {
-        "id": "b1", "tenant_id": "t1", "project_id": "p1",
+        "id": "b1", "tenant_id": "t1", "project": "p1",
         "monthly_limit": 10.0, "monthly_usage": 5.0,
         "daily_limit": 1.0, "daily_usage": 0.5,
         "last_usage_at": datetime.now()
@@ -214,7 +214,7 @@ async def test_check_budget_fail():
     mock_pool.fetchrow = AsyncMock()
 
     mock_pool.fetchrow.return_value = {
-        "id": "b1", "tenant_id": "t1", "project_id": "p1",
+        "id": "b1", "tenant_id": "t1", "project": "p1",
         "monthly_limit": 10.0, "monthly_usage": 5.0,
         "daily_limit": 1.0, "daily_usage": 0.9,
         "last_usage_at": datetime.now()

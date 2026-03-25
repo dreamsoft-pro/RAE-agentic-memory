@@ -23,7 +23,7 @@ class FeedbackRequestV2(BaseModel):
     feedback_type: str = Field(..., pattern="^(positive|negative)$")
     score: float = Field(..., ge=0.0, le=1.0)
     comment: Optional[str] = None
-    query_text: Optional[str] = None
+    query: Optional[str] = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -44,7 +44,7 @@ async def submit_feedback(
         feedback_type=request.feedback_type,
         comment=request.comment,
         score=request.score,
-        query_text=request.query_text,
+        query=request.query,
         metadata=request.metadata,
     )
 

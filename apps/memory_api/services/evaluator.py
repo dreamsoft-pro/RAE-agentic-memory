@@ -62,7 +62,7 @@ class ExecutionContext:
 
     # Metadata
     tenant_id: str = ""
-    project_id: str = ""
+    project: str = ""
     session_id: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 

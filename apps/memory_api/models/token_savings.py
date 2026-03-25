@@ -8,7 +8,7 @@ class TokenSavingsEntry(BaseModel):
     """Data model for a single token savings event."""
 
     tenant_id: str
-    project_id: str
+    project: str
     request_id: Optional[str] = None
     predicted_tokens: int
     real_tokens: int

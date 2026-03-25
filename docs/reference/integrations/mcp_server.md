@@ -53,5 +53,5 @@ The MCP Server is a local daemon that automatically feeds context from your loca
     ```bash
     curl -X DELETE "http://localhost:8001/projects/my-project-tenant-your-project-name"
     ```
-    The `project_id` is typically a combination of `tenant_id` and the base name of the project path.
+    The `project` is typically a combination of `tenant_id` and the base name of the project path.
 

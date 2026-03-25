@@ -687,7 +687,7 @@ This release completes the implementation of critical functionalities identified
 - ✅ `ab_test_results` table - Individual A/B test observations
   - Variant assignment tracking
   - Metric values as JSONB for flexibility
-  - Query metadata (query_id, query_text, session_id)
+  - Query metadata (query_id, query, session_id)
   - Retrieved document counts and relevance labels
   - User feedback integration
   - Execution timing tracking
@@ -1464,7 +1464,7 @@ await rbac_service.assign_role(
 ### Changed - API Endpoints (2025-11-22)
 - `/v2/graph/query` now uses `get_hybrid_search_service()` dependency
 - `/v2/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-- `/v2/memory/query` now uses `get_hybrid_search_service()` dependency
+- `/v2/v2/memories/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed (2025-11-22)
 - Test fixtures updated to match new DI constructor signatures
@@ -1531,7 +1531,7 @@ await rbac_service.assign_role(
 - **API Endpoints**
   - `/v2/graph/query` now uses `get_hybrid_search_service()` dependency
   - `/v2/graph/subgraph` now uses `get_hybrid_search_service()` dependency
-  - `/v2/memory/query` now uses `get_hybrid_search_service()` dependency
+  - `/v2/v2/memories/query` now uses `get_hybrid_search_service()` dependency
 
 ### Fixed
 - Test fixtures updated to match new DI constructor signatures

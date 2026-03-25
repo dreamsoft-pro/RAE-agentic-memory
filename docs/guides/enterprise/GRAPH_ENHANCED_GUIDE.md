@@ -27,7 +27,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "node_id": "person_alice",
     "label": "Person",
     "properties": {
@@ -43,7 +43,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes \
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "tenant_id": "demo",
-  "project_id": "my-app",
+  "project": "my-app",
   "node_id": "person_alice",
   "label": "Person",
   "properties": {
@@ -64,7 +64,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges \
   -H "X-API-Key": your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "source_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "target_node_id": "660e8400-e29b-41d4-a716-446655440001",
     "relation": "WORKS_WITH",
@@ -104,7 +104,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "node_id": "concept_machine_learning",
     "label": "Concept",
     "properties": {
@@ -120,7 +120,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes \
 Analyze node connectivity:
 
 ```bash
-curl "http://localhost:8000/v2/graph-management/nodes/550e8400-e29b-41d4-a716-446655440000/metrics?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/graph-management/nodes/550e8400-e29b-41d4-a716-446655440000/metrics?tenant_id=demo&project=my-app" \
   -H "X-API-Key: your-key"
 ```
 
@@ -157,7 +157,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes/connected \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "node_id": "550e8400-e29b-41d4-a716-446655440000",
     "max_depth": 3
   }'
@@ -196,7 +196,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "source_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "target_node_id": "660e8400-e29b-41d4-a716-446655440001",
     "relation": "DEPENDS_ON",
@@ -281,7 +281,7 @@ curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "algorithm": "BFS",
     "max_depth": 3
@@ -317,7 +317,7 @@ curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "algorithm": "DFS",
     "max_depth": 5
@@ -335,7 +335,7 @@ curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "algorithm": "BFS",
     "max_depth": 3,
@@ -356,7 +356,7 @@ curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "algorithm": "BFS",
     "max_depth": 3,
@@ -385,7 +385,7 @@ curl -X POST http://localhost:8000/v2/graph-management/path/shortest \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "end_node_id": "880e8400-e29b-41d4-a716-446655440003",
     "algorithm": "dijkstra",
@@ -428,7 +428,7 @@ curl -X POST http://localhost:8000/v2/graph-management/path/shortest \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "start_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "end_node_id": "880e8400-e29b-41d4-a716-446655440003",
     "algorithm": "dijkstra",
@@ -449,7 +449,7 @@ curl -X POST http://localhost:8000/v2/graph-management/cycles/detect \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "source_node_id": "550e8400-e29b-41d4-a716-446655440000",
     "target_node_id": "660e8400-e29b-41d4-a716-446655440001",
     "max_depth": 10
@@ -501,7 +501,7 @@ curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "snapshot_name": "before-migration",
     "description": "Graph state before Q1 2025 migration",
     "include_inactive_edges": false,
@@ -525,7 +525,7 @@ curl -X POST http://localhost:8000/v2/graph-management/snapshots \
 ### List Snapshots
 
 ```bash
-curl "http://localhost:8000/v2/graph-management/snapshots?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/graph-management/snapshots?tenant_id=demo&project=my-app" \
   -H "X-API-Key: your-key"
 ```
 
@@ -541,7 +541,7 @@ curl http://localhost:8000/v2/graph-management/snapshots/990e8400-e29b-41d4-a716
 {
   "id": "990e8400-...",
   "tenant_id": "demo",
-  "project_id": "my-app",
+  "project": "my-app",
   "snapshot_name": "before-migration",
   "description": "Graph state before Q1 2025 migration",
   "node_count": 1547,
@@ -599,7 +599,7 @@ curl -X POST http://localhost:8000/v2/graph-management/statistics \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "include_centrality": true,
     "include_distributions": true
   }'
@@ -659,7 +659,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "nodes": [
       {
         "node_id": "person_bob",
@@ -703,7 +703,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "edges": [
       {
         "source_node_id": "bb0e8400-...",
@@ -737,7 +737,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "prod",
+    "project": "prod",
     "nodes": [
       {"node_id": "api-gateway", "label": "Service", "properties": {"name": "API Gateway"}},
       {"node_id": "auth-service", "label": "Service", "properties": {"name": "Auth Service"}},
@@ -753,7 +753,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "prod",
+    "project": "prod",
     "edges": [
       {
         "source_node_id": "{api-gateway-uuid}",
@@ -778,7 +778,7 @@ curl -X POST http://localhost:8000/v2/graph-management/cycles/detect \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "prod",
+    "project": "prod",
     "source_node_id": "{order-service-uuid}",
     "target_node_id": "{auth-service-uuid}"
   }'
@@ -791,7 +791,7 @@ curl -X POST http://localhost:8000/v2/graph-management/cycles/detect \
 curl -X POST http://localhost:8000/v2/graph-management/nodes \
   -d '{
     "tenant_id": "demo",
-    "project_id": "hr",
+    "project": "hr",
     "node_id": "emp_001",
     "label": "Employee",
     "properties": {"name": "Alice", "title": "Senior Engineer"}
@@ -801,7 +801,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes \
 curl -X POST http://localhost:8000/v2/graph-management/edges \
   -d '{
     "tenant_id": "demo",
-    "project_id": "hr",
+    "project": "hr",
     "source_node_id": "{alice-uuid}",
     "target_node_id": "{manager-uuid}",
     "relation": "REPORTS_TO",
@@ -813,7 +813,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges \
 curl -X POST http://localhost:8000/v2/graph-management/traverse \
   -d '{
     "tenant_id": "demo",
-    "project_id": "hr",
+    "project": "hr",
     "start_node_id": "{ceo-uuid}",
     "algorithm": "BFS",
     "at_timestamp": "2025-03-15T00:00:00Z",
@@ -828,7 +828,7 @@ curl -X POST http://localhost:8000/v2/graph-management/traverse \
 curl -X POST http://localhost:8000/v2/graph-management/snapshots \
   -d '{
     "tenant_id": "demo",
-    "project_id": "knowledge",
+    "project": "knowledge",
     "snapshot_name": "pre-update-v2.1",
     "description": "Before upgrading to v2.1",
     "tags": ["backup", "v2.0"]

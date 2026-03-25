@@ -161,7 +161,7 @@ class ActionExecutor:
             action_type=action.action_type.value,
             parameters=action.parameters,
             tenant_id=state.tenant_id,
-            project_id=state.project_id,
+            project=state.project,
         )
 
         execution_start = datetime.now()

@@ -35,7 +35,7 @@ curl -X POST http://localhost:8000/v2/triggers/create \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "rule_name": "Auto-Reflection Generator",
     "description": "Generate reflections when memory count exceeds 100",
     "event_types": ["memory_created"],
@@ -74,7 +74,7 @@ curl -X POST http://localhost:8000/v2/triggers/events/emit \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "event_type": "memory_created",
     "payload": {
       "memory_id": "123",
@@ -151,7 +151,7 @@ Triggers use conditions to match events. Use operators to define matching logic.
   "condition_operator": "AND",
   "conditions": {
     "memory_count": {"operator": ">=", "value": 100},
-    "project_id": {"operator": "==", "value": "prod"}
+    "project": {"operator": "==", "value": "prod"}
   }
 }
 ```
@@ -176,7 +176,7 @@ Triggers use conditions to match events. Use operators to define matching logic.
   "conditions": {
     "layer": {"operator": "in", "value": ["episodic", "semantic"]},
     "importance": {"operator": ">=", "value": 0.7},
-    "project_id": {"operator": "==", "value": "production"},
+    "project": {"operator": "==", "value": "production"},
     "content": {"operator": "contains", "value": "customer"}
   }
 }
@@ -300,7 +300,7 @@ curl -X POST http://localhost:8000/v2/triggers/workflows/create \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "workflow_name": "Nightly Maintenance",
     "description": "Generate reflections, apply decay, create snapshot",
     "execution_mode": "sequential",
@@ -366,7 +366,7 @@ curl http://localhost:8000/v2/triggers/workflows/{workflow_id} \
 
 ### List Workflows
 ```bash
-curl "http://localhost:8000/v2/triggers/workflows?tenant_id=demo&project_id=my-app" \
+curl "http://localhost:8000/v2/triggers/workflows?tenant_id=demo&project=my-app" \
   -H "X-API-Key: your-key"
 ```
 
@@ -408,7 +408,7 @@ curl http://localhost:8000/v2/triggers/templates \
 ### Instantiate Template
 
 ```bash
-curl -X POST "http://localhost:8000/v2/triggers/templates/auto_reflection/instantiate?tenant_id=demo&project_id=my-app&rule_name=My%20Reflection%20Rule&created_by=admin" \
+curl -X POST "http://localhost:8000/v2/triggers/templates/auto_reflection/instantiate?tenant_id=demo&project=my-app&rule_name=My%20Reflection%20Rule&created_by=admin" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
@@ -426,7 +426,7 @@ curl -X POST "http://localhost:8000/v2/triggers/templates/auto_reflection/instan
 ### List Triggers
 
 ```bash
-curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&status_filter=active&limit=50" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project=my-app&status_filter=active&limit=50" \
   -H "X-API-Key: your-key"
 ```
 
@@ -566,7 +566,7 @@ curl -X POST http://localhost:8000/v2/triggers/create \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "production",
+    "project": "production",
     "rule_name": "Slack Quality Alert",
     "event_types": ["quality_degraded"],
     "conditions": {
@@ -599,7 +599,7 @@ curl -X POST http://localhost:8000/v2/triggers/create \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "rule_name": "Nightly Snapshot",
     "event_types": ["schedule_triggered"],
     "conditions": {
@@ -629,7 +629,7 @@ curl -X POST http://localhost:8000/v2/triggers/workflows/create \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "workflow_name": "Compliance Alert Chain",
     "execution_mode": "sequential",
     "steps": [

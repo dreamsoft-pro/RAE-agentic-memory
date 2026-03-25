@@ -78,7 +78,7 @@ def simple_graph():
             )
         },
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         created_at=datetime.now(),
         last_updated=datetime.now(),
     )
@@ -463,7 +463,7 @@ def test_merge_nodes_redirect_edges(graph_operator):
             ),
         },
         tenant_id="test",
-        project_id="test",
+        project="test",
     )
 
     # Merge node2 into node1
@@ -620,7 +620,7 @@ def test_convergence_analysis_growing_graph(graph_operator):
                 for j in range(i + 1)
             },
             tenant_id="test",
-            project_id="test",
+            project="test",
         )
         history.append(graph)
 
@@ -656,7 +656,7 @@ def test_convergence_analysis_spectral_gap(graph_operator):
             ),
         },
         tenant_id="test",
-        project_id="test",
+        project="test",
     )
 
     history = [graph.copy() for _ in range(5)]

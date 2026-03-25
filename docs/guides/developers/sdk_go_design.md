@@ -128,7 +128,7 @@ func (c *Client) StoreMemory(ctx context.Context, memory *StoreMemoryRequest) (*
 
 // QueryMemory queries the memory for relevant records.
 func (c *Client) QueryMemory(ctx context.Context, query *QueryMemoryRequest) (*QueryMemoryResponse, error) {
-	respBody, err := c.doRequest(ctx, "POST", "/memory/query", query)
+	respBody, err := c.doRequest(ctx, "POST", "/v2/memories/query", query)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ type StoreMemoryResponse struct {
 
 // QueryMemoryRequest is the request body for querying memories.
 type QueryMemoryRequest struct {
-	QueryText string                 `json:"query_text"`
+	QueryText string                 `json:"query"`
 	K         *int                   `json:"k,omitempty"`
 	Filters   *map[string]interface{} `json:"filters,omitempty"`
 }

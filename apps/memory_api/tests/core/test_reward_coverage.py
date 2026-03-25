@@ -17,7 +17,7 @@ from apps.memory_api.core.state import (
 def real_state():
     return RAEState(
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         budget_state=BudgetState(),
         memory_state=MemoryState(),
         graph_state=GraphState(),

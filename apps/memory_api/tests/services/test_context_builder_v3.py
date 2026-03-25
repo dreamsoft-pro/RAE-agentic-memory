@@ -49,7 +49,7 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     # Act
     ctx = await builder.build_context(
         tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
-        project_id="p1",
+        project="p1",
         query="test query",
     )
 

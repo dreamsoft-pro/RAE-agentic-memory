@@ -45,14 +45,14 @@ async def generate_queries_from_db(project_name: str, num_queries: int = 100):
         if anchors:
             # Atomic Lookup Query
             anchor = random.choice(anchors)
-            query_text = f"Find information related to {anchor}"
+            query = f"Find information related to {anchor}"
         else:
             # Semantic snippet query
             words = content.split()
-            query_text = " ".join(words[:min(6, len(words))])
+            query = " ".join(words[:min(6, len(words))])
 
         queries.append({
-            "query": query_text,
+            "query": query,
             "expected_source_ids": [str(m["id"])],
             "category": "industrial_atomic" if anchors else "semantic_prose"
         })

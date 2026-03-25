@@ -110,7 +110,7 @@ class QueryAnalysisRequest(BaseModel):
 
     query: str = Field(..., min_length=1, max_length=1024)
     tenant_id: str
-    project_id: str
+    project: str
 
     # Context (optional)
     conversation_history: List[str] = Field(default_factory=list)
@@ -219,7 +219,7 @@ class HybridSearchRequest(BaseModel):
     """Request for hybrid multi-strategy search"""
 
     tenant_id: str
-    project_id: str
+    project: str
     query: str = Field(..., min_length=1, max_length=1024)
 
     # Result parameters
@@ -402,7 +402,7 @@ class SearchAnalytics(BaseModel):
     """Analytics for search performance"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Query statistics
     total_queries: int = Field(0, ge=0)
@@ -429,7 +429,7 @@ class GetSearchAnalyticsRequest(BaseModel):
     """Request for search analytics"""
 
     tenant_id: str
-    project_id: str
+    project: str
     period_start: Optional[datetime] = None
     period_end: Optional[datetime] = None
 

@@ -66,7 +66,7 @@ async def test_summarize_session_llm(mock_rae_service):
         m["metadata"]["session_id"] = str(session_id)
 
     result = await worker.summarize_session(
-        tenant_id="tenant-1", project_id="default", session_id=session_id, min_events=2
+        tenant_id="tenant-1", project="default", session_id=session_id, min_events=2
     )
 
     # Verify interaction
@@ -101,7 +101,7 @@ async def test_summarize_long_sessions(mock_rae_service):
 
     # Run long session summarization
     summaries = await worker.summarize_long_sessions(
-        tenant_id="tenant-1", project_id="default", event_threshold=100
+        tenant_id="tenant-1", project="default", event_threshold=100
     )
 
     # Verify results

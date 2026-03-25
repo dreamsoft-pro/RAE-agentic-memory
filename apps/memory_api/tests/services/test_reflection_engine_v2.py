@@ -51,7 +51,7 @@ def engine(mock_rae_service, mock_llm_provider):
 def sample_context():
     return ReflectionContext(
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         outcome=OutcomeType.SUCCESS,
         events=[
             Event(

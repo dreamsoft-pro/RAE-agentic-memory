@@ -109,14 +109,14 @@ class GraphAlgorithmsService:
         self.graph_repo = graph_repo
 
     async def load_tenant_graph(
-        self, tenant_id: UUID, project_id: Optional[str] = None
+        self, tenant_id: UUID, project: Optional[str] = None
     ) -> KnowledgeGraph:
         """
         Load tenant's knowledge graph from storage
 
         Args:
             tenant_id: Tenant UUID
-            project_id: Optional project identifier to filter by
+            project: Optional project identifier to filter by
 
         Returns:
             KnowledgeGraph instance
@@ -127,13 +127,13 @@ class GraphAlgorithmsService:
             logger.warning("no_graph_repo", tenant_id=str(tenant_id))
             return graph
 
-        logger.info("loading_graph", tenant_id=str(tenant_id), project_id=project_id)
+        logger.info("loading_graph", tenant_id=str(tenant_id), project=project)
 
         try:
             # Load nodes
-            # If project_id is None, we need to handle it. GraphRepository methods currently require project_id.
+            # If project is None, we need to handle it. GraphRepository methods currently require project.
             # Assuming 'default' or similar if not provided, or we might need a get_all_nodes_for_tenant method.
-            target_project = project_id or "default"
+            target_project = project or "default"
 
             nodes = await self.graph_repo.get_all_nodes(str(tenant_id), target_project)
 
@@ -175,7 +175,7 @@ class GraphAlgorithmsService:
     async def pagerank(
         self,
         tenant_id: UUID,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         damping: float = 0.85,
         max_iterations: int = 100,
         tolerance: float = 1e-6,
@@ -188,7 +188,7 @@ class GraphAlgorithmsService:
 
         Args:
             tenant_id: Tenant UUID
-            project_id: Optional project identifier to filter by
+            project: Optional project identifier to filter by
             damping: Damping factor (typical: 0.85)
             max_iterations: Maximum iterations
             tolerance: Convergence tolerance
@@ -199,11 +199,11 @@ class GraphAlgorithmsService:
         logger.info(
             "calculating_pagerank",
             tenant_id=str(tenant_id),
-            project_id=project_id,
+            project=project,
             damping=damping,
         )
 
-        graph = await self.load_tenant_graph(tenant_id, project_id)
+        graph = await self.load_tenant_graph(tenant_id, project)
 
         if graph.node_count() == 0:
             return {}

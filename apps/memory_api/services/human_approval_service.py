@@ -53,7 +53,7 @@ class ApprovalRequest(BaseModel):
 
     request_id: UUID = Field(default_factory=uuid4)
     tenant_id: str
-    project_id: str
+    project: str
 
     # Operation details
     operation_type: str = Field(
@@ -130,7 +130,7 @@ class HumanApprovalService:
     async def request_approval(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         operation_type: str,
         operation_description: str,
         risk_level: OperationRiskLevel,
@@ -149,7 +149,7 @@ class HumanApprovalService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             operation_type: Type of operation
             operation_description: Human-readable description
             risk_level: Risk level of operation
@@ -185,7 +185,7 @@ class HumanApprovalService:
 
             request = ApprovalRequest(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 operation_type=operation_type,
                 operation_description=operation_description,
                 risk_level=risk_level,
@@ -212,7 +212,7 @@ class HumanApprovalService:
 
         request = ApprovalRequest(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             operation_type=operation_type,
             operation_description=operation_description,
             risk_level=risk_level,

@@ -18,13 +18,13 @@ async def diagnose():
     # Query from benchmark
     query = "Are there any critical payment system problems?"
     tenant_id = "00000000-0000-0000-0000-000000000000"
-    project_id = "industrial_small"
+    project = "industrial_small"
     
     print(f"\n--- DIAGNOSING QUERY: {query} ---")
     
     # 1. Fetch FTS results
     fts_strategy = FullTextStrategy(storage)
-    fts_results = await fts_strategy.search(query, tenant_id, limit=50, agent_id=project_id)
+    fts_results = await fts_strategy.search(query, tenant_id, limit=50, agent_id=project)
     
     if not fts_results:
         print("❌ NO FTS RESULTS FOUND!")

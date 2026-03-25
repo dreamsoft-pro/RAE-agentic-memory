@@ -57,13 +57,13 @@ class TestCreateDecisionContext:
 
         result = await provenance_service.create_decision_context(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             query="What are user preferences?",
             sources=sources,
         )
 
         assert result.tenant_id == "test-tenant"
-        assert result.project_id == "test-project"
+        assert result.project == "test-project"
         assert result.query == "What are user preferences?"
         assert result.total_sources == 2
         assert len(result.sources) == 2
@@ -92,7 +92,7 @@ class TestCreateDecisionContext:
 
         result = await provenance_service.create_decision_context(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             query="Test query",
             sources=sources,
         )
@@ -113,7 +113,7 @@ class TestCreateDecisionContext:
 
         result = await provenance_service.create_decision_context(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             query="Test query",
             sources=[],
         )
@@ -161,7 +161,7 @@ class TestCreateDecisionContext:
 
         result = await provenance_service.create_decision_context(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             query="Test query",
             sources=sources,
         )
@@ -188,7 +188,7 @@ class TestCreateDecisionContext:
 
         result = await provenance_service.create_decision_context(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             query="Test query",
             sources=sources,
         )
@@ -215,7 +215,7 @@ class TestRecordDecision:
 
         result = await provenance_service.record_decision(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             decision_type=DecisionType.RESPONSE_GENERATION,
             decision_description="Generated response to user query",
             context_id=context_id,
@@ -225,7 +225,7 @@ class TestRecordDecision:
         )
 
         assert result.tenant_id == "test-tenant"
-        assert result.project_id == "test-project"
+        assert result.project == "test-project"
         assert result.decision_type == DecisionType.RESPONSE_GENERATION
         assert result.context_id == context_id
         assert result.output == "Here is your answer..."
@@ -251,7 +251,7 @@ class TestRecordDecision:
 
         result = await provenance_service.record_decision(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             decision_type=DecisionType.ACTION_EXECUTION,
             decision_description="Delete critical data",
             context_id=context_id,
@@ -283,7 +283,7 @@ class TestRecordDecision:
 
         result = await provenance_service.record_decision(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             decision_type=DecisionType.RESPONSE_GENERATION,
             decision_description="Test decision",
             context_id=context_id,

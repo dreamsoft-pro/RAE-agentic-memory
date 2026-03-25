@@ -409,7 +409,7 @@ class RAEClient:
         base_url: str,
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None,
+        project: Optional[str] = None,
         # Retry configuration
         max_retries: int = DEFAULT_MAX_RETRIES,
         initial_backoff_ms: int = DEFAULT_INITIAL_BACKOFF_MS,
@@ -434,7 +434,7 @@ class RAEClient:
             base_url: Base URL for RAE API
             api_key: API key for authentication
             tenant_id: Default tenant ID
-            project_id: Default project ID
+            project: Default project ID
             max_retries: Maximum number of retries
             initial_backoff_ms: Initial backoff in milliseconds
             max_backoff_ms: Maximum backoff in milliseconds
@@ -451,7 +451,7 @@ class RAEClient:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.tenant_id = tenant_id
-        self.project_id = project_id
+        self.project = project
 
         # Retry configuration
         self.max_retries = max_retries
@@ -710,8 +710,8 @@ class RAEClient:
         if self.tenant_id:
             headers["X-Tenant-ID"] = self.tenant_id
 
-        if self.project_id:
-            headers["X-Project-ID"] = self.project_id
+        if self.project:
+            headers["X-Project-ID"] = self.project
 
         if additional_headers:
             headers.update(additional_headers)

@@ -28,7 +28,7 @@ async def test_savings_write():
         print("📝 Logging mock savings event (2000 -> 500 tokens)...")
         await service.track_savings(
             tenant_id="test-tenant",
-            project_id="test-project",
+            project="test-project",
             model="gpt-4o",
             predicted_tokens=2000,
             real_tokens=500,

@@ -692,7 +692,7 @@ All tool parameters are validated before processing:
    ```
 2. Check API key is valid:
    ```bash
-   curl -H "X-API-Key: your-key" http://localhost:8000/v2/memory/query
+   curl -H "X-API-Key: your-key" http://localhost:8000/v2/v2/memories/query
    ```
 3. Review MCP server logs (if available via IDE)
 4. Test tool manually using JSON-RPC:
@@ -724,9 +724,9 @@ All tool parameters are validated before processing:
 **Solutions**:
 1. Check RAE API response times:
    ```bash
-   time curl -X POST http://localhost:8000/v2/memory/query \
+   time curl -X POST http://localhost:8000/v2/v2/memories/query \
      -H "Content-Type: application/json" \
-     -d '{"query_text":"test","k":5}'
+     -d '{"query":"test","k":5}'
    ```
 2. Optimize RAE API (see RAE documentation)
 3. Reduce `top_k` in search queries

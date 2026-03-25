@@ -27,7 +27,7 @@ def upgrade() -> None:
             "id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False
         ),
         sa.Column("tenant_id", sa.UUID(), nullable=False),
-        sa.Column("project_id", sa.String(length=255), nullable=True),
+        sa.Column("project", sa.String(length=255), nullable=True),
         sa.Column("metric_name", sa.String(length=255), nullable=False),
         sa.Column("metric_value", sa.Float(), nullable=False),
         sa.Column("metric_type", sa.String(length=50), nullable=False),
@@ -66,7 +66,7 @@ def upgrade() -> None:
     op.create_index(
         "idx_metrics_ts_project_time",
         "metrics_timeseries",
-        ["tenant_id", "project_id", sa.text("timestamp DESC")],
+        ["tenant_id", "project", sa.text("timestamp DESC")],
         unique=False,
     )
     op.create_index(
@@ -78,7 +78,7 @@ def upgrade() -> None:
     op.create_index(
         "idx_metrics_ts_dashboard_query",
         "metrics_timeseries",
-        ["tenant_id", "project_id", "metric_name", sa.text("timestamp DESC")],
+        ["tenant_id", "project", "metric_name", sa.text("timestamp DESC")],
         unique=False,
     )
     # GIN indexes for JSONB

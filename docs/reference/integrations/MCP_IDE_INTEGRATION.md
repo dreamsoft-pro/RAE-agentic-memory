@@ -290,7 +290,7 @@ For project-specific settings, create `.rae-mcp.json`:
 {
   "base_url": "http://localhost:8000",
   "tenant_id": "project-specific-tenant",
-  "project_id": "my-project",
+  "project": "my-project",
   "default_tags": ["my-project", "team-a"],
   "auto_store_important": true,
   "importance_threshold": 0.7

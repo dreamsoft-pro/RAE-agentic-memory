@@ -51,7 +51,7 @@ class EvaluationService:
     async def evaluate_search_results(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         relevance_judgments: List[RelevanceJudgment],
         search_results: Dict[str, List[RankedResult]],
         metrics_to_compute: List[MetricType],
@@ -62,7 +62,7 @@ class EvaluationService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             relevance_judgments: Ground truth relevance scores
             search_results: System-generated ranked results (query_id -> results)
             metrics_to_compute: Which metrics to calculate
@@ -182,7 +182,7 @@ class EvaluationService:
         evaluation_result = EvaluationResult(
             evaluation_id=uuid4(),
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             metrics=metric_scores,
             num_queries_evaluated=len(search_results),
             num_documents_retrieved=total_documents,

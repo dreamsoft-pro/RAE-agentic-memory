@@ -116,7 +116,7 @@ class SemanticExtractor:
     async def extract_from_memories(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         memory_ids: Optional[List[UUID]] = None,
         max_memories: int = 100,
         min_confidence: float = 0.5,
@@ -126,7 +126,7 @@ class SemanticExtractor:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             memory_ids: Optional specific memory IDs
             max_memories: Maximum memories to process
             min_confidence: Minimum extraction confidence
@@ -137,13 +137,13 @@ class SemanticExtractor:
         logger.info(
             "semantic_extraction_started",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             max_memories=max_memories,
         )
 
         # Fetch memories
         memories = await self._fetch_memories(
-            tenant_id, project_id, memory_ids, max_memories
+            tenant_id, project, memory_ids, max_memories
         )
 
         if not memories:
@@ -168,7 +168,7 @@ class SemanticExtractor:
                 try:
                     await self._create_or_update_semantic_node(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project=project,
                         topic=topic.topic,
                         normalized_topic=topic.normalized_topic,
                         node_type=SemanticNodeType.TOPIC,
@@ -189,7 +189,7 @@ class SemanticExtractor:
                 try:
                     await self._create_or_update_semantic_node(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project=project,
                         topic=term.original,
                         normalized_topic=term.canonical,
                         node_type=SemanticNodeType.TERM,
@@ -211,7 +211,7 @@ class SemanticExtractor:
                 try:
                     created = await self._create_semantic_relationship(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project=project,
                         source=relation.source,
                         relation_type=relation.relation,
                         target=relation.target,
@@ -269,7 +269,7 @@ class SemanticExtractor:
     async def _fetch_memories(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         memory_ids: Optional[List[UUID]],
         max_memories: int,
     ) -> List[Dict[str, Any]]:
@@ -280,7 +280,7 @@ class SemanticExtractor:
 
         return await self.rae_service.list_memories(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             filters=query_filters,
             limit=max_memories,
         )
@@ -335,7 +335,7 @@ class SemanticExtractor:
     async def _create_or_update_semantic_node(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         topic: str,
         normalized_topic: str,
         node_type: SemanticNodeType,
@@ -356,10 +356,10 @@ class SemanticExtractor:
             """
             SELECT id, reinforcement_count, source_memory_ids
             FROM semantic_nodes
-            WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
+            WHERE tenant_id = $1 AND project = $2 AND node_id = $3
             """,
             tenant_id,
-            project_id,
+            project,
             node_id,
         )
 
@@ -398,14 +398,14 @@ class SemanticExtractor:
             record = await self.rae_service.db.fetchrow(
                 """
                 INSERT INTO semantic_nodes (
-                    tenant_id, project_id, node_id, label, node_type,
+                    tenant_id, project, node_id, label, node_type,
                     canonical_form, definition, domain, categories,
                     embedding, extraction_confidence, source_memory_ids
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING id
                 """,
                 tenant_id,
-                project_id,
+                project,
                 node_id,
                 topic,
                 node_type.value,
@@ -426,7 +426,7 @@ class SemanticExtractor:
     async def _create_semantic_relationship(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         source: str,
         relation_type: str,
         target: str,
@@ -444,16 +444,16 @@ class SemanticExtractor:
 
         # Get node UUIDs
         source_uuid = await self.rae_service.db.fetchval(
-            "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
+            "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project = $2 AND node_id = $3",
             tenant_id,
-            project_id,
+            project,
             source_node_id,
         )
 
         target_uuid = await self.rae_service.db.fetchval(
-            "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
+            "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project = $2 AND node_id = $3",
             tenant_id,
-            project_id,
+            project,
             target_node_id,
         )
 
@@ -470,14 +470,14 @@ class SemanticExtractor:
             await self.rae_service.db.execute(
                 """
                 INSERT INTO semantic_relationships (
-                    tenant_id, project_id,
+                    tenant_id, project,
                     source_node_id, target_node_id,
                     relation_type, confidence
                 ) VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT DO NOTHING
                 """,
                 tenant_id,
-                project_id,
+                project,
                 source_uuid,
                 target_uuid,
                 relation_type_enum.value,

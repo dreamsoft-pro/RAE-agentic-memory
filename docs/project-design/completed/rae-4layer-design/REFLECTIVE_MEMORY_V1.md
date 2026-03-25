@@ -190,7 +190,7 @@ MEMORY_BASE_DECAY_RATE=0.001
 ```python
 async def build_context(
     tenant_id: str,
-    project_id: str,
+    project: str,
     query: str,
     recent_messages: List[Dict],
 ) -> WorkingMemoryContext
@@ -221,7 +221,7 @@ async def build_context(
 async def inject_reflections_into_prompt(
     base_prompt: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     query: str,
 ) -> str
 ```
@@ -377,7 +377,7 @@ context = ReflectionContext(
     error=error,
     task_description="Fetch user data",
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
 )
 
 # Generate reflection
@@ -392,7 +392,7 @@ print(f"Tags: {result.tags}")
 stored = await engine.store_reflection(
     result=result,
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
 )
 ```
 
@@ -406,7 +406,7 @@ builder = ContextBuilder(pool)
 # Build context for new task
 context = await builder.build_context(
     tenant_id="tenant-1",
-    project_id="project-1",
+    project="project-1",
     query="I need to query the users table",
     recent_messages=[
         {"role": "user", "content": "How do I get user data?"}

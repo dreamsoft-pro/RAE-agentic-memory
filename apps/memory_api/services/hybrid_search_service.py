@@ -105,7 +105,7 @@ class HybridSearchService:
     async def search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         k: int = 10,
         enable_vector: bool = True,
@@ -127,7 +127,7 @@ class HybridSearchService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Search query
             k: Number of results
             enable_vector: Enable vector search
@@ -172,7 +172,7 @@ class HybridSearchService:
             cached_result = await self.cache.get(
                 query=query,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 filters=cache_filters,
             )
 
@@ -187,7 +187,7 @@ class HybridSearchService:
 
                 await self.savings_service.track_savings(
                     tenant_id=tenant_id,
-                    project_id=project_id,
+                    project=project,
                     model="claude-3-haiku",
                     predicted_tokens=predicted_tokens,
                     real_tokens=0,
@@ -215,7 +215,7 @@ class HybridSearchService:
             query_analysis = await self.query_analyzer.analyze_intent(
                 query=query,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 context=conversation_history,
             )
 
@@ -241,7 +241,7 @@ class HybridSearchService:
         if enable_vector and weights.get(SearchStrategy.VECTOR, 0) > 0:
             vector_results = await self._vector_search(
                 tenant_id,
-                project_id,
+                project,
                 query,
                 k * 3,
                 temporal_filter,
@@ -253,7 +253,7 @@ class HybridSearchService:
         # Semantic search
         if enable_semantic and weights.get(SearchStrategy.SEMANTIC, 0) > 0:
             semantic_results = await self._semantic_search(
-                tenant_id, project_id, query, k * 2, query_analysis.key_concepts
+                tenant_id, project, query, k * 2, query_analysis.key_concepts
             )
             results_by_strategy[SearchStrategy.SEMANTIC] = semantic_results
 
@@ -262,7 +262,7 @@ class HybridSearchService:
             if query_analysis.requires_graph_traversal or enable_graph:
                 graph_results = await self._graph_search(
                     tenant_id,
-                    project_id,
+                    project,
                     query,
                     query_analysis.key_entities,
                     graph_max_depth,
@@ -273,7 +273,7 @@ class HybridSearchService:
         # Full-text search
         if enable_fulltext and weights.get(SearchStrategy.FULLTEXT, 0) > 0:
             fulltext_results = await self._fulltext_search(
-                tenant_id, project_id, query, k * 2, temporal_filter, tag_filter
+                tenant_id, project, query, k * 2, temporal_filter, tag_filter
             )
             results_by_strategy[SearchStrategy.FULLTEXT] = fulltext_results
 
@@ -352,7 +352,7 @@ class HybridSearchService:
             await self.cache.set(
                 query=query,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 result=final_response.model_dump(),
                 filters=cache_filters,
             )
@@ -366,7 +366,7 @@ class HybridSearchService:
     async def _vector_search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         k: int,
         temporal_filter: Optional[datetime] = None,
@@ -392,7 +392,7 @@ class HybridSearchService:
                 WHERE m.tenant_id = $1 AND m.project = $2
                     AND me.model_name = 'default'
             """
-            params: List[Any] = [tenant_id, project_id, query_embedding]
+            params: List[Any] = [tenant_id, project, query_embedding]
             param_idx = 4
 
             if temporal_filter:
@@ -436,7 +436,7 @@ class HybridSearchService:
     async def _semantic_search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         k: int,
         key_concepts: List[str],
@@ -450,7 +450,7 @@ class HybridSearchService:
                 SELECT sn.id, sn.label, sn.canonical_form, sn.importance_score,
                        sn.source_memory_ids, sn.created_at
                 FROM semantic_nodes sn
-                WHERE sn.tenant_id = $1 AND sn.project_id = $2
+                WHERE sn.tenant_id = $1 AND sn.project = $2
                     AND (
                         sn.label ILIKE '%' || $3 || '%'
                         OR sn.canonical_form ILIKE '%' || $3 || '%'
@@ -461,7 +461,7 @@ class HybridSearchService:
             """
 
             records = await self.rae_service.db.fetch(
-                sql, tenant_id, project_id, query, k
+                sql, tenant_id, project, query, k
             )
 
             # Expand to source memories
@@ -478,7 +478,7 @@ class HybridSearchService:
                         LIMIT 5
                         """,
                         tenant_id,
-                        project_id,
+                        project,
                         memory_ids,
                     )
 
@@ -504,7 +504,7 @@ class HybridSearchService:
     async def _graph_search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         key_entities: List[str],
         max_depth: int,
@@ -523,7 +523,7 @@ class HybridSearchService:
             node_records = await self.rae_service.db.fetch(
                 """
                 SELECT id, node_id, label, properties FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                     AND (
                         label ILIKE ANY($3)
                         OR node_id = ANY($3)
@@ -531,7 +531,7 @@ class HybridSearchService:
                 LIMIT 10
                 """,
                 tenant_id,
-                project_id,
+                project,
                 [f"%{entity}%" for entity in key_entities],
             )
 
@@ -555,7 +555,7 @@ class HybridSearchService:
                         0 as depth
                     FROM knowledge_graph_nodes n
                     WHERE n.tenant_id = $1
-                    AND n.project_id = $2
+                    AND n.project = $2
                     AND n.node_id = ANY($3)
 
                     UNION
@@ -577,7 +577,7 @@ class HybridSearchService:
                     )
                     WHERE gt.depth < $4
                     AND n.tenant_id = $1
-                    AND n.project_id = $2
+                    AND n.project = $2
                 )
                 SELECT DISTINCT ON (id) id, node_id, label, properties, depth
                 FROM graph_traverse
@@ -585,7 +585,7 @@ class HybridSearchService:
                 LIMIT 50
                 """,
                 tenant_id,
-                project_id,
+                project,
                 start_node_ids,
                 max_depth,
             )
@@ -623,7 +623,7 @@ class HybridSearchService:
                 LIMIT $4
                 """,
                 tenant_id,
-                project_id,
+                project,
                 list(memory_ids),
                 k,
             )
@@ -655,7 +655,7 @@ class HybridSearchService:
     async def _fulltext_search(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         k: int,
         temporal_filter: Optional[datetime] = None,
@@ -672,7 +672,7 @@ class HybridSearchService:
                 WHERE tenant_id = $1 AND project = $2
                     AND to_tsvector('english', content) @@ plainto_tsquery('english', $3)
             """
-            params: List[Any] = [tenant_id, project_id, query]
+            params: List[Any] = [tenant_id, project, query]
             param_idx = 4
 
             if temporal_filter:

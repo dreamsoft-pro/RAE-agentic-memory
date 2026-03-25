@@ -81,7 +81,7 @@ async def test_create_node_uses_provider(mock_db):
         "id": "123e4567-e89b-12d3-a456-426614174000",
         "node_id": "test-node",
         "tenant_id": "tenant1",
-        "project_id": "proj1",
+        "project": "proj1",
         "label": "Test",
         "properties": {},
         "created_at": "2025-01-01T00:00:00",

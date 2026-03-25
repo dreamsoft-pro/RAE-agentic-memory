@@ -33,7 +33,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 | | `/memories/{id}` | GET | Get memory by ID |
 | | `/memories/{id}` | PUT | Update memory |
 | | `/memories/{id}` | DELETE | Delete memory |
-| **Search** | `/memory/query` | POST | Hybrid search |
+| **Search** | `/v2/memories/query` | POST | Hybrid search |
 | | `/memory/search/advanced` | POST | Advanced search with filters |
 | **Reflection** | `/reflection/generate` | POST | Generate reflection |
 | | `/reflections` | GET | List reflections |
@@ -100,7 +100,7 @@ curl -H "X-Tenant-ID: your-tenant-id" ...
 
 ## 2. Query Memory (Hybrid Search)
 
-**POST** `/v2/memory/query`
+**POST** `/v2/v2/memories/query`
 
 ### Request Body
 
@@ -322,7 +322,7 @@ print(f"Created memory: {memory_id}")
 
 # 2. Query similar memories
 response = requests.post(
-    f"{BASE_URL}/memory/query",
+    f"{BASE_URL}/v2/memories/query",
     headers=HEADERS,
     json={
         "query": "How to secure authentication?",

@@ -12,7 +12,7 @@ class FeedbackRequest(BaseModel):
         None,
         description="Numeric score from -1.0 to 1.0 (derived from type if missing)",
     )
-    query_text: Optional[str] = Field(
+    query: Optional[str] = Field(
         None, description="The query that triggered this result"
     )
     comment: Optional[str] = Field(None, description="Optional comment")

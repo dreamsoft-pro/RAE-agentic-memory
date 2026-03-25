@@ -24,7 +24,7 @@ class TriggerRepository:
     async def create_trigger(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         rule_name: str,
         event_types: List[str],
         conditions: List[Dict[str, Any]],
@@ -44,7 +44,7 @@ class TriggerRepository:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             rule_name: Name of the trigger rule
             event_types: List of event types to match
             conditions: List of condition objects
@@ -66,7 +66,7 @@ class TriggerRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO trigger_rules (
-                    tenant_id, project_id, rule_name, description,
+                    tenant_id, project, rule_name, description,
                     event_types, conditions, condition_operator, actions,
                     priority, status, retry_config, created_by,
                     template_id, tags, metadata
@@ -75,7 +75,7 @@ class TriggerRepository:
                 RETURNING *
                 """,
                 tenant_id,
-                project_id,
+                project,
                 rule_name,
                 description,
                 event_types,
@@ -130,7 +130,7 @@ class TriggerRepository:
     async def list_triggers(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         status_filter: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
@@ -140,7 +140,7 @@ class TriggerRepository:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             status_filter: Optional status filter
             limit: Maximum number of records
             offset: Pagination offset
@@ -153,12 +153,12 @@ class TriggerRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM trigger_rules
-                    WHERE tenant_id = $1 AND project_id = $2 AND status = $3
+                    WHERE tenant_id = $1 AND project = $2 AND status = $3
                     ORDER BY priority DESC, created_at DESC
                     LIMIT $4 OFFSET $5
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     status_filter,
                     limit,
                     offset,
@@ -167,12 +167,12 @@ class TriggerRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM trigger_rules
-                    WHERE tenant_id = $1 AND project_id = $2
+                    WHERE tenant_id = $1 AND project = $2
                     ORDER BY priority DESC, created_at DESC
                     LIMIT $3 OFFSET $4
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     limit,
                     offset,
                 )
@@ -277,7 +277,7 @@ class TriggerRepository:
         return deleted
 
     async def get_active_triggers_for_event(
-        self, event_type: str, tenant_id: str, project_id: str
+        self, event_type: str, tenant_id: str, project: str
     ) -> List[Dict[str, Any]]:
         """
         Get active triggers that match a specific event type.
@@ -285,7 +285,7 @@ class TriggerRepository:
         Args:
             event_type: Event type to match
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             List of matching trigger records, ordered by priority
@@ -295,13 +295,13 @@ class TriggerRepository:
                 """
                 SELECT * FROM trigger_rules
                 WHERE tenant_id = $1
-                  AND project_id = $2
+                  AND project = $2
                   AND status = 'active'
                   AND $3 = ANY(event_types)
                 ORDER BY priority DESC, created_at ASC
                 """,
                 tenant_id,
-                project_id,
+                project,
                 event_type,
             )
 
@@ -311,7 +311,7 @@ class TriggerRepository:
         self,
         trigger_id: UUID,
         tenant_id: str,
-        project_id: str,
+        project: str,
         event_id: Optional[UUID],
         event_type: str,
         event_payload: Optional[Dict[str, Any]] = None,
@@ -331,7 +331,7 @@ class TriggerRepository:
         Args:
             trigger_id: Trigger UUID
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             event_id: Event UUID that triggered execution
             event_type: Event type
             event_payload: Event data
@@ -352,7 +352,7 @@ class TriggerRepository:
             execution_id = await conn.fetchval(
                 """
                 INSERT INTO trigger_executions (
-                    trigger_id, tenant_id, project_id,
+                    trigger_id, tenant_id, project,
                     event_id, event_type, event_payload,
                     status, actions_executed, actions_succeeded, actions_failed,
                     duration_ms, error_message, error_details,
@@ -363,7 +363,7 @@ class TriggerRepository:
                 """,
                 trigger_id,
                 tenant_id,
-                project_id,
+                project,
                 event_id,
                 event_type,
                 json.dumps(event_payload) if event_payload else None,
@@ -499,7 +499,7 @@ class WorkflowRepository:
     async def create_workflow(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         workflow_name: str,
         steps: List[Dict[str, Any]],
         created_by: str,
@@ -516,7 +516,7 @@ class WorkflowRepository:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             workflow_name: Workflow name
             steps: List of workflow steps
             created_by: User who created the workflow
@@ -535,7 +535,7 @@ class WorkflowRepository:
             record = await conn.fetchrow(
                 """
                 INSERT INTO workflows (
-                    tenant_id, project_id, workflow_name, description,
+                    tenant_id, project, workflow_name, description,
                     steps, execution_mode, status, timeout_seconds,
                     retry_policy, created_by, tags, metadata
                 )
@@ -543,7 +543,7 @@ class WorkflowRepository:
                 RETURNING *
                 """,
                 tenant_id,
-                project_id,
+                project,
                 workflow_name,
                 description,
                 json.dumps(steps),
@@ -586,7 +586,7 @@ class WorkflowRepository:
     async def list_workflows(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         status_filter: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
@@ -597,12 +597,12 @@ class WorkflowRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM workflows
-                    WHERE tenant_id = $1 AND project_id = $2 AND status = $3
+                    WHERE tenant_id = $1 AND project = $2 AND status = $3
                     ORDER BY created_at DESC
                     LIMIT $4 OFFSET $5
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     status_filter,
                     limit,
                     offset,
@@ -611,12 +611,12 @@ class WorkflowRepository:
                 records = await conn.fetch(
                     """
                     SELECT * FROM workflows
-                    WHERE tenant_id = $1 AND project_id = $2
+                    WHERE tenant_id = $1 AND project = $2
                     ORDER BY created_at DESC
                     LIMIT $3 OFFSET $4
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     limit,
                     offset,
                 )

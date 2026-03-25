@@ -62,7 +62,7 @@ event = Event(
     event_id="evt_123",
     event_type=EventType.MEMORY_CREATED,
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     timestamp=datetime.now(),
     payload={
         "memory_id": "mem_456",
@@ -92,7 +92,7 @@ trigger = TriggerRule(
     trigger_id="trg_001",
     name="High Importance Memory Alert",
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     event_type=EventType.MEMORY_CREATED,
     condition=TriggerCondition(
         condition_group=ConditionGroup(

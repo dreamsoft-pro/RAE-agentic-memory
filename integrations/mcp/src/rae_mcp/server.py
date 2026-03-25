@@ -516,7 +516,7 @@ class RAEMemoryClient:
         """Request approval for a high-risk operation."""
         payload = {
             "tenant_id": RAE_TENANT_ID,
-            "project_id": RAE_PROJECT_ID,
+            "project": RAE_PROJECT_ID,
             "operation_type": operation_type,
             "operation_description": operation_description,
             "risk_level": risk_level,
@@ -1439,7 +1439,7 @@ async def main():
         "rae_mcp_server_starting",
         version="1.0.0",
         api_url=RAE_API_URL,
-        project_id=RAE_PROJECT_ID,
+        project=RAE_PROJECT_ID,
         tenant_id=RAE_TENANT_ID,
     )
 

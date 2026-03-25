@@ -272,8 +272,8 @@ class PostgreSQLStorage(IMemoryStorage):
         param_idx = 2
 
         # 1. Project Filter (Context)
-        # Handle both 'project' and 'project_id' for backward compatibility
-        p_filter = project or filters.get("project") or filters.get("project_id")
+        # Handle both 'project' and 'project' for backward compatibility
+        p_filter = project or filters.get("project") or filters.get("project")
         if p_filter and p_filter != "default":
             conditions.append(
                 f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
@@ -319,7 +319,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 "min_importance",
                 "score_threshold",
                 "project",
-                "project_id",
+                "project",
                 "agent_id",
                 "layer",
             ]:
@@ -447,8 +447,8 @@ class PostgreSQLStorage(IMemoryStorage):
         param_idx = 2
 
         # 1. Project Filter (Context)
-        # Handle both 'project' and 'project_id' for backward compatibility
-        p_filter = project or filters.get("project") or filters.get("project_id")
+        # Handle both 'project' and 'project' for backward compatibility
+        p_filter = project or filters.get("project") or filters.get("project")
         if p_filter and p_filter != "default":
             conditions.append(
                 f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
@@ -530,7 +530,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     "min_importance",
                     "memory_ids",
                     "project",
-                    "project_id",
+                    "project",
                     "agent_id",
                     "layer",
                 ]:

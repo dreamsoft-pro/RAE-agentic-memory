@@ -58,7 +58,7 @@ def test_retrieve_episodic_valid_state():
     """Test RetrieveEpisodicAction validity with valid state"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=10000),
         memory_state=MemoryState(episodic=MemoryLayerState(count=50)),
     )
@@ -73,7 +73,7 @@ def test_retrieve_episodic_invalid_no_memories():
     """Test RetrieveEpisodicAction invalid with no episodic memories"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(episodic=MemoryLayerState(count=0)),
     )
 
@@ -87,7 +87,7 @@ def test_retrieve_episodic_invalid_budget_exhausted():
     """Test RetrieveEpisodicAction invalid with exhausted budget"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         budget_state=BudgetState(remaining_tokens=0),
         memory_state=MemoryState(episodic=MemoryLayerState(count=50)),
     )
@@ -100,7 +100,7 @@ def test_retrieve_episodic_invalid_budget_exhausted():
 @pytest.mark.unit
 def test_retrieve_episodic_cost_estimation():
     """Test RetrieveEpisodicAction cost estimation"""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     action = RetrieveEpisodicAction(parameters={"k": 15})
 
@@ -116,7 +116,7 @@ def test_retrieve_working_action():
     """Test RetrieveWorkingAction"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(working=MemoryLayerState(count=10)),
     )
 
@@ -133,7 +133,7 @@ def test_retrieve_semantic_without_graph():
     """Test RetrieveSemanticAction without graph"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(semantic=MemoryLayerState(count=100)),
     )
 
@@ -149,7 +149,7 @@ def test_retrieve_semantic_with_graph():
     """Test RetrieveSemanticAction with graph traversal"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(semantic=MemoryLayerState(count=100)),
         graph_state=GraphState(node_count=200, edge_count=400),
     )
@@ -171,7 +171,7 @@ def test_retrieve_semantic_invalid_no_graph():
     """Test RetrieveSemanticAction invalid when graph required but missing"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(semantic=MemoryLayerState(count=100)),
         graph_state=GraphState(node_count=0),  # No graph
     )
@@ -186,7 +186,7 @@ def test_retrieve_ltm_action():
     """Test RetrieveLTMAction"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(ltm=MemoryLayerState(count=50)),
     )
 
@@ -203,7 +203,7 @@ def test_retrieve_reflective_action():
     """Test RetrieveReflectiveAction"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(reflective=MemoryLayerState(count=10)),
     )
 
@@ -219,7 +219,7 @@ def test_call_llm_action_valid():
     """Test CallLLMAction with valid state"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(content=["memory 1"], token_count=500),
         budget_state=BudgetState(remaining_tokens=10000, remaining_cost_usd=5.0),
     )
@@ -234,7 +234,7 @@ def test_call_llm_action_invalid_no_context():
     """Test CallLLMAction invalid with no context"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=0),
     )
 
@@ -248,7 +248,7 @@ def test_call_llm_action_cost_estimation():
     """Test CallLLMAction cost estimation"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=2000),
     )
 
@@ -266,7 +266,7 @@ def test_call_llm_action_exceeds_budget():
     """Test CallLLMAction invalid when exceeding budget"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=2000),
         budget_state=BudgetState(
             remaining_tokens=10000, remaining_cost_usd=0.001
@@ -284,7 +284,7 @@ def test_prune_context_action():
     """Test PruneContextAction"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=5000),
     )
 
@@ -304,7 +304,7 @@ def test_prune_context_invalid_empty():
     """Test PruneContextAction invalid with empty context"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=0),
     )
 
@@ -320,7 +320,7 @@ def test_generate_reflection_action_valid():
     """Test GenerateReflectionAction with sufficient memories"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=50), semantic=MemoryLayerState(count=100)
         ),
@@ -339,7 +339,7 @@ def test_generate_reflection_action_invalid_insufficient_memories():
     """Test GenerateReflectionAction invalid with insufficient memories"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=3), semantic=MemoryLayerState(count=2)
         ),
@@ -356,7 +356,7 @@ def test_generate_reflection_action_invalid_insufficient_memories():
 @pytest.mark.unit
 def test_generate_reflection_cost_estimation():
     """Test GenerateReflectionAction cost estimation"""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     action = GenerateReflectionAction(
         parameters={"max_memories": 100, "min_cluster_size": 5}
@@ -373,7 +373,7 @@ def test_generate_reflection_cost_estimation():
 @pytest.mark.unit
 def test_update_graph_action():
     """Test UpdateGraphAction"""
-    state = RAEState(tenant_id="test", project_id="test")
+    state = RAEState(tenant_id="test", project="test")
 
     action = UpdateGraphAction(
         parameters={"operation": "add_node", "node_data": {"name": "test"}}
@@ -393,7 +393,7 @@ def test_consolidate_episodic_to_working_action():
     """Test ConsolidateEpisodicToWorkingAction"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=50), working=MemoryLayerState(count=10)
         ),
@@ -414,7 +414,7 @@ def test_consolidate_invalid_no_episodic():
     """Test ConsolidateEpisodicToWorkingAction invalid with no episodic memories"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(episodic=MemoryLayerState(count=0)),
     )
 
@@ -428,7 +428,7 @@ def test_consolidate_invalid_working_full():
     """Test ConsolidateEpisodicToWorkingAction invalid with full working memory"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=50), working=MemoryLayerState(count=150)
         ),
@@ -445,7 +445,7 @@ def test_summarize_context_extractive():
     """Test SummarizeContextAction with extractive method"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=5000),
     )
 
@@ -465,7 +465,7 @@ def test_summarize_context_abstractive():
     """Test SummarizeContextAction with abstractive method"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=4000),
     )
 
@@ -500,7 +500,7 @@ def test_multiple_actions_in_sequence():
     """Test multiple actions can be created and validated in sequence"""
     state = RAEState(
         tenant_id="test",
-        project_id="test",
+        project="test",
         working_context=WorkingContext(token_count=1000),
         memory_state=MemoryState(
             episodic=MemoryLayerState(count=50), semantic=MemoryLayerState(count=100)

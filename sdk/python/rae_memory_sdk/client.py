@@ -119,14 +119,14 @@ class MemoryClient:
         return StoreMemoryResponse(**response_data)
 
     def query(
-        self, query_text: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
+        self, query: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
     ) -> QueryMemoryResponse:
         """
         Queries the memory for relevant records.
         """
-        request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
+        request_body = QueryMemoryRequest(query=query, k=k, filters=filters)
         response_data = self._request(
-            "POST", "/v2/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v2/v2/memories/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -143,7 +143,7 @@ class MemoryClient:
 
     def extract_knowledge_graph(
         self,
-        project_id: str,
+        project: str,
         limit: int = 50,
         min_confidence: float = 0.5,
         auto_store: bool = True,
@@ -152,7 +152,7 @@ class MemoryClient:
         Extract knowledge graph from episodic memories.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             limit: Maximum number of memories to process
             min_confidence: Minimum confidence threshold for triples
             auto_store: Whether to automatically store extracted triples
@@ -161,7 +161,7 @@ class MemoryClient:
             Dict containing extracted triples, entities, and statistics
         """
         request_body: Dict[str, Any] = {
-            "project_id": project_id,
+            "project": project,
             "limit": limit,
             "min_confidence": min_confidence,
             "auto_store": auto_store,
@@ -173,7 +173,7 @@ class MemoryClient:
 
     def query_graph(
         self,
-        project_id: str,
+        project: str,
         query: str,
         limit: int = 20,
         similarity_threshold: float = 0.7,
@@ -182,7 +182,7 @@ class MemoryClient:
         Query the knowledge graph for relevant nodes and edges.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             query: Search query
             limit: Maximum items to return
             similarity_threshold: Minimum similarity for nodes
@@ -192,7 +192,7 @@ class MemoryClient:
         """
         request_body: Dict[str, Any] = {
             "query": query,
-            "project_id": project_id,
+            "project": project,
             "limit": limit,
             "similarity_threshold": similarity_threshold,
         }
@@ -200,24 +200,24 @@ class MemoryClient:
             Dict[str, Any], self._request("POST", "/v2/graph/query", json=request_body)
         )
 
-    def get_graph_stats(self, project_id: str) -> Dict[str, Any]:
+    def get_graph_stats(self, project: str) -> Dict[str, Any]:
         """
         Get knowledge graph statistics.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
 
         Returns:
             Dict with node/edge counts and distribution
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v2/graph/stats?project_id={project_id}"),
+            self._request("GET", f"/v2/graph/stats?project={project}"),
         )
 
     def get_graph_nodes(
         self,
-        project_id: str,
+        project: str,
         limit: int = 100,
         use_pagerank: bool = False,
         min_pagerank_score: float = 0.0,
@@ -226,7 +226,7 @@ class MemoryClient:
         Retrieve graph nodes with optional PageRank filtering.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             limit: Maximum nodes to return
             use_pagerank: Enable PageRank filtering
             min_pagerank_score: Minimum PageRank threshold
@@ -235,7 +235,7 @@ class MemoryClient:
             List of node dictionaries
         """
         params = {
-            "project_id": project_id,
+            "project": project,
             "limit": limit,
             "use_pagerank": use_pagerank,
             "min_pagerank_score": min_pagerank_score,
@@ -245,20 +245,20 @@ class MemoryClient:
         )
 
     def get_graph_edges(
-        self, project_id: str, limit: int = 100, relation: Optional[str] = None
+        self, project: str, limit: int = 100, relation: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Retrieve graph edges with optional relation filtering.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             limit: Maximum edges to return
             relation: Filter by relation type
 
         Returns:
             List of edge dictionaries
         """
-        params = {"project_id": project_id, "limit": limit}
+        params = {"project": project, "limit": limit}
         if relation:
             params["relation"] = relation
         return cast(
@@ -266,13 +266,13 @@ class MemoryClient:
         )
 
     def get_subgraph(
-        self, project_id: str, node_ids: List[str], depth: int = 1
+        self, project: str, node_ids: List[str], depth: int = 1
     ) -> Dict[str, Any]:
         """
         Retrieve a subgraph starting from specific nodes.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             node_ids: List of starting node IDs
             depth: Maximum traversal depth
 
@@ -283,7 +283,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             self._request(
-                "POST", f"/v2/graph/subgraph?project_id={project_id}", json=request_body
+                "POST", f"/v2/graph/subgraph?project={project}", json=request_body
             ),
         )
 
@@ -373,7 +373,7 @@ class MemoryClient:
     def request_approval(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         operation_type: str,
         operation_description: str,
         risk_level: str,
@@ -388,7 +388,7 @@ class MemoryClient:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             operation_type: Type of operation (e.g., "delete", "export", "modify")
             operation_description: Human-readable description of the operation
             risk_level: Risk level (none, low, medium, high, critical)
@@ -403,7 +403,7 @@ class MemoryClient:
         """
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "operation_type": operation_type,
             "operation_description": operation_description,
             "risk_level": risk_level,
@@ -474,7 +474,7 @@ class MemoryClient:
     def create_decision_context(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         sources: List[Dict[str, Any]],
         metadata: Optional[Dict[str, Any]] = None,
@@ -484,7 +484,7 @@ class MemoryClient:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Original query that led to the decision
             sources: List of context sources with metadata
             metadata: Optional additional metadata
@@ -494,7 +494,7 @@ class MemoryClient:
         """
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "query": query,
             "sources": sources,
         }
@@ -511,7 +511,7 @@ class MemoryClient:
     def record_decision(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         context_id: str,
         decision: str,
         decision_type: str,
@@ -525,7 +525,7 @@ class MemoryClient:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             context_id: ID of the decision context
             decision: The decision made
             decision_type: Type of decision (e.g., "classification", "recommendation")
@@ -539,7 +539,7 @@ class MemoryClient:
         """
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "context_id": context_id,
             "decision": decision,
             "decision_type": decision_type,
@@ -833,22 +833,22 @@ class MemoryClient:
         return StoreMemoryResponse(**response_data)
 
     async def query_async(
-        self, query_text: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
+        self, query: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
     ) -> QueryMemoryResponse:
         """
         Asynchronously queries the memory for relevant records.
 
         Args:
-            query_text: Search query
+            query: Search query
             k: Number of results to return
             filters: Optional filters
 
         Returns:
             QueryMemoryResponse with scored results
         """
-        request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
+        request_body = QueryMemoryRequest(query=query, k=k, filters=filters)
         response_data = await self._async_request(
-            "POST", "/v2/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v2/v2/memories/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -871,14 +871,14 @@ class MemoryClient:
 
     async def extract_knowledge_graph_async(
         self,
-        project_id: str,
+        project: str,
         limit: int = 50,
         min_confidence: float = 0.5,
         auto_store: bool = True,
     ) -> Dict[str, Any]:
         """Async version of extract_knowledge_graph."""
         request_body: Dict[str, Any] = {
-            "project_id": project_id,
+            "project": project,
             "limit": limit,
             "min_confidence": min_confidence,
             "auto_store": auto_store,
@@ -891,7 +891,7 @@ class MemoryClient:
     async def query_graph_async(
         self,
         query: str,
-        project_id: str,
+        project: str,
         top_k_vector: int = 5,
         graph_depth: int = 2,
         traversal_strategy: str = "bfs",
@@ -899,7 +899,7 @@ class MemoryClient:
         """Async version of query_graph."""
         request_body: Dict[str, Any] = {
             "query": query,
-            "project_id": project_id,
+            "project": project,
             "top_k_vector": top_k_vector,
             "graph_depth": graph_depth,
             "traversal_strategy": traversal_strategy,
@@ -909,12 +909,12 @@ class MemoryClient:
             await self._async_request("POST", "/v2/graph/query", json=request_body),
         )
 
-    async def get_graph_stats_async(self, project_id: str) -> Dict[str, Any]:
+    async def get_graph_stats_async(self, project: str) -> Dict[str, Any]:
         """Async version of get_graph_stats."""
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "GET", f"/v2/graph/stats?project_id={project_id}"
+                "GET", f"/v2/graph/stats?project={project}"
             ),
         )
 
@@ -937,7 +937,7 @@ class MemoryClient:
     async def request_approval_async(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         operation_type: str,
         operation_description: str,
         risk_level: str,
@@ -950,7 +950,7 @@ class MemoryClient:
         """Async version of request_approval."""
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "operation_type": operation_type,
             "operation_description": operation_description,
             "risk_level": risk_level,
@@ -1004,7 +1004,7 @@ class MemoryClient:
     async def create_decision_context_async(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         query: str,
         sources: List[Dict[str, Any]],
         metadata: Optional[Dict[str, Any]] = None,
@@ -1012,7 +1012,7 @@ class MemoryClient:
         """Async version of create_decision_context."""
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "query": query,
             "sources": sources,
         }
@@ -1029,7 +1029,7 @@ class MemoryClient:
     async def record_decision_async(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         context_id: str,
         decision: str,
         decision_type: str,
@@ -1041,7 +1041,7 @@ class MemoryClient:
         """Async version of record_decision."""
         request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
-            "project_id": project_id,
+            "project": project,
             "context_id": context_id,
             "decision": decision,
             "decision_type": decision_type,

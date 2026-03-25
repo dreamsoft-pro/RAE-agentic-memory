@@ -207,13 +207,13 @@ RAE allows multiple instances to synchronize memories asynchronously with explic
 
         # Define a tenant and project
         tenant_id = "my-test-tenant"
-        project_id = "my-first-project"
+        project = "my-first-project"
 
         # Add a memory
         memory_text = "The user is interested in learning about cognitive architectures."
         await client.add_memory(
             tenant_id,
-            project_id,
+            project,
             memory_text,
             importance=0.8,
             source="hello_world_script"
@@ -222,7 +222,7 @@ RAE allows multiple instances to synchronize memories asynchronously with explic
 
         # Retrieve the memory
         query = "What is the user interested in?"
-        results = await client.query_memory(tenant_id, project_id, query)
+        results = await client.query_memory(tenant_id, project, query)
 
         print(f"\nQuerying for: '{query}'")
         if results:
@@ -340,7 +340,7 @@ RAE follows a clean, 3-layer architecture pattern within its services:
 
 3.  **Route Layer (API):**
     -   **Purpose:** Defines the external-facing API endpoints. It handles incoming HTTP requests, performs validation (using Pydantic), calls the relevant service layer methods, and formats the HTTP response.
-    -   **Example:** `apps/memory_api/routes/memory.py` defines the `/v2/memory/query` endpoint, which calls the memory service to perform a search.
+    -   **Example:** `apps/memory_api/routes/memory.py` defines the `/v2/v2/memories/query` endpoint, which calls the memory service to perform a search.
 
 This separation of concerns makes the codebase modular, easier to test, and easier to maintain.
 

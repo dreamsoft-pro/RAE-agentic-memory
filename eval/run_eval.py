@@ -93,12 +93,12 @@ def run_evaluation(queries):
         headers = {"X-Tenant-Id": TENANT_ID}
         payload = {
             "tenant_id": TENANT_ID,
-            "query_text": q["query"],
+            "query": q["query"],
             "k": 10,  # We retrieve 10 documents for evaluation
         }
 
         try:
-            r = requests.post(f"{API}/memory/query", json=payload, headers=headers)
+            r = requests.post(f"{API}/v2/memories/query", json=payload, headers=headers)
             r.raise_for_status()
             dt = (time.time() - t0) * 1000
             latencies.append(dt)

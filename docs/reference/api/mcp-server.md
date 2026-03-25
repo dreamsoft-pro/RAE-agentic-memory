@@ -108,7 +108,7 @@ RAE exposes memories as MCP resources:
 
 ```
 rae://memory/{memory_id}
-rae://project/{project_id}/memories
+rae://project/{project}/memories
 rae://search?q={query}
 ```
 

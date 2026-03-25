@@ -129,7 +129,7 @@ search = HybridSearchService(pool=db_pool, enable_cache=True)
 
 results = await search.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="authentication best practices",
     k=10,
     enable_graph=True,

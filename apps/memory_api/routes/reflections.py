@@ -131,7 +131,7 @@ async def query_reflections(request: QueryReflectionsRequest, pool=Depends(get_p
     {
       "tenant_id": "acme-corp",
       "project": "production",
-      "query_text": "authentication patterns",
+      "query": "authentication patterns",
       "k": 10,
       "reflection_types": ["pattern", "insight"],
       "min_priority": 3,
@@ -147,21 +147,21 @@ async def query_reflections(request: QueryReflectionsRequest, pool=Depends(get_p
         "query_reflections_request",
         tenant_id=request.tenant_id,
         project=request.project,
-        has_query=request.query_text is not None,
+        has_query=request.query is not None,
     )
 
     try:
         # Generate embedding for semantic search if query provided
         query_embedding = None
-        if request.query_text:
+        if request.query:
             ml_client = MLServiceClient()
-            query_embedding = await ml_client.get_embedding(request.query_text)
+            query_embedding = await ml_client.get_embedding(request.query)
 
         # Query reflections
         reflections, total_count = await reflection_repository.query_reflections(
             pool=pool,
             tenant_id=request.tenant_id,
-            project_id=request.project,
+            project=request.project,
             query_embedding=query_embedding,
             k=request.k,
             reflection_types=request.reflection_types,
@@ -178,10 +178,10 @@ async def query_reflections(request: QueryReflectionsRequest, pool=Depends(get_p
             await reflection_repository.log_reflection_usage(
                 pool=pool,
                 tenant_id=request.tenant_id,
-                project_id=request.project,
+                project=request.project,
                 reflection_id=reflection.id,
                 usage_type="query",
-                query_text=request.query_text,
+                query=request.query,
                 rank_position=i + 1,
             )
 
@@ -236,14 +236,14 @@ async def get_reflection(
         raise HTTPException(status_code=404, detail="Reflection not found")
 
     # Verify tenant access
-    if reflection.tenant_id != tenant_id or reflection.project_id != project:
+    if reflection.tenant_id != tenant_id or reflection.project != project:
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Log usage
     await reflection_repository.log_reflection_usage(
         pool=pool,
         tenant_id=tenant_id,
-        project_id=project,
+        project=project,
         reflection_id=reflection_id,
         usage_type="api_call",
     )
@@ -401,7 +401,7 @@ async def create_reflection_relationship(
         relationship = await reflection_repository.create_reflection_relationship(
             pool=pool,
             tenant_id=request.tenant_id,
-            project_id=request.project,
+            project=request.project,
             source_reflection_id=request.source_reflection_id,
             target_reflection_id=request.target_reflection_id,
             relation_type=request.relation_type,
@@ -453,7 +453,7 @@ async def get_reflection_statistics(
     logger.info("get_statistics_request", tenant_id=tenant_id, project=project)
 
     statistics = await reflection_repository.get_reflection_statistics(
-        pool=pool, tenant_id=tenant_id, project_id=project
+        pool=pool, tenant_id=tenant_id, project=project
     )
 
     return statistics
@@ -496,7 +496,7 @@ async def delete_reflections_batch(
             """
             DELETE FROM reflections
             WHERE tenant_id = $1
-              AND project_id = $2
+              AND project = $2
               AND id = ANY($3)
             """,
             tenant_id,

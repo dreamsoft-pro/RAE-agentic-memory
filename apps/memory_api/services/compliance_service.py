@@ -128,7 +128,7 @@ class ComplianceService:
     async def generate_compliance_report(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         report_type: str = "full",
         compliance_area: Optional[ComplianceArea] = None,
     ) -> ComplianceReport:
@@ -137,7 +137,7 @@ class ComplianceService:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             report_type: 'full', 'summary', or 'area_specific'
             compliance_area: Specific area for area_specific reports
 
@@ -148,42 +148,42 @@ class ComplianceService:
             f"Generating ISO 42001 compliance report for tenant {tenant_id}",
             extra={
                 "tenant_id": tenant_id,
-                "project_id": project_id,
+                "project": project,
                 "report_type": report_type,
             },
         )
 
         # Collect all compliance metrics
-        governance_metrics = await self._get_governance_metrics(tenant_id, project_id)
-        risk_metrics = await self._get_risk_management_metrics(tenant_id, project_id)
-        data_metrics = await self._get_data_management_metrics(tenant_id, project_id)
+        governance_metrics = await self._get_governance_metrics(tenant_id, project)
+        risk_metrics = await self._get_risk_management_metrics(tenant_id, project)
+        data_metrics = await self._get_data_management_metrics(tenant_id, project)
         transparency_metrics = await self._get_transparency_metrics(
-            tenant_id, project_id
+            tenant_id, project
         )
         human_oversight_metrics = await self._get_human_oversight_metrics(
-            tenant_id, project_id
+            tenant_id, project
         )
         security_metrics = await self._get_security_privacy_metrics(
-            tenant_id, project_id
+            tenant_id, project
         )
 
         # Get risk register
-        active_risks = await self._get_active_risks(tenant_id, project_id)
+        active_risks = await self._get_active_risks(tenant_id, project)
 
         # Get data retention metrics
-        retention_metrics = await self._get_retention_metrics(tenant_id, project_id)
+        retention_metrics = await self._get_retention_metrics(tenant_id, project)
 
         # Get source trust metrics
         source_trust_metrics = await self._get_source_trust_metrics(
-            tenant_id, project_id
+            tenant_id, project
         )
 
         # Get audit trail completeness
         audit_completeness = await self._get_audit_trail_completeness(
-            tenant_id, project_id
+            tenant_id, project
         )
         audit_entries_count = await self._get_audit_entries_count(
-            tenant_id, project_id, days=30
+            tenant_id, project, days=30
         )
 
         # Calculate overall compliance score
@@ -249,7 +249,7 @@ class ComplianceService:
         # Create compliance report
         report = ComplianceReport(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             report_type=report_type,
             overall_compliance_score=overall_score,
             overall_status=overall_status,
@@ -401,7 +401,7 @@ class ComplianceService:
     # ========================================================================
 
     async def _get_governance_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get governance compliance metrics"""
         metrics = []
@@ -470,7 +470,7 @@ class ComplianceService:
         return metrics
 
     async def _get_risk_management_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get risk management compliance metrics"""
         metrics = []
@@ -548,7 +548,7 @@ class ComplianceService:
         return metrics
 
     async def _get_data_management_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get data management compliance metrics"""
         metrics = []
@@ -596,7 +596,7 @@ class ComplianceService:
         return metrics
 
     async def _get_transparency_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get transparency compliance metrics"""
         metrics = []
@@ -624,10 +624,10 @@ class ComplianceService:
 
         # 8.2 - Context provenance and decision lineage
         context_quality = await self._get_context_provenance_quality(
-            tenant_id, project_id
+            tenant_id, project
         )
         decision_coverage = await self._get_decision_audit_coverage(
-            tenant_id, project_id
+            tenant_id, project
         )
 
         combined_provenance = (context_quality + decision_coverage) / 2
@@ -657,15 +657,15 @@ class ComplianceService:
         return metrics
 
     async def _get_human_oversight_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get human oversight compliance metrics"""
         # 9.1 - Human oversight for high-risk operations
         approval_workflow_coverage = await self._get_approval_workflow_coverage(
-            tenant_id, project_id
+            tenant_id, project
         )
         high_risk_approval_rate = await self._get_high_risk_approval_rate(
-            tenant_id, project_id
+            tenant_id, project
         )
 
         # Combined metric: coverage + approval rate
@@ -694,7 +694,7 @@ class ComplianceService:
         ]
 
     async def _get_security_privacy_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[ISO42001Metric]:
         """Get security & privacy compliance metrics"""
         metrics = []
@@ -742,7 +742,7 @@ class ComplianceService:
         return metrics
 
     async def _get_active_risks(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[RiskMetric]:
         """Get active risks from risk register (parsed from documentation)"""
         # This is a simplified version - in production, risks would be in database
@@ -801,7 +801,7 @@ class ComplianceService:
         return risks
 
     async def _get_retention_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> List[DataRetentionMetric]:
         """Get data retention compliance metrics"""
         # Placeholder - would query actual retention data
@@ -820,7 +820,7 @@ class ComplianceService:
         ]
 
     async def _get_source_trust_metrics(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> SourceTrustMetric:
         """Get source trust distribution"""
         async with self.rae_service.db.acquire() as conn:
@@ -881,14 +881,14 @@ class ComplianceService:
             )
 
     async def _get_audit_trail_completeness(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> float:
         """Calculate audit trail completeness percentage"""
         # Placeholder - would calculate based on actual audit logs
         return 85.0
 
     async def _get_audit_entries_count(
-        self, tenant_id: str, project_id: str, days: int = 30
+        self, tenant_id: str, project: str, days: int = 30
     ) -> int:
         """Count audit trail entries in last N days"""
         # Placeholder - would query actual audit log table
@@ -1039,7 +1039,7 @@ class ComplianceService:
             return min(100.0, health_score)
 
     async def _get_context_provenance_quality(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> float:
         """Calculate context provenance quality score"""
         async with self.rae_service.db.acquire() as conn:
@@ -1051,11 +1051,11 @@ class ComplianceService:
                     AVG(coverage_score) as avg_coverage,
                     COUNT(*) as context_count
                 FROM decision_contexts
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                     AND created_at >= NOW() - INTERVAL '30 days'
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
 
             if not result or result["context_count"] == 0:
@@ -1072,7 +1072,7 @@ class ComplianceService:
             return quality_score
 
     async def _get_decision_audit_coverage(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> float:
         """Calculate decision audit coverage percentage"""
         async with self.rae_service.db.acquire() as conn:
@@ -1080,11 +1080,11 @@ class ComplianceService:
                 """
                 SELECT COUNT(*) as decision_count
                 FROM decision_records
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                     AND decided_at >= NOW() - INTERVAL '30 days'
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
 
             decision_count = result["decision_count"] if result else 0
@@ -1098,7 +1098,7 @@ class ComplianceService:
             return 100.0
 
     async def _get_approval_workflow_coverage(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> float:
         """Calculate approval workflow coverage for high-risk operations"""
         async with self.rae_service.db.acquire() as conn:
@@ -1108,11 +1108,11 @@ class ComplianceService:
                     COUNT(*) as total_requests,
                     COUNT(CASE WHEN risk_level IN ('high', 'critical') THEN 1 END) as high_risk_requests
                 FROM approval_requests
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                     AND requested_at >= NOW() - INTERVAL '30 days'
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
 
             if not result or result["total_requests"] == 0:
@@ -1123,7 +1123,7 @@ class ComplianceService:
             return 100.0
 
     async def _get_high_risk_approval_rate(
-        self, tenant_id: str, project_id: str
+        self, tenant_id: str, project: str
     ) -> float:
         """Calculate approval rate for high-risk operations"""
         async with self.rae_service.db.acquire() as conn:
@@ -1133,12 +1133,12 @@ class ComplianceService:
                     COUNT(*) as total_high_risk,
                     COUNT(CASE WHEN status IN ('approved', 'auto_approved') THEN 1 END) as approved_count
                 FROM approval_requests
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                     AND risk_level IN ('high', 'critical')
                     AND requested_at >= NOW() - INTERVAL '30 days'
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
 
             if not result or result["total_high_risk"] == 0:

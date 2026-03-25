@@ -77,7 +77,7 @@ curl -X POST http://localhost:8000/v2/graph-management/nodes/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "nodes": [
       {
         "node_id": "concept_python",
@@ -107,7 +107,7 @@ curl -X POST http://localhost:8000/v2/graph-management/edges/batch \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "project_id": "my-app",
+    "project": "my-app",
     "edges": [
       {
         "source_node_id": "concept_react",
@@ -190,15 +190,15 @@ Handle large result sets efficiently.
 
 ```bash
 # Page 1
-curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=0" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project=my-app&limit=50&offset=0" \
   -H "X-API-Key: your-key"
 
 # Page 2
-curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=50" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project=my-app&limit=50&offset=50" \
   -H "X-API-Key: your-key"
 
 # Page 3
-curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&limit=50&offset=100" \
+curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project=my-app&limit=50&offset=100" \
   -H "X-API-Key: your-key"
 ```
 
@@ -219,12 +219,12 @@ curl "http://localhost:8000/v2/triggers/list?tenant_id=demo&project_id=my-app&li
 
 ```bash
 # First page
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "query_text": "user preferences",
+    "query": "user preferences",
     "k": 50
   }'
 ```
@@ -240,12 +240,12 @@ curl -X POST http://localhost:8000/v2/memory/query \
 
 ```bash
 # Next page
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
     "tenant_id": "demo",
-    "query_text": "user preferences",
+    "query": "user preferences",
     "k": 50,
     "cursor": "eyJsYXN0X2lkIjogIjU1MGU4NDAwLi4uIiwgImxhc3Rfc2NvcmUiOiAwLjg1fQ=="
   }'
@@ -286,7 +286,7 @@ items = fetch_all_pages(
     'http://localhost:8000/v2/triggers/list',
     {
         'tenant_id': 'demo',
-        'project_id': 'my-app',
+        'project': 'my-app',
         'limit': 50
     },
     max_pages=10  # Safety limit
@@ -579,7 +579,7 @@ Respect API rate limits.
 ### Rate Limit Headers
 
 ```bash
-curl -i http://localhost:8000/v2/memory/query \
+curl -i http://localhost:8000/v2/v2/memories/query \
   -H "X-API-Key: your-key"
 ```
 

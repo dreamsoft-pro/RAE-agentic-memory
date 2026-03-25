@@ -197,7 +197,7 @@ search_service = HybridSearchService(pool=db_pool)
 
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="authentication best practices",
     k=10,
     enable_vector=True,
@@ -222,7 +222,7 @@ from datetime import datetime, timedelta
 
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="recent security issues",
     k=5,
     temporal_filter=datetime.now() - timedelta(days=7),
@@ -239,7 +239,7 @@ result = await search_service.search(
 # Override automatic weight calculation
 result = await search_service.search(
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     query="system architecture",
     k=10,
     manual_weights={
@@ -256,7 +256,7 @@ result = await search_service.search(
 ### 1. Caching Strategy
 - **Cache Enabled**: First query hits database, subsequent queries served from cache
 - **TTL**: Balance between freshness and performance (default: 5 minutes)
-- **Invalidation**: Clear cache on memory updates via `cache.invalidate(tenant_id, project_id)`
+- **Invalidation**: Clear cache on memory updates via `cache.invalidate(tenant_id, project)`
 
 ### 2. Parallel Execution
 - All search strategies execute concurrently

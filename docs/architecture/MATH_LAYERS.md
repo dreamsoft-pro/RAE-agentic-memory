@@ -129,7 +129,7 @@ from apps.memory_api.core.math_structure import MathStructure
 math1 = MathStructure(memory_repository, graph_repository)
 
 # Analyze graph structure
-metrics = await math1.analyze_structure(tenant_id, project_id)
+metrics = await math1.analyze_structure(tenant_id, project)
 
 print(f"Graph Connectivity: {metrics.graph_connectivity_score:.2f}")
 print(f"Semantic Coherence: {metrics.semantic_coherence_score:.2f}")
@@ -239,7 +239,7 @@ math2 = MathDynamics(memory_repository)
 # Track drift over time
 drift_metrics = await math2.calculate_drift(
     tenant_id,
-    project_id,
+    project,
     time_window_days=7
 )
 

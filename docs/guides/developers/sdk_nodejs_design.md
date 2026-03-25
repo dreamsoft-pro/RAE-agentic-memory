@@ -69,7 +69,7 @@ class RaeMemoryClient {
   }
 
   async query(request: QueryMemoryRequest): Promise<QueryMemoryResponse> {
-    return this.request<QueryMemoryResponse>('POST', '/memory/query', request);
+    return this.request<QueryMemoryResponse>('POST', '/v2/memories/query', request);
   }
 
   async delete(memoryId: string): Promise<DeleteMemoryResponse> {

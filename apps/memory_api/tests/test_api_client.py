@@ -32,7 +32,7 @@ def rae_client():
         base_url="http://localhost:8000",
         api_key="test-key",
         tenant_id="test-tenant",
-        project_id="test-project",
+        project="test-project",
         max_retries=3,
         enable_circuit_breaker=True,
         enable_cache=True,

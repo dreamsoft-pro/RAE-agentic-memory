@@ -189,13 +189,13 @@ Jeżeli scheduler jest tylko „na papierze”:
 **Zadanie E2 – Refaktoryzacja:**
 
 - W każdym miejscu, które:
-  - ma dostęp do `tenant_id`, `project_id`, `session_id` i „celu zadania”,
+  - ma dostęp do `tenant_id`, `project`, `session_id` i „celu zadania”,
 - wymuś schemat:
 
 ```python
 context = context_builder.build_context(
     tenant_id=...,
-    project_id=...,
+    project=...,
     session_id=...,
     task_description="...",
     ...

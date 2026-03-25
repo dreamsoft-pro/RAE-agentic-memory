@@ -76,7 +76,7 @@ class SemanticNode(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Core identification
     node_id: str = Field(..., max_length=500, description="Canonical identifier")
@@ -170,7 +170,7 @@ class SemanticRelationship(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Relationship
     source_node_id: UUID
@@ -200,7 +200,7 @@ class SemanticIndexEntry(BaseModel):
 
     id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     topic: str
     normalized_topic: str
@@ -345,7 +345,7 @@ class SemanticNodeStatistics(BaseModel):
     """Statistics for semantic nodes"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     total_nodes: int = 0
     concepts: int = 0

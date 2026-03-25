@@ -156,7 +156,7 @@ worker = SummarizationWorker(pool)
 
 summary = await worker.summarize_session(
     tenant_id="tenant-123",
-    project_id="default",
+    project="default",
     session_id=UUID("session-uuid"),
     min_events=10
 )
@@ -170,7 +170,7 @@ summary = await worker.summarize_session(
 # Find all sessions with >100 events and summarize them
 summaries = await worker.summarize_long_sessions(
     tenant_id="tenant-123",
-    project_id="default",
+    project="default",
     event_threshold=100
 )
 
@@ -245,7 +245,7 @@ worker = DreamingWorker(pool)
 
 results = await worker.run_dreaming_cycle(
     tenant_id="tenant-123",
-    project_id="default",
+    project="default",
     lookback_hours=24,
     min_importance=0.6,
     max_samples=20
@@ -260,7 +260,7 @@ results = await worker.run_dreaming_cycle(
 from apps.memory_api.tasks.background_tasks import run_dreaming_task
 
 # Schedule dreaming for specific tenant
-run_dreaming_task.delay(tenant_id="tenant-123", project_id="default")
+run_dreaming_task.delay(tenant_id="tenant-123", project="default")
 ```
 
 ### Dreaming Algorithm
@@ -480,7 +480,7 @@ class SummarizationWorker:
     async def summarize_session(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         session_id: UUID,
         min_events: int = 10,
     ) -> Optional[Dict[str, Any]]
@@ -488,7 +488,7 @@ class SummarizationWorker:
     async def summarize_long_sessions(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         event_threshold: int = 100,
     ) -> List[Dict[str, Any]]
 ```
@@ -500,7 +500,7 @@ class DreamingWorker:
     async def run_dreaming_cycle(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         lookback_hours: int = 24,
         min_importance: float = 0.6,
         max_samples: int = 20,

@@ -123,7 +123,7 @@ class Event(BaseModel):
 
     # Event source
     tenant_id: str
-    project_id: str
+    project: str
     source_service: str = Field(..., description="Service that emitted the event")
 
     # Event data
@@ -310,7 +310,7 @@ class TriggerRule(BaseModel):
 
     trigger_id: UUID
     tenant_id: str
-    project_id: str
+    project: str
 
     # Rule identification
     rule_name: str = Field(..., max_length=200)
@@ -393,7 +393,7 @@ class ActionExecution(BaseModel):
 
     # Context
     tenant_id: str
-    project_id: str
+    project: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -437,7 +437,7 @@ class CreateTriggerRequest(BaseModel):
     """Request to create a trigger rule"""
 
     tenant_id: str
-    project_id: str
+    project: str
     rule_name: str = Field(..., max_length=200)
     description: Optional[str] = None
 
@@ -474,7 +474,7 @@ class EmitEventRequest(BaseModel):
     """Request to emit a custom event"""
 
     tenant_id: str
-    project_id: str
+    project: str
     event_type: EventType
     payload: Dict[str, Any] = Field(default_factory=dict)
     tags: List[str] = Field(default_factory=list)
@@ -512,7 +512,7 @@ class CreateWorkflowRequest(BaseModel):
     """Request to create a workflow"""
 
     tenant_id: str
-    project_id: str
+    project: str
     workflow_name: str
     description: Optional[str] = None
     steps: List[WorkflowStep] = Field(..., min_length=1)

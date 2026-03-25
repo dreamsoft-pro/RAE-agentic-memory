@@ -29,7 +29,7 @@ class RAEClient:
         api_url: str = "http://localhost:8000",
         api_key: str = "default-key",
         tenant_id: str = "default-tenant",
-        project_id: str = "default-project",
+        project: str = "default-project",
         timeout: float = 300.0,
     ):
         """
@@ -39,13 +39,13 @@ class RAEClient:
             api_url: Base URL of RAE API
             api_key: API authentication key
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             timeout: Request timeout in seconds
         """
         self.api_url = api_url.rstrip("/")
         self.api_key = api_key
         self.tenant_id = tenant_id
-        self.project_id = project_id
+        self.project = project
         self.timeout = timeout
 
         self.headers = {
@@ -107,7 +107,7 @@ class RAEClient:
                 "/v2/dashboard/metrics",
                 json={
                     "tenant_id": self.tenant_id,
-                    "project_id": self.project_id,
+                    "project": self.project,
                     "period": "last_24h",
                 },
             )
@@ -146,7 +146,7 @@ class RAEClient:
         """
         try:
             # Use GET /list for raw data retrieval (no vector search)
-            params = {"limit": limit, "offset": 0, "project": self.project_id}
+            params = {"limit": limit, "offset": 0, "project": self.project}
             # Note: API V1 /list might not support multi-layer filter in one go unless updated.
             # Assuming it filters by project mostly.
 
@@ -192,14 +192,14 @@ class RAEClient:
             Dictionary with nodes and edges
         """
         try:
-            # Use project_id parameter as required by API
-            project_id = project or self.project_id
-            if not project_id:
-                raise ValueError("project_id is required for knowledge graph")
+            # Use project parameter as required by API
+            project = project or self.project
+            if not project:
+                raise ValueError("project is required for knowledge graph")
 
             # Fetch nodes and edges separately
-            nodes = self._request("GET", f"/v2/graph/nodes?project_id={project_id}")
-            edges = self._request("GET", f"/v2/graph/edges?project_id={project_id}")
+            nodes = self._request("GET", f"/v2/graph/nodes?project={project}")
+            edges = self._request("GET", f"/v2/graph/edges?project={project}")
 
             # Combine into expected format
             return {
@@ -228,12 +228,12 @@ class RAEClient:
         try:
             response = self._request(
                 "POST",
-                "/v2/memory/query",
+                "/v2/v2/memories/query",
                 json={
-                    "query_text": query,
+                    "query": query,
                     "k": top_k,
                     "filters": filters or {},
-                    "project": self.project_id,
+                    "project": self.project,
                 },
             )
 
@@ -295,7 +295,7 @@ class RAEClient:
                     json={
                         "content": content,
                         "tags": tags or [],
-                        "project": self.project_id,
+                        "project": self.project,
                     },
                 )
 
@@ -343,8 +343,8 @@ class RAEClient:
         try:
             response = self._request(
                 "POST",
-                "/v2/memory/query",
-                json={"query_text": query, "k": top_k, "project": self.project_id},
+                "/v2/v2/memories/query",
+                json={"query": query, "k": top_k, "project": self.project},
             )
 
             results = response.get("results", [])
@@ -370,7 +370,7 @@ class RAEClient:
         This avoids blocking the Dashboard with heavy LLM generation calls.
         """
         try:
-            proj = project or self.project_id
+            proj = project or self.project
 
             # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually,
             # ideally API should support sort, but list usually returns recent first or we assume)
@@ -482,7 +482,7 @@ class RAEClient:
 
 @st.cache_data(ttl=5)
 def get_cached_stats(
-    _client: RAEClient, tenant_id: str, project_id: str
+    _client: RAEClient, tenant_id: str, project: str
 ) -> Dict[str, int]:
     """
     Cached version of get_stats.

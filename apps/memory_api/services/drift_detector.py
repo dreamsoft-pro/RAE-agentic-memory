@@ -53,7 +53,7 @@ class DriftDetector:
     async def detect_drift(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         drift_type: DriftType,
         baseline_start: datetime,
@@ -68,7 +68,7 @@ class DriftDetector:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             metric_name: Name of metric to analyze
             drift_type: Type of drift to detect
             baseline_start: Start of baseline period
@@ -90,12 +90,12 @@ class DriftDetector:
 
         # Fetch baseline data
         baseline_data = await self._fetch_metric_data(
-            tenant_id, project_id, metric_name, baseline_start, baseline_end
+            tenant_id, project, metric_name, baseline_start, baseline_end
         )
 
         # Fetch current data
         current_data = await self._fetch_metric_data(
-            tenant_id, project_id, metric_name, current_start, current_end
+            tenant_id, project, metric_name, current_start, current_end
         )
 
         if len(baseline_data) == 0 or len(current_data) == 0:
@@ -379,7 +379,7 @@ class DriftDetector:
     async def _fetch_metric_data(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         metric_name: str,
         start_time: datetime,
         end_time: datetime,
@@ -389,7 +389,7 @@ class DriftDetector:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             metric_name: Metric name
             start_time: Period start
             end_time: Period end
@@ -412,7 +412,7 @@ class DriftDetector:
                     ORDER BY created_at
                     """,
                     tenant_id,
-                    project_id,
+                    project,
                     start_time,
                     end_time,
                 )

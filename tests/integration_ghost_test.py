@@ -17,14 +17,14 @@ async def test_reflection_db_persistence():
     try:
         rae = RAECoreService(postgres_pool=pool)
         tenant_id = str(uuid.uuid4())
-        project_id = "ghostbusters-final-test"
+        project = "ghostbusters-final-test"
         
         print(f"👻 Starting Persistence Test for Tenant: {tenant_id}")
         
         # 1. Zapisujemy wspomnienie przez serwis
         mem_id = await rae.store_memory(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             content="Ghostbusters check: Testing functional repository pattern.",
             source="test_agent",
             layer="episodic"
@@ -45,7 +45,7 @@ async def test_reflection_db_persistence():
         refl_unit = await create_reflection(
             pool=pool,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             content="Functional reflection test successful.",
             reflection_type=ReflectionType.ANALYSIS,
             priority=3,

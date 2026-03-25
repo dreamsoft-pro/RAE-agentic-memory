@@ -175,7 +175,7 @@ class ReflectionEngine:
 
         # Use repository's batch storage method
         stats = await self.graph_repo.store_graph_triples(
-            triples=triple_dicts, tenant_id=tenant_id, project_id=project
+            triples=triple_dicts, tenant_id=tenant_id, project=project
         )
 
         logger.info(
@@ -231,7 +231,7 @@ class ReflectionEngine:
 
         # Use the dedicated graph extraction service
         extraction_result = await self.graph_extractor.extract_knowledge_graph(
-            project_id=project,
+            project=project,
             tenant_id=tenant_id,
             limit=limit,
             min_confidence=min_confidence,
@@ -241,7 +241,7 @@ class ReflectionEngine:
         if auto_store and extraction_result.triples:
             storage_stats = await self.graph_extractor.store_graph_triples(
                 triples=extraction_result.triples,
-                project_id=project,
+                project=project,
                 tenant_id=tenant_id,
             )
 

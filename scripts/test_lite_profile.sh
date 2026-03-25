@@ -127,13 +127,13 @@ else
 fi
 
 # Test query memory
-echo -n "  Testing POST /v2/memory/query... "
-QUERY_RESPONSE=$(curl -s -X POST ${API_URL}/v2/memory/query \
+echo -n "  Testing POST /v2/v2/memories/query... "
+QUERY_RESPONSE=$(curl -s -X POST ${API_URL}/v2/v2/memories/query \
     -H "Content-Type: application/json" \
     -H "X-Tenant-Id: ${TENANT_ID}" \
     -H "X-API-Key: secret" \
     -d '{
-        "query_text": "smoke test",
+        "query": "smoke test",
         "k": 5
     }' 2>&1)
 

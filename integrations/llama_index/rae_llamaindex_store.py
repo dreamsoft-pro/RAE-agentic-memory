@@ -50,11 +50,11 @@ class _RAEAPIClient:
 
     def query(self, query: VectorStoreQuery) -> VectorStoreQueryResult:
         """Queries the RAE API and returns results."""
-        payload = {"query_text": query.query_str, "k": query.similarity_top_k}
+        payload = {"query": query.query_str, "k": query.similarity_top_k}
         try:
             with httpx.Client() as client:
                 response = client.post(
-                    f"{self.base_url}/memory/query", json=payload, headers=self.headers
+                    f"{self.base_url}/v2/memories/query", json=payload, headers=self.headers
                 )
                 response.raise_for_status()
 

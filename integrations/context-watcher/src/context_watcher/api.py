@@ -42,11 +42,11 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: Cleanup resources
     print("Context Watcher shutting down...")
-    for project_id, project_data in app.state.watched_projects.items():
+    for project, project_data in app.state.watched_projects.items():
         if project_data.get("observer"):
             project_data["observer"].stop()
             project_data["observer"].join()
-            print(f"Stopped watcher for project: {project_id}")
+            print(f"Stopped watcher for project: {project}")
 
 
 app = FastAPI(
@@ -68,7 +68,7 @@ class Project(BaseModel):
 class ProjectRegistrationResponse(BaseModel):
     """Project registration response."""
 
-    project_id: str
+    project: str
     message: str
 
 
@@ -85,7 +85,7 @@ class StoreMemoryRequest(BaseModel):
 class QueryMemoryRequest(BaseModel):
     """Memory query request."""
 
-    query_text: str
+    query: str
     k: int = 10
 
 
@@ -161,16 +161,16 @@ async def register_project(project: Project, background_tasks: BackgroundTasks):
             status_code=400, detail="The provided path is not a valid directory."
         )
 
-    project_id = f"{project.tenant_id}-{os.path.basename(path)}"
-    if project_id in app.state.watched_projects:
+    project = f"{project.tenant_id}-{os.path.basename(path)}"
+    if project in app.state.watched_projects:
         raise HTTPException(
-            status_code=400, detail=f"Project '{project_id}' is already being watched."
+            status_code=400, detail=f"Project '{project}' is already being watched."
         )
 
     callback = get_file_update_callback(tenant_id=project.tenant_id)
     observer = start_watching(path, callback)
 
-    app.state.watched_projects[project_id] = {
+    app.state.watched_projects[project] = {
         "path": path,
         "tenant_id": project.tenant_id,
         "observer": observer,
@@ -179,10 +179,10 @@ async def register_project(project: Project, background_tasks: BackgroundTasks):
     # Update metrics
     WATCHED_PROJECTS.set(len(app.state.watched_projects))
 
-    print(f"Started watching project: {project_id} at {path}")
+    print(f"Started watching project: {project} at {path}")
 
     return ProjectRegistrationResponse(
-        project_id=project_id, message=f"Started watching project '{project_id}'."
+        project=project, message=f"Started watching project '{project}'."
     )
 
 
@@ -201,34 +201,34 @@ async def list_projects():
     }
 
 
-@app.delete("/projects/{project_id}")
-async def unregister_project(project_id: str):
+@app.delete("/projects/{project}")
+async def unregister_project(project: str):
     """
     Stops watching a project directory.
 
     Args:
-        project_id: The project ID to unregister
+        project: The project ID to unregister
 
     Returns:
         Success message
     """
-    if project_id not in app.state.watched_projects:
+    if project not in app.state.watched_projects:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    project_data = app.state.watched_projects[project_id]
+    project_data = app.state.watched_projects[project]
     observer = project_data.get("observer")
     if observer:
         observer.stop()
         observer.join()
 
-    del app.state.watched_projects[project_id]
+    del app.state.watched_projects[project]
 
     # Update metrics
     WATCHED_PROJECTS.set(len(app.state.watched_projects))
 
-    print(f"Stopped watching project: {project_id}")
+    print(f"Stopped watching project: {project}")
 
-    return {"message": f"Stopped watching project '{project_id}'."}
+    return {"message": f"Stopped watching project '{project}'."}
 
 
 # --- RAE API Proxy Endpoints ---
@@ -266,7 +266,7 @@ async def store_memory_proxy(req: StoreMemoryRequest, tenant_id: str):
         return response.json()
 
 
-@app.post("/memory/query")
+@app.post("/v2/memories/query")
 async def query_memory_proxy(req: QueryMemoryRequest, tenant_id: str):
     """
     Proxy endpoint to query memory from the RAE API.
@@ -279,7 +279,7 @@ async def query_memory_proxy(req: QueryMemoryRequest, tenant_id: str):
         RAE API query results
     """
     rae_client = RAEClient(tenant_id=tenant_id)
-    return rae_client.query_memory(req.query_text, req.k)
+    return rae_client.query_memory(req.query, req.k)
 
 
 @app.delete("/memory/delete")

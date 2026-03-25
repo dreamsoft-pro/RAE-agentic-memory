@@ -176,7 +176,7 @@ class ActivityLog(BaseModel):
 
     # Context
     tenant_id: str
-    project_id: str
+    project: str
 
     # Related entities
     memory_id: Optional[UUID] = None
@@ -455,7 +455,7 @@ class WebSocketMessage(BaseModel):
 
     # Context
     tenant_id: str
-    project_id: str
+    project: str
 
     # Timestamp
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -818,7 +818,7 @@ class ComplianceReport(BaseModel):
 
     # Context
     tenant_id: str
-    project_id: str
+    project: str
     report_type: str = Field("full", description="'full', 'summary', 'area_specific'")
 
     # Overall compliance
@@ -904,7 +904,7 @@ class GetDashboardMetricsRequest(BaseModel):
     """Request to get dashboard metrics"""
 
     tenant_id: str
-    project_id: str
+    project: str
     period: MetricPeriod = MetricPeriod.LAST_24H
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
@@ -923,7 +923,7 @@ class GetVisualizationRequest(BaseModel):
     """Request to get visualization data"""
 
     tenant_id: str
-    project_id: str
+    project: str
     visualization_type: VisualizationType
 
     # Type-specific parameters
@@ -959,7 +959,7 @@ class GetSystemHealthRequest(BaseModel):
     """Request to get system health"""
 
     tenant_id: str
-    project_id: str
+    project: str
     include_sub_components: bool = True
 
 
@@ -975,7 +975,7 @@ class SubscribeWebSocketRequest(BaseModel):
     """Request to subscribe to WebSocket events"""
 
     tenant_id: str
-    project_id: str
+    project: str
 
     # Event filters
     event_types: List[DashboardEventType] = Field(
@@ -991,7 +991,7 @@ class WebSocketSubscription(BaseModel):
 
     subscription_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     tenant_id: str
-    project_id: str
+    project: str
 
     subscribed_events: List[DashboardEventType]
     update_interval_seconds: int
@@ -1004,7 +1004,7 @@ class GetComplianceReportRequest(BaseModel):
     """Request to get ISO 42001 compliance report"""
 
     tenant_id: str
-    project_id: str
+    project: str
     report_type: str = Field("full", description="'full', 'summary', 'area_specific'")
     compliance_area: Optional[ComplianceArea] = None  # For area_specific reports
     include_audit_trail: bool = True
@@ -1022,7 +1022,7 @@ class GetComplianceMetricsRequest(BaseModel):
     """Request to get compliance metrics by area"""
 
     tenant_id: str
-    project_id: str
+    project: str
     compliance_area: Optional[ComplianceArea] = None
     include_history: bool = False
     period: MetricPeriod = MetricPeriod.LAST_30D
@@ -1043,7 +1043,7 @@ class GetRiskRegisterRequest(BaseModel):
     """Request to get risk register data"""
 
     tenant_id: str
-    project_id: str
+    project: str
     risk_level: Optional[RiskLevel] = None
     status: Optional[str] = None  # 'open', 'mitigated', etc.
     include_closed: bool = False
@@ -1064,7 +1064,7 @@ class GetAuditTrailRequest(BaseModel):
     """Request to get audit trail entries"""
 
     tenant_id: str
-    project_id: str
+    project: str
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     event_types: Optional[List[str]] = None

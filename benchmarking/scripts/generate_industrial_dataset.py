@@ -388,15 +388,15 @@ class IndustrialDataGenerator:
             
             # 50% chance for exact nonce query, 50% for semantic + nonce
             if random.random() > 0.5:
-                query_text = f"Find entry with code {nonce}"
+                query = f"Find entry with code {nonce}"
             else:
                 # Use a snippet of the text + nonce
                 words = m["text"].split()
                 snippet = " ".join(words[:min(5, len(words))])
-                query_text = f"{snippet} (Reference: {nonce})"
+                query = f"{snippet} (Reference: {nonce})"
 
             queries.append({
-                "query": query_text,
+                "query": query,
                 "expected_source_ids": [m["id"]],
                 "difficulty": "easy",
                 "category": "atomic_lookup",

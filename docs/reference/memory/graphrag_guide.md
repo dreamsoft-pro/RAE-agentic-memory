@@ -111,7 +111,7 @@ Extracts knowledge graph from episodic memories.
 **Request:**
 ```json
 {
-  "project_id": "my-project",
+  "project": "my-project",
   "limit": 50,
   "min_confidence": 0.5,
   "auto_store": true
@@ -128,7 +128,7 @@ Extracts knowledge graph from episodic memories.
       "target": "EncryptionService",
       "confidence": 0.92,
       "metadata": {
-        "project_id": "my-project",
+        "project": "my-project",
         "extraction_method": "llm_structured"
       }
     }
@@ -155,7 +155,7 @@ curl -X POST http://localhost:8000/v2/graph/extract \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "project_id": "my-project",
+    "project": "my-project",
     "limit": 50,
     "min_confidence": 0.6,
     "auto_store": true
@@ -164,14 +164,14 @@ curl -X POST http://localhost:8000/v2/graph/extract \
 
 ### 2. Hybrid Search (Memory Query with Graph)
 
-**Endpoint:** `POST /v2/memory/query`
+**Endpoint:** `POST /v2/v2/memories/query`
 
 Standard memory query extended with graph traversal capabilities.
 
 **Request:**
 ```json
 {
-  "query_text": "authentication bugs and fixes",
+  "query": "authentication bugs and fixes",
   "k": 10,
   "use_graph": true,
   "graph_depth": 2,
@@ -204,12 +204,12 @@ Standard memory query extended with graph traversal capabilities.
 
 **cURL Example:**
 ```bash
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "query_text": "authentication module dependencies",
+    "query": "authentication module dependencies",
     "k": 5,
     "use_graph": true,
     "graph_depth": 2,
@@ -227,7 +227,7 @@ Dedicated endpoint for complex graph-based searches.
 ```json
 {
   "query": "authentication dependencies",
-  "project_id": "my-project",
+  "project": "my-project",
   "top_k_vector": 5,
   "graph_depth": 3,
   "traversal_strategy": "bfs"
@@ -272,7 +272,7 @@ curl -X POST http://localhost:8000/v2/graph/query \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "query": "show me all dependencies of AuthService",
-    "project_id": "my-project",
+    "project": "my-project",
     "top_k_vector": 10,
     "graph_depth": 3,
     "traversal_strategy": "bfs"
@@ -281,14 +281,14 @@ curl -X POST http://localhost:8000/v2/graph/query \
 
 ### 4. Get Graph Statistics
 
-**Endpoint:** `GET /v2/graph/stats?project_id=my-project`
+**Endpoint:** `GET /v2/graph/stats?project=my-project`
 
 Retrieve statistics about the knowledge graph.
 
 **Response:**
 ```json
 {
-  "project_id": "my-project",
+  "project": "my-project",
   "tenant_id": "my-tenant",
   "total_nodes": 145,
   "total_edges": 287,
@@ -307,7 +307,7 @@ Retrieve statistics about the knowledge graph.
 
 **cURL Example:**
 ```bash
-curl -X GET "http://localhost:8000/v2/graph/stats?project_id=my-project" \
+curl -X GET "http://localhost:8000/v2/graph/stats?project=my-project" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
@@ -319,13 +319,13 @@ curl -X GET "http://localhost:8000/v2/graph/stats?project_id=my-project" \
 Retrieve a subgraph starting from specific nodes.
 
 **Parameters:**
-- `project_id`: Project identifier
+- `project`: Project identifier
 - `node_ids`: Comma-separated list of starting node IDs
 - `depth`: Traversal depth (default: 1)
 
 **Example:**
 ```bash
-curl -X GET "http://localhost:8000/v2/graph/subgraph?project_id=my-project&node_ids=AuthService,EncryptionService&depth=2" \
+curl -X GET "http://localhost:8000/v2/graph/subgraph?project=my-project&node_ids=AuthService,EncryptionService&depth=2" \
   -H "X-Tenant-ID: my-tenant" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
@@ -339,7 +339,7 @@ Generate hierarchical (map-reduce) reflection from large episode collections.
 **Request:**
 ```json
 {
-  "project_id": "my-project",
+  "project": "my-project",
   "bucket_size": 10,
   "max_episodes": 1000
 }
@@ -348,7 +348,7 @@ Generate hierarchical (map-reduce) reflection from large episode collections.
 **Response:**
 ```json
 {
-  "project_id": "my-project",
+  "project": "my-project",
   "summary": "The project has focused on improving authentication security...",
   "episodes_processed": 234
 }
@@ -373,7 +373,7 @@ for event in events:
 
 # 2. Extract knowledge graph
 result = httpx.post("http://localhost:8000/v2/graph/extract", json={
-    "project_id": "my-project",
+    "project": "my-project",
     "limit": 100,
     "min_confidence": 0.6,
     "auto_store": True
@@ -390,7 +390,7 @@ Periodically update the graph as new memories are added:
 # Run graph extraction on a schedule (e.g., every hour)
 async def update_knowledge_graph():
     result = await client.post("/v2/graph/extract", json={
-        "project_id": "my-project",
+        "project": "my-project",
         "limit": 50,  # Only process recent memories
         "min_confidence": 0.5,
         "auto_store": True
@@ -407,8 +407,8 @@ Use hybrid search to provide rich context to AI agents:
 user_query = "How does authentication work in our system?"
 
 # Perform hybrid search
-response = httpx.post("http://localhost:8000/v2/memory/query", json={
-    "query_text": user_query,
+response = httpx.post("http://localhost:8000/v2/v2/memories/query", json={
+    "query": user_query,
     "k": 10,
     "use_graph": True,
     "graph_depth": 3,
@@ -430,7 +430,7 @@ Explore dependencies and relationships in your codebase:
 # Find all dependencies of a specific module
 result = httpx.post("http://localhost:8000/v2/graph/query", json={
     "query": "AuthService dependencies and relationships",
-    "project_id": "my-project",
+    "project": "my-project",
     "graph_depth": 3,
     "traversal_strategy": "bfs"
 }, headers={"X-Tenant-ID": "tenant-123"})
@@ -502,9 +502,9 @@ The knowledge graph tables are indexed for optimal performance:
 
 ```sql
 -- Indexes created by migration
-CREATE INDEX idx_nodes_tenant_project ON knowledge_graph_nodes(tenant_id, project_id);
+CREATE INDEX idx_nodes_tenant_project ON knowledge_graph_nodes(tenant_id, project);
 CREATE INDEX idx_nodes_node_id ON knowledge_graph_nodes(node_id);
-CREATE INDEX idx_edges_tenant_project ON knowledge_graph_edges(tenant_id, project_id);
+CREATE INDEX idx_edges_tenant_project ON knowledge_graph_edges(tenant_id, project);
 CREATE INDEX idx_edges_relation ON knowledge_graph_edges(relation);
 ```
 
@@ -575,7 +575,7 @@ client = MemoryClient(
 
 # Extract graph
 result = client.extract_knowledge_graph(
-    project_id="my-project",
+    project="my-project",
     limit=50,
     min_confidence=0.6
 )
@@ -596,7 +596,7 @@ from langchain.memory import RAEGraphMemory
 memory = RAEGraphMemory(
     rae_url="http://localhost:8000",
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     use_graph=True,
     graph_depth=2
 )

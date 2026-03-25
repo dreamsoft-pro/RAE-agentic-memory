@@ -51,7 +51,7 @@ This document provides a complete index of all API endpoints in the RAE Agentic 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/v2/memory/store` | Store a new memory (episodic, semantic, procedural) |
-| POST | `/v2/memory/query` | Query memories with vector similarity + filters |
+| POST | `/v2/v2/memories/query` | Query memories with vector similarity + filters |
 | DELETE | `/v2/memory/delete` | Delete memories by ID or filters |
 | POST | `/v2/memory/rebuild-reflections` | Trigger reflection regeneration |
 | GET | `/v2/memory/reflection-stats` | Get reflection statistics |
@@ -395,10 +395,10 @@ All endpoints (except `/health*` and `/metrics`) require authentication:
 
 ```bash
 # API Key
-curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/memory/query
+curl -H "X-API-Key: your-api-key" http://localhost:8000/v2/v2/memories/query
 
 # JWT Bearer Token
-curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/memory/query
+curl -H "Authorization: Bearer your-token" http://localhost:8000/v2/v2/memories/query
 ```
 
 ## Common Headers

@@ -257,7 +257,7 @@ class StoreMemoryResponse(BaseModel):
 
 
 class QueryMemoryRequest(BaseModel):
-    query_text: str = Field(min_length=1, max_length=1024)
+    query: str = Field(min_length=1, max_length=1024)
     k: int = Field(default=10, gt=0, le=10000)
     filters: Optional[Dict[str, Any]] = None
     # Hybrid search parameters
@@ -275,13 +275,13 @@ class QueryMemoryRequest(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "query_text": "What are the user's UI preferences?",
+                    "query": "What are the user's UI preferences?",
                     "k": 5,
                     "filters": {"tags": ["preferences"]},
                     "use_graph": False,
                 },
                 {
-                    "query_text": "Find related concepts about authentication",
+                    "query": "Find related concepts about authentication",
                     "k": 10,
                     "use_graph": True,
                     "graph_depth": 3,

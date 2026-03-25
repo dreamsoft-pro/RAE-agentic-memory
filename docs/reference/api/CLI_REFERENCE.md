@@ -40,13 +40,13 @@ profiles:
     base_url: https://rae.example.com
     api_key: ${RAE_API_KEY}
     tenant_id: tenant-123
-    project_id: default
+    project: default
 
   local:
     base_url: http://localhost:8000
     api_key: test-key
     tenant_id: test-tenant
-    project_id: default
+    project: default
 ```
 
 ## Commands

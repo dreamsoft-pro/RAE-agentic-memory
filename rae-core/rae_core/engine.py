@@ -410,7 +410,7 @@ class RAEEngine:
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     q_resp = await client.post(f"{self.settings.QUALITY_API_URL}/v2/quality/audit", json={
                         "code": content,
-                        "project_id": project,
+                        "project": project,
                         "importance": "medium"
                     })
                     if q_resp.status_code == 200:

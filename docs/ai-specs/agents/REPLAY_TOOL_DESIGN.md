@@ -37,7 +37,7 @@ To enable comprehensive replay, the following information needs to be stored for
     {
       "step_id": "uuid",
       "timestamp": "iso8601",
-      "query_text": "string",
+      "query": "string",
       "raw_retrieved_memories": [
         {
           "memory_id": "uuid",

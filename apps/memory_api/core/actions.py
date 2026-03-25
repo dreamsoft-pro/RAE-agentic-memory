@@ -196,7 +196,7 @@ class RetrieveEpisodicAction(Action):
         ) as span:
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
-            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.project", state.project)
             span.set_attribute("rae.memory.layer", "episodic")
             span.set_attribute("rae.memory.count", state.memory_state.episodic.count)
 
@@ -409,7 +409,7 @@ class CallLLMAction(Action):
         with tracer.start_as_current_span("rae.action.call_llm.validate") as span:
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
-            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.project", state.project)
             span.set_attribute(
                 "rae.action.model", self.parameters.get("model", "gpt-4o-mini")
             )
@@ -556,7 +556,7 @@ class GenerateReflectionAction(Action):
         ) as span:
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
-            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.project", state.project)
             span.set_attribute("rae.memory.layer", "reflective")
 
             if state.budget_state.is_exhausted():

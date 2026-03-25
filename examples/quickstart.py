@@ -114,7 +114,7 @@ async def main():
     client = MemoryClient(
         api_url="http://localhost:8000",
         tenant_id="quickstart-demo",
-        project_id="my-first-agent",
+        project="my-first-agent",
     )
 
     console.print("✅ Client initialized!")

@@ -38,7 +38,7 @@ def sample_event():
     return Event(
         event_id=str(uuid4()),
         tenant_id=TENANT_ID,
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         source_service="test_service",
         event_type=EventType.MEMORY_CREATED,
         timestamp=datetime.now(timezone.utc),
@@ -170,7 +170,7 @@ async def test_process_event_flow(rules_engine, sample_event):
         trigger_id=uuid4(),
         rule_name="High Importance Trigger",
         tenant_id=TENANT_ID,
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         created_by="test_user",
         condition=TriggerCondition(
             event_types=[EventType.MEMORY_CREATED],
@@ -217,7 +217,7 @@ async def test_action_retry_logic(rules_engine, sample_event):
         trigger_id=uuid4(),
         rule_name="Retry Test",
         tenant_id=TENANT_ID,
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         created_by="test_user",
         condition=TriggerCondition(
             event_types=[EventType.MEMORY_CREATED],
@@ -265,7 +265,7 @@ async def test_rate_limit_check(rules_engine):
         trigger_id=uuid4(),
         rule_name="Rate Limit Test",
         tenant_id=TENANT_ID,
-        project_id=PROJECT_ID,
+        project=PROJECT_ID,
         created_by="test_user",
         condition=TriggerCondition(
             event_types=[EventType.MEMORY_CREATED],

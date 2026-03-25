@@ -143,7 +143,7 @@ class ReflectionEngineV2:
         logger.info(
             "reflection_generation_started",
             tenant_id=context.tenant_id,
-            project_id=context.project_id,
+            project=context.project,
             outcome=context.outcome.value,
             event_count=len(context.events),
         )
@@ -306,7 +306,7 @@ class ReflectionEngineV2:
         self,
         result: ReflectionResult,
         tenant_id: str,
-        project_id: str,
+        project: str,
         session_id: Optional[UUID] = None,
     ) -> Dict[str, str]:
         """
@@ -318,7 +318,7 @@ class ReflectionEngineV2:
         Args:
             result: ReflectionResult to store
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             session_id: Optional session identifier
 
         Returns:
@@ -329,7 +329,7 @@ class ReflectionEngineV2:
         # Store reflection
         reflection_id = await self.rae_service.store_memory(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             content=result.reflection_text,
             source="reflection_engine_v2",
             importance=result.importance,
@@ -342,7 +342,7 @@ class ReflectionEngineV2:
         logger.info(
             "reflection_stored",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             reflection_id=reflection_id,
             importance=result.importance,
         )
@@ -351,7 +351,7 @@ class ReflectionEngineV2:
         if result.strategy_text:
             strategy_id = await self.rae_service.store_memory(
                 tenant_id=tenant_id,
-                project=project_id,
+                project=project,
                 content=result.strategy_text,
                 source="reflection_engine_v2",
                 importance=result.importance
@@ -365,7 +365,7 @@ class ReflectionEngineV2:
             logger.info(
                 "strategy_stored",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 strategy_id=strategy_id,
             )
 
@@ -374,8 +374,8 @@ class ReflectionEngineV2:
     async def query_reflections(
         self,
         tenant_id: str,
-        project_id: str,
-        query_text: Optional[str] = None,
+        project: str,
+        query: Optional[str] = None,
         k: int = 5,
         min_importance: float = 0.5,
         tags: Optional[List[str]] = None,
@@ -386,17 +386,17 @@ class ReflectionEngineV2:
         This ensures that even specific technical codes or exact matches
         are found and used during the reflection process.
         """
-        if not query_text:
+        if not query:
             # Fallback to listing if no query provided
             reflections = await self.rae_service.list_memories(
-                tenant_id=tenant_id, layer="reflective", project=project_id, limit=100
+                tenant_id=tenant_id, layer="reflective", project=project, limit=100
             )
         else:
             # HYBRID SEARCH: The core of RAE's multi-strategy retrieval
             reflections = await self.rae_service.engine.search_memories(
-                query=query_text,
+                query=query,
                 tenant_id=tenant_id,
-                agent_id=project_id,
+                agent_id=project,
                 layer="reflective",  # Focus on Layer 4
                 top_k=k * 2,  # Fetch more for filtering
             )

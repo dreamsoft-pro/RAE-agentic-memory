@@ -31,7 +31,7 @@ class FeedbackService:
         feedback_type: str,
         comment: Optional[str] = None,
         score: Optional[float] = None,
-        query_text: Optional[str] = None,
+        query: Optional[str] = None,
         weights_snapshot: Optional[dict] = None,
         metadata: Optional[dict] = None,
     ) -> bool:
@@ -66,7 +66,7 @@ class FeedbackService:
 
             sql = """
                 INSERT INTO memory_feedback (
-                    id, tenant_id, query_text, memory_id, score,
+                    id, tenant_id, query, memory_id, score,
                     weights_snapshot, metadata
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             """
@@ -74,7 +74,7 @@ class FeedbackService:
                 sql,
                 uuid4(),
                 tenant_id,
-                query_text or "unknown",
+                query or "unknown",
                 UUID(memory_id),
                 score,
                 json.dumps(weights_snapshot or {}),

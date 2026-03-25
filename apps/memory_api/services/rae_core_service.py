@@ -777,7 +777,7 @@ class RAECoreService:
                 asyncio.create_task(
                     self.websocket_service.broadcast_memory_created(
                         tenant_id=tenant_id,
-                        project_id=project_canonical,
+                        project=project_canonical,
                         memory_id=memory_id,
                         content=content,
                         importance=importance or 0.5,
@@ -1084,7 +1084,7 @@ class RAECoreService:
                 if tokens_saved > 0:
                     await self.savings_service.track_savings(
                         tenant_id=tenant_id,
-                        project_id=project,
+                        project=project,
                         model="gpt-4o",
                         predicted_tokens=tokens_saved,
                         real_tokens=0,
@@ -1222,7 +1222,7 @@ class RAECoreService:
                         old_project_id,
                     )
 
-                    # Update metrics (if we had a project_id column, but metrics are timeseries so maybe skip or update)
+                    # Update metrics (if we had a project column, but metrics are timeseries so maybe skip or update)
                     # For now, we only update memories as that's the source of truth for RAE
 
                     logger.info(

@@ -53,15 +53,15 @@ class RAEClient:
         except Exception as e:
             print(f"An unexpected error occurred while storing memory: {e}")
 
-    def query_memory(self, query_text: str, k: int = 10):
+    def query_memory(self, query: str, k: int = 10):
         """
         Queries the RAE API for relevant memories.
         """
-        payload = {"query_text": query_text, "k": k}
+        payload = {"query": query, "k": k}
         try:
             with httpx.Client() as client:
                 response = client.post(
-                    f"{self.base_v1_url}/memory/query",
+                    f"{self.base_v1_url}/v2/memories/query",
                     json=payload,
                     headers=self.headers,
                 )

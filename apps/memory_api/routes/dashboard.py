@@ -111,18 +111,18 @@ def get_websocket_service(
 async def websocket_endpoint(
     websocket: WebSocket,
     tenant_id: str = Query(...),
-    project_id: str = Query(...),
+    project: str = Query(...),
     event_types: Optional[str] = Query(None, description="Comma-separated event types"),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     WebSocket endpoint for real-time dashboard updates.
 
-    **Connection:** ws://host/v2/dashboard/ws?tenant_id=X&project_id=Y
+    **Connection:** ws://host/v2/dashboard/ws?tenant_id=X&project=Y
 
     **Query Parameters:**
     - tenant_id: Tenant identifier (required)
-    - project_id: Project identifier (required)
+    - project: Project identifier (required)
     - event_types: Comma-separated list of event types to subscribe to (optional)
 
     **Messages Received:**
@@ -154,14 +154,14 @@ async def websocket_endpoint(
     connection_id = None
     try:
         connection_id = await service.handle_connection(
-            websocket, tenant_id, project_id, subscribed_events
+            websocket, tenant_id, project, subscribed_events
         )
 
         logger.info(
             "websocket_connection_established",
             connection_id=connection_id,
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
         )
 
         # Keep connection alive and handle incoming messages
@@ -197,7 +197,7 @@ async def _get_dashboard_metrics_impl(
     rae_service: RAECoreService,
     request_data: Optional[GetDashboardMetricsRequest] = None,
     tenant_id: Optional[str] = None,
-    project_id: Optional[str] = None,
+    project: Optional[str] = None,
     project: Optional[str] = None,
     period: MetricPeriod = MetricPeriod.LAST_24H,
 ) -> GetDashboardMetricsResponse:
@@ -205,12 +205,12 @@ async def _get_dashboard_metrics_impl(
     try:
         # Handle parameters from multiple sources
         t_id = tenant_id
-        p_id = project_id or project  # Fallback to 'project'
+        p_id = project or project  # Fallback to 'project'
         m_period = period
 
         if request_data:
             t_id = t_id or request_data.tenant_id
-            p_id = p_id or request_data.project_id
+            p_id = p_id or request_data.project
             m_period = request_data.period
 
         # Final safety check
@@ -253,7 +253,7 @@ async def _get_dashboard_metrics_impl(
 @router.get("/metrics", response_model=GetDashboardMetricsResponse)
 async def get_dashboard_metrics_get(
     tenant_id: Optional[str] = Query(None),
-    project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     project: Optional[str] = Query(None),
     period: MetricPeriod = Query(MetricPeriod.LAST_24H),
     rae_service: RAECoreService = Depends(get_rae_core_service),
@@ -262,7 +262,7 @@ async def get_dashboard_metrics_get(
     return await _get_dashboard_metrics_impl(
         rae_service=rae_service,
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         project=project,
         period=period,
     )
@@ -284,7 +284,7 @@ async def get_dashboard_metrics_post(
 async def get_metric_timeseries(
     metric_name: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     period: MetricPeriod = MetricPeriod.LAST_24H,
     repo: MetricsRepository = Depends(get_metrics_repo),
 ):
@@ -322,7 +322,7 @@ async def get_metric_timeseries(
         # Fetch metric data from database
         data_points = await repo.get_timeseries(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             metric_name=metric_name,
             start_time=start_time,
             end_time=end_time,
@@ -435,21 +435,21 @@ async def get_visualization(
             response.reflection_tree = await _generate_reflection_tree(
                 pool,
                 request.tenant_id,
-                request.project_id,
+                request.project,
                 request.root_reflection_id,
                 request.max_depth,
             )
 
         elif request.visualization_type == VisualizationType.SEMANTIC_GRAPH:
             response.semantic_graph = await _generate_semantic_graph(
-                pool, request.tenant_id, request.project_id, request.limit
+                pool, request.tenant_id, request.project, request.limit
             )
 
         elif request.visualization_type == VisualizationType.MEMORY_TIMELINE:
             response.memory_timeline = await _generate_memory_timeline(
                 pool,
                 request.tenant_id,
-                request.project_id,
+                request.project,
                 request.start_time,
                 request.end_time,
             )
@@ -458,7 +458,7 @@ async def get_visualization(
             response.quality_trend = await _generate_quality_trend(
                 pool,
                 request.tenant_id,
-                request.project_id,
+                request.project,
                 request.start_time,
                 request.end_time,
             )
@@ -506,7 +506,7 @@ async def get_system_health(
         service = get_websocket_service(rae_service)
 
         system_health = await service._check_system_health(
-            request.tenant_id, request.project_id
+            request.tenant_id, request.project
         )
 
         # Add component details if requested
@@ -567,7 +567,7 @@ async def simple_health_check(
 @router.get("/activity")
 async def get_activity_log(
     tenant_id: str,
-    project_id: str,
+    project: str,
     limit: int = 100,
     event_types: Optional[str] = Query(None),
     rae_service: RAECoreService = Depends(get_rae_core_service),
@@ -586,7 +586,7 @@ async def get_activity_log(
             event_type_filter = [et.strip() for et in event_types.split(",")]
 
         activity_logs = await _get_recent_activity(
-            rae_service.db, tenant_id, project_id, limit, event_type_filter
+            rae_service.db, tenant_id, project, limit, event_type_filter
         )
 
         logger.info(
@@ -610,7 +610,7 @@ async def get_activity_log(
 
 
 async def _get_time_series_metrics(
-    db, tenant_id: str, project_id: str, period: MetricPeriod
+    db, tenant_id: str, project: str, period: MetricPeriod
 ) -> List[TimeSeriesMetric]:
     """Generate time series metrics for dashboard."""
     try:
@@ -649,7 +649,7 @@ async def _get_time_series_metrics(
                 # Fetch metric data
                 data_points = await repo.get_timeseries(
                     tenant_id=tenant_id,
-                    project_id=project_id,
+                    project=project,
                     metric_name=metric_name,
                     start_time=start_time,
                     end_time=end_time,
@@ -664,13 +664,13 @@ async def _get_time_series_metrics(
                             live_val = await db.fetchval(
                                 "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)",
                                 tenant_id,
-                                project_id,
+                                project,
                             )
                         elif metric_name == "reflection_count":
                             live_val = await db.fetchval(
                                 "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
                                 tenant_id,
-                                project_id,
+                                project,
                             )
 
                         if live_val is not None and live_val >= 0:
@@ -745,7 +745,7 @@ async def _get_time_series_metrics(
 async def _get_recent_activity(
     db,
     tenant_id: str,
-    project_id: str,
+    project: str,
     limit: int = 50,
     event_types: Optional[List[str]] = None,
 ) -> List[ActivityLog]:
@@ -761,7 +761,7 @@ async def _get_recent_activity(
             LIMIT $3
             """,
             tenant_id,
-            project_id,
+            project,
             min(limit, 20),
         )
 
@@ -774,7 +774,7 @@ async def _get_recent_activity(
                 title="Memory Created",
                 description=record["content"][:100],
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 memory_id=record["id"],
                 severity="info",
                 occurred_at=record["created_at"],
@@ -786,12 +786,12 @@ async def _get_recent_activity(
             """
             SELECT id, content, score, created_at
             FROM reflections
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             ORDER BY created_at DESC
             LIMIT $3
             """,
             tenant_id,
-            project_id,
+            project,
             min(limit, 10),
         )
 
@@ -802,7 +802,7 @@ async def _get_recent_activity(
                 title="Reflection Generated",
                 description=record["content"][:100],
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 reflection_id=record["id"],
                 severity="info",
                 occurred_at=record["created_at"],
@@ -820,7 +820,7 @@ async def _get_recent_activity(
 
 
 async def _generate_reflection_tree(
-    db, tenant_id: str, project_id: str, root_id: Optional[UUID], max_depth: int
+    db, tenant_id: str, project: str, root_id: Optional[UUID], max_depth: int
 ) -> Optional[ReflectionTreeNode]:
     """Generate hierarchical reflection tree."""
     try:
@@ -833,13 +833,13 @@ async def _generate_reflection_tree(
                        array_length(source_memory_ids, 1) as source_count,
                        created_at
                 FROM reflections
-                WHERE tenant_id = $1 AND project_id = $2
+                WHERE tenant_id = $1 AND project = $2
                       AND parent_reflection_id IS NULL
                 ORDER BY score DESC, created_at DESC
                 LIMIT 1
                 """,
                 tenant_id,
-                project_id,
+                project,
             )
             if not records:
                 return None
@@ -852,11 +852,11 @@ async def _generate_reflection_tree(
                        array_length(source_memory_ids, 1) as source_count,
                        created_at
                 FROM reflections
-                WHERE id = $1 AND tenant_id = $2 AND project_id = $3
+                WHERE id = $1 AND tenant_id = $2 AND project = $3
                 """,
                 root_id,
                 tenant_id,
-                project_id,
+                project,
             )
             if not root_record:
                 return None
@@ -884,17 +884,17 @@ async def _generate_reflection_tree(
                        created_at
                 FROM reflections
                 WHERE parent_reflection_id = $1
-                      AND tenant_id = $2 AND project_id = $3
+                      AND tenant_id = $2 AND project = $3
                 ORDER BY score DESC
                 """,
                 root_node.reflection_id,
                 tenant_id,
-                project_id,
+                project,
             )
 
             for child_record in children_records:
                 child_node = await _generate_reflection_tree(
-                    db, tenant_id, project_id, child_record["id"], max_depth
+                    db, tenant_id, project, child_record["id"], max_depth
                 )
                 if child_node:
                     root_node.children.append(child_node)
@@ -907,7 +907,7 @@ async def _generate_reflection_tree(
 
 
 async def _generate_semantic_graph(
-    db, tenant_id: str, project_id: str, limit: int
+    db, tenant_id: str, project: str, limit: int
 ) -> Optional[SemanticGraph]:
     """Generate semantic knowledge graph."""
     try:
@@ -917,12 +917,12 @@ async def _generate_semantic_graph(
             SELECT id, label, node_type, canonical_form,
                    importance_score, reinforcement_count, is_degraded
             FROM semantic_nodes
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
             ORDER BY importance_score DESC
             LIMIT $3
             """,
             tenant_id,
-            project_id,
+            project,
             limit,
         )
 
@@ -948,12 +948,12 @@ async def _generate_semantic_graph(
             SELECT source_node_id, target_node_id, relation_type,
                    edge_weight, confidence
             FROM knowledge_graph_edges
-            WHERE tenant_id = $1 AND project_id = $2
+            WHERE tenant_id = $1 AND project = $2
                   AND source_node_id = ANY($3)
                   AND target_node_id = ANY($3)
             """,
             tenant_id,
-            project_id,
+            project,
             list(node_ids),
         )
 
@@ -986,7 +986,7 @@ async def _generate_semantic_graph(
 async def _generate_memory_timeline(
     db,
     tenant_id: str,
-    project_id: str,
+    project: str,
     start_time: Optional[datetime],
     end_time: Optional[datetime],
 ) -> Optional[MemoryTimeline]:
@@ -1009,7 +1009,7 @@ async def _generate_memory_timeline(
             LIMIT 100
             """,
             tenant_id,
-            project_id,
+            project,
             start_time,
             end_time,
         )
@@ -1045,7 +1045,7 @@ async def _generate_memory_timeline(
 async def _generate_quality_trend(
     db,
     tenant_id: str,
-    project_id: str,
+    project: str,
     start_time: Optional[datetime],
     end_time: Optional[datetime],
 ) -> Optional[QualityTrend]:
@@ -1061,7 +1061,7 @@ async def _generate_quality_trend(
         # Get MRR data
         data_points = await repo.get_timeseries(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             metric_name="search_quality_mrr",
             start_time=start_time,
             end_time=end_time,
@@ -1266,14 +1266,14 @@ async def get_compliance_report(
         logger.info(
             "compliance_report_requested",
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             report_type=request.report_type,
         )
 
         # Generate compliance report
         compliance_report = await compliance_service.generate_compliance_report(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             report_type=request.report_type,
             compliance_area=request.compliance_area,
         )
@@ -1330,7 +1330,7 @@ async def get_compliance_metrics(
         # In production, this would be optimized to only fetch requested area
         full_report = await compliance_service.generate_compliance_report(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             report_type="area_specific" if request.compliance_area else "full",
             compliance_area=request.compliance_area,
         )
@@ -1407,7 +1407,7 @@ async def get_risk_register(
     try:
         # Get active risks
         risks = await compliance_service._get_active_risks(
-            tenant_id=request.tenant_id, project_id=request.project_id
+            tenant_id=request.tenant_id, project=request.project
         )
 
         # Apply filters

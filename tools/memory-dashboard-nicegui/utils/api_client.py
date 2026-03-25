@@ -14,13 +14,13 @@ class RAEClient:
         api_url: str,
         api_key: str,
         tenant_id: str = "default",
-        project_id: str = "default",
+        project: str = "default",
     ):
         self.api_url = api_url.rstrip("/")
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "X-Tenant-ID": tenant_id,
-            "X-Project-ID": project_id,
+            "X-Project-ID": project,
             "Content-Type": "application/json",
         }
         self.timeout = 10.0
@@ -71,10 +71,10 @@ class RAEClient:
             logger.error(f"Failed to fetch projects: {e}")
             return ["default", "default_agent"]
 
-    async def update_context(self, tenant_id: str, project_id: str):
+    async def update_context(self, tenant_id: str, project: str):
         """Update client headers with new context."""
         self.headers["X-Tenant-ID"] = tenant_id
-        self.headers["X-Project-ID"] = project_id
+        self.headers["X-Project-ID"] = project
         # Also re-verify connection or similar if needed
 
     async def get_stats(self) -> Dict[str, Any]:

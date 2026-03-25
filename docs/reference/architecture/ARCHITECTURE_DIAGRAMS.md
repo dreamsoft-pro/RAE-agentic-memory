@@ -316,7 +316,7 @@ erDiagram
     memories {
         uuid id PK
         string tenant_id
-        string project_id
+        string project
         string content
         vector embedding
         string layer
@@ -328,7 +328,7 @@ erDiagram
     graph_nodes {
         uuid id PK
         string tenant_id
-        string project_id
+        string project
         string node_id
         string label
         jsonb properties

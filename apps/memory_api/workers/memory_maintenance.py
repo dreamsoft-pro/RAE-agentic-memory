@@ -176,7 +176,7 @@ class SummarizationWorker:
     async def summarize_session(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         session_id: UUID,
         min_events: int = 10,
     ) -> Optional[Dict[str, Any]]:
@@ -185,7 +185,7 @@ class SummarizationWorker:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             session_id: Session identifier
             min_events: Minimum events required for summarization
 
@@ -204,7 +204,7 @@ class SummarizationWorker:
         logger.info(
             "session_summarization_started",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             session_id=str(session_id),
             min_events=settings.SUMMARIZATION_MIN_EVENTS,
         )
@@ -217,7 +217,7 @@ class SummarizationWorker:
 
         episodic_memories = await self.rae_service.list_memories(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             layer="episodic",
             limit=100,
             # filters=filters # Need to verify if filters pass through correctly
@@ -259,7 +259,7 @@ class SummarizationWorker:
             importance=summary_importance,
             layer="episodic",
             tags=["session_summary", "auto_generated"],
-            project=project_id,
+            project=project,
         )
 
         logger.info(
@@ -319,7 +319,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
     async def summarize_long_sessions(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         event_threshold: int = 100,
     ) -> List[Dict[str, Any]]:
         """
@@ -327,7 +327,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             event_threshold: Minimum events to trigger summarization
 
         Returns:
@@ -336,7 +336,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
         logger.info(
             "long_session_summarization_started",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             threshold=event_threshold,
         )
 
@@ -344,7 +344,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
 
         # Find sessions with many events
         long_sessions = await self.rae_service.list_long_sessions(
-            tenant_id=tenant_id, project=project_id, threshold=event_threshold
+            tenant_id=tenant_id, project=project, threshold=event_threshold
         )
 
         # Summarize each long session
@@ -353,7 +353,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
             try:
                 summary = await self.summarize_session(
                     tenant_id=tenant_id,
-                    project_id=project_id,
+                    project=project,
                     session_id=session_id,
                     min_events=event_threshold,
                 )
@@ -402,7 +402,7 @@ class DreamingWorker:
     async def run_dreaming_cycle(
         self,
         tenant_id: str,
-        project_id: str,
+        project: str,
         lookback_hours: int = 24,
         min_importance: float = 0.6,
         max_samples: int = 20,
@@ -413,7 +413,7 @@ class DreamingWorker:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             lookback_hours: Hours to look back
             min_importance: Minimum importance to consider
             max_samples: Maximum memories to sample
@@ -435,7 +435,7 @@ class DreamingWorker:
         logger.info(
             "dreaming_cycle_started",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             lookback_hours=lookback_hours,
             mode=settings.REFLECTIVE_MEMORY_MODE,
         )
@@ -447,7 +447,7 @@ class DreamingWorker:
 
         records = await self.rae_service.list_memories(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             layer="episodic",
             filters={
                 "min_importance": min_importance,
@@ -490,7 +490,7 @@ class DreamingWorker:
             task_description="Analyzing patterns in recent high-importance memories",
             task_goal="Identify recurring themes, potential strategies, and meta-insights",
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
         )
 
         # Generate reflection
@@ -501,7 +501,7 @@ class DreamingWorker:
             stored_ids = await self.reflection_engine.store_reflection(
                 result=result,
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
             )
 
             logger.info(
@@ -626,7 +626,7 @@ class MaintenanceScheduler:
                         # For simplicity, use default project
                         results = await self.dreaming_worker.run_dreaming_cycle(
                             tenant_id=tenant_id,
-                            project_id="default",  # TODO: Get actual projects
+                            project="default",  # TODO: Get actual projects
                             lookback_hours=settings.DREAMING_LOOKBACK_HOURS,
                             min_importance=settings.DREAMING_MIN_IMPORTANCE,
                             max_samples=settings.DREAMING_MAX_SAMPLES,

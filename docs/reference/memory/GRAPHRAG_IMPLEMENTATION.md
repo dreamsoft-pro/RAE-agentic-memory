@@ -50,43 +50,43 @@ New router with comprehensive graph operations:
 
 **POST /v2/graph/extract**
 - Extract knowledge graph from memories
-- Parameters: project_id, limit, min_confidence, auto_store
+- Parameters: project, limit, min_confidence, auto_store
 - Returns: GraphExtractionResult with triples and statistics
 
 **POST /v2/graph/query**
 - Advanced hybrid search with full graph traversal
-- Parameters: query, project_id, top_k_vector, graph_depth, traversal_strategy
+- Parameters: query, project, top_k_vector, graph_depth, traversal_strategy
 - Returns: HybridSearchResult with vector matches and graph data
 
 **POST /v2/graph/reflection/hierarchical**
 - Generate map-reduce reflections from large episode sets
-- Parameters: project_id, bucket_size, max_episodes
+- Parameters: project, bucket_size, max_episodes
 - Returns: Summary and statistics
 
 **GET /v2/graph/stats**
 - Retrieve graph statistics
-- Parameters: project_id
+- Parameters: project
 - Returns: Node counts, edge counts, unique relations
 
 **GET /v2/graph/nodes**
 - List graph nodes
-- Parameters: project_id, limit
+- Parameters: project, limit
 - Returns: List of nodes with metadata
 
 **GET /v2/graph/edges**
 - List graph edges
-- Parameters: project_id, limit, relation (optional filter)
+- Parameters: project, limit, relation (optional filter)
 - Returns: List of edges with metadata
 
 **GET /v2/graph/subgraph**
 - Extract subgraph from starting nodes
-- Parameters: project_id, node_ids, depth
+- Parameters: project, node_ids, depth
 - Returns: Nodes and edges in subgraph
 
 #### Enhanced `apps/memory_api/api/v2/memory.py`
 Extended existing endpoints:
 
-**POST /v2/memory/query** (Enhanced)
+**POST /v2/v2/memories/query** (Enhanced)
 - Added hybrid search support
 - New parameters: use_graph, graph_depth, project
 - Returns include: synthesized_context, graph_statistics
@@ -101,20 +101,20 @@ New tables:
 ```sql
 - id: UUID (primary key)
 - tenant_id: String (indexed)
-- project_id: String (indexed)
+- project: String (indexed)
 - node_id: String (business ID, indexed)
 - label: String
 - properties: JSONB
 - created_at: Timestamp
 - updated_at: Timestamp
-- UNIQUE(tenant_id, project_id, node_id)
+- UNIQUE(tenant_id, project, node_id)
 ```
 
 **knowledge_graph_edges**
 ```sql
 - id: UUID (primary key)
 - tenant_id: String (indexed)
-- project_id: String (indexed)
+- project: String (indexed)
 - source_node_id: UUID (foreign key, indexed)
 - target_node_id: UUID (foreign key, indexed)
 - relation: String (indexed)
@@ -277,7 +277,7 @@ result = await reflection_engine.extract_knowledge_graph_enhanced(
 search_result = await hybrid_search.search(
     query="authentication bugs",
     tenant_id="my-tenant",
-    project_id="my-project",
+    project="my-project",
     use_graph=True,
     graph_depth=2
 )
@@ -288,12 +288,12 @@ search_result = await hybrid_search.search(
 # Extract graph
 curl -X POST http://localhost:8000/v2/graph/extract \
   -H "X-Tenant-ID: tenant" \
-  -d '{"project_id": "proj", "limit": 50}'
+  -d '{"project": "proj", "limit": 50}'
 
 # Hybrid search
-curl -X POST http://localhost:8000/v2/memory/query \
+curl -X POST http://localhost:8000/v2/v2/memories/query \
   -H "X-Tenant-ID: tenant" \
-  -d '{"query_text": "bugs", "use_graph": true, "project": "proj"}'
+  -d '{"query": "bugs", "use_graph": true, "project": "proj"}'
 ```
 
 ## Migration Path

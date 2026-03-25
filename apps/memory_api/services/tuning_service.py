@@ -57,7 +57,7 @@ class TuningService:
         """
         # 1. Fetch feedback history from DB
         sql = """
-            SELECT query_text, score, weights_snapshot
+            SELECT query, score, weights_snapshot
             FROM memory_feedback
             WHERE tenant_id = $1
             ORDER BY created_at DESC

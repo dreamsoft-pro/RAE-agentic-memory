@@ -55,7 +55,7 @@ The RAE architecture is built on core concepts and services supporting memory ma
 *   **ReflectionEngine:** Dedicated service for generating and managing higher-level reflections from agent memories.
 
 **Memory Lifecycle & Governance:**
-*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v2/memory/query` or `/v2/agent/execute`).
+*   **Access Tracking:** Automatically updates `last_accessed_at` and `usage_count` for memories on retrieval (e.g., via `/v2/v2/memories/query` or `/v2/agent/execute`).
 *   **Importance Scoring:** Utilizes `ImportanceScoringService` to calculate dynamic scores based on factors like Recency, Access Frequency, Graph Centrality, Semantic Relevance, User Rating, Consolidation, and Manual Boost.
 *   **Temporal Decay:** Automated periodic process to adjust importance scores based on time and access patterns, with protected, normal, and accelerated decay strategies.
 *   **Memory Lifecycle States:** Defines states such as `CREATED`, `ACTIVE`, `AGING`, `STALE`, and `ARCHIVED`, guiding memory management and retention.
@@ -77,7 +77,7 @@ GraphRAG extends RAE's memory capabilities by integrating Knowledge Graph techno
 
 **API Endpoints:**
 *   **Extract Knowledge Graph (`POST /v2/graph/extract`):** Extracts knowledge graph from episodic memories using LLM-based prompts.
-*   **Hybrid Search (extended `POST /v2/memory/query`):** Standard memory query enhanced with graph traversal capabilities.
+*   **Hybrid Search (extended `POST /v2/v2/memories/query`):** Standard memory query enhanced with graph traversal capabilities.
 *   **Advanced Graph Query (`POST /v2/graph/query`):** Dedicated endpoint for complex graph-based searches.
 *   **Get Graph Statistics (`GET /v2/graph/stats`):** Retrieves statistics about the knowledge graph.
 *   **Get Subgraph (`GET /v2/graph/subgraph`):** Retrieves a subgraph starting from specific nodes.
@@ -143,7 +143,7 @@ The OpenAPI 3.0.3 specification formally describes the API's structure, endpoint
 *   **API Endpoints Defined:**
     *   **Health Check (`/health` GET):** Basic API health status.
     *   **Add Memory (`/memory/add` POST):** Allows adding new memories.
-    *   **Query Memory (`/memory/query` POST):** Enables querying existing memories.
+    *   **Query Memory (`/v2/memories/query` POST):** Enables querying existing memories.
     *   **Agent Execute (`/agent/execute` POST):** For executing agent tasks.
     *   **Memory Timeline (`/memory/timeline` GET):** Retrieves a chronological timeline of memories.
 *   **Core Data Models (`components/schemas`):** Defines `MemoryType` (episodic, semantic, procedural), `AddMemoryRequest`/`Response`, `QueryRequest`/`Response`, `AgentExecuteRequest`/`Response`, `TimelineResponse`.

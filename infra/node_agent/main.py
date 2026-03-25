@@ -186,7 +186,7 @@ class NodeAgent:
                 headers = {"X-API-Key": self.api_key}
                 payload = {"query": query, "k": 5}
                 resp = await client.post(
-                    f"{self.base_url}/v2/memory/query", json=payload, headers=headers
+                    f"{self.base_url}/v2/v2/memories/query", json=payload, headers=headers
                 )
                 if resp.status_code == 200:
                     return resp.json().get("results", [])

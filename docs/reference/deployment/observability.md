@@ -57,7 +57,7 @@ All spans use consistent attribute naming:
 
 **Common Attributes:**
 - `rae.tenant_id` - Multi-tenant isolation tracking
-- `rae.project_id` - Project-level tracking
+- `rae.project` - Project-level tracking
 - `rae.outcome.label` - Operation result (success, error types)
 
 **Memory Operations:**
@@ -642,7 +642,7 @@ When implementing future phases, follow these patterns:
 2. **Error Tracking**: Always set `rae.outcome.label` (success/error/not_found)
 3. **Error Details**: Include `rae.error.message` on failures
 4. **Performance Metrics**: Track duration, count, and size metrics
-5. **Business Metrics**: Include tenant_id, project_id for multi-tenant tracking
+5. **Business Metrics**: Include tenant_id, project for multi-tenant tracking
 6. **Outcome Labels**: Standardize on success, error, not_found, timeout, invalid_request
 
 ### Testing Recommendations

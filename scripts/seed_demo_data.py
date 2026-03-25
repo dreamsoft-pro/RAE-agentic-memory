@@ -669,11 +669,11 @@ def check_rae_health() -> bool:
 
 
 def create_memory(
-    client: httpx.Client, memory_data: Dict[str, Any], tenant_id: str, project_id: str
+    client: httpx.Client, memory_data: Dict[str, Any], tenant_id: str, project: str
 ) -> bool:
     """Create a single memory in RAE."""
     try:
-        payload = {"project": project_id, **memory_data}
+        payload = {"project": project, **memory_data}
         headers = {"X-Tenant-Id": tenant_id, "X-User-Id": "admin"}
 
         response = client.post(
@@ -702,7 +702,7 @@ def seed_scenario(
     client: httpx.Client,
     scenario_name: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     memories: List[Dict[str, Any]],
 ) -> tuple[int, int]:
     """Seed a specific scenario and return (success_count, failed_count)."""
@@ -710,7 +710,7 @@ def seed_scenario(
     print(f"\n{'=' * 70}")
     print(f"  SCENARIO: {scenario_name}")
     print(f"  Tenant: {tenant_id}")
-    print(f"  Project: {project_id}")
+    print(f"  Project: {project}")
     print(f"  Memories: {len(memories)}")
     print(f"{'=' * 70}\n")
 
@@ -732,7 +732,7 @@ def seed_scenario(
             f"{layer_emoji} [{i:2d}/{len(memories):2d}] {memory['layer'].upper():3s}: {content_preview}..."
         )
 
-        if create_memory(client, memory, tenant_id, project_id):
+        if create_memory(client, memory, tenant_id, project):
             success_count += 1
             print("   ✅ Created")
         else:
@@ -767,7 +767,7 @@ def print_usage_tips(scenarios: List[str]):
     print("\n💡 Explore the data:")
     print("   1. Dashboard: http://localhost:8501")
     print("   2. API Docs: http://localhost:8000/docs")
-    print("   3. Query API: POST http://localhost:8000/v2/memory/query")
+    print("   3. Query API: POST http://localhost:8000/v2/v2/memories/query")
     print("   4. Graph extraction: http://localhost:8000/v2/graph/extract")
     print("   5. ISO/IEC 42001: http://localhost:8000/v2/compliance/...")
     print()

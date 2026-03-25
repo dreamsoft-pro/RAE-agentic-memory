@@ -246,7 +246,7 @@ def test_lite_profile_query_memory(lite_profile_services):
     time.sleep(1)
 
     # Query for the memory
-    query_payload = {"query_text": "test memory query", "k": 5}
+    query_payload = {"query": "test memory query", "k": 5}
 
     response = httpx.post(
         f"http://127.0.0.1:{api_port}/v2/memories/query",

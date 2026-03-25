@@ -68,7 +68,7 @@ class TestQdrantVectorStore:
             content="Test content for sparse vector generation",
             layer="episodic",
             tenant_id="tenant1",
-            project_id="proj1",
+            project="proj1",
         )
         embedding = [0.1, 0.2, 0.3]  # Dummy 3D vector
 
@@ -102,14 +102,14 @@ class TestQdrantVectorStore:
                 content="A",
                 layer="episodic",
                 tenant_id="t",
-                project_id="p",
+                project="p",
             ),
             MemoryRecord(
                 id=str(uuid4()),
                 content="B",
                 layer="episodic",
                 tenant_id="t",
-                project_id="p",
+                project="p",
             ),
         ]
         embeddings = [[0.1], [0.2]]
@@ -130,7 +130,7 @@ class TestQdrantVectorStore:
             "content": "Match",
             "layer": "episodic",
             "tenant_id": "t",
-            "project_id": "p",
+            "project": "p",
         }
         mock_qdrant_client.query_points.return_value.points = [mock_point]
 

@@ -67,7 +67,7 @@ with st.sidebar:
             "tenant_id": os.getenv(
                 "RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000"
             ),
-            "project_id": os.getenv("RAE_PROJECT_ID", "benchmark_project"),
+            "project": os.getenv("RAE_PROJECT_ID", "benchmark_project"),
         }
 
     # Connection settings
@@ -161,7 +161,7 @@ with st.sidebar:
         if projects_list:
             try:
                 default_pid_idx = projects_list.index(
-                    st.session_state.config["project_id"]
+                    st.session_state.config["project"]
                 )
             except ValueError:
                 default_pid_idx = 0
@@ -174,14 +174,14 @@ with st.sidebar:
         else:
             selected_project_id = st.text_input(
                 "Project ID",
-                value=st.session_state.config["project_id"],
+                value=st.session_state.config["project"],
             )
 
         # AUTO-UPDATE LOGIC
         # If selection changed, update config and client immediately
         if (
             selected_tenant_id != st.session_state.config["tenant_id"]
-            or selected_project_id != st.session_state.config["project_id"]
+            or selected_project_id != st.session_state.config["project"]
             or api_url != st.session_state.config["api_url"]
         ):
 
@@ -190,7 +190,7 @@ with st.sidebar:
                     "api_url": api_url,
                     "api_key": api_key,
                     "tenant_id": selected_tenant_id,
-                    "project_id": selected_project_id,
+                    "project": selected_project_id,
                 }
             )
 
@@ -199,7 +199,7 @@ with st.sidebar:
                 api_url=api_url,
                 api_key=api_key,
                 tenant_id=selected_tenant_id,
-                project_id=selected_project_id,
+                project=selected_project_id,
             )
 
             if new_client.test_connection():
@@ -237,7 +237,7 @@ with st.sidebar:
                         selected_project_id, new_project_name
                     )
                     if success:
-                        st.session_state.config["project_id"] = new_project_name
+                        st.session_state.config["project"] = new_project_name
                         st.success("Project Renamed! Refreshing...")
                         time.sleep(1)
                         st.rerun()
@@ -279,7 +279,7 @@ with st.sidebar:
 
     # Connection status (Compact)
     if st.session_state.get("connected", False):
-        st.sidebar.success(f"Connected: {st.session_state.config['project_id']}")
+        st.sidebar.success(f"Connected: {st.session_state.config['project']}")
     else:
         st.sidebar.warning("🔴 Not connected")
 
@@ -316,7 +316,7 @@ if "connected" in st.session_state and st.session_state.connected:
 
     # Metrics row
     try:
-        stats = get_cached_stats(client, client.tenant_id, client.project_id)
+        stats = get_cached_stats(client, client.tenant_id, client.project)
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:

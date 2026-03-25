@@ -24,7 +24,7 @@ async def probe():
         data = yaml.load(f, Loader=Loader)
 
     queries = data.get("queries", [])[:20]  # Test first 20 queries
-    # RUNNER USES 'name' from yaml as project_id, but passes it to 'agent_id' param in store_memory
+    # RUNNER USES 'name' from yaml as project, but passes it to 'agent_id' param in store_memory
     target_agent_id = "industrial_ultra_200q"
     tenant_id = "00000000-0000-0000-0000-000000000000"
 

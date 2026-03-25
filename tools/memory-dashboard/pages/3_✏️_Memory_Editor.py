@@ -443,7 +443,7 @@ elif st.session_state.editor_mode == "create":
                             "layer": layer,
                             "tags": tags,
                             "source": source,
-                            "project": client.project_id,
+                            "project": client.project,
                         },
                     )
 

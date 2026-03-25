@@ -269,7 +269,7 @@ class GraphExtractionService:
 
     async def extract_knowledge_graph(
         self,
-        project_id: str,
+        project: str,
         tenant_id: str,
         limit: int = 50,
         min_confidence: float = 0.5,
@@ -285,7 +285,7 @@ class GraphExtractionService:
         4. Returns structured extraction results
 
         Args:
-            project_id: The project to extract knowledge from
+            project: The project to extract knowledge from
             tenant_id: The tenant ID for multi-tenancy
             limit: Maximum number of memories to process (default: 50)
             min_confidence: Minimum confidence threshold for triples (default: 0.5)
@@ -295,23 +295,23 @@ class GraphExtractionService:
             GraphExtractionResult with triples, entities, and statistics
 
         Raises:
-            ValueError: If project_id or tenant_id is invalid
+            ValueError: If project or tenant_id is invalid
             RuntimeError: If extraction fails
         """
         target_model = model or settings.EXTRACTION_MODEL
         logger.info(
             "starting_graph_extraction",
-            project_id=project_id,
+            project=project,
             tenant_id=tenant_id,
             limit=limit,
             model=target_model,
         )
 
         # 1. Fetch recent episodic memories
-        memories = await self._fetch_episodic_memories(project_id, tenant_id, limit)
+        memories = await self._fetch_episodic_memories(project, tenant_id, limit)
 
         if not memories:
-            logger.info("no_memories_found", project_id=project_id)
+            logger.info("no_memories_found", project=project)
             return GraphExtractionResult(
                 statistics={
                     "memories_processed": 0,
@@ -324,7 +324,7 @@ class GraphExtractionService:
         factual_memories = await self._filter_factual_memories(memories)
 
         if not factual_memories:
-            logger.info("no_factual_memories_found", project_id=project_id)
+            logger.info("no_factual_memories_found", project=project)
             return GraphExtractionResult(
                 statistics={
                     "memories_processed": len(memories),
@@ -337,7 +337,7 @@ class GraphExtractionService:
             "gatekeeper_filtered",
             total=len(memories),
             factual=len(factual_memories),
-            project_id=project_id,
+            project=project,
         )
 
         # 2. Format memories for extraction
@@ -369,7 +369,7 @@ class GraphExtractionService:
             for triple in filtered_triples:
                 triple.metadata.update(
                     {
-                        "project_id": str(project_id),
+                        "project": str(project),
                         "tenant_id": str(tenant_id),
                         "extraction_method": "llm_structured",
                         "model": target_model,
@@ -388,13 +388,13 @@ class GraphExtractionService:
 
             logger.info(
                 "graph_extraction_completed",
-                project_id=project_id,
+                project=project,
                 statistics=statistics,
             )
 
             # Update metrics
             metrics.reflection_event_counter.labels(
-                tenant_id=str(tenant_id), project=str(project_id)
+                tenant_id=str(tenant_id), project=str(project)
             ).inc()
 
             return GraphExtractionResult(
@@ -405,7 +405,7 @@ class GraphExtractionService:
 
         except Exception as e:
             logger.exception(
-                "graph_extraction_failed", project_id=project_id, error=str(e)
+                "graph_extraction_failed", project=project, error=str(e)
             )
             raise RuntimeError(f"Graph extraction failed: {e}")
 
@@ -478,13 +478,13 @@ class GraphExtractionService:
             return memories
 
     async def _fetch_episodic_memories(
-        self, project_id: str, tenant_id: str, limit: int
+        self, project: str, tenant_id: str, limit: int
     ) -> List[Dict[str, Any]]:
         """
         Fetch recent episodic memories for extraction using RAECoreService.
 
         Args:
-            project_id: Project identifier
+            project: Project identifier
             tenant_id: Tenant identifier
             limit: Maximum number of memories to fetch
 
@@ -494,7 +494,7 @@ class GraphExtractionService:
         # Fetch memories using RAECoreService
         # We assume 'episodic' layer.
         return await self.rae_service.list_memories(
-            tenant_id=tenant_id, layer="episodic", project=project_id, limit=limit
+            tenant_id=tenant_id, layer="episodic", project=project, limit=limit
         )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:
@@ -528,7 +528,7 @@ class GraphExtractionService:
         return "\n".join(formatted_lines)
 
     async def store_graph_triples(
-        self, triples: List[GraphTriple], project_id: str, tenant_id: str
+        self, triples: List[GraphTriple], project: str, tenant_id: str
     ) -> Dict[str, int]:
         """
         Store extracted graph triples in the database using GraphRepository.
@@ -537,7 +537,7 @@ class GraphExtractionService:
 
         Args:
             triples: List of GraphTriple objects to store
-            project_id: Project identifier
+            project: Project identifier
             tenant_id: Tenant identifier
 
         Returns:
@@ -556,5 +556,5 @@ class GraphExtractionService:
         ]
 
         return await self.graph_repo.store_graph_triples(
-            triples=triple_dicts, tenant_id=tenant_id, project_id=project_id
+            triples=triple_dicts, tenant_id=tenant_id, project=project
         )

@@ -145,7 +145,7 @@ Tracks cost and token budgets per tenant/project with daily and monthly limits.
 CREATE TABLE budgets (
     id UUID PRIMARY KEY,
     tenant_id VARCHAR(255) NOT NULL,
-    project_id VARCHAR(255) NOT NULL,
+    project VARCHAR(255) NOT NULL,
 
     -- USD Cost Limits
     daily_limit_usd DECIMAL(10, 4),
@@ -170,7 +170,7 @@ CREATE TABLE budgets (
     last_daily_reset TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_monthly_reset TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-    UNIQUE (tenant_id, project_id)
+    UNIQUE (tenant_id, project)
 );
 ```
 
@@ -184,7 +184,7 @@ Complete audit log of all LLM API calls with detailed token and cost tracking.
 CREATE TABLE cost_logs (
     id UUID PRIMARY KEY,
     tenant_id VARCHAR(255) NOT NULL,
-    project_id VARCHAR(255) NOT NULL,
+    project VARCHAR(255) NOT NULL,
 
     -- LLM Call Metadata
     model VARCHAR(255) NOT NULL,
@@ -246,10 +246,10 @@ CREATE TABLE cost_logs (
 
 **Key Functions**:
 
-- `check_budget(pool, tenant_id, project_id, cost_usd, tokens)` → Raises HTTPException(402) if exceeded
-- `increment_usage(pool, tenant_id, project_id, BudgetUsageIncrement)` → Updates budgets table
-- `get_budget_status(pool, tenant_id, project_id)` → Returns budget status with percentages
-- `set_budget_limits(pool, tenant_id, project_id, ...)` → Admin configuration
+- `check_budget(pool, tenant_id, project, cost_usd, tokens)` → Raises HTTPException(402) if exceeded
+- `increment_usage(pool, tenant_id, project, BudgetUsageIncrement)` → Updates budgets table
+- `get_budget_status(pool, tenant_id, project)` → Returns budget status with percentages
+- `set_budget_limits(pool, tenant_id, project, ...)` → Admin configuration
 
 **Models**:
 
@@ -257,7 +257,7 @@ CREATE TABLE cost_logs (
 class Budget(BaseModel):
     id: str
     tenant_id: str
-    project_id: str
+    project: str
     monthly_limit_usd: Optional[float]
     daily_limit_usd: Optional[float]
     monthly_usage_usd: float
@@ -296,7 +296,7 @@ class BudgetUsageIncrement(BaseModel):
 ```python
 class LogLLMCallParams(BaseModel):
     tenant_id: str
-    project_id: str
+    project: str
     model: str
     provider: str
     operation: str
@@ -451,7 +451,7 @@ from apps.memory_api.services import budget_service
 await budget_service.set_budget_limits(
     pool,
     tenant_id="acme-corp",
-    project_id="production",
+    project="production",
     daily_limit_usd=50.00,      # $50/day
     monthly_limit_usd=1000.00   # $1000/month
 )
@@ -460,7 +460,7 @@ await budget_service.set_budget_limits(
 await budget_service.set_budget_limits(
     pool,
     tenant_id="acme-corp",
-    project_id="production",
+    project="production",
     daily_tokens_limit=5_000_000,      # 5M tokens/day
     monthly_tokens_limit=100_000_000   # 100M tokens/month
 )
@@ -469,7 +469,7 @@ await budget_service.set_budget_limits(
 await budget_service.set_budget_limits(
     pool,
     tenant_id="acme-corp",
-    project_id="production",
+    project="production",
     daily_limit_usd=50.00,
     monthly_limit_usd=1000.00,
     daily_tokens_limit=5_000_000,
@@ -480,7 +480,7 @@ await budget_service.set_budget_limits(
 await budget_service.set_budget_limits(
     pool,
     tenant_id="acme-corp",
-    project_id="sandbox",
+    project="sandbox",
     daily_limit_usd=None,    # Unlimited
     monthly_limit_usd=None   # Unlimited
 )
@@ -792,7 +792,7 @@ if estimated > budget_remaining:
 
 ### Budget Service API
 
-#### `check_budget(pool, tenant_id, project_id, cost_usd, tokens)`
+#### `check_budget(pool, tenant_id, project, cost_usd, tokens)`
 
 **Purpose**: Check if a new cost is within budget.
 
@@ -826,7 +826,7 @@ await budget_service.check_budget(
 }
 ```
 
-#### `increment_usage(pool, tenant_id, project_id, BudgetUsageIncrement)`
+#### `increment_usage(pool, tenant_id, project, BudgetUsageIncrement)`
 
 **Purpose**: Increment daily and monthly usage for both USD and tokens.
 
@@ -865,7 +865,7 @@ log_id = await cost_logs_repository.log_llm_call(
     pool,
     LogLLMCallParams(
         tenant_id="acme-corp",
-        project_id="production",
+        project="production",
         model="gpt-4o-mini",
         provider="openai",
         operation="query",
@@ -880,7 +880,7 @@ log_id = await cost_logs_repository.log_llm_call(
 )
 ```
 
-#### `get_cost_statistics(pool, tenant_id, project_id, period_start, period_end)`
+#### `get_cost_statistics(pool, tenant_id, project, period_start, period_end)`
 
 **Purpose**: Get aggregated cost statistics for a time period.
 
@@ -1039,7 +1039,7 @@ from apps.memory_api.services import budget_service
 await budget_service.set_budget_limits(
     pool,
     tenant_id="new-startup",
-    project_id="mvp",
+    project="mvp",
     daily_limit_usd=5.00,        # $5/day for MVP testing
     monthly_limit_usd=100.00,    # $100/month
     daily_tokens_limit=1_000_000,    # 1M tokens/day
@@ -1090,12 +1090,12 @@ print(f"Monthly limit: ${status['usd']['monthly']['limit']}")
 
 ```python
 # Check current limits
-status = await budget_service.get_budget_status(pool, tenant_id, project_id)
+status = await budget_service.get_budget_status(pool, tenant_id, project)
 print(status['usd']['daily']['limit'])  # Should NOT be None
 
 # Set limits
 await budget_service.set_budget_limits(
-    pool, tenant_id, project_id,
+    pool, tenant_id, project,
     daily_limit_usd=10.00,
     monthly_limit_usd=100.00
 )
@@ -1173,14 +1173,14 @@ await budget_service.set_budget_limits(
 
 2. Check current usage:
    ```python
-   status = await budget_service.get_budget_status(pool, tenant_id, project_id)
+   status = await budget_service.get_budget_status(pool, tenant_id, project)
    print(f"Daily: ${status['usd']['daily']['usage']:.2f} / ${status['usd']['daily']['limit']:.2f}")
    ```
 
 3. Increase limits:
    ```python
    await budget_service.set_budget_limits(
-       pool, tenant_id, project_id,
+       pool, tenant_id, project,
        daily_limit_usd=50.00,  # Increased from $10
        monthly_limit_usd=1000.00
    )

@@ -452,7 +452,7 @@ curl -X POST http://localhost:8000/v2/memories/query \
   -H "X-API-Key: dev-key" \
   -H "X-Tenant-Id: my-team" \
   -d '{
-    "query_text": "what happened today",
+    "query": "what happened today",
     "k": 20,
     "project": "my-project"
   }' | jq '.results[].content'
@@ -569,7 +569,7 @@ importance=0.2
 # 1. Are you using the same tenant_id?
 echo $RAE_TENANT_ID
 
-# 2. Are you using the same project_id?
+# 2. Are you using the same project?
 echo $RAE_PROJECT_ID
 
 # 3. Is RAE API running?

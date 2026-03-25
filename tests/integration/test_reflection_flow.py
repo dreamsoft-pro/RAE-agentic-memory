@@ -185,7 +185,7 @@ def tenant_id():
 
 
 @pytest.fixture
-def project_id():
+def project():
     """Test project ID"""
     return "test-project"
 
@@ -197,7 +197,7 @@ def project_id():
 
 @pytest.mark.asyncio
 async def test_generate_reflection_from_failure(
-    reflection_engine, rae_service, tenant_id, project_id
+    reflection_engine, rae_service, tenant_id, project
 ):
     """
     Test reflection generation from a failed task execution.
@@ -242,7 +242,7 @@ async def test_generate_reflection_from_failure(
         task_description="Fetch data from large table",
         task_goal="Retrieve user analytics data",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
     )
 
     # 2. Generate reflection
@@ -267,7 +267,7 @@ async def test_generate_reflection_from_failure(
     stored_ids = await reflection_engine.store_reflection(
         result=result,
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
     )
 
     assert "reflection_id" in stored_ids
@@ -275,7 +275,7 @@ async def test_generate_reflection_from_failure(
 
     # 5. Verify stored in database
     reflections = await rae_service.list_memories(
-        tenant_id=tenant_id, project=project_id, layer="reflective"
+        tenant_id=tenant_id, project=project, layer="reflective"
     )
     assert len(reflections) >= 1, "Reflection should be stored in database"
 
@@ -295,7 +295,7 @@ async def test_generate_reflection_from_failure(
 
 @pytest.mark.asyncio
 async def test_generate_reflection_from_success(
-    reflection_engine, rae_service, tenant_id, project_id
+    reflection_engine, rae_service, tenant_id, project
 ):
     """
     Test reflection generation from a successful task execution.
@@ -329,7 +329,7 @@ async def test_generate_reflection_from_success(
         task_description="Fetch user data efficiently",
         task_goal="Retrieve first 100 users",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
     )
 
     # Generate reflection
@@ -344,7 +344,7 @@ async def test_generate_reflection_from_success(
         assert len(result.strategy_text) > 0
         # Store should create both reflection and strategy
         stored_ids = await reflection_engine.store_reflection(
-            result=result, tenant_id=tenant_id, project_id=project_id
+            result=result, tenant_id=tenant_id, project=project
         )
         assert "strategy_id" in stored_ids
 
@@ -360,7 +360,7 @@ async def test_reflection_retrieval_in_context(
     context_builder,
     rae_service,
     tenant_id,
-    project_id,
+    project,
 ):
     """
     Test that reflections are retrieved and injected into context.
@@ -384,7 +384,7 @@ async def test_reflection_retrieval_in_context(
         importance=0.8,
         layer="reflective",
         tags=["sql", "timeout", "best-practice"],
-        project=project_id,
+        project=project,
     )
 
     # 2. Build context with query about SQL (matching the reflection content for mock similarity)
@@ -399,7 +399,7 @@ async def test_reflection_retrieval_in_context(
 
     working_memory = await context_builder.build_context(
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         query=query,
         recent_messages=[],
     )
@@ -443,7 +443,7 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
     3. Execute an action with similar query
     4. Verify that the past failure is injected as a CRITICAL constraint
     """
-    project_id = "szubar-test-project"
+    project = "szubar-test-project"
     error_content = "Connection to legacy DB failed due to incorrect port 5432"
 
     # 1. Enable Szubar Mode
@@ -452,7 +452,7 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
     # 2. Store failure memory
     await rae_service.store_memory(
         tenant_id=tenant_id,
-        project=project_id,
+        project=project,
         agent_id="default",  # Common failure knowledge for the project
         content=error_content,
         source="system",
@@ -476,7 +476,7 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
 
     action = await rae_service.execute_action(
         tenant_id=tenant_id,
-        project=project_id,
+        project=project,
         agent_id="model-123",  # Separate attribution for evaluation
         prompt="Connect to the database",
     )
@@ -507,7 +507,7 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
     3. Execute action
     4. Verify response is generated using Math Fallback (STABILITY MODE)
     """
-    project_id = "math-test-project"
+    project = "math-test-project"
     memories = [
         "The capital of France is Paris",
         "RAE uses a 4-layer memory architecture",
@@ -518,7 +518,7 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
     for content in memories:
         await rae_service.store_memory(
             tenant_id=tenant_id,
-            project=project_id,
+            project=project,
             agent_id="default",  # Common knowledge
             content=content,
             source="manual",
@@ -533,7 +533,7 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
     # 3. Execute action
     action = await rae_service.execute_action(
         tenant_id=tenant_id,
-        project=project_id,
+        project=project,
         agent_id="math-model-1",
         prompt="Tell me about RAE and France",
     )
@@ -596,7 +596,7 @@ async def test_memory_scoring_v2():
 
 @pytest.mark.asyncio
 async def test_inject_reflections_into_prompt(
-    context_builder, rae_service, tenant_id, project_id
+    context_builder, rae_service, tenant_id, project
 ):
     """
     Test the helper method for injecting reflections into existing prompts.
@@ -609,7 +609,7 @@ async def test_inject_reflections_into_prompt(
         importance=0.9,
         layer="reflective",
         tags=["security", "validation"],
-        project=project_id,
+        project=project,
     )
 
     # 2. Inject into prompt
@@ -617,7 +617,7 @@ async def test_inject_reflections_into_prompt(
     enhanced_prompt = await context_builder.inject_reflections_into_prompt(
         base_prompt=base_prompt,
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
         query="How should I handle user input?",
     )
 
@@ -643,7 +643,7 @@ async def test_end_to_end_reflection_flow(
     context_builder,
     rae_service,
     tenant_id,
-    project_id,
+    project,
 ):
     """
     Test complete end-to-end flow:
@@ -688,13 +688,13 @@ async def test_end_to_end_reflection_flow(
         task_description="Call external API",
         task_goal="Fetch data from API",
         tenant_id=tenant_id,
-        project_id=project_id,
+        project=project,
     )
 
     # Generate and store reflection
     result = await reflection_engine.generate_reflection(context_fail)
     stored_ids = await reflection_engine.store_reflection(
-        result=result, tenant_id=tenant_id, project_id=project_id
+        result=result, tenant_id=tenant_id, project=project
     )
 
     reflection_id = stored_ids["reflection_id"]
@@ -705,7 +705,7 @@ async def test_end_to_end_reflection_flow(
     # Build context for similar task
     query = "I need to call the external API again and fix authentication issues"
     working_memory = await context_builder.build_context(
-        tenant_id=tenant_id, project_id=project_id, query=query
+        tenant_id=tenant_id, project=project, query=query
     )
 
     # Verify reflection is available

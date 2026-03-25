@@ -168,7 +168,7 @@ async def test_generate_reflections_with_clusters(pipeline):
             id=uuid4(),
             content="Insight",
             tenant_id=TENANT_ID,
-            project_id=PROJECT_ID,
+            project=PROJECT_ID,
             type=ReflectionType.INSIGHT,
             reflection_type=ReflectionType.INSIGHT,
             score=0.8,

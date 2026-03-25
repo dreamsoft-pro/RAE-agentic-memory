@@ -164,7 +164,7 @@ class ContextBuilder:
     async def build_context(
         self,
         tenant_id: UUID,
-        project_id: str,
+        project: str,
         query: str,
         recent_messages: Optional[List[Dict[str, Any]]] = None,
         user_id: Optional[str] = None,
@@ -175,7 +175,7 @@ class ContextBuilder:
 
         Args:
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Current user query/task
             recent_messages: Recent conversation messages
             user_id: Optional user identifier
@@ -186,14 +186,14 @@ class ContextBuilder:
         """
         with tracer.start_as_current_span("rae.context_builder.build") as span:
             span.set_attribute("rae.tenant_id", tenant_id)
-            span.set_attribute("rae.project_id", project_id)
+            span.set_attribute("rae.project", project)
             span.set_attribute("rae.context.query_length", len(query))
             span.set_attribute("rae.context.max_tokens", self.config.max_total_tokens)
 
             logger.info(
                 "context_building_started",
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 query_length=len(query),
             )
 
@@ -212,7 +212,7 @@ class ContextBuilder:
             # 2. Retrieve relevant LTM
             ltm_components = await self._retrieve_ltm(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 query=query,
             )
             retrieval_stats["ltm_retrieved"] = len(ltm_components)
@@ -221,7 +221,7 @@ class ContextBuilder:
             # 3. Retrieve relevant reflections (Lessons Learned)
             reflection_components = await self._retrieve_reflections(
                 tenant_id=tenant_id,
-                project_id=project_id,
+                project=project,
                 query=query,
             )
             retrieval_stats["reflections_retrieved"] = len(reflection_components)
@@ -231,7 +231,7 @@ class ContextBuilder:
 
             # 4. Retrieve user/system profile
             profile_components = await self._retrieve_profile(
-                tenant_id=tenant_id, project_id=project_id, user_id=user_id
+                tenant_id=tenant_id, project=project, user_id=user_id
             )
             span.set_attribute("rae.context.profile_items", len(profile_components))
 
@@ -297,7 +297,7 @@ class ContextBuilder:
         return components
 
     async def _retrieve_ltm(
-        self, tenant_id: UUID, project_id: str, query: str
+        self, tenant_id: UUID, project: str, query: str
     ) -> List[ContextComponent]:
         """
         Retrieve relevant Long-Term Memories.
@@ -309,10 +309,10 @@ class ContextBuilder:
 
         # Retrieve episodic and semantic memories
         episodic = await self.rae_service.list_memories(
-            tenant_id=str(tenant_id), project=project_id, layer="episodic", limit=50
+            tenant_id=str(tenant_id), project=project, layer="episodic", limit=50
         )
         semantic = await self.rae_service.list_memories(
-            tenant_id=str(tenant_id), project=project_id, layer="semantic"
+            tenant_id=str(tenant_id), project=project, layer="semantic"
         )
 
         all_memories = episodic + semantic
@@ -402,7 +402,7 @@ class ContextBuilder:
         return components
 
     async def _retrieve_reflections(
-        self, tenant_id: UUID, project_id: str, query: str
+        self, tenant_id: UUID, project: str, query: str
     ) -> List[ContextComponent]:
         """
         Retrieve relevant reflections (Lessons Learned).
@@ -433,8 +433,8 @@ class ContextBuilder:
         # Query reflections using reflection engine
         reflections = await self.reflection_engine.query_reflections(
             tenant_id=str(tenant_id),
-            project_id=project_id,
-            query_text=query,
+            project=project,
+            query=query,
             k=max_items,
             min_importance=min_importance,
         )
@@ -470,7 +470,7 @@ class ContextBuilder:
     async def _retrieve_profile(
         self,
         tenant_id: UUID,
-        project_id: str,
+        project: str,
         user_id: Optional[str] = None,
     ) -> List[ContextComponent]:
         """Retrieve user/system profile information"""
@@ -542,7 +542,7 @@ class ContextBuilder:
         self,
         base_prompt: str,
         tenant_id: UUID,
-        project_id: str,
+        project: str,
         query: str,
     ) -> str:
         """
@@ -551,14 +551,14 @@ class ContextBuilder:
         Args:
             base_prompt: Original system prompt
             tenant_id: Tenant identifier
-            project_id: Project identifier
+            project: Project identifier
             query: Current query for relevance
 
         Returns:
             Enhanced prompt with reflections injected
         """
         reflections = await self._retrieve_reflections(
-            tenant_id=tenant_id, project_id=project_id, query=query
+            tenant_id=tenant_id, project=project, query=query
         )
 
         if not reflections:

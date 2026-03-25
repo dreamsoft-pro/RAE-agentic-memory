@@ -43,7 +43,7 @@ def base_state():
     """Create base RAE state for testing"""
     return RAEState(
         tenant_id="test_tenant",
-        project_id="test_project",
+        project="test_project",
         budget_state=BudgetState(
             remaining_tokens=100000,
             remaining_cost_usd=10.0,

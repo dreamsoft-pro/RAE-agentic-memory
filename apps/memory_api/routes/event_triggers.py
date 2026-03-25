@@ -87,7 +87,7 @@ async def create_trigger(
         # Create trigger in database
         trigger_record = await repo.create_trigger(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             rule_name=request.rule_name,
             event_types=[et.value for et in request.condition.event_types],
             conditions=(
@@ -251,7 +251,7 @@ async def disable_trigger(trigger_id: str, pool=Depends(get_pool)):
 @router.get("/list")
 async def list_triggers(
     tenant_id: str,
-    project_id: str,
+    project: str,
     status_filter: Optional[str] = None,
     limit: int = 100,
     repo: TriggerRepository = Depends(get_trigger_repo),
@@ -264,7 +264,7 @@ async def list_triggers(
     try:
         triggers = await repo.list_triggers(
             tenant_id=tenant_id,
-            project_id=project_id,
+            project=project,
             status_filter=status_filter,
             limit=limit,
         )
@@ -301,7 +301,7 @@ async def emit_event(request: EmitEventRequest, pool=Depends(get_pool)):
             event_id=uuid4(),
             event_type=request.event_type,
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             source_service="api",
             payload=request.payload,
             tags=request.tags,
@@ -430,7 +430,7 @@ async def create_workflow(
         # Create workflow in database
         workflow_record = await repo.create_workflow(
             tenant_id=request.tenant_id,
-            project_id=request.project_id,
+            project=request.project,
             workflow_name=request.workflow_name,
             steps=[s.model_dump() for s in request.steps],
             created_by=request.created_by,
@@ -471,14 +471,14 @@ async def get_workflow(
 @router.get("/workflows")
 async def list_workflows(
     tenant_id: str,
-    project_id: str,
+    project: str,
     limit: int = 100,
     repo: WorkflowRepository = Depends(get_workflow_repo),
 ):
     """List workflows"""
     try:
         workflows = await repo.list_workflows(
-            tenant_id=tenant_id, project_id=project_id, limit=limit
+            tenant_id=tenant_id, project=project, limit=limit
         )
 
         return {
@@ -549,7 +549,7 @@ async def get_trigger_template(template_id: str):
 async def instantiate_template(
     template_id: str,
     tenant_id: str,
-    project_id: str,
+    project: str,
     rule_name: str,
     parameters: dict,
     created_by: str,
