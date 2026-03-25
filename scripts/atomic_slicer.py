@@ -8,8 +8,10 @@ from pathlib import Path
 
 # v76 - Direct File Slicer (Bypassing DB Integrity Issues)
 BASE_API = "http://localhost:8001/v2/memories" 
-OUT_DIR = '/mnt/extra_storage/RAE-agentic-memory/agent_hive/work_dir/components/'
-FRONTEND_ROOT = '/mnt/extra_storage/dreamsoft_factory/frontend/'
+PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent))
+CLOUD_ROOT = PROJECT_ROOT.parent
+OUT_DIR = str(PROJECT_ROOT / 'agent_hive' / 'work_dir' / 'components')
+FRONTEND_ROOT = str(CLOUD_ROOT / 'dreamsoft_factory' / 'frontend')
 CHUNK_SIZE = 3000
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
 

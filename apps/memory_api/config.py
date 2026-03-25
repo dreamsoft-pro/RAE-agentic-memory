@@ -1,5 +1,6 @@
 import os
 import socket
+from pathlib import Path
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -177,7 +178,7 @@ class Settings(BaseSettings):
         return self
 
     model_config = SettingsConfigDict(
-        env_file=[".env", "/app/rae_core/.env"], env_file_encoding="utf-8", extra="ignore"
+        env_file=[".env", str(Path(__file__).parent.parent.parent / "rae-core" / ".env"), str(Path("/app/rae_core/.env"))], env_file_encoding="utf-8", extra="ignore"
     )
 
 
