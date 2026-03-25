@@ -1,163 +1,87 @@
-# RAE Memory - STANDARD STACK
 services:
   rae-postgres:
     image: ankane/pgvector:latest
     container_name: rae-postgres
-    restart: unless-stopped
+    restart: always
     environment:
-      - POSTGRES_USER=rae
-      - POSTGRES_PASSWORD=rae_password
-      - POSTGRES_DB=rae
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: rae
+      POSTGRES_USER: rae
+      POSTGRES_PASSWORD: rae_password
     volumes:
-      - rae-agentic-memory_postgres_data:/var/lib/postgresql/data
+      - rae_db_data:/var/lib/postgresql/data
+    networks:
+      - rae-internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rae"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U rae -d rae"]
+      interval: 5s
       timeout: 5s
       retries: 5
+
+  rae-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rae-qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+    volumes:
+      - rae_qdrant_data:/qdrant/storage
     networks:
       - rae-internal
 
   rae-redis:
     image: redis:7-alpine
     container_name: rae-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - rae-agentic-memory_redis_data:/data
+    restart: always
+    networks:
+      - rae-internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - rae-internal
-
-  rae-qdrant:
-    image: qdrant/qdrant:latest
-    container_name: rae-qdrant
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - rae-agentic-memory_qdrant_data:/qdrant/storage
-    networks:
-      - rae-internal
-
-  ollama-dev:
-    image: ollama/ollama:latest
-    container_name: ollama-dev
-    restart: unless-stopped
-    ports:
-      - "11435:11434"
-    volumes:
-      - rae-agentic-memory_ollama_data:/root/.ollama
-    networks:
-      - rae-internal
 
   rae-api-dev:
-    build: .
     image: rae-memory:latest
     container_name: rae-api-dev
-    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000
-    restart: unless-stopped
+    restart: always
     ports:
       - "8001:8000"
-    environment:
-      - POSTGRES_USER=rae
-      - POSTGRES_PASSWORD=rae_password
-      - POSTGRES_DB=rae
-      - POSTGRES_HOST=rae-postgres
-      - REDIS_URL=redis://rae-redis:6379/0
-      - QDRANT_HOST=rae-qdrant
-      - RAE_API_KEY=test-key
-      - RAE_DB_MODE=migrate
-      - PYTHONPATH=/app
-      - OLLAMA_API_URL=http://ollama-dev:11434
-      - RAE_EMBEDDING_BACKEND=api
-      - RAE_EMBEDDING_MODEL=nomic-embed-text
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - rae-internal
+    env_file:
+      - .env
+    volumes:
+      - ./rae_adapters:/opt/venv/lib/python3.14/site-packages/rae_adapters
+      - ./rae-core/rae_core:/opt/venv/lib/python3.14/site-packages/rae_core
     depends_on:
       rae-postgres:
         condition: service_healthy
       rae-redis:
         condition: service_healthy
-      ollama-dev:
-        condition: service_started
+    networks:
+      - rae-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rae-worker:
-    build: .
     image: rae-memory:latest
     container_name: rae-worker
-    command: bash -c "celery -A apps.memory_api.celery_app worker --loglevel=info"
-    restart: unless-stopped
-    environment:
-      - PYTHONPATH=/app
-      - POSTGRES_HOST=rae-postgres
-      - REDIS_URL=redis://rae-redis:6379/0
-      - CELERY_BROKER_URL=redis://rae-redis:6379/0
-      - OLLAMA_API_URL=http://ollama-dev:11434
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./rae_adapters:/opt/venv/lib/python3.14/site-packages/rae_adapters
+      - ./rae-core/rae_core:/opt/venv/lib/python3.14/site-packages/rae_core
+    depends_on:
+      - rae-redis
     networks:
       - rae-internal
-    depends_on:
-      rae-api-dev:
-        condition: service_healthy
-
-  rae-mcp:
-    image: rae-memory:latest
-    container_name: rae-mcp
-    command: ["python3", "-m", "rae_mcp.server"]
-    stdin_open: true
-    tty: true
-    restart: unless-stopped
-    environment:
-      - RAE_API_URL=http://rae-api-dev:8000
-      - RAE_API_KEY=test-key
-      - RAE_TENANT_ID=53717286-fe94-4c8f-baf9-c4d2758eb672
-      - RAE_PROJECT_ID=dreamsoft_factory
-      - PYTHONPATH=/app:/app/integrations/mcp/src
-    networks:
-      - rae-internal
-    depends_on:
-      rae-api-dev:
-        condition: service_healthy
-
-  rae-portal:
-    build: ./rae-portal
-    container_name: rae-portal
-    restart: unless-stopped
-    ports:
-      - "8500:8080"
-    environment:
-      - RAE_API_URL=http://rae-api-dev:8000
-      - RAE_TENANT_ID=66435998-b1d9-5521-9481-55a9fd10e014
-    networks:
-      - rae-internal
-    depends_on:
-      rae-api-dev:
-        condition: service_healthy
 
 networks:
   rae-internal:
-    name: rae-internal
-    driver: bridge
+    external: true
 
 volumes:
-  rae-agentic-memory_postgres_data:
-    driver: local
-  rae-agentic-memory_redis_data:
-    driver: local
-  rae-agentic-memory_qdrant_data:
-    driver: local
-  rae-agentic-memory_ollama_data:
-    driver: local
+  rae_db_data:
+  rae_qdrant_data:
