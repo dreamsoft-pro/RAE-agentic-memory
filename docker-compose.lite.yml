@@ -1,0 +1,46 @@
+# RAE - Lite (CPU Only)
+# Minimal resource usage, no GPU required
+
+services:
+  rae-api-lite:
+    build:
+      context: .
+      args:
+        - BASE_IMAGE=python:3.14-slim
+        - INSTALL_ML=false
+    container_name: rae-api-lite
+    restart: always
+    ports:
+      - "8010:8000"
+    environment:
+      - RAE_PROFILE=lite
+    env_file: .env
+    depends_on:
+      rae-postgres-lite:
+        condition: service_healthy
+    networks:
+      - rae-lite-network
+
+  rae-postgres-lite:
+    image: ankane/pgvector:latest
+    container_name: rae-postgres-lite
+    environment:
+      - POSTGRES_DB=rae_lite
+      - POSTGRES_USER=rae
+      - POSTGRES_PASSWORD=rae_password
+    volumes:
+      - rae_lite_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rae -d rae_lite"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rae-lite-network
+
+networks:
+  rae-lite-network:
+    name: rae-lite-internal
+
+volumes:
+  rae_lite_db_data:

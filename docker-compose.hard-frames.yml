@@ -1,0 +1,32 @@
+# RAE Hard Frames Overlay
+# Usage: docker compose -f docker-compose.yml -f docker-compose.hard-frames.yml up -d
+
+services:
+  rae-api:
+    # Hard Frames Enforcement
+    networks:
+      rae-network:
+        ipv4_address: 172.20.0.10 # Deterministic IP for firewalling
+    dns:
+      - 127.0.0.1 # Point to nowhere to block external DNS
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # In Hard Frames, we often want to block write access outside workspace
+    # read_only: true 
+    # tmpfs: /tmp
+
+  rae-worker:
+    networks:
+      rae-network:
+        ipv4_address: 172.20.0.11
+    dns:
+      - 127.0.0.1
+    cap_drop:
+      - ALL
+
+networks:
+  rae-network:
+    name: rae-internal
+    internal: true # THIS IS THE KEY: Blocks external internet access

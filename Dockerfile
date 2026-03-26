@@ -1,25 +1,27 @@
-# STAGE 1: Builder
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS builder
+# RAE Universal Dockerfile
+# Supports both CPU (Lite) and GPU (Full) via build arguments
 
+ARG BASE_IMAGE=python:3.14-slim
+FROM ${BASE_IMAGE} AS builder
+
+# Set build environment
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    software-properties-common curl git gcc g++ \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y \
-    python3.14 python3.14-dev python3.14-venv \
+    curl git gcc g++ libpq-dev \
     && rm -rf /var/lib/apt/lists/*
-
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.14
-RUN ln -sf /usr/bin/python3.14 /usr/bin/python3
 
 WORKDIR /app
 
-# Install dependencies in a virtualenv
-RUN python3.14 -m venv /opt/venv
+# Create virtualenv
+RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Install local RAE packages FIRST
+# (Order matters for dependency resolution)
 COPY sdk/python/rae_memory_sdk /app/sdk/python/rae_memory_sdk
 RUN pip install --no-cache-dir /app/sdk/python/rae_memory_sdk
 
@@ -29,27 +31,28 @@ RUN pip install --no-cache-dir /app/rae-core
 COPY rae_adapters /app/rae_adapters
 RUN pip install --no-cache-dir /app/rae_adapters
 
+# Install application requirements
 COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt
-COPY apps/memory_api/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements-base.txt
 
-# STAGE 2: Final Runtime
-FROM nvidia/cuda:12.4.1-base-ubuntu22.04 AS runtime
+# Optional: Full ML features (if GPU build is requested, you might want these)
+ARG INSTALL_ML=false
+COPY apps/memory_api/requirements-ml.txt /app/requirements-ml.txt
+RUN if [ "$INSTALL_ML" = "true" ] ; then pip install --no-cache-dir -r /app/requirements-ml.txt ; fi
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
+# FINAL STAGE
+FROM ${BASE_IMAGE} AS runtime
+
 ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
 
-# Only essential system libraries
 RUN apt-get update && apt-get install -y \
-    software-properties-common curl \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y python3.14 \
+    curl libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy the virtualenv from builder
+# Copy virtualenv from builder
 COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code
@@ -58,10 +61,11 @@ COPY alembic /app/alembic
 COPY apps /app/apps
 COPY models /app/models
 
-# Non-root user
+# Setup user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-CMD ["/bin/bash", "-c", "uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000"]
+# Default command (can be overridden in docker-compose)
+CMD ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

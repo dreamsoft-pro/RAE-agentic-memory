@@ -1,29 +1,61 @@
-# RAE Memory - DEV HOTRELOAD OVERRIDE
+# RAE - Development (Hot Reload)
+# Mounts local source code for instant feedback
+
 services:
   rae-api-dev:
-    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload
+    build:
+      context: .
+      args:
+        - BASE_IMAGE=python:3.14-slim
+        - INSTALL_ML=false
+    container_name: rae-api-dev
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+      - ./rae-core/rae_core:/opt/venv/lib/python3.14/site-packages/rae_core
+      - ./rae_adapters:/opt/venv/lib/python3.14/site-packages/rae_adapters
     environment:
-      - RAE_PROFILE=dev
-    volumes:
-      - ./rae-core/rae_core:/app/rae_core
-      - ./apps:/app/apps
-      - ./rae_adapters:/app/rae_adapters
-      - ./alembic:/app/alembic
-      - ./models:/app/models
-      - ./apps/llm/config:/app/apps/llm/config
+      - RAE_PROFILE=laptop
+      - RAE_DB_MODE=migrate
+      - WATCHFILES_FORCE_POLLING=true
+    env_file: .env
+    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      rae-postgres:
+        condition: service_healthy
+    networks:
+      - rae-dev-network
 
-  rae-worker:
-    volumes:
-      - ./rae-core/rae_core:/app/rae_core
-      - ./apps:/app/apps
-      - ./rae_adapters:/app/rae_adapters
-      - ./models:/app/models
+  rae-postgres:
+    image: ankane/pgvector:latest
+    container_name: rae-postgres-dev
+    environment:
+      - POSTGRES_DB=rae
+      - POSTGRES_USER=rae
+      - POSTGRES_PASSWORD=rae_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rae -d rae"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rae-dev-network
 
-  rae-mcp:
-    volumes:
-      - ./integrations/mcp/src/rae_mcp:/app/rae_mcp
-      - ./rae-core/rae_core:/app/rae_core
+  rae-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rae-qdrant-dev
+    ports:
+      - "6333:6333"
+    networks:
+      - rae-dev-network
 
-  rae-portal:
-    volumes:
-      - ./rae-portal:/app
+  rae-redis:
+    image: redis:7-alpine
+    container_name: rae-redis-dev
+    networks:
+      - rae-dev-network
+
+networks:
+  rae-dev-network:
+    name: rae-internal-dev
