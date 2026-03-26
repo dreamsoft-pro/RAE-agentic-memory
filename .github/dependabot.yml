@@ -1,27 +1,29 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 99
-    groups:
-      security-updates:
-        patterns:
-          - "*"
-
-  - package-ecosystem: "pip"
     directory: "/apps/memory_api"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 99
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    # Ignorujemy paczki ML, które wymagają ręcznej weryfikacji z CUDA na Node 1
+    ignore:
+      - dependency-name: "numpy"
+      - dependency-name: "onnxruntime-gpu"
+      - dependency-name: "scipy"
     groups:
-      app-security:
+      web-dependencies:
         patterns:
-          - "*"
+          - "fastapi"
+          - "pydantic*"
+          - "requests"
+          - "aiohttp"
+      security-critical:
+        patterns:
+          - "cryptography"
+          - "pyjwt"
+          - "authlib"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
