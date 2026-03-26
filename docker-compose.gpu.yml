@@ -1,0 +1,29 @@
+# RAE - GPU Acceleration Overlay
+# Use this with: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+
+services:
+  rae-api:
+    build:
+      args:
+        - BASE_IMAGE=nvidia/cuda:12.4.1-base-ubuntu22.04
+        - INSTALL_ML=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  rae-worker:
+    build:
+      args:
+        - BASE_IMAGE=nvidia/cuda:12.4.1-base-ubuntu22.04
+        - INSTALL_ML=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

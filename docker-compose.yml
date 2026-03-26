@@ -1,13 +1,14 @@
 # RAE - Full Stack (Production/Standard)
-# Supports GPU acceleration if available
+# CPU Optimized (no GPU required)
 
 services:
   rae-api:
+    image: rae-api:latest
     build:
       context: .
       args:
-        - BASE_IMAGE=nvidia/cuda:12.4.1-base-ubuntu22.04 # Change to python:3.14-slim if no GPU
-        - INSTALL_ML=true
+        - BASE_IMAGE=python:3.11-slim
+        - INSTALL_ML=false
     container_name: rae-api
     restart: always
     ports:
@@ -18,25 +19,23 @@ services:
         condition: service_healthy
       rae-redis:
         condition: service_healthy
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     networks:
-      - rae-network
+      - rae-internal
 
   rae-worker:
+    build:
+      context: .
+      args:
+        - BASE_IMAGE=python:3.11-slim
+        - INSTALL_ML=false
     image: rae-api:latest
     container_name: rae-worker
-    command: celery -A apps.memory_api.tasks worker --loglevel=info
+    command: celery -A apps.memory_api.celery_app:celery_app worker --loglevel=info
     env_file: .env
     depends_on:
       - rae-redis
     networks:
-      - rae-network
+      - rae-internal
 
   rae-postgres:
     image: ankane/pgvector:latest
@@ -53,7 +52,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - rae-network
+      - rae-internal
 
   rae-qdrant:
     image: qdrant/qdrant:latest
@@ -63,7 +62,7 @@ services:
     volumes:
       - rae_qdrant_data:/qdrant/storage
     networks:
-      - rae-network
+      - rae-internal
 
   rae-redis:
     image: redis:7-alpine
@@ -74,10 +73,10 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - rae-network
+      - rae-internal
 
 networks:
-  rae-network:
+  rae-internal:
     name: rae-internal
 
 volumes:
