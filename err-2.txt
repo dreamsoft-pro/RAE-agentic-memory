@@ -1,0 +1,331 @@
+ => ERROR [rae-api builder 12/14] RUN pip install --no-cache-dir -r /app/requirements-base.txt                                                                                                                                  25.1s
+------                                                                                                                                                                                                                                
+ > [rae-api builder 12/14] RUN pip install --no-cache-dir -r /app/requirements-base.txt:                                                                                                                                              
+0.520 Collecting aiohappyeyeballs==2.6.1                                                                                                                                                                                              
+0.638   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)                                                                                                                                                                   
+1.397 Collecting aiohttp==3.13.3                                                                                                                                                                                                      
+1.414   Downloading aiohttp-3.13.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.7 MB)                                                                                                          
+1.543      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 13.8 MB/s eta 0:00:00
+1.584 Collecting aiosignal==1.4.0
+1.601   Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+1.605 Requirement already satisfied: aiosqlite==0.22.1 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 4)) (0.22.1)
+1.655 Collecting alembic==1.18.4
+1.672   Downloading alembic-1.18.4-py3-none-any.whl (263 kB)
+1.675      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 263.9/263.9 KB 235.0 MB/s eta 0:00:00
+1.710 Collecting amqp==5.3.1
+1.726   Downloading amqp-5.3.1-py3-none-any.whl (50 kB)
+1.728      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.9/50.9 KB 325.5 MB/s eta 0:00:00
+1.761 Collecting annotated-doc==0.0.4
+1.778   Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+1.781 Requirement already satisfied: annotated-types==0.7.0 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 8)) (0.7.0)
+1.839 Collecting anthropic==0.85.0
+1.858   Downloading anthropic-0.85.0-py3-none-any.whl (458 kB)
+1.862      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 458.2/458.2 KB 190.6 MB/s eta 0:00:00
+1.902 Collecting anyio==4.12.1
+1.918   Downloading anyio-4.12.1-py3-none-any.whl (113 kB)
+1.920      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 113.6/113.6 KB 404.9 MB/s eta 0:00:00
+1.960 Collecting asgiref==3.11.1
+1.976   Downloading asgiref-3.11.1-py3-none-any.whl (24 kB)
+2.074 Collecting asyncpg==0.31.0
+2.094   Downloading asyncpg-0.31.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (2.9 MB)
+2.134      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.9/2.9 MB 75.4 MB/s eta 0:00:00
+2.173 Collecting attrs==25.4.0
+2.190   Downloading attrs-25.4.0-py3-none-any.whl (67 kB)
+2.192      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.6/67.6 KB 302.2 MB/s eta 0:00:00
+2.236 Collecting Authlib==1.6.9
+2.252   Downloading authlib-1.6.9-py2.py3-none-any.whl (244 kB)
+2.255      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 244.2/244.2 KB 393.0 MB/s eta 0:00:00
+2.295 Collecting billiard==4.2.4
+2.310   Downloading billiard-4.2.4-py3-none-any.whl (87 kB)
+2.312      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 87.1/87.1 KB 677.7 MB/s eta 0:00:00
+2.366 Collecting celery==5.6.2
+2.383   Downloading celery-5.6.2-py3-none-any.whl (445 kB)
+2.387      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 445.5/445.5 KB 148.0 MB/s eta 0:00:00
+2.390 Requirement already satisfied: certifi==2026.2.25 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 17)) (2026.2.25)
+2.390 Requirement already satisfied: cffi==2.0.0 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 18)) (2.0.0)
+2.526 Collecting charset-normalizer==3.4.6
+2.542   Downloading charset_normalizer-3.4.6-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (207 kB)
+2.544      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 207.9/207.9 KB 256.5 MB/s eta 0:00:00
+2.577 Collecting click==8.3.1
+2.593   Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2.595      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 108.3/108.3 KB 415.9 MB/s eta 0:00:00
+2.623 Collecting click-didyoumean==0.3.1
+2.641   Downloading click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+2.679 Collecting click-plugins==1.1.1.2
+2.697   Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl (11 kB)
+2.733 Collecting click-repl==0.3.0
+2.757   Downloading click_repl-0.3.0-py3-none-any.whl (10 kB)
+3.030 Collecting cryptography==46.0.5
+3.047   Downloading cryptography-46.0.5-cp38-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+3.096      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 94.4 MB/s eta 0:00:00
+3.145 Collecting Deprecated==1.3.1
+3.161   Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+3.201 Collecting diskcache==5.6.3
+3.217   Downloading diskcache-5.6.3-py3-none-any.whl (45 kB)
+3.219      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.5/45.5 KB 409.1 MB/s eta 0:00:00
+3.246 Collecting distro==1.9.0
+3.263   Downloading distro-1.9.0-py3-none-any.whl (20 kB)
+3.300 Collecting docstring_parser==0.17.0
+3.322   Downloading docstring_parser-0.17.0-py3-none-any.whl (36 kB)
+3.351 Collecting dparse==0.6.4
+3.369   Downloading dparse-0.6.4-py3-none-any.whl (11 kB)
+3.406 Collecting ecdsa==0.19.1
+3.423   Downloading ecdsa-0.19.1-py2.py3-none-any.whl (150 kB)
+3.427      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 150.6/150.6 KB 279.2 MB/s eta 0:00:00
+3.508 Collecting fastapi==0.135.1
+3.524   Downloading fastapi-0.135.1-py3-none-any.whl (116 kB)
+3.526      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 117.0/117.0 KB 734.8 MB/s eta 0:00:00
+3.577 Collecting fastuuid==0.14.0
+3.594   Downloading fastuuid-0.14.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (280 kB)
+3.597      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 280.0/280.0 KB 158.7 MB/s eta 0:00:00
+3.635 Collecting filelock==3.25.2
+3.651   Downloading filelock-3.25.2-py3-none-any.whl (26 kB)
+3.684 Collecting flatbuffers==25.12.19
+3.701   Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+3.812 Collecting frozenlist==1.8.0
+3.827   Downloading frozenlist-1.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (219 kB)
+3.830      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 219.5/219.5 KB 172.8 MB/s eta 0:00:00
+3.876 Collecting fsspec==2026.2.0
+3.892   Downloading fsspec-2026.2.0-py3-none-any.whl (202 kB)
+3.894      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 202.5/202.5 KB 231.1 MB/s eta 0:00:00
+3.929 Collecting google-ai-generativelanguage==0.6.15
+3.947   Downloading google_ai_generativelanguage-0.6.15-py3-none-any.whl (1.3 MB)
+3.959      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 135.1 MB/s eta 0:00:00
+4.061 Collecting google-api-core==2.25.2
+4.077   Downloading google_api_core-2.25.2-py3-none-any.whl (162 kB)
+4.079      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 162.5/162.5 KB 276.1 MB/s eta 0:00:00
+4.154 Collecting google-api-python-client==2.193.0
+4.170   Downloading google_api_python_client-2.193.0-py3-none-any.whl (14.9 MB)
+4.301      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.9/14.9 MB 115.7 MB/s eta 0:00:00
+4.382 Collecting google-auth==2.49.1
+4.399   Downloading google_auth-2.49.1-py3-none-any.whl (240 kB)
+4.401      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 240.7/240.7 KB 234.1 MB/s eta 0:00:00
+4.431 Collecting google-auth-httplib2==0.3.0
+4.450   Downloading google_auth_httplib2-0.3.0-py3-none-any.whl (9.5 kB)
+4.486 Collecting google-generativeai==0.8.6
+4.503   Downloading google_generativeai-0.8.6-py3-none-any.whl (155 kB)
+4.507      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 155.1/155.1 KB 263.5 MB/s eta 0:00:00
+4.548 Collecting googleapis-common-protos==1.73.0
+4.564   Downloading googleapis_common_protos-1.73.0-py3-none-any.whl (297 kB)
+4.567      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 297.6/297.6 KB 280.4 MB/s eta 0:00:00
+4.751 Collecting greenlet==3.3.2
+4.767   Downloading greenlet-3.3.2-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (591 kB)
+4.772      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 591.7/591.7 KB 135.8 MB/s eta 0:00:00
+5.428 Collecting grpcio==1.78.0
+5.446   Downloading grpcio-1.78.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.7 MB)
+5.509      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.7/6.7 MB 113.3 MB/s eta 0:00:00
+5.573 Collecting grpcio-status==1.71.2
+5.589   Downloading grpcio_status-1.71.2-py3-none-any.whl (14 kB)
+5.590 Requirement already satisfied: h11==0.16.0 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 47)) (0.16.0)
+5.619 Collecting h2==4.3.0
+5.635   Downloading h2-4.3.0-py3-none-any.whl (61 kB)
+5.638      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.8/61.8 KB 278.9 MB/s eta 0:00:00
+5.725 Collecting hf-xet==1.4.2
+5.740   Downloading hf_xet-1.4.2-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.2 MB)
+5.778      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 120.0 MB/s eta 0:00:00
+5.811 Collecting hpack==4.1.0
+5.828   Downloading hpack-4.1.0-py3-none-any.whl (34 kB)
+5.832 Requirement already satisfied: httpcore==1.0.9 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 51)) (1.0.9)
+5.867 Collecting httplib2==0.31.2
+5.884   Downloading httplib2-0.31.2-py3-none-any.whl (91 kB)
+5.887      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 91.1/91.1 KB 280.8 MB/s eta 0:00:00
+5.888 Requirement already satisfied: httpx==0.28.1 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 53)) (0.28.1)
+5.927 Collecting httpx-sse==0.4.3
+5.945   Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+6.022 Collecting huggingface_hub==1.7.1
+6.039   Downloading huggingface_hub-1.7.1-py3-none-any.whl (616 kB)
+6.045      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 616.3/616.3 KB 152.0 MB/s eta 0:00:00
+6.073 Collecting hyperframe==6.1.0
+6.090   Downloading hyperframe-6.1.0-py3-none-any.whl (13 kB)
+6.093 Requirement already satisfied: idna==3.11 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 57)) (3.11)
+6.149 Collecting importlib_metadata==8.7.1
+6.166   Downloading importlib_metadata-8.7.1-py3-none-any.whl (27 kB)
+6.232 Collecting instructor==1.14.5
+6.248   Downloading instructor-1.14.5-py3-none-any.whl (177 kB)
+6.250      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 177.4/177.4 KB 681.5 MB/s eta 0:00:00
+6.280 Collecting Jinja2==3.1.6
+6.296   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+6.298      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 KB 413.8 MB/s eta 0:00:00
+6.416 Collecting jiter==0.11.1
+6.432   Downloading jiter-0.11.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (359 kB)
+6.435      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 359.3/359.3 KB 156.9 MB/s eta 0:00:00
+6.471 Collecting joblib==1.5.3
+6.493   Downloading joblib-1.5.3-py3-none-any.whl (309 kB)
+6.496      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 309.1/309.1 KB 341.4 MB/s eta 0:00:00
+6.540 Collecting jsonschema==4.26.0
+6.558   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+6.560      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 KB 499.1 MB/s eta 0:00:00
+6.598 Collecting jsonschema-specifications==2025.9.1
+6.614   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+6.670 Collecting kombu==5.6.2
+6.687   Downloading kombu-5.6.2-py3-none-any.whl (214 kB)
+6.690      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 214.2/214.2 KB 365.6 MB/s eta 0:00:00
+6.735 Collecting limits==5.8.0
+6.758   Downloading limits-5.8.0-py3-none-any.whl (60 kB)
+6.761      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.0/61.0 KB 318.7 MB/s eta 0:00:00
+7.160 Collecting litellm==1.82.4
+7.177   Downloading litellm-1.82.4-py3-none-any.whl (15.6 MB)
+7.422      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.6/15.6 MB 66.9 MB/s eta 0:00:00
+7.480 Collecting Mako==1.3.10
+7.496   Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+7.498      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.5/78.5 KB 400.7 MB/s eta 0:00:00
+7.534 Collecting markdown-it-py==4.0.0
+7.557   Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+7.561      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 87.3/87.3 KB 236.1 MB/s eta 0:00:00
+7.648 Collecting MarkupSafe==3.0.3
+7.664   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+7.719 Collecting marshmallow==4.2.2
+7.736   Downloading marshmallow-4.2.2-py3-none-any.whl (48 kB)
+7.738      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.5/48.5 KB 390.6 MB/s eta 0:00:00
+7.782 Collecting mcp==1.26.0
+7.799   Downloading mcp-1.26.0-py3-none-any.whl (233 kB)
+7.804      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 233.6/233.6 KB 173.0 MB/s eta 0:00:00
+7.842 Collecting mdurl==0.1.2
+7.860   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+7.900 Collecting mpmath==1.3.0
+7.917   Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+7.922      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 KB 180.9 MB/s eta 0:00:00
+8.245 Collecting multidict==6.7.1
+8.261   Downloading multidict-6.7.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (243 kB)
+8.263      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 243.3/243.3 KB 195.1 MB/s eta 0:00:00
+8.366 Collecting mysql-connector-python==9.6.0
+8.382   Downloading mysql_connector_python-9.6.0-cp310-cp310-manylinux_2_28_x86_64.whl (34.5 MB)
+8.988      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 34.5/34.5 MB 108.3 MB/s eta 0:00:00
+9.050 Collecting networkx>=3.0
+9.067   Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+9.084      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 120.4 MB/s eta 0:00:00
+9.125 Collecting nltk>=3.8
+9.142   Downloading nltk-3.9.4-py3-none-any.whl (1.6 MB)
+9.204      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 26.6 MB/s eta 0:00:00
+9.213 Requirement already satisfied: numpy>=2.0 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 79)) (2.2.6)
+9.266 Collecting onnxruntime-gpu>=1.20.0
+9.287   Downloading onnxruntime_gpu-1.23.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (300.5 MB)
+19.23      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 300.5/300.5 MB 26.4 MB/s eta 0:00:00
+19.51 Collecting openai>=1.50.0
+19.53   Downloading openai-2.30.0-py3-none-any.whl (1.1 MB)
+19.57      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 30.8 MB/s eta 0:00:00
+19.63 Collecting opentelemetry-api==1.40.0
+19.64   Downloading opentelemetry_api-1.40.0-py3-none-any.whl (68 kB)
+19.64      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 68.7/68.7 KB 413.3 MB/s eta 0:00:00
+19.68 Collecting opentelemetry-instrumentation==0.61b0
+19.70   Downloading opentelemetry_instrumentation-0.61b0-py3-none-any.whl (33 kB)
+19.74 Collecting opentelemetry-instrumentation-asgi==0.61b0
+19.75   Downloading opentelemetry_instrumentation_asgi-0.61b0-py3-none-any.whl (16 kB)
+19.90 Collecting opentelemetry-instrumentation-asyncpg==0.61b0
+19.92   Downloading opentelemetry_instrumentation_asyncpg-0.61b0-py3-none-any.whl (10 kB)
+19.96 Collecting opentelemetry-instrumentation-fastapi==0.61b0
+19.98   Downloading opentelemetry_instrumentation_fastapi-0.61b0-py3-none-any.whl (13 kB)
+20.03 Collecting opentelemetry-instrumentation-httpx==0.61b0
+20.04   Downloading opentelemetry_instrumentation_httpx-0.61b0-py3-none-any.whl (17 kB)
+20.09 Collecting opentelemetry-instrumentation-redis==0.61b0
+20.11   Downloading opentelemetry_instrumentation_redis-0.61b0-py3-none-any.whl (15 kB)
+20.15 Collecting opentelemetry-instrumentation-requests==0.61b0
+20.17   Downloading opentelemetry_instrumentation_requests-0.61b0-py3-none-any.whl (14 kB)
+20.21 Collecting opentelemetry-sdk==1.40.0
+20.22   Downloading opentelemetry_sdk-1.40.0-py3-none-any.whl (141 kB)
+20.23      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 142.0/142.0 KB 81.0 MB/s eta 0:00:00
+20.28 Collecting opentelemetry-semantic-conventions==0.61b0
+20.29   Downloading opentelemetry_semantic_conventions-0.61b0-py3-none-any.whl (231 kB)
+20.30      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 231.6/231.6 KB 51.6 MB/s eta 0:00:00
+20.34 Collecting opentelemetry-util-http==0.61b0
+20.36   Downloading opentelemetry_util_http-0.61b0-py3-none-any.whl (9.3 kB)
+20.40 Collecting packaging==26.0
+20.41   Downloading packaging-26.0-py3-none-any.whl (74 kB)
+20.42      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 74.4/74.4 KB 121.6 MB/s eta 0:00:00
+20.45 Collecting pgvector==0.4.2
+20.46   Downloading pgvector-0.4.2-py3-none-any.whl (27 kB)
+20.51 Collecting portalocker==3.2.0
+20.53   Downloading portalocker-3.2.0-py3-none-any.whl (22 kB)
+20.67 Collecting prometheus-fastapi-instrumentator==7.1.0
+20.69   Downloading prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl (19 kB)
+20.73 Collecting prometheus_client==0.24.1
+20.75   Downloading prometheus_client-0.24.1-py3-none-any.whl (64 kB)
+20.75      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.1/64.1 KB 171.9 MB/s eta 0:00:00
+20.82 Collecting prompt_toolkit==3.0.52
+20.84   Downloading prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+20.85      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 391.4/391.4 KB 44.9 MB/s eta 0:00:00
+20.95 Collecting propcache==0.4.1
+20.97   Downloading propcache-0.4.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (196 kB)
+20.97      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 196.9/196.9 KB 38.1 MB/s eta 0:00:00
+21.01 Collecting proto-plus==1.27.1
+21.03   Downloading proto_plus-1.27.1-py3-none-any.whl (50 kB)
+21.03      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.5/50.5 KB 330.4 MB/s eta 0:00:00
+21.25 Collecting protobuf==5.29.3
+21.27   Downloading protobuf-5.29.3-cp38-abi3-manylinux2014_x86_64.whl (319 kB)
+21.27      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 319.7/319.7 KB 53.1 MB/s eta 0:00:00
+21.38 Collecting psutil==7.2.2
+21.39   Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+21.40      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 155.6/155.6 KB 47.5 MB/s eta 0:00:00
+21.49 Collecting psycopg2-binary==2.9.11
+21.51   Downloading psycopg2_binary-2.9.11-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.2 MB)
+21.66      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 28.7 MB/s eta 0:00:00
+21.71 Collecting pyasn1==0.6.3
+21.72   Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+21.73      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 84.0/84.0 KB 413.2 MB/s eta 0:00:00
+21.76 Collecting pyasn1_modules==0.4.2
+21.78   Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+21.79      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 181.3/181.3 KB 74.1 MB/s eta 0:00:00
+21.79 Requirement already satisfied: pycparser==3.0 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 106)) (3.0)
+21.79 Requirement already satisfied: pydantic==2.12.5 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 107)) (2.12.5)
+21.79 Requirement already satisfied: pydantic-settings==2.13.1 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 108)) (2.13.1)
+21.79 Requirement already satisfied: pydantic_core==2.41.5 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 109)) (2.41.5)
+21.83 Collecting Pygments==2.19.2
+21.85   Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+21.89      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 32.3 MB/s eta 0:00:00
+21.94 Collecting PyJWT==2.12.1
+21.95   Downloading pyjwt-2.12.1-py3-none-any.whl (29 kB)
+22.00 Collecting pyparsing==3.3.2
+22.02   Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)
+22.02      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 122.8/122.8 KB 73.6 MB/s eta 0:00:00
+22.05 Collecting python-dateutil==2.9.0.post0
+22.07   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+22.08      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 229.9/229.9 KB 54.8 MB/s eta 0:00:00
+22.08 Requirement already satisfied: python-dotenv==1.2.2 in /opt/venv/lib/python3.10/site-packages (from -r /app/requirements-base.txt (line 114)) (1.2.2)
+22.11 Collecting python-jose==3.5.0
+22.13   Downloading python_jose-3.5.0-py2.py3-none-any.whl (34 kB)
+22.27 Collecting python-louvain==0.16
+22.28   Downloading python-louvain-0.16.tar.gz (204 kB)
+22.29      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 204.6/204.6 KB 120.6 MB/s eta 0:00:00
+22.30   Preparing metadata (setup.py): started
+22.39   Preparing metadata (setup.py): finished with status 'done'
+22.41 Collecting python-multipart==0.0.22
+22.43   Downloading python_multipart-0.0.22-py3-none-any.whl (24 kB)
+22.50 Collecting PyYAML==6.0.3
+22.52   Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (770 kB)
+22.54      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 KB 35.2 MB/s eta 0:00:00
+22.59 Collecting qdrant-client==1.17.1
+22.61   Downloading qdrant_client-1.17.1-py3-none-any.whl (389 kB)
+22.62      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.9/389.9 KB 44.5 MB/s eta 0:00:00
+22.67 Collecting redis==7.3.0
+22.69   Downloading redis-7.3.0-py3-none-any.whl (404 kB)
+22.70      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 404.4/404.4 KB 44.6 MB/s eta 0:00:00
+22.79 Collecting referencing==0.37.0
+22.80   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+23.29 Collecting regex==2026.2.28
+23.30   Downloading regex-2026.2.28-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (791 kB)
+23.33      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 791.7/791.7 KB 34.4 MB/s eta 0:00:00
+23.38 Collecting requests==2.32.5
+23.40   Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+23.40      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.7/64.7 KB 464.9 MB/s eta 0:00:00
+23.47 Collecting rich==14.3.3
+23.48   Downloading rich-14.3.3-py3-none-any.whl (310 kB)
+23.49      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.5/310.5 KB 40.3 MB/s eta 0:00:00
+23.86 Collecting rpds-py==0.30.0
+23.88   Downloading rpds_py-0.30.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (390 kB)
+23.89      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 390.5/390.5 KB 41.4 MB/s eta 0:00:00
+23.93 Collecting rsa==4.9.1
+23.95   Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+24.13 Collecting ruamel.yaml==0.19.1
+24.14   Downloading ruamel_yaml-0.19.1-py3-none-any.whl (118 kB)
+24.14      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 118.1/118.1 KB 51.2 MB/s eta 0:00:00
+24.29 Collecting safety==3.7.0
+24.31   Downloading safety-3.7.0-py3-none-any.whl (312 kB)
+24.32      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 312.4/312.4 KB 41.0 MB/s eta 0:00:00
+24.45 Collecting safety-schemas==0.0.16
+24.47   Downloading safety_schemas-0.0.16-py3-none-any.whl (39 kB)
+24.65 ERROR: Could not find a version that satisfies the requirement scipy==1.17.1 (from versions: 0.8.0, 0.9.0, 0.10.0, 0.10.1, 0.11.0, 0.12.0, 0.12.1, 0.13.0, 0.13.1, 0.13.2, 0.13.3, 0.14.0, 0.14.1, 0.15.0, 0.15.1, 0.16.0, 0.16.1, 0.17.0, 0.17.1, 0.18.0, 0.18.1, 0.19.0, 0.19.1, 1.0.0, 1.0.1, 1.1.0, 1.2.0, 1.2.1, 1.2.2, 1.2.3, 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.4.0, 1.4.1, 1.5.0, 1.5.1, 1.5.2, 1.5.3, 1.5.4, 1.6.0, 1.6.1, 1.7.2, 1.7.3, 1.8.0rc1, 1.8.0rc2, 1.8.0rc3, 1.8.0rc4, 1.8.0, 1.8.1, 1.9.0rc1, 1.9.0rc2, 1.9.0rc3, 1.9.0, 1.9.1, 1.9.2, 1.9.3, 1.10.0rc1, 1.10.0rc2, 1.10.0, 1.10.1, 1.11.0rc1, 1.11.0rc2, 1.11.0, 1.11.1, 1.11.2, 1.11.3, 1.11.4, 1.12.0rc1, 1.12.0rc2, 1.12.0, 1.13.0rc1, 1.13.0, 1.13.1, 1.14.0rc1, 1.14.0rc2, 1.14.0, 1.14.1, 1.15.0rc1, 1.15.0rc2, 1.15.0, 1.15.1, 1.15.2, 1.15.3)
+24.65 ERROR: No matching distribution found for scipy==1.17.1
+------
+failed to solve: process "/bin/sh -c pip install --no-cache-dir -r /app/requirements-base.txt" did not complete successfully: exit code: 1
+print@TrujetAI:~/cloud/RAE-agentic-memory$ 
+
