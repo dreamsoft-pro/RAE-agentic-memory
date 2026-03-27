@@ -20,13 +20,13 @@ services:
       rae-redis:
         condition: service_healthy
       rae-qdrant:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 15s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     networks:
       - rae-internal
 
@@ -46,13 +46,13 @@ services:
       rae-redis:
         condition: service_healthy
       rae-qdrant:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app:celery_app inspect ping"]
       interval: 30s
       timeout: 15s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     networks:
       - rae-internal
 
@@ -82,12 +82,6 @@ services:
       - "6333:6333"
     volumes:
       - ./data/qdrant:/qdrant/storage
-    healthcheck:
-      # SYSTEM 96.3: Robust Healthcheck (No curl/wget dependency)
-      test: ["CMD-SHELL", "cat /dev/tcp/localhost/6333 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - rae-internal
 
