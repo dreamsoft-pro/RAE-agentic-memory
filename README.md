@@ -104,7 +104,7 @@ Get RAE up and running in 2 simple steps:
     ```bash
     git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
     cd RAE-agentic-memory
-chmod +x init.sh
+    chmod +x init.sh
     ./init.sh  # Automatically creates .env and workspaces
     ```
 
