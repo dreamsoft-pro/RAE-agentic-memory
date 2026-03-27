@@ -11,13 +11,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-venv python3-dev \
     curl git gcc g++ libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Create virtualenv
-RUN python -m venv /opt/venv
+RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install local RAE packages FIRST

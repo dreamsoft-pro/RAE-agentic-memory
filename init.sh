@@ -29,11 +29,11 @@ mkdir -p work_dir
 
 echo "🚀 Initialization complete."
 echo "--------------------------------------------------"
-echo "Standard:     docker compose up -d"
-echo "Lite:         docker compose -f docker-compose.lite.yml up -d"
-echo "Dev:          docker compose -f docker-compose.dev.yml up -d"
+echo "Standard (CPU):             docker compose up -d"
+echo "GPU Acceleration (NVIDIA):  docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d"
+echo "Lite:                       docker compose -f docker-compose.lite.yml up -d"
+echo "Dev:                        docker compose -f docker-compose.dev.yml up -d"
 echo "--------------------------------------------------"
 echo "🛡️  HARD FRAMES (Isolation Mode) - append overlay:"
 echo "Example: docker compose -f docker-compose.yml -f docker-compose.hard-frames.yml up -d"
 echo "--------------------------------------------------"
-

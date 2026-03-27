@@ -83,7 +83,7 @@ pass_*.tmp
 .env.benchmark
 .node1_access.md
 scripts/wake_lumina.sh
-scripts/wake_lumina.sh
 RAE_PORTABLE_STATE.zip
 work_dir/
 data/
+err*.txt

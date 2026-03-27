@@ -4,11 +4,11 @@ This module provides concrete implementations of the abstract interfaces:
 - PostgreSQLStorage: IMemoryStorage implementation using asyncpg
 - QdrantVectorStore: IVectorStore implementation using Qdrant
 - RedisCache: ICacheProvider implementation using Redis
-- SQLiteStorage: IMemoryStorage implementation using SQLite (Phase 1)
-- SQLiteVectorStore: IVectorStore implementation using SQLite (Phase 1)
-- InMemoryStorage: IMemoryStorage for testing (Phase 1)
-- InMemoryVectorStore: IVectorStore for testing (Phase 1)
-- InMemoryCache: ICacheProvider for testing (Phase 1)
+- SQLiteStorage: IMemoryStorage implementation using SQLite
+- SQLiteVectorStore: IVectorStore implementation using SQLite
+- InMemoryStorage: IMemoryStorage for testing
+- InMemoryVectorStore: IVectorStore for testing
+- InMemoryCache: ICacheProvider for testing
 
 Adapters follow dependency injection pattern for easy testing and swapping.
 """
@@ -16,9 +16,9 @@ Adapters follow dependency injection pattern for easy testing and swapping.
 from .memory.cache import InMemoryCache
 from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
-from .postgres import PostgreSQLStorage
-from .qdrant import QdrantVectorStore
-from .redis_cache import RedisAdapter as RedisCache
+from .postgres_adapter import PostgreSQLStorage
+from .qdrant_adapter import QdrantVectorStore
+from .redis_adapter import RedisAdapter as RedisCache
 from .sqlite.storage import SQLiteStorage
 from .sqlite.vector import SQLiteVectorStore
 
