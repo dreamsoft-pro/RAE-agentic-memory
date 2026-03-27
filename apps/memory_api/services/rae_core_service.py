@@ -11,6 +11,7 @@ from uuid import UUID
 import asyncpg
 import redis.asyncio as redis
 import structlog
+from fastapi import Request
 from qdrant_client import AsyncQdrantClient
 
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
@@ -1325,3 +1326,9 @@ class RAECoreService:
             limit,
         )
         return [dict(r) for r in records]
+
+
+async def get_rae_core_service(request: Request) -> RAECoreService:
+    """Dependency for getting RAECoreService from app state."""
+    return request.app.state.rae_core_service
+

@@ -34,6 +34,8 @@ services:
       - POSTGRES_DB=rae
       - POSTGRES_USER=rae
       - POSTGRES_PASSWORD=rae_password
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rae -d rae"]
       interval: 5s
@@ -47,6 +49,8 @@ services:
     container_name: rae-qdrant-dev
     ports:
       - "6333:6333"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
     networks:
       - rae-dev-network
 

@@ -22,9 +22,32 @@ async def agent_interaction(
     All interactions are recorded as events and captured in memory.
     """
     service: RAECoreService = request.app.state.rae_core_service
-    tenant_id = request.headers.get("X-Tenant-Id", "default")
-    project = request.headers.get("X-Project-Id", "default")
     
+    # SYSTEM 95.1: Intelligent Context Resolution
+    tenant_id = request.headers.get("X-Tenant-Id") or "00000000-0000-0000-0000-000000000000"
+    project = request.headers.get("X-Project-Id")
+    
+    # Auto-detect project from payload keywords if not explicitly provided
+    if not project:
+        payload_str = str(payload).lower()
+        if any(kw in payload_str for kw in ["speed", "area", "machine", "job id", "ink"]):
+            project = "screenwatcher"
+        elif any(kw in payload_str for kw in ["dreamsoft", "modernization", "nextjs", "angular"]):
+            project = "dreamsoft_modernization"
+        else:
+            project = "default"
+
+    # SYSTEM 95.2: Human-Centric Labeling
+    # Check payload for intelligence FIRST
+    payload_data = payload.get("payload", payload) # Support both nested and flat payload
+    action_name = payload_data.get("action", "interaction").replace("_", " ").title()
+    
+    # Check agents
+    s_agent = payload.get("source_agent") or source_agent
+    t_agent = payload.get("target_agent") or target_agent
+    
+    human_label = payload.get("human_label") or f"{action_name} ({s_agent} -> {t_agent})"
+
     event_id = uuid4()
     if correlation_id is None:
         correlation_id = event_id
@@ -49,9 +72,9 @@ async def agent_interaction(
     )
 
     # 2. Implicit Capture: Store in Memory (Episodic)
-    # This ensures every A2A interaction is auditable in the future
     try:
-        content_summary = f"A2A: {source_agent} -> {target_agent}: {str(payload)[:200]}..."
+        content_summary = f"A2A: {source_agent} -> {target_agent}: {str(payload)[:500]}"
+        
         await service.engine.store_memory(
             tenant_id=tenant_id,
             agent_id=source_agent,
@@ -59,11 +82,13 @@ async def agent_interaction(
             layer="episodic",
             project=project,
             session_id=session_id,
+            human_label=human_label,
             metadata={
                 "event_id": str(event_id),
                 "correlation_id": str(correlation_id),
                 "target_agent": target_agent,
-                "full_payload": payload
+                "full_payload": payload,
+                "human_label": human_label
             }
         )
     except Exception as e:

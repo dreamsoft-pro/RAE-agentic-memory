@@ -23,19 +23,14 @@ from apps.memory_api.models.hybrid_search_models import (
 from apps.memory_api.services.hybrid_search_service import HybridSearchService
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
 
+from apps.memory_api.services.rae_core_service import (
+    RAECoreService,
+    get_rae_core_service,
+)
+
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Hybrid Search"])
-
-
-# ============================================================================
-# Dependency Injection
-# ============================================================================
-
-
-async def get_pool(request: Request):
-    """Get database connection pool from app state"""
-    return request.app.state.pool
 
 
 # ============================================================================
@@ -44,7 +39,10 @@ async def get_pool(request: Request):
 
 
 @router.post("/hybrid", response_model=HybridSearchResponse)
-async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
+async def hybrid_search(
+    request: HybridSearchRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Execute hybrid multi-strategy search.
 
@@ -58,7 +56,7 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
     - Optional LLM re-ranking
     """
     try:
-        service = HybridSearchService(pool)
+        service = HybridSearchService(rae_service)
 
         result = await service.search(
             tenant_id=request.tenant_id,
@@ -103,7 +101,7 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
 @router.post("/analyze", response_model=QueryAnalysisResponse)
 async def analyze_query(
-    req: Request, request: QueryAnalysisRequest, pool=Depends(get_pool)
+    req: Request, request: QueryAnalysisRequest, rae_service: RAECoreService = Depends(get_rae_core_service)
 ):
     """
     Analyze query intent and recommend search strategies.
@@ -289,7 +287,7 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
 
 @router.post("/compare")
 async def compare_search_strategies(
-    request: HybridSearchRequest, pool=Depends(get_pool)
+    request: HybridSearchRequest, rae_service: RAECoreService = Depends(get_rae_core_service)
 ):
     """
     Compare results from different search strategies side-by-side.
@@ -298,7 +296,7 @@ async def compare_search_strategies(
     Useful for evaluation and debugging.
     """
     try:
-        service = HybridSearchService(pool)
+        service = HybridSearchService(rae_service)
 
         # Execute with only vector
         vector_result = await service.search(
@@ -399,7 +397,7 @@ async def test_custom_weights(
     tenant_id: str,
     project: str,
     k: int = 10,
-    pool=Depends(get_pool),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Test search with custom weights.
@@ -417,7 +415,7 @@ async def test_custom_weights(
                 status_code=400, detail=f"Weights must sum to ~1.0 (got {total})"
             )
 
-        service = HybridSearchService(pool)
+        service = HybridSearchService(rae_service)
 
         result = await service.search(
             tenant_id=tenant_id,

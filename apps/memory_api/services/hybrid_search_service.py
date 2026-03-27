@@ -17,6 +17,7 @@ Includes:
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import json
 
 import structlog
 
@@ -415,16 +416,23 @@ class HybridSearchService:
 
             records = await self.rae_service.db.fetch(sql, *params)
 
-            results = [
-                {
+            results = []
+            for record in records:
+                # SYSTEM 94.1: Robust JSONB parsing for metadata
+                meta = record.get("metadata", {})
+                if isinstance(meta, str):
+                    try:
+                        meta = json.loads(meta)
+                    except Exception:
+                        meta = {}
+
+                results.append({
                     "memory_id": record["id"],
                     "content": record["content"],
                     "score": float(record["similarity"]),
-                    "metadata": record.get("metadata", {}),
+                    "metadata": meta or {},
                     "created_at": record["created_at"],
-                }
-                for record in records
-            ]
+                })
 
             logger.info("vector_search_complete", results=len(results))
             return results
