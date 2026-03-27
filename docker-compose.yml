@@ -19,6 +19,14 @@ services:
         condition: service_healthy
       rae-redis:
         condition: service_healthy
+      rae-qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - rae-internal
 
@@ -33,7 +41,18 @@ services:
     command: celery -A apps.memory_api.celery_app:celery_app worker --loglevel=info
     env_file: .env
     depends_on:
-      - rae-redis
+      rae-postgres:
+        condition: service_healthy
+      rae-redis:
+        condition: service_healthy
+      rae-qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app:celery_app inspect ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rae-internal
 
@@ -61,6 +80,11 @@ services:
       - "6333:6333"
     volumes:
       - rae_qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - rae-internal
 

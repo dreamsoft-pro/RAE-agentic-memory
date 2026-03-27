@@ -18,7 +18,8 @@ from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
 from .postgres import PostgreSQLStorage
 from .postgres_db import PostgresDatabaseProvider
-from .qdrant_adapter import QdrantVectorStore
+from .qdrant import QdrantVectorStore
+from .qdrant_adapter import QdrantAdapter
 from .redis_adapter import RedisAdapter as RedisCache
 from .sqlite.storage import SQLiteStorage
 from .sqlite.vector import SQLiteVectorStore
@@ -32,6 +33,7 @@ __all__ = [
     "PostgreSQLStorage",
     "PostgresDatabaseProvider",
     "QdrantVectorStore",
+    "QdrantAdapter",
     "RedisCache",
     "SQLiteStorage",
     "SQLiteVectorStore",
