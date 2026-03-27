@@ -16,7 +16,8 @@ Adapters follow dependency injection pattern for easy testing and swapping.
 from .memory.cache import InMemoryCache
 from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
-from .postgres_adapter import PostgreSQLStorage
+from .postgres import PostgreSQLStorage
+from .postgres_db import PostgresDatabaseProvider
 from .qdrant_adapter import QdrantVectorStore
 from .redis_adapter import RedisAdapter as RedisCache
 from .sqlite.storage import SQLiteStorage
@@ -29,6 +30,7 @@ RedisCacheAdapter = RedisCache
 
 __all__ = [
     "PostgreSQLStorage",
+    "PostgresDatabaseProvider",
     "QdrantVectorStore",
     "RedisCache",
     "SQLiteStorage",
