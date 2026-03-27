@@ -11,6 +11,8 @@ from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..models import (
+    EmbeddingRequest,
+    EmbeddingResponse,
     LLMAuthError,
     LLMChunk,
     LLMContextLengthError,
@@ -248,3 +250,29 @@ class OpenAIProvider:
                     provider="openai",
                     raw_error=e,
                 ) from e
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate a single embedding."""
+        response = await self.embed_batch(request)
+        return response
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate batch embeddings via OpenAI SDK."""
+        try:
+            response = await self.client.embeddings.create(
+                model=request.model, input=request.input
+            )
+
+            embeddings = [d.embedding for d in response.data]
+
+            return EmbeddingResponse(
+                embeddings=embeddings,
+                model=request.model,
+                usage={
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                },
+                raw=response.model_dump(),
+            )
+        except Exception as e:
+            raise LLMProviderError(f"OpenAI Embedding Failed: {str(e)}")

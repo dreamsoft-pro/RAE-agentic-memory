@@ -267,3 +267,43 @@ class LLMRouter:
                 f"llm.provider.error - provider={provider.name} error=streaming: {e}"
             )
             raise
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """
+        Generate an embedding using the appropriate provider.
+        """
+        provider = self._get_provider_for_model(request.model)
+        if not provider:
+            raise ValueError(f"No provider available for model: {request.model}")
+
+        try:
+            logger.info(
+                f"llm.embed.start - provider={provider.name} model={request.model}"
+            )
+            response = await provider.embed(request)
+            logger.info(f"llm.embed.ok - provider={provider.name}")
+            return response
+        except Exception as e:
+            logger.error(f"llm.embed.error - provider={provider.name} error={e}")
+            raise
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """
+        Generate batch embeddings using the appropriate provider.
+        """
+        provider = self._get_provider_for_model(request.model)
+        if not provider:
+            raise ValueError(f"No provider available for model: {request.model}")
+
+        try:
+            logger.info(
+                f"llm.embed_batch.start - provider={provider.name} "
+                f"model={request.model} count={len(request.input)}"
+            )
+            response = await provider.embed_batch(request)
+            logger.info(f"llm.embed_batch.ok - provider={provider.name}")
+            return response
+        except Exception as e:
+            logger.error(f"llm.embed_batch.error - provider={provider.name} error={e}")
+            raise
+

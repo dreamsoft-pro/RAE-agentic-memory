@@ -11,6 +11,8 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..models import (
+    EmbeddingRequest,
+    EmbeddingResponse,
     LLMAuthError,
     LLMChunk,
     LLMContextLengthError,
@@ -326,3 +328,35 @@ class QwenProvider:
                 provider="qwen",
                 raw_error=e,
             ) from e
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate a single embedding."""
+        response = await self.embed_batch(request)
+        return response
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate batch embeddings via Qwen DashScope API."""
+        payload = {
+            "model": request.model,
+            "input": {"texts": request.input},
+            "parameters": {"text_type": "document"},
+        }
+
+        try:
+            response = await self.client.post(
+                "/services/aigc/text-embedding/text-embedding",
+                json=payload,
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            embeddings = [d["embedding"] for d in result["output"]["embeddings"]]
+
+            return EmbeddingResponse(
+                embeddings=embeddings,
+                model=request.model,
+                usage={"total_tokens": result.get("usage", {}).get("total_tokens", 0)},
+                raw=result,
+            )
+        except Exception as e:
+            raise LLMProviderError(f"Qwen Embedding Failed: {str(e)}")

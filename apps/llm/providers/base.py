@@ -7,7 +7,13 @@ This module defines the contract that all LLM providers must implement.
 from collections.abc import AsyncIterator
 from typing import Protocol
 
-from ..models import LLMChunk, LLMRequest, LLMResponse
+from ..models import (
+    EmbeddingRequest,
+    EmbeddingResponse,
+    LLMChunk,
+    LLMRequest,
+    LLMResponse,
+)
 
 
 class LLMProvider(Protocol):
@@ -61,5 +67,29 @@ class LLMProvider(Protocol):
 
         Raises:
             Same exceptions as complete()
+        """
+        ...
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """
+        Generate an embedding for a single text.
+
+        Args:
+            request: Standardized embedding request
+
+        Returns:
+            Standardized embedding response
+        """
+        ...
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """
+        Generate embeddings for a batch of texts.
+
+        Args:
+            request: Standardized embedding request
+
+        Returns:
+            Standardized embedding response
         """
         ...
