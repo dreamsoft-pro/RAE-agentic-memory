@@ -17,3 +17,8 @@ Modernization of Dreamsoft Pro 2.0 (Next.js + PHP API).
 - Baza danych zsynchronizowana na Node 1 (Lumina).
 - Frontend Next.js na porcie 3005 (Laptop).
 - Stary system na porcie 8081 (Laptop).
+
+## 🔐 INFRASTRUCTURE & AUTH
+- **GitHub Auth:** ALWAYS use SSH keys. Use `GIT_SSH_COMMAND="ssh -o BatchMode=yes"` to avoid interactive passphrase prompts.
+- **Node 1 (Lumina):** DO NOT connect unless explicitly requested.
+- **Persistence:** Use Bind Mounts for local data to ensure memory survives code changes.

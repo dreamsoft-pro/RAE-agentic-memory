@@ -13,7 +13,7 @@ htmlcov/
 .pytest_cache/
 .tox/
 coverage.xml
-junit.xml # Added to ignore generated JUnit XML reports
+junit.xml
 .hypothesis/
 # Node
 node_modules/
@@ -38,7 +38,7 @@ soak_test_stats_exceptions.csv
 soak_test_stats_failures.csv
 soak_test_stats_stats.csv
 soak_test_stats_stats_history.csv
-*.log # Catching stress_test.log and soak_test.log
+*.log
 
 
 # venv/IDE
