@@ -69,7 +69,7 @@ Repository = "https://github.com/dreamsoft-pro/RAE-agentic-memory.git"
 Issues = "https://github.com/dreamsoft-pro/RAE-agentic-memory/issues"
 
 [tool.setuptools]
-packages = ["rae_core"]
+packages = { find = { where = ["."], include = ["rae_core*"] } }
 
 [tool.setuptools.package-data]
 rae_core = ["py.typed"]
