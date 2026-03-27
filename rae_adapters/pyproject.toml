@@ -21,7 +21,9 @@ qdrant = ["qdrant-client>=1.7"]
 all = ["asyncpg>=0.29", "redis>=5.0", "qdrant-client>=1.7"]
 
 [tool.setuptools]
-packages = ["rae_adapters"]
+packages = ["rae_adapters", "rae_adapters.memory", "rae_adapters.sqlite"]
 
 [tool.setuptools.package-dir]
 rae_adapters = "."
+"rae_adapters.memory" = "memory"
+"rae_adapters.sqlite" = "sqlite"

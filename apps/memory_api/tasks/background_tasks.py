@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 import asyncpg
 import structlog
 from qdrant_client import AsyncQdrantClient
+from celery import shared_task, current_app
 
-from apps.memory_api.celery_app import celery_app
 from apps.memory_api.config import settings
 from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.repositories.graph_repository import GraphRepository
@@ -60,7 +60,7 @@ async def rae_context():
         await pool.close()
 
 
-@celery_app.task
+@shared_task
 def generate_reflection_for_project(project: str, tenant_id: str):
     """
     Celery task to generate a reflection for a specific project.
@@ -76,7 +76,7 @@ def generate_reflection_for_project(project: str, tenant_id: str):
     asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def schedule_reflections():
     """
     Periodically finds projects with recent activity and schedules reflection tasks.
@@ -99,7 +99,7 @@ def schedule_reflections():
     asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def apply_memory_decay():
     """
     Periodically applies decay to memory strength and deletes expired memories.
@@ -115,7 +115,7 @@ def apply_memory_decay():
     asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def prune_old_memories():
     """
     Periodically deletes old episodic memories to manage data lifecycle.
@@ -136,7 +136,7 @@ def prune_old_memories():
     asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def cleanup_expired_data_task(self, tenant_id: str | None = None):
     """
     Enterprise-grade data retention cleanup - ISO/IEC 42001 & GDPR compliance
@@ -201,7 +201,7 @@ def cleanup_expired_data_task(self, tenant_id: str | None = None):
     return asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def gdpr_delete_user_data_task(
     self, tenant_id: str, user_identifier: str, deleted_by: str
 ):
@@ -282,7 +282,7 @@ def gdpr_delete_user_data_task(
     return asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def rebuild_cache():
     """
     Celery task to perform a full rebuild of the context cache.
@@ -291,7 +291,7 @@ def rebuild_cache():
     asyncio.run(rebuild_full_cache())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def extract_graph_lazy(
     self, memory_ids: list, tenant_id: str, use_mini_model: bool = True
 ):
@@ -379,7 +379,7 @@ def extract_graph_lazy(
     return asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def process_graph_extraction_queue():
     """
     Periodically checks for memories waiting for graph extraction.
@@ -415,7 +415,7 @@ def process_graph_extraction_queue():
     asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def run_entity_resolution_task(project: str = "default", tenant_id: str = "default"):
     """
     Periodic task for Pillar 1: Entity Resolution.
@@ -430,7 +430,7 @@ def run_entity_resolution_task(project: str = "default", tenant_id: str = "defau
     asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def run_community_detection_task(
     project: str = "default", tenant_id: str = "default"
 ):
@@ -449,7 +449,7 @@ def run_community_detection_task(
     asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def decay_memory_importance_task(self, tenant_id: str | None = None):
     """
     Enterprise-grade periodic task for memory importance decay.
@@ -585,7 +585,7 @@ def decay_memory_importance_task(self, tenant_id: str | None = None):
     return asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def run_maintenance_cycle_task(self):
     """
     Run the complete memory maintenance cycle.
@@ -630,7 +630,7 @@ def run_maintenance_cycle_task(self):
     return asyncio.run(main())
 
 
-@celery_app.task
+@shared_task
 def run_dreaming_task(tenant_id: str, project: str = "default"):
     """
     Run dreaming cycle for a specific tenant/project.
@@ -676,7 +676,7 @@ def run_dreaming_task(tenant_id: str, project: str = "default"):
     return asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def run_consistency_check_task(self, tenant_id: str = "default"):
     """
     Periodic task to fix 'Dual Write' inconsistencies (Ghost Memories).
@@ -706,7 +706,7 @@ def run_consistency_check_task(self, tenant_id: str = "default"):
     return asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def run_nightly_quality_audit(self):
     """
     Automated Nocturnal Quality Audit.
@@ -766,7 +766,7 @@ def run_nightly_quality_audit(self):
 
 
 # --- Celery Beat Schedule ---
-@celery_app.on_after_configure.connect
+@current_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     from celery.schedules import crontab
 
