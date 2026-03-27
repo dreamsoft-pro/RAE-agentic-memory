@@ -114,30 +114,50 @@ class QdrantVectorStore(IVectorStore):
         await self._ensure_collection()
 
     async def _ensure_collection(self) -> None:
-        """Ensure collection exists with proper schema."""
+        """Ensure collection exists and has the required vector space (Hot-Update)."""
         if self._initialized:
             return
 
+        from qdrant_client.models import VectorParams, SparseVectorParams
+        
         try:
             collection_info = await self.client.get_collection(self.collection_name)
-            # Log current configuration
             vectors_config = collection_info.config.params.vectors
-            logger.info("collection_exists", collection=self.collection_name, vectors=list(vectors_config.keys()) if isinstance(vectors_config, dict) else "single")
-        except Exception:
-            # Collection doesn't exist, create it with System 41.0 Multi-Vector schema
-            from qdrant_client.models import VectorParams, SparseVectorParams
+            
+            # SYSTEM 96.2: Dynamic Vector Space Provisioning
+            needs_update = False
+            if isinstance(vectors_config, dict):
+                if self.vector_name not in vectors_config:
+                    needs_update = True
+            else:
+                # Upgrading from single vector to multi-vector
+                needs_update = True
+                
+            if needs_update:
+                try:
+                    await self.client.update_collection(
+                        collection_name=self.collection_name,
+                        vectors_config={
+                            self.vector_name: VectorParams(size=self.embedding_dim, distance=self.distance)
+                        }
+                    )
+                    logger.info("collection_updated_with_new_vector", collection=self.collection_name, vector=self.vector_name, dim=self.embedding_dim)
+                except Exception as update_err:
+                    logger.warning("collection_update_skipped", error=str(update_err))
 
+        except Exception:
+            # Collection doesn't exist, create it with the current primary vector
             try:
-                # We pre-provision both MiniLM (384) and Nomic (768) dimensions to be agnostic
                 await self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config={
                         "dense": VectorParams(size=384, distance=self.distance),
                         "nomic": VectorParams(size=768, distance=self.distance),
+                        self.vector_name: VectorParams(size=self.embedding_dim, distance=self.distance)
                     },
                     sparse_vectors_config={"text": SparseVectorParams()},
                 )
-                logger.info("collection_created_multi_vector", collection=self.collection_name)
+                logger.info("collection_created_multi_vector", collection=self.collection_name, primary_vector=self.vector_name)
             except Exception as e:
                 if "already exists" in str(e):
                     logger.info("collection_created_parallel", collection=self.collection_name)

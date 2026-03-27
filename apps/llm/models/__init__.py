@@ -2,6 +2,7 @@
 LLM data models and types.
 """
 
+from .embedding_models import EmbeddingRequest, EmbeddingResponse
 from .llm_error import (
     LLMAuthError,
     LLMContextLengthError,
@@ -19,10 +20,12 @@ __all__ = [
     "LLMRequest",
     "LLMMessage",
     "LLMTool",
+    "EmbeddingRequest",
     # Response models
     "LLMResponse",
     "LLMChunk",
     "TokenUsage",
+    "EmbeddingResponse",
     # Error types
     "LLMError",
     "LLMRateLimitError",

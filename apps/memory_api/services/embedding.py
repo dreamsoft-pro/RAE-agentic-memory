@@ -1,8 +1,8 @@
 import hashlib
 from typing import Any, List, Optional, cast
 
-import litellm
-
+from apps.llm.broker.llm_router import LLMRouter
+from apps.llm.models.embedding_models import EmbeddingRequest
 from apps.memory_api.metrics import embedding_time_histogram
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
@@ -10,10 +10,11 @@ from rae_core.interfaces.embedding import IEmbeddingProvider
 
 
 class EmbeddingService:
-    def __init__(self, settings: Optional[Any] = None):
+    def __init__(self, settings: Optional[Any] = None, router: Optional[LLMRouter] = None):
         self._settings = settings
         self._initialized = False
-        self.litellm_model = "text-embedding-3-small"  # Default
+        self.router = router or LLMRouter()
+        self.embedding_model = "text-embedding-3-small"  # Default
 
     @property
     def settings(self):
@@ -42,9 +43,9 @@ class EmbeddingService:
         ):
             model_name = f"ollama/{model_name}"
 
-        self.litellm_model = model_name
+        self.embedding_model = model_name
 
-        print(f"Embedding service initialized with LiteLLM model: {self.litellm_model}")
+        print(f"Embedding service initialized with model: {self.embedding_model}")
         self._initialized = True
 
     def _generate_hash_embedding(self, text: str, dimension: int) -> List[float]:
@@ -86,41 +87,11 @@ class EmbeddingService:
     @embedding_time_histogram.time()
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generates dense embeddings for a list of texts (synchronous) via LiteLLM.
+        Generates dense embeddings for a list of texts (synchronous).
         """
-        self._initialize_model()
+        import asyncio
 
-        # Calibration: Apply Nomic prefixes if using nomic-embed-text
-        processed_texts = []
-        if "nomic" in self.litellm_model.lower():
-            for t in texts:
-                if not t.startswith("search_"):
-                    if len(t) < 100 and "?" in t:
-                        processed_texts.append(f"search_query: {t}")
-                    else:
-                        processed_texts.append(f"search_document: {t}")
-                else:
-                    processed_texts.append(t)
-        else:
-            processed_texts = texts
-
-        # Use LiteLLM for embeddings
-        try:
-            kwargs = {}
-            if self.litellm_model.startswith("ollama/"):
-                kwargs["api_base"] = (
-                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
-                )
-
-            response = litellm.embedding(
-                model=self.litellm_model, input=processed_texts, **kwargs
-            )
-            return [d["embedding"] for d in response["data"]]
-        except Exception as e:
-            print(f"LiteLLM embedding failed: {e}")
-            # Fallback to Hash Embeddings for Smoke Tests in CI
-            dim = self.get_dimension_for_model(self.litellm_model)
-            return [self._generate_hash_embedding(t, dim) for t in texts]
+        return asyncio.run(self.generate_embeddings_async(texts))
 
     def get_dimension_for_model(self, model_name: str) -> int:
         if "openai" in model_name or "text-embedding-3" in model_name:
@@ -152,7 +123,7 @@ class EmbeddingService:
 
         # Calibration: Apply Nomic prefixes if using nomic-embed-text
         processed_texts = []
-        if "nomic" in self.litellm_model.lower():
+        if "nomic" in self.embedding_model.lower():
             for t in texts:
                 if not t.startswith("search_"):
                     if len(t) < 100 and "?" in t:
@@ -164,40 +135,31 @@ class EmbeddingService:
         else:
             processed_texts = texts
 
-        # LiteLLM supports async via aembedding
+        # Use LLMRouter for embeddings
         try:
-            kwargs = {}
-            if self.litellm_model.startswith("ollama/"):
-                kwargs["api_base"] = (
-                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
-                )
+            request = EmbeddingRequest(model=self.embedding_model, input=processed_texts)
 
-            response = await litellm.aembedding(
-                model=self.litellm_model, input=processed_texts, **kwargs
-            )
-            return [d["embedding"] for d in response["data"]]
+            response = await self.router.embed_batch(request)
+            return response.embeddings
+
         except Exception as e:
-            print(f"LiteLLM async embedding failed: {e}")
-            dim = self.get_dimension_for_model(self.litellm_model)
+            print(f"Native embedding failed: {e}")
+            # Fallback to Hash Embeddings for Smoke Tests in CI
+            dim = self.get_dimension_for_model(self.embedding_model)
             return [self._generate_hash_embedding(t, dim) for t in texts]
 
     async def generate_embeddings_for_model(
         self, texts: List[str], model_name: str
     ) -> List[List[float]]:
         """
-        Generates embeddings for a specific model via LiteLLM.
+        Generates embeddings for a specific model via LLMRouter.
         """
         try:
-            kwargs = {}
-            if model_name.startswith("ollama/"):
-                kwargs["api_base"] = (
-                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
-                )
-
-            response = await litellm.aembedding(model=model_name, input=texts, **kwargs)
-            return [d["embedding"] for d in response["data"]]
+            request = EmbeddingRequest(model=model_name, input=texts)
+            response = await self.router.embed_batch(request)
+            return response.embeddings
         except Exception as e:
-            print(f"LiteLLM embedding for {model_name} failed: {e}")
+            print(f"Native embedding for {model_name} failed: {e}")
             dim = self.get_dimension_for_model(model_name)
             return [self._generate_hash_embedding(t, dim) for t in texts]
 

@@ -245,3 +245,11 @@ class AnthropicProvider:
                 provider="anthropic",
                 raw_error=e,
             ) from e
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Anthropic does not provide embeddings."""
+        raise LLMProviderError("Anthropic does not support embeddings yet.")
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Anthropic does not provide embeddings."""
+        raise LLMProviderError("Anthropic does not support embeddings yet.")

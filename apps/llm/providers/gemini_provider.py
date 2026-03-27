@@ -11,6 +11,8 @@ import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..models import (
+    EmbeddingRequest,
+    EmbeddingResponse,
     LLMAuthError,
     LLMChunk,
     LLMContextLengthError,
@@ -326,3 +328,25 @@ class GeminiProvider:
                     provider="gemini",
                     raw_error=e,
                 ) from e
+
+    async def embed(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate a single embedding."""
+        response = await self.embed_batch(request)
+        return response
+
+    async def embed_batch(self, request: EmbeddingRequest) -> EmbeddingResponse:
+        """Generate batch embeddings via Gemini SDK."""
+        try:
+            # SYSTEM 96.2: Native Gemini Embedding
+            # Gemini models like 'models/text-embedding-004'
+            response = await genai.embed_content_async(
+                model=request.model,
+                content=request.input,
+                task_type="retrieval_document",
+            )
+
+            return EmbeddingResponse(
+                embeddings=response["embedding"], model=request.model, raw=response
+            )
+        except Exception as e:
+            raise LLMProviderError(f"Gemini Embedding Failed: {str(e)}")

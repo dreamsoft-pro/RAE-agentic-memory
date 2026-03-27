@@ -34,6 +34,8 @@ services:
       - POSTGRES_DB=rae
       - POSTGRES_USER=rae
       - POSTGRES_PASSWORD=rae_password
+    ports:
+      - "5432:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -57,6 +59,8 @@ services:
   rae-redis:
     image: redis:7-alpine
     container_name: rae-redis-dev
+    ports:
+      - "6379:6379"
     networks:
       - rae-dev-network
 

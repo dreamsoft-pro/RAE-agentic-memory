@@ -20,7 +20,7 @@ from rae_core.search.strategies.vector import VectorSearchStrategy
 from rae_adapters.postgres import PostgreSQLStorage
 from rae_adapters.qdrant import QdrantVectorStore
 from rae_core.embedding.native import NativeEmbeddingProvider
-from config import Settings
+from apps.memory_api.config import Settings
 
 logger = structlog.get_logger(__name__)
 
@@ -40,12 +40,13 @@ class RAEBenchmarkRunner:
         db_url = os.getenv("DATABASE_URL", "postgresql://rae:rae_password@localhost/rae")
         self.pool = await asyncpg.create_pool(db_url.replace("+asyncpg", ""))
         
-        q_client = AsyncQdrantClient(host=os.getenv("QDRANT_HOST", "localhost"), port=6333)
+        # Use localhost for host-based benchmarking
+        q_client = AsyncQdrantClient(host="localhost", port=6333)
         
         storage = PostgreSQLStorage(pool=self.pool)
         
-        model_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/model.onnx")
-        tokenizer_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/tokenizer.json")
+        model_path = os.path.join(os.getcwd(), "models/nomic-embed-text-v1.5/model.onnx")
+        tokenizer_path = os.path.join(os.getcwd(), "models/nomic-embed-text-v1.5/tokenizer.json")
         embedding = NativeEmbeddingProvider(model_path=model_path, tokenizer_path=tokenizer_path)
         
         vector_store = QdrantVectorStore(client=q_client, embedding_dim=embedding.get_dimension(), vector_name="dense")

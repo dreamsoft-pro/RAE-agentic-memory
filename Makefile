@@ -271,7 +271,7 @@ benchmark-local-nine-five: ## Run specialized 9/5 benchmarks locally
 
 benchmark-lite:  ## Run quick benchmark (academic_lite, <10s)
 	@echo "🔬 Running lite benchmark..."
-	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set benchmarking/sets/academic_lite.yaml
 	@echo "✅ Lite benchmark complete"
 
 benchmark-extended:  ## Run extended benchmark (academic_extended, ~30s)
