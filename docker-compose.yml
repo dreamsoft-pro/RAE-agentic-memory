@@ -2,7 +2,7 @@
 # Supports 'Core' (default) and 'Full' profiles
 
 services:
-  rae-api:
+  rae-am-api:
     image: rae-api:latest
     pull_policy: build
     build:
@@ -10,17 +10,17 @@ services:
       args:
         - BASE_IMAGE=python:3.14-slim
         - INSTALL_ML=false
-    container_name: rae-api
+    container_name: rae-am-api
     restart: always
     ports:
       - "8001:8000"
     env_file: .env
     depends_on:
-      rae-postgres:
+      rae-am-postgres:
         condition: service_healthy
-      rae-redis:
+      rae-am-redis:
         condition: service_healthy
-      rae-qdrant:
+      rae-am-qdrant:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -31,7 +31,7 @@ services:
     networks:
       - rae-internal
 
-  rae-worker:
+  rae-am-worker:
     image: rae-api:latest
     pull_policy: build
     build:
@@ -39,16 +39,15 @@ services:
       args:
         - BASE_IMAGE=python:3.14-slim
         - INSTALL_ML=false
-    container_name: rae-worker
-    profiles: ["full"]
+    container_name: rae-am-worker
     command: celery -A apps.memory_api.celery_app:celery_app worker --loglevel=info
     env_file: .env
     depends_on:
-      rae-postgres:
+      rae-am-postgres:
         condition: service_healthy
-      rae-redis:
+      rae-am-redis:
         condition: service_healthy
-      rae-qdrant:
+      rae-am-qdrant:
         condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app:celery_app inspect ping"]
@@ -59,7 +58,7 @@ services:
     networks:
       - rae-internal
 
-  rae-beat:
+  rae-am-beat:
     image: rae-api:latest
     pull_policy: build
     build:
@@ -67,22 +66,20 @@ services:
       args:
         - BASE_IMAGE=python:3.14-slim
         - INSTALL_ML=false
-    container_name: rae-beat
-    profiles: ["full"]
+    container_name: rae-am-beat
     command: celery -A apps.memory_api.celery_app:celery_app beat --loglevel=info
     env_file: .env
     depends_on:
-      rae-redis:
+      rae-am-redis:
         condition: service_healthy
     networks:
       - rae-internal
 
-  rae-reranker:
+  rae-am-reranker:
     pull_policy: build
     build:
       context: ./apps/reranker_service
-    container_name: rae-reranker
-    profiles: ["full"]
+    container_name: rae-am-reranker
     ports:
       - "8002:8001"
     environment:
@@ -109,9 +106,9 @@ services:
     networks:
       - rae-internal
 
-  rae-qdrant:
+  rae-am-qdrant:
     image: qdrant/qdrant:latest
-    container_name: rae-qdrant
+    container_name: rae-am-qdrant
     ports:
       - "6333:6333"
     volumes:

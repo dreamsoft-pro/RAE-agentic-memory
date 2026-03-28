@@ -17,7 +17,7 @@ services:
     # read_only: true 
     # tmpfs: /tmp
 
-  rae-worker:
+  rae-am-worker:
     networks:
       rae-network:
         ipv4_address: 172.20.0.11

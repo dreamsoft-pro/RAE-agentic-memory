@@ -16,7 +16,7 @@ services:
               count: all
               capabilities: [gpu]
 
-  rae-worker:
+  rae-am-worker:
     pull_policy: build
     build:
       args:
