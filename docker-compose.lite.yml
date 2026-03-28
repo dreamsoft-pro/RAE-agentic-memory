@@ -4,6 +4,7 @@
 
 services:
   rae-lite:
+    pull_policy: build
     build:
       context: .
       args:

@@ -10,6 +10,9 @@ if [ ! -f .env ]; then
     else
         echo "⚠️  .env.example not found! Creating a basic .env..."
         cat << 'EOF' > .env
+# Docker Settings
+COMPOSE_BAKE=false
+
 # RAE Environment Configuration
 RAE_PROFILE=standard
 RAE_DB_MODE=migrate
@@ -24,8 +27,8 @@ EOF
     fi
 fi
 
-# Ensure work_dir exists for dev
-mkdir -p work_dir
+# Ensure work_dir and data volumes exist
+mkdir -p work_dir data/postgres data/qdrant data/lite
 
 echo "🚀 Initialization complete."
 echo "--------------------------------------------------"
