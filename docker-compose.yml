@@ -4,6 +4,7 @@
 services:
   rae-api:
     image: rae-api:latest
+    pull_policy: build
     build:
       context: .
       args:
@@ -32,6 +33,7 @@ services:
 
   rae-worker:
     image: rae-api:latest
+    pull_policy: build
     build:
       context: .
       args:
@@ -59,6 +61,12 @@ services:
 
   rae-beat:
     image: rae-api:latest
+    pull_policy: build
+    build:
+      context: .
+      args:
+        - BASE_IMAGE=python:3.14-slim
+        - INSTALL_ML=false
     container_name: rae-beat
     profiles: ["full"]
     command: celery -A apps.memory_api.celery_app:celery_app beat --loglevel=info
@@ -70,6 +78,7 @@ services:
       - rae-internal
 
   rae-reranker:
+    pull_policy: build
     build:
       context: ./apps/reranker_service
     container_name: rae-reranker

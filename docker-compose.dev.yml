@@ -3,6 +3,7 @@
 
 services:
   rae-api-dev:
+    pull_policy: build
     build:
       context: .
       args:
