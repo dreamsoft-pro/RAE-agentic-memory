@@ -324,33 +324,41 @@ class RAEMemoryClient:
         self,
         content: str,
         source: str,
-        layer: str = "longterm",
+        layer: str = "episodic",
         tags: Optional[List[str]] = None,
-        project: str = RAE_PROJECT_ID,
+        project: Optional[str] = None,
         importance: float = 0.5,
+        human_label: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Store a memory in RAE."""
+        """
+        Store a memory in RAE via the Intelligent Bridge.
+        SYSTEM 97.1: MCP to Bridge Synchronization
+        """
         with tracer.start_as_current_span("rae.mcp.store_memory") as span:
             # Add span attributes for observability
             span.set_attribute("memory.layer", layer)
             span.set_attribute("memory.source", source)
-            span.set_attribute("memory.tags_count", len(tags or []))
-            span.set_attribute("memory.project", project)
-            span.set_attribute("memory.importance", importance)
+            span.set_attribute("memory.project", project or "auto")
+            span.set_attribute("memory.human_label", human_label or "auto")
 
+            # Use Bridge API for intelligent ingestion
             payload = {
-                "content": content,
-                "source": source,
-                "layer": layer,
-                "tags": tags or [],
-                "project": project,
-                "importance": importance,
+                "payload": {
+                    "action": "agent_memory_capture",
+                    "content": content,
+                    "source": source,
+                    "importance": importance,
+                    "tags": tags or [],
+                },
+                "source_agent": source,
+                "target_agent": "rae-oracle",
+                "human_label": human_label,
             }
 
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        f"{self.base_url}/memories/",
+                        f"{self.api_url}/v2/bridge/interact",
                         json=payload,
                         headers=self.headers,
                         timeout=30.0,
@@ -358,14 +366,11 @@ class RAEMemoryClient:
                     response.raise_for_status()
                     result = response.json()
 
-                    memory_id = result.get("memory_id")
-                    span.set_attribute("memory.id", memory_id)
-
                     logger.info(
-                        "memory_stored",
-                        memory_id=memory_id,
+                        "memory_stored_via_bridge",
+                        event_id=result.get("event_id"),
                         source=source,
-                        layer=layer,
+                        project=project or "auto-detected",
                     )
 
                     return result  # type: ignore[no-any-return]
@@ -740,6 +745,10 @@ async def handle_list_tools() -> list[types.Tool]:
                         "type": "string",
                         "description": "Project identifier (e.g., 'rae-core', 'website')",
                     },
+                    "human_label": {
+                        "type": "string",
+                        "description": "Readable label for the operation (e.g., 'Fix: Auth Bug')",
+                    },
                 },
                 "required": ["content", "source"],
             },
@@ -941,6 +950,7 @@ async def handle_call_tool(
             layer_input = arguments.get("layer", "episodic")
             importance = arguments.get("importance", 0.5)
             project = arguments.get("project", RAE_PROJECT_ID)
+            human_label = arguments.get("human_label")
 
             # Map human-friendly layer name to API code
             layer = LAYER_MAPPING.get(layer_input, "longterm")
@@ -963,6 +973,7 @@ async def handle_call_tool(
                 tags=tags,
                 importance=importance,
                 project=project,
+                human_label=human_label,
             )
 
             memory_id = result.get("memory_id", "unknown")

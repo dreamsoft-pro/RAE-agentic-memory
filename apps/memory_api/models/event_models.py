@@ -490,6 +490,47 @@ class EmitEventResponse(BaseModel):
     message: str = "Event emitted successfully"
 
 
+class BridgeInteractionRequest(BaseModel):
+    """
+    Request model for RAE Bridge Interaction.
+    Supports intelligent project detection and human-centric labeling.
+    """
+
+    payload: Dict[str, Any] = Field(
+        ...,
+        description="The event data to capture. Can be any valid JSON object.",
+        examples=[
+            {
+                "action": "component_modernization",
+                "component": "OrderDetails.tsx",
+                "details": "Migrated from AngularJS to Next.js 14",
+                "status": "success",
+            },
+            {
+                "action": "machine_telemetry",
+                "machine": "TrueJet 2",
+                "speed": 85.5,
+                "ink_level": "low",
+            },
+        ],
+    )
+    source_agent: str = Field(
+        "open-claw", description="Identifier of the sending agent"
+    )
+    target_agent: str = Field(
+        "rae-oracle", description="Identifier of the receiving agent"
+    )
+    session_id: Optional[str] = Field(None, description="Optional logical session ID")
+    correlation_id: Optional[UUID] = Field(
+        None, description="Optional ID to link multiple interactions"
+    )
+    human_label: Optional[str] = Field(
+        None,
+        description="Optional readable label. If missing, RAE generates one intelligently.",
+        examples=["STABILIZACJA INFRASTRUKTURY: Python 3.14"],
+    )
+
+
 class GetTriggerExecutionsRequest(BaseModel):
     """Request to get trigger execution history"""
 

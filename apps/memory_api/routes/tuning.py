@@ -7,9 +7,48 @@ from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.tuning_service import TuningService
+from rae_core.math.manifold import TheoryAtlas
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(tags=["Self-Improvement"])
+
+
+@router.get("/theories")
+async def list_available_theories():
+    """
+    List all mathematical genomes stored in the Theory Atlas.
+    These represent historical and modern reasoning strategies.
+    """
+    atlas = TheoryAtlas()
+    return {
+        "status": "success",
+        "theories": atlas.list_theories(),
+        "total_count": len(atlas.list_theories()),
+    }
+
+
+@router.get("/theories/{name}")
+async def get_theory_details(name: str):
+    """
+    Get detailed 'Genome' (mathematical parameters) for a specific theory.
+    """
+    atlas = TheoryAtlas()
+    try:
+        arm = atlas.get_arm(name)
+        return {
+            "status": "success",
+            "theory": name,
+            "genome": {
+                "name": arm.name_alias,
+                "alpha": arm.alpha,
+                "beta": arm.beta,
+                "gamma": arm.gamma,
+                "sharpening": arm.sharpening,
+                "tier_0_base": arm.tier_0_base,
+            },
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Theory '{name}' not found in Atlas."}
 
 
 @router.post("/run")

@@ -41,11 +41,22 @@ class LogicGateway:
     @property
     def strategies(self):
         if self._strategies is None:
-            # Lazy import to avoid circular dependencies
+            # SYSTEM 98.0: The Manifold Atlas (Historical & Modern Strategies)
+            from rae_core.math.manifold.implementations import (
+                System1IBStrategy,
+                System37HyperStrategy,
+                System41LinguisticStrategy,
+                System100FluidStrategy,
+            )
             from rae_core.math.fusion import Legacy416Strategy, SiliconOracleStrategy
+
             self._strategies = {
+                "system_1_ib": System1IBStrategy(self.config),
+                "system_37_hyper": System37HyperStrategy(self.config),
+                "system_41_scalpel": System41LinguisticStrategy(self.config),
+                "system_100_fluid": System100FluidStrategy(self.config),
                 "legacy_416": Legacy416Strategy(self.config),
-                "silicon_oracle": SiliconOracleStrategy(self.config)
+                "silicon_oracle": SiliconOracleStrategy(self.config),
             }
         return self._strategies
 

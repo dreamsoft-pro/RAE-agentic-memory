@@ -314,11 +314,49 @@ app.include_router(federation.router, prefix="/v2/federation", tags=["Federation
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
+
+    # SYSTEM 97.0: Professional OpenAPI Metadata
+    tags_metadata = [
+        {
+            "name": "Bridge",
+            "description": "🚀 **The Neural Entrance**. Handles autonomous ingestion of agent events. Implements *Implicit Capture* and *Intelligent Context Resolution*.",
+        },
+        {
+            "name": "Search",
+            "description": "🔍 **Neural Polyglot Search**. Perform hybrid, multi-vector, and cross-layer semantic queries. Powered by *Silicon Oracle v4.16*.",
+        },
+        {
+            "name": "Reflections",
+            "description": "🧠 **Hierarchical Cognition**. Access deep insights and synthesized knowledge generated from raw episodic memories.",
+        },
+        {
+            "name": "Dashboard",
+            "description": "📊 **Mission Control**. Real-time monitoring of operational health, memory density, and agentic patterns.",
+        },
+        {
+            "name": "System",
+            "description": "🩺 **Core Vitality**. L1 Healthchecks and system configuration status.",
+        },
+    ]
+
     openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        description=app.description,
+        title="RAE: Reflective Agentic Engine",
+        version="4.16.0",
+        summary="Silicon Oracle Enterprise API",
+        description="""
+# 🧠 Silicon Oracle v4.16 (Neural Polyglot)
+Enterprise-grade cognitive memory system for AI Agents.
+
+### 🔑 Key Features:
+- **Zero-Egress Security**: Native ONNX embeddings (no external API needed).
+- **Auditability**: ISO 27001/42001 compliant event tracing.
+- **Dimensional Independence**: Direct support for any vector model (Gemini, OpenAI, Nomic).
+- **Federated Memory**: Secure P2P memory synchronization (Mesh API).
+
+---
+        """,
         routes=app.routes,
+        tags=tags_metadata,
     )
     # Add Enterprise Customizations
     openapi_schema["info"]["x-logo"] = {"url": "https://rae.ai/logo.png"}
