@@ -1,46 +1,35 @@
-# RAE - Lite (CPU Only)
-# Minimal resource usage, no GPU required
+# RAE - Lite (Hardware Agnostic)
+# No External DB dependencies (Uses SQLite + In-Memory Vectors)
+# Ideal for Windows, Laptops, and Edge Devices
 
 services:
-  rae-api-lite:
+  rae-lite:
     build:
       context: .
       args:
         - BASE_IMAGE=python:3.14-slim
         - INSTALL_ML=false
-    container_name: rae-api-lite
+    container_name: rae-lite
     restart: always
     ports:
       - "8010:8000"
     environment:
       - RAE_PROFILE=lite
-    env_file: .env
-    depends_on:
-      rae-postgres-lite:
-        condition: service_healthy
-    networks:
-      - rae-lite-network
-
-  rae-postgres-lite:
-    image: ankane/pgvector:latest
-    container_name: rae-postgres-lite
-    environment:
-      - POSTGRES_DB=rae_lite
-      - POSTGRES_USER=rae
-      - POSTGRES_PASSWORD=rae_password
+      - RAE_DB_MODE=init
+      # SYSTEM 98.1: SQLite Fallback for Lite Profile
+      - DATABASE_URL=sqlite+aiosqlite:///data/rae_lite.db
+      - QDRANT_HOST=disabled
+      - REDIS_HOST=disabled
     volumes:
-      - rae_lite_db_data:/var/lib/postgresql/data
+      - ./data/lite:/app/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rae -d rae_lite"]
-      interval: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
     networks:
       - rae-lite-network
 
 networks:
   rae-lite-network:
     name: rae-lite-internal
-
-volumes:
-  rae_lite_db_data:
