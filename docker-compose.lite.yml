@@ -3,14 +3,14 @@
 # Ideal for Windows, Laptops, and Edge Devices
 
 services:
-  rae-lite:
+  rae-am-lite:
     pull_policy: build
     build:
       context: .
       args:
         - BASE_IMAGE=python:3.14-slim
         - INSTALL_ML=false
-    container_name: rae-lite
+    container_name: rae-am-lite
     restart: always
     ports:
       - "8010:8000"

@@ -2,7 +2,7 @@
 # Use this with: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 
 services:
-  rae-api:
+  rae-am-api:
     pull_policy: build
     build:
       args:
@@ -16,7 +16,7 @@ services:
               count: all
               capabilities: [gpu]
 
-  rae-worker:
+  rae-am-worker:
     pull_policy: build
     build:
       args:

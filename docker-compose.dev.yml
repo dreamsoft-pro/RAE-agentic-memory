@@ -23,14 +23,14 @@ services:
     env_file: .env
     command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
-      rae-postgres:
+      rae-am-postgres:
         condition: service_healthy
     networks:
       - rae-dev-network
 
-  rae-postgres:
+  rae-am-postgres:
     image: ankane/pgvector:latest
-    container_name: rae-postgres-dev
+    container_name: rae-am-postgres-dev
     environment:
       - POSTGRES_DB=rae
       - POSTGRES_USER=rae
@@ -57,9 +57,9 @@ services:
     networks:
       - rae-dev-network
 
-  rae-redis:
+  rae-am-redis:
     image: redis:7-alpine
-    container_name: rae-redis-dev
+    container_name: rae-am-redis-dev
     ports:
       - "6379:6379"
     networks:
