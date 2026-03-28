@@ -19,8 +19,11 @@ RAE_DB_MODE=migrate
 POSTGRES_USER=rae
 POSTGRES_PASSWORD=rae_password
 POSTGRES_DB=rae
+POSTGRES_HOST=rae-am-postgres
 QDRANT_HOST=rae-am-qdrant
-REDIS_HOST=rae-am-redis
+REDIS_URL=redis://rae-am-redis:6379/0
+CELERY_BROKER_URL=redis://rae-am-redis:6379/1
+CELERY_RESULT_BACKEND=redis://rae-am-redis:6379/2
 OLLAMA_API_URL=http://host.docker.internal:11434
 EOF
         echo "✅ Basic .env generated."

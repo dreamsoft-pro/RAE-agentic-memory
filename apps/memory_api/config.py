@@ -11,19 +11,19 @@ class Settings(BaseSettings):
     Settings are loaded from environment variables and/or a .env file.
     """
 
-    POSTGRES_HOST: str = "localhost"
+    POSTGRES_HOST: str = "rae-am-postgres"
     POSTGRES_DB: str = "rae"
     POSTGRES_USER: str = "rae"
     POSTGRES_PASSWORD: str = "rae_password"
     DATABASE_URL: str | None = None
 
-    QDRANT_HOST: str = "localhost"
+    QDRANT_HOST: str = "rae-am-qdrant"
     QDRANT_PORT: int = 6333
     QDRANT_URL: str | None = None
 
-    RERANKER_API_URL: str = "http://localhost:8001"
-    ML_SERVICE_URL: str = "http://localhost:8001"
-    MEMORY_API_URL: str = "http://localhost:8000"
+    RERANKER_API_URL: str = "http://rae-am-reranker:8001"
+    ML_SERVICE_URL: str = "http://rae-am-reranker:8001"
+    MEMORY_API_URL: str = "http://rae-am-api:8000"
 
     LLM_MODEL: str | None = None
     GEMINI_API_KEY: str | None = None
@@ -93,9 +93,9 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: list[str] = ["*"]
 
-    CELERY_BROKER_URL: str = "redis://rae-redis:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://rae-redis:6379/2"
-    REDIS_URL: str = "redis://rae-redis:6379/0"
+    CELERY_BROKER_URL: str = "redis://rae-am-redis:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://rae-am-redis:6379/2"
+    REDIS_URL: str = "redis://rae-am-redis:6379/0"
 
     MEMORY_RETENTION_DAYS: int = 30
     MEMORY_DECAY_RATE: float = 0.01

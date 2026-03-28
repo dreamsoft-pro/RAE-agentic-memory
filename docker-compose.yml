@@ -29,7 +29,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-worker:
     image: rae-api:latest
@@ -56,7 +56,7 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-beat:
     image: rae-api:latest
@@ -73,7 +73,7 @@ services:
       rae-am-redis:
         condition: service_healthy
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-reranker:
     pull_policy: build
@@ -85,7 +85,7 @@ services:
     environment:
       - MODEL_NAME=cross-encoder/ms-marco-TinyBERT-L-2-v2
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-postgres:
     image: ankane/pgvector:latest
@@ -99,12 +99,12 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rae -d rae"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rae} -d ${POSTGRES_DB:-rae}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-qdrant:
     image: qdrant/qdrant:latest
@@ -114,7 +114,7 @@ services:
     volumes:
       - ./data/qdrant:/qdrant/storage
     networks:
-      - rae-internal
+      - rae-am-internal
 
   rae-am-redis:
     image: redis:7-alpine
@@ -127,8 +127,8 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - rae-internal
+      - rae-am-internal
 
 networks:
-  rae-internal:
-    name: rae-internal
+  rae-am-internal:
+    name: rae-am-internal
