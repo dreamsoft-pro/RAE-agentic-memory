@@ -110,17 +110,27 @@ Get RAE up and running in 2 simple steps:
 
 2.  **Launch Profile**:
     ```bash
-    # Standard (CPU/GPU-aware):
+    # Standard (Core Infrastructure):
     docker compose up -d --build
 
-    # Lightweight (CPU only):
-    docker compose -f docker-compose.lite.yml up -d
+    # Full Potential (Core + Workers + Neural Reranker):
+    docker compose --profile full up -d --build
 
-    # Secure (Hard Frames Isolation):
-    docker compose -f docker-compose.yml -f docker-compose.hard-frames.yml up -d
+    # Lightweight (SQLite + In-Memory, no external DB):
+    docker compose -f docker-compose.lite.yml up -d
     ```
 
 *API available at http://localhost:8001 (Standard/Dev) or http://localhost:8010 (Lite).*
+
+---
+
+## 🏗️ Architecture & Documentation
+RAE is a comprehensive mathematical manifold for agentic memory.
+
+- 📖 **[API Reference V2](docs/API_REFERENCE_V2.md)** – Complete endpoint guide (Swagger/ReDoc).
+- 🏛️ **[Architectural Blueprint](docs/RAE_ARCHITECTURAL_BLUEPRINT.md)** – Deep dive into 5 layers and 3 math planes.
+- 🧬 **[Theory Atlas](docs/THEORY_ATLAS_GUIDE.md)** – Registry of historical mathematical strategies.
+- 🛡️ **[Compliance Guide](docs/COMPLIANCE_AND_AUDIT.md)** – ISO 27001/42001 audit trails.
 
 ---
 
