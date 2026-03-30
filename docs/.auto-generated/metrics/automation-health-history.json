@@ -270,13 +270,5 @@
     "status": "success",
     "files_count": 8,
     "errors_count": 0
-  },
-  {
-    "run_id": "20260330-001603",
-    "timestamp": "2026-03-30T00:16:03.286969",
-    "duration_seconds": 0.21,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
   }
 ]
