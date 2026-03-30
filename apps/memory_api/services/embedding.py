@@ -186,7 +186,7 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
     def get_dimension(self) -> int:
         """Get embedding dimension."""
         self.service._initialize_model()
-        return self.service.get_dimension_for_model(self.service.litellm_model)
+        return self.service.get_dimension_for_model(os.getenv("LITELLM_MODEL", "gpt-4o"))
 
 
 class RemoteEmbeddingProvider(IEmbeddingProvider):
