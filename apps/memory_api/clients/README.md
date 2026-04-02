@@ -317,7 +317,7 @@ client.reset_stats()
 # Cache is automatic for GET requests
 
 # Invalidate specific cache entry
-client.invalidate_cache("GET", "/v1/memories/search")
+client.invalidate_cache("GET", "/v2/memories/search")
 
 # Clear entire cache
 client.client.cache.clear()
