@@ -10,7 +10,7 @@ from rae_core.utils.contract_manager import ContractManager
 def verify_volumes():
     print("🛡️ Verifying Data Locator Contract...")
     try:
-        with open(str(Path(__file__).parent.parent / "docker-compose.yml"), 'r') as f:
+        with open(os.environ.get('RAE_PROJECT_ROOT', str(Path(__file__).resolve().parent.parent)), 'r') as f:
             content = f.read()
             if "rae-node-agent_postgres_data" not in content:
                 print("❌ VIOLATION: POSTGRES_DATA volume is NOT pointing to rae-node-agent_postgres_data!")

@@ -4,10 +4,8 @@ set -e
 echo "🚀 STARTING RAE-FENIKS POWERED FACTORY V2.2 (Oracle V2.0 Protocol)..."
 
 # 📍 Path Definitions
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-CLOUD_ROOT="$(dirname "$PROJECT_ROOT")"
-FENIKS_ROOT="$CLOUD_ROOT/factory/RAE-Feniks"
+FENIKS_ROOT = os.environ.get('RAE_FENIKS_ROOT', str(Path(__file__).resolve().parent.parent / 'FENIKS_ROOT_default'))
+PROJECT_ROOT = os.environ.get('RAE_PROJECT_ROOT', str(Path(__file__).resolve().parent.parent / 'PROJECT_ROOT_default'))
 CONFIG_PATH="$PROJECT_ROOT/config/agentic_board.yaml"
 STRATEGY_PATH="$PROJECT_ROOT/docs/modernization/STRATEGIC_ORACLE_PLAN_V2.md"
 

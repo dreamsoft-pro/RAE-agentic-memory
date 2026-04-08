@@ -34,3 +34,11 @@ strategies:
   industrial:
     mode: single
     primary: local_qwen_optimized
+
+  council_l2:
+    mode: consensus
+    models: [local_qwen_optimized, local_qwen, local_phi]
+
+  council_l3:
+    mode: consensus
+    models: [premium_openai, local_qwen_optimized, local_phi] # W produkcji tu byłyby Gemini i Claude

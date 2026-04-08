@@ -8,10 +8,8 @@ import json
 # Configuration
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
-PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent.parent))
-CLOUD_ROOT = PROJECT_ROOT.parent
-WORK_DIR = str(PROJECT_ROOT / 'agent_hive' / 'work_dir' / 'components') if 'WORK_DIR' in ['OUT_DIR', 'WORK_DIR'] else str(CLOUD_ROOT / 'dreamsoft_factory' / 'frontend')
-COMPOSE_DIR = str(PROJECT_ROOT / 'agent_hive')
+WORK_DIR = os.environ.get('RAE_WORK_DIR', str(Path(__file__).resolve().parent.parent / 'WORK_DIR_default'))
+COMPOSE_DIR = os.environ.get('RAE_COMPOSE_DIR', str(Path(__file__).resolve().parent.parent / 'COMPOSE_DIR_default'))
 
 def log_to_rae(msg, tags=[]):
     payload = {"content": f"[SUPERVISOR] {msg}", "layer": "reflective", "tags": ["supervisor_log"] + tags}

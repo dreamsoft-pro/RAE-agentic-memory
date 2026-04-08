@@ -75,7 +75,7 @@ async def agent_interaction(
         tenant_id=tenant_id,
         project=project,
         source_service=s_agent,
-        payload={"target_agent": t_agent, "interaction_data": payload},
+        payload={"target_agent": t_agent, "interaction_data": payload, "strategy": request_data.strategy},
         session_id=request_data.session_id,
         correlation_id=correlation_id,
         metadata={"a2a": True, "protocol": "mcp-bridge-v1"},
@@ -99,6 +99,7 @@ async def agent_interaction(
                 "target_agent": t_agent,
                 "full_payload": payload,
                 "human_label": human_label,
+                "strategy": request_data.strategy,
             },
         )
     except Exception as e:

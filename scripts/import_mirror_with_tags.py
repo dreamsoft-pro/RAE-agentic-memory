@@ -5,10 +5,7 @@ from pathlib import Path
 
 API_URL = "http://localhost:8001/v2/memories/"
 TENANT_ID = "53717286-fe94-4c8f-baf9-c4d2758eb672"
-
-PROJECT_ROOT = Path(os.environ.get('RAE_PROJECT_ROOT', Path(__file__).resolve().parent))
-CLOUD_ROOT = PROJECT_ROOT.parent
-SOURCE_FILE = str(CLOUD_ROOT / "RAE-Phoenix/runs/latest/chunks.enriched.jsonl")
+SOURCE_FILE = os.environ.get('RAE_SOURCE_FILE', str(Path(__file__).resolve().parent.parent / 'SOURCE_FILE_default'))
 
 def run_import():
     print("🚀 Starting Mirror Import with Advanced Tagging...")

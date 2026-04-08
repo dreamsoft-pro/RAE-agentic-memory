@@ -198,13 +198,14 @@ async def _get_dashboard_metrics_impl(
     request_data: Optional[GetDashboardMetricsRequest] = None,
     tenant_id: Optional[str] = None,
     project: Optional[str] = None,
+    project: Optional[str] = None,
     period: MetricPeriod = MetricPeriod.LAST_24H,
 ) -> GetDashboardMetricsResponse:
     """Shared implementation for dashboard metrics."""
     try:
         # Handle parameters from multiple sources
         t_id = tenant_id
-        p_id = project
+        p_id = project or project  # Fallback to 'project'
         m_period = period
 
         if request_data:
@@ -250,8 +251,9 @@ async def _get_dashboard_metrics_impl(
 
 
 @router.get("/metrics", response_model=GetDashboardMetricsResponse)
-async def get_dashboard_metrics(
+async def get_dashboard_metrics_get(
     tenant_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     project: Optional[str] = Query(None),
     period: MetricPeriod = Query(MetricPeriod.LAST_24H),
     rae_service: RAECoreService = Depends(get_rae_core_service),
@@ -260,6 +262,7 @@ async def get_dashboard_metrics(
     return await _get_dashboard_metrics_impl(
         rae_service=rae_service,
         tenant_id=tenant_id,
+        project=project,
         project=project,
         period=period,
     )
