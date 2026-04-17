@@ -63,6 +63,9 @@ class AgentAction(BaseModel):
     # e.g., ["decision", "critical", "proposal"]
     signals: list[str] = Field(default_factory=list)
 
+    # Financial cost estimate for this action (USD)
+    cost_estimate: float = Field(default=0.0, ge=0.0)
+
     # Metadata for tools or specific extensions
     metadata: dict[str, Any] = Field(default_factory=dict)
 

@@ -58,7 +58,7 @@ async def execute_agent(
             return AgentExecuteResponseV2(
                 answer=str(action.content),
                 session_id=request.session_id,
-                cost_estimate=0.0,  # TODO: Real cost from Action object
+                cost_estimate=action.cost_estimate,
             )
         except Exception as e:
             logger.error("agent_execute_failed", error=str(e), tenant_id=tenant_id)

@@ -13,6 +13,8 @@ import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
 
+from apps.memory_api.config import settings as api_settings
+from apps.memory_api.services.cost_controller import calculate_cost
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
@@ -76,16 +78,14 @@ class RAECoreService:
 
             self.tuning_service = TuningService(self)
 
-        from apps.memory_api.config import settings
-
         # 1. Initialize embedding providers (Multi-Vector Support)
-        self._init_embedding_providers(settings)
+        self._init_embedding_providers(api_settings)
 
         # 2. Initialize adapters
-        self._init_adapters(settings, postgres_pool, qdrant_client, redis_client)
+        self._init_adapters(api_settings, postgres_pool, qdrant_client, redis_client)
 
         # 3. Initialize Engine & Runtime
-        self._init_engine(settings, postgres_pool)
+        self._init_engine(api_settings, postgres_pool)
 
         # New: Reflection Engine
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
@@ -99,7 +99,7 @@ class RAECoreService:
 
         self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
 
-        logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
+        logger.info("rae_core_service_initialized", profile=api_settings.RAE_PROFILE)
 
     def enable_szubar_mode(self, enabled: bool = True) -> None:
         """Enable or disable RAE-SZUBAR Mode (Evolutionary Pressure)."""
@@ -399,20 +399,34 @@ class RAECoreService:
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
                 # 2. Generate response using LLM or DESIGNED MATH (Fallback)
+                cost_estimate = 0.0
                 try:
                     import asyncio
 
                     # Check if LLM is actually available
-                    if not self.service.engine.llm_provider:
+                    if not self.service.llm_provider:
                         raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
 
                     # RELAXED TIMEOUT for weak machines (120s)
-                    llm_result = await asyncio.wait_for(
-                        self.service.engine.generate_text(
-                            prompt=rae_input.content, system_prompt=system_prompt
+                    # We use generate() instead of generate_text() to get LLMResult with usage
+                    llm_result_obj = await asyncio.wait_for(
+                        self.service.llm_provider.generate(
+                            system=system_prompt,
+                            prompt=rae_input.content,
+                            model=api_settings.RAE_LLM_MODEL_DEFAULT,
                         ),
                         timeout=120.0,
                     )
+                    llm_result = llm_result_obj.text
+
+                    # Calculate real-time cost
+                    cost_info = calculate_cost(
+                        model_name=llm_result_obj.model_name,
+                        input_tokens=llm_result_obj.usage.prompt_tokens,
+                        output_tokens=llm_result_obj.usage.candidates_tokens,
+                    )
+                    cost_estimate = cost_info.get("total_cost_usd", 0.0)
+
                 except (asyncio.TimeoutError, Exception) as e:
                     # GRACEFUL DEGRADATION: Math-Only Fallback (Designed Mathematics)
                     logger.warning("llm_fallback_triggered", reason=str(e))
@@ -457,6 +471,7 @@ class RAECoreService:
                         else "LLM generation"
                     ),
                     signals=signals,
+                    cost_estimate=cost_estimate,
                 )
 
         # Initialize Runtime with the transient agent
