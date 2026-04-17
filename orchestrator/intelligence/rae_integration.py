@@ -7,7 +7,12 @@ historical analysis, and cross-deployment learning.
 import logging
 from typing import Dict, List, Optional
 
-from .performance_tracker import ExecutionRecord, PerformanceTracker
+try:
+    from .performance_tracker import ExecutionRecord, PerformanceTracker
+except (ImportError, ValueError):
+    # Handle direct execution or missing dependencies for testing
+    ExecutionRecord = None
+    PerformanceTracker = None
 
 logger = logging.getLogger(__name__)
 
@@ -210,12 +215,33 @@ def create_rae_integration(config_path: Optional[str] = None) -> RAEMemoryIntegr
     Returns:
         RAE integration instance
     """
-    # TODO: Load from config file
-    # For now, check environment variable
     import os
+    from pathlib import Path
 
+    import yaml
+
+    # Default values
     rae_endpoint = os.environ.get("RAE_ENDPOINT")
+    namespace = "orchestrator_performance"
 
-    return RAEMemoryIntegration(
-        rae_endpoint=rae_endpoint, namespace="orchestrator_performance"
-    )
+    # Try to load from config file
+    if config_path is None:
+        # Check default location
+        default_config = Path(".orchestrator/intelligence.yaml")
+        if default_config.exists():
+            config_path = str(default_config)
+
+    if config_path and Path(config_path).exists():
+        try:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+                if config:
+                    rae_config = config.get("rae", {})
+                    # Config takes precedence if present
+                    rae_endpoint = rae_config.get("endpoint", rae_endpoint)
+                    namespace = rae_config.get("namespace", namespace)
+                    logger.debug(f"Loaded RAE config from {config_path}")
+        except Exception as e:
+            logger.error(f"Failed to load RAE config from {config_path}: {e}")
+
+    return RAEMemoryIntegration(rae_endpoint=rae_endpoint, namespace=namespace)

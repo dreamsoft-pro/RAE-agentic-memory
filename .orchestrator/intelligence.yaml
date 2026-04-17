@@ -1,0 +1,35 @@
+# Intelligence & Learning Configuration
+# Configure performance tracking, adaptive routing, and RAE integration
+
+rae:
+  # RAE API endpoint for syncing performance records
+  # Can also be set via RAE_ENDPOINT environment variable
+  endpoint: "http://localhost:8000"
+
+  # Namespace for orchestrator performance data
+  namespace: "orchestrator_performance"
+
+# Learning configuration for adaptive routing
+learning:
+  # Strategy: baseline, performance, cost, balanced, learning
+  strategy: "learning"
+
+  # Minimum samples to trust historical data
+  min_samples: 5
+
+  # Weight for success rate (0-1)
+  success_weight: 0.7
+
+  # Weight for cost optimization (0-1)
+  cost_weight: 0.3
+
+  # Probability of trying non-optimal models (exploration)
+  exploration_rate: 0.1
+
+# Performance tracking configuration
+tracking:
+  # Directory for local execution records
+  storage_dir: "orchestrator/intelligence/data"
+
+  # Whether to sync with RAE memory
+  rae_integration: true
