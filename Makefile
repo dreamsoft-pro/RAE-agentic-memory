@@ -419,7 +419,13 @@ secure-shell:  ## [HARD FRAMES] Open Developer Shell inside Secure Container (No
 # DEPLOYMENT
 # ==============================================================================
 
-pre-push:  ## [ZERO DRIFT] Run BEFORE pushing: Format -> Docs -> Lint -> Test
+hard-contracts:  ## Run Hard Contract Gatekeeper validation
+	@python3 /home/grzegorz/cloud/scripts/hard_contract_gatekeeper.py pre-commit
+	@python3 /home/grzegorz/cloud/scripts/test_hard_contracts.py
+
+pre-push:  ## [ZERO DRIFT & HARD CONTRACTS] Run BEFORE pushing: Hard Contracts -> Format -> Docs -> Lint -> Test
+	@echo "🛡️  Running Hard Contract Verification..."
+	@$(MAKE) hard-contracts
 	@echo "🚀 Starting Pre-Push Protocol (Zero Drift)..."
 	@echo "1️⃣  Formatting Code..."
 	@$(MAKE) format
