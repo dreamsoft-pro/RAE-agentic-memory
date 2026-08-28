@@ -624,8 +624,16 @@ class MeshService:
                                 "id": str(parse_uuid(row["id"])),
                                 "content": row["content"],
                                 "layer": row["layer"],
-                                "tenant_id": row["tenant_id"],
-                                "agent_id": row["agent_id"],
+                                "tenant_id": (
+                                    str(row["tenant_id"])
+                                    if row["tenant_id"] is not None
+                                    else None
+                                ),
+                                "agent_id": (
+                                    str(row["agent_id"])
+                                    if row["agent_id"] is not None
+                                    else None
+                                ),
                                 "tags": (list(row["tags"]) if row["tags"] else []),
                                 "metadata": (
                                     json.loads(row["metadata"])
@@ -653,7 +661,11 @@ class MeshService:
                                     else None
                                 ),
                                 "project": row["project"],
-                                "session_id": row["session_id"],
+                                "session_id": (
+                                    str(row["session_id"])
+                                    if row["session_id"] is not None
+                                    else None
+                                ),
                                 "memory_type": row["memory_type"],
                                 "source": row["source"],
                                 "info_class": (
