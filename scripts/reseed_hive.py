@@ -1,6 +1,6 @@
-import requests
-import json
 import os
+
+import requests
 
 NODE1_API = "http://100.68.166.117:8001/v2/memories/"
 
@@ -8,10 +8,10 @@ def seed_doc(file_path, project="RAE-Hive"):
     if not os.path.exists(file_path):
         print(f"File {file_path} not found")
         return
-    
+
     with open(file_path, "r") as f:
         content = f.read()
-    
+
     payload = {
         "content": content,
         "layer": "semantic",
@@ -19,7 +19,7 @@ def seed_doc(file_path, project="RAE-Hive"):
         "tags": ["documentation", "bootstrapped"],
         "importance": 1.0
     }
-    
+
     print(f"Seeding {file_path}...")
     response = requests.post(NODE1_API, json=payload)
     if response.status_code == 200:

@@ -1,8 +1,5 @@
 import logging
-import os
-import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import httpx
 
@@ -31,7 +28,7 @@ class CivicRAEClient:
         }
         self.tenant_id = tenant_id
         self.project = project
-        self.timeout = 180.0 
+        self.timeout = 180.0
 
     async def check_connection(self) -> bool:
         try:
@@ -106,7 +103,7 @@ class CivicRAEClient:
                         pass # trigger fallback below
                     else:
                         return data
-                
+
                 # Hybrid search fallback
                 resp_search = await client.post(f"{self.api_url}/v2/memories/query", json={
                     "query": query,

@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional
+import os
+from typing import List
+
+import litellm
 import structlog
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-import litellm
-import os
-import uvicorn
 
 logger = structlog.get_logger(__name__)
 
@@ -32,7 +33,7 @@ async def generate_embeddings(req: EmbeddingRequest):
     logger.info("embedding_generation_requested", text_count=len(req.texts), model=req.model)
     try:
         api_base = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
-        
+
         processed_texts = []
         if "nomic" in req.model.lower():
             for t in req.texts:
@@ -45,10 +46,10 @@ async def generate_embeddings(req: EmbeddingRequest):
             input=processed_texts,
             api_base=api_base
         )
-        
+
         embeddings = [d["embedding"] for d in response["data"]]
         dim = len(embeddings[0]) if embeddings else 0
-        
+
         return EmbeddingResponse(
             embeddings=embeddings,
             model=req.model,

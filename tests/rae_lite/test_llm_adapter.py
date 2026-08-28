@@ -1,7 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 from rae_lite.llm_adapter import LlamaCppAdapter
+
 
 class TestLlamaCppAdapter:
 
@@ -28,13 +30,13 @@ class TestLlamaCppAdapter:
         llama, model = mock_paths
         with patch.object(Path, "exists", return_value=True):
             adapter = LlamaCppAdapter(llama, model, profile="D")
-            
+
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = "Response"
-                
+
                 adapter.generate("Test prompt")
-                
+
                 args = mock_run.call_args[0][0]
                 assert str(llama) in args
                 assert str(model) in args

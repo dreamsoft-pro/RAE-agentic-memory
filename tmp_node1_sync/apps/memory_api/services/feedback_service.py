@@ -53,7 +53,7 @@ class FeedbackService:
             delta = settings.FEEDBACK_POSITIVE_DELTA
         elif feedback_type == "negative":
             delta = -settings.FEEDBACK_NEGATIVE_DELTA
-        
+
         # Always try to adjust importance if feedback loop is enabled or for Phase 4
         await self.rae_service.adjust_importance(
             memory_id=memory_id, tenant_id=tenant_id, delta=delta
@@ -63,7 +63,7 @@ class FeedbackService:
         try:
             import json
             from uuid import UUID, uuid4
-            
+
             sql = """
                 INSERT INTO memory_feedback (
                     id, tenant_id, query_text, memory_id, score, 
@@ -81,7 +81,7 @@ class FeedbackService:
                 json.dumps(metadata or {})
             )
 
-            
+
             logger.info(
                 "feedback_persisted",
                 memory_id=memory_id,

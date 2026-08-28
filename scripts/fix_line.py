@@ -1,5 +1,6 @@
 import sys
 
+
 def fix_line(path, line_num, new_content):
     with open(path, 'r') as f:
         lines = f.readlines()

@@ -769,6 +769,7 @@ def sync_mesh_peers_task(self):
     Sorts peer UUIDs lexicographically to prevent deadlocks.
     """
     import asyncio
+
     from apps.memory_api.services.mesh_service import MeshService
 
     async def main():
@@ -777,7 +778,7 @@ def sync_mesh_peers_task(self):
                 mesh_service = MeshService(
                     pool=rae_service.postgres_pool,
                     redis_client=rae_service.redis_client,
-                    secret_key=settings.SECRET_KEY
+                    secret_key=settings.SECRET_KEY,
                 )
                 peers = await mesh_service.list_peers()
                 if not peers:
@@ -792,12 +793,16 @@ def sync_mesh_peers_task(self):
                     peer_id = peer.peer_id
                     lock_key = f"mesh_sync_{peer_id}"
                     locked = False
-                    
+
                     if rae_service.redis_client is not None:
                         # Enforce Redis advisory lock
-                        locked = await rae_service.redis_client.set(lock_key, "1", ex=300, nx=True)
+                        locked = await rae_service.redis_client.set(
+                            lock_key, "1", ex=300, nx=True
+                        )
                         if not locked:
-                            logger.warning("sync_mesh_peers_lock_conflict", peer_id=peer_id)
+                            logger.warning(
+                                "sync_mesh_peers_lock_conflict", peer_id=peer_id
+                            )
                             results[peer_id] = "locked"
                             continue
 
@@ -805,18 +810,21 @@ def sync_mesh_peers_task(self):
                         logger.info("sync_mesh_peers_started", peer_id=peer_id)
                         synced_count = await mesh_service.push_memories_to_peer(peer_id)
                         results[peer_id] = f"success: {synced_count} memories"
-                        logger.info("sync_mesh_peers_complete", peer_id=peer_id, count=synced_count)
+                        logger.info(
+                            "sync_mesh_peers_complete",
+                            peer_id=peer_id,
+                            count=synced_count,
+                        )
                     except Exception as e:
-                        logger.error("sync_mesh_peers_failed", peer_id=peer_id, error=str(e))
+                        logger.error(
+                            "sync_mesh_peers_failed", peer_id=peer_id, error=str(e)
+                        )
                         results[peer_id] = f"failed: {str(e)}"
                     finally:
                         if locked and rae_service.redis_client is not None:
                             await rae_service.redis_client.delete(lock_key)
 
-                return {
-                    "peers_synced": len(peers),
-                    "details": results
-                }
+                return {"peers_synced": len(peers), "details": results}
             except Exception as e:
                 logger.error("sync_mesh_peers_task_error", error=str(e))
                 raise self.retry(exc=e, countdown=60)
@@ -887,4 +895,3 @@ def setup_periodic_tasks(sender, **kwargs):
         sync_mesh_peers_task.s(),
         name="synchronize with mesh peers every 5 mins",
     )
-

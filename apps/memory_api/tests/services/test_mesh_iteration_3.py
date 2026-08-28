@@ -1,22 +1,20 @@
+import hashlib
 import json
 import time
-import pytest
-import asyncio
-import hashlib
-import threading
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime
 
-from apps.memory_api.services.mesh_service import MeshService, PeerInfo
-from apps.memory_api.services.ssh_tunnel import SSHTunnelManager
+import pytest
+
+from apps.memory_api.api.v2.mesh import receive_sync_data
+from apps.memory_api.services.mesh_service import MeshService
 from apps.memory_api.services.relay_broker import (
-    encrypt_payload,
-    decrypt_payload,
     MatrixRelay,
     NATSRelay,
+    decrypt_payload,
+    encrypt_payload,
 )
-from apps.memory_api.api.v2.mesh import receive_sync_data, safe_hash
+from apps.memory_api.services.ssh_tunnel import SSHTunnelManager
 
 
 def make_mock_request(payload: dict) -> MagicMock:
@@ -42,7 +40,7 @@ async def test_normalization_and_sanitization_in_sync(mesh_service):
 
     # Content with HTML tags and unicode accents/ligatures (unnormalized)
     raw_content = "<p>Hello 𝔲𝔫𝔦𝔠𝔬𝔡𝔢 <script>alert(1)</script></p>"
-    
+
     payload = {
         "sender_id": sender_id,
         "receiver_id": "rae-host",
@@ -51,9 +49,9 @@ async def test_normalization_and_sanitization_in_sync(mesh_service):
                 "id": str(uuid4()),
                 "content": raw_content,
                 "layer": "episodic",
-                "info_class": "public"
+                "info_class": "public",
             }
-        ]
+        ],
     }
 
     mock_req = make_mock_request(payload)
@@ -72,8 +70,10 @@ async def test_normalization_and_sanitization_in_sync(mesh_service):
     # Check the sanitized insert values
     insert_call = mock_conn.execute.call_args_list[0]
     sql_args = insert_call[0]
-    
-    sanitized_content = sql_args[2]  # content is the third argument in execute (after query and UUID)
+
+    sanitized_content = sql_args[
+        2
+    ]  # content is the third argument in execute (after query and UUID)
     assert "<script>" not in sanitized_content
     assert "</p>" in sanitized_content  # nh3 keeps safe tags like <p> but strips unsafe
     assert "unicode" in sanitized_content
@@ -95,7 +95,7 @@ async def test_signature_and_provenance_verification_success(mesh_service):
             "id": str(uuid4()),
             "content": "Secret information",
             "layer": "episodic",
-            "info_class": "public"
+            "info_class": "public",
         }
     ]
 
@@ -108,7 +108,7 @@ async def test_signature_and_provenance_verification_success(mesh_service):
         "receiver_id": "rae-host",
         "payload_hash": payload_hash,
         "signature": signature,
-        "memories": memories
+        "memories": memories,
     }
 
     mock_req = make_mock_request(payload)
@@ -131,7 +131,7 @@ async def test_signature_verification_failure_altered_payload(mesh_service):
             "id": str(uuid4()),
             "content": "Secret information",
             "layer": "episodic",
-            "info_class": "public"
+            "info_class": "public",
         }
     ]
 
@@ -144,7 +144,7 @@ async def test_signature_verification_failure_altered_payload(mesh_service):
             "id": memories[0]["id"],
             "content": "Altered secret information",
             "layer": "episodic",
-            "info_class": "public"
+            "info_class": "public",
         }
     ]
 
@@ -152,10 +152,11 @@ async def test_signature_verification_failure_altered_payload(mesh_service):
         "sender_id": sender_id,
         "receiver_id": "rae-host",
         "signature": signature,
-        "memories": altered_memories
+        "memories": altered_memories,
     }
 
     from fastapi import HTTPException
+
     mock_req = make_mock_request(payload)
     with pytest.raises(HTTPException) as exc:
         await receive_sync_data(mock_req, mesh_service)
@@ -178,18 +179,15 @@ async def test_signature_bypass_prevention(mesh_service):
             "id": str(uuid4()),
             "content": "Secret information",
             "layer": "episodic",
-            "info_class": "public"
+            "info_class": "public",
         }
     ]
 
     # Send request completely missing the signature parameter
-    payload = {
-        "sender_id": sender_id,
-        "receiver_id": "rae-host",
-        "memories": memories
-    }
+    payload = {"sender_id": sender_id, "receiver_id": "rae-host", "memories": memories}
 
     from fastapi import HTTPException
+
     mock_req = make_mock_request(payload)
     with pytest.raises(HTTPException) as exc:
         await receive_sync_data(mock_req, mesh_service)
@@ -203,7 +201,7 @@ def test_ssh_tunnel_manager_exponential_backoff():
         remote_port=8081,
         ssh_host="example.com",
         ssh_user="operator",
-        base_backoff=0.1
+        base_backoff=0.1,
     )
 
     mock_popen = MagicMock()
@@ -226,7 +224,7 @@ def test_relay_broker_aes_gcm_encryption_decryption():
     payload = {
         "sender_id": "peer-a",
         "receiver_id": "peer-b",
-        "memories": [{"content": "hello relay!"}]
+        "memories": [{"content": "hello relay!"}],
     }
 
     encrypted = encrypt_payload(payload, secret_key)
@@ -244,12 +242,14 @@ async def test_matrix_relay_publish_consume():
         homeserver_url="https://matrix.org",
         access_token="syt_token",
         room_id="!room:matrix.org",
-        secret_key=secret
+        secret_key=secret,
     )
 
     # Mock publish post request
     with patch("httpx.AsyncClient.post") as mock_post:
-        mock_post.return_value = MagicMock(status_code=200, json=lambda: {"event_id": "123"})
+        mock_post.return_value = MagicMock(
+            status_code=200, json=lambda: {"event_id": "123"}
+        )
         success = await relay.publish({"data": "test"})
         assert success is True
         mock_post.assert_called_once()
@@ -258,7 +258,7 @@ async def test_matrix_relay_publish_consume():
     with patch("httpx.AsyncClient.get") as mock_get:
         payload = {"data": "test"}
         encrypted = encrypt_payload(payload, secret)
-        
+
         mock_get.return_value = MagicMock(
             status_code=200,
             json=lambda: {
@@ -272,17 +272,17 @@ async def test_matrix_relay_publish_consume():
                                         "type": "m.room.message",
                                         "content": {
                                             "rae_encrypted": True,
-                                            "body": encrypted
-                                        }
+                                            "body": encrypted,
+                                        },
                                     }
                                 ]
                             }
                         }
                     }
-                }
-            }
+                },
+            },
         )
-        
+
         consumed = await relay.consume()
         assert len(consumed) == 1
         assert consumed[0]["data"] == "test"
@@ -295,7 +295,7 @@ async def test_nats_relay_publish_consume():
         nats_host="127.0.0.1",
         nats_port=4222,
         subject="rae.mesh.sync",
-        secret_key=secret
+        secret_key=secret,
     )
 
     mock_reader = AsyncMock()
@@ -303,7 +303,9 @@ async def test_nats_relay_publish_consume():
     mock_writer = AsyncMock()
 
     # Test publish
-    with patch("asyncio.open_connection", return_value=(mock_reader, mock_writer)) as mock_conn:
+    with patch(
+        "asyncio.open_connection", return_value=(mock_reader, mock_writer)
+    ) as mock_conn:
         success = await relay.publish({"data": "nats-test"})
         assert success is True
         mock_conn.assert_called_once_with("127.0.0.1", 4222)
@@ -313,15 +315,17 @@ async def test_nats_relay_publish_consume():
     payload = {"data": "nats-test"}
     encrypted = encrypt_payload(payload, secret)
     encrypted_bytes = encrypted.encode("utf-8")
-    
+
     mock_reader.readline.side_effect = [
         b"INFO {}\r\n",
         f"MSG rae.mesh.sync 1 {len(encrypted_bytes)}\r\n".encode("utf-8"),
-        b"\r\n"
+        b"\r\n",
     ]
     mock_reader.readexactly.return_value = encrypted_bytes
 
-    with patch("asyncio.open_connection", return_value=(mock_reader, mock_writer)) as mock_conn:
+    with patch(
+        "asyncio.open_connection", return_value=(mock_reader, mock_writer)
+    ) as mock_conn:
         msg = await relay.consume_one()
         assert msg is not None
         assert msg["data"] == "nats-test"

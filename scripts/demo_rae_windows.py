@@ -1,7 +1,7 @@
 import asyncio
+import logging
 import os
 import shutil
-import logging
 import sys
 from pathlib import Path
 
@@ -72,7 +72,7 @@ async def run_demo():
     print("="*50 + "\n")
 
     await setup_demo_files()
-    
+
     if STORAGE_DIR.exists():
         shutil.rmtree(STORAGE_DIR)
     STORAGE_DIR.mkdir()
@@ -88,7 +88,7 @@ async def run_demo():
 
     # Wait for ingestion to finish (it's async)
     print("⏳ Waiting for ingestion to complete...")
-    await asyncio.sleep(2) 
+    await asyncio.sleep(2)
 
     print("\n" + "-"*40)
     print("🔎 TESTING SEARCH & REASONING")
@@ -99,7 +99,7 @@ async def run_demo():
     print(f"\nQUERY: '{query1}'")
     # Use service.query() which uses MathController + Resonance
     results1 = await service.query("5000 EUR", tenant_id="local-user")
-    
+
     if results1:
         print(f"✅ FOUND {len(results1)} relevant fragments (Math + Resonance):")
         for r in results1:
@@ -113,7 +113,7 @@ async def run_demo():
     query2 = "Are cross-year transfers allowed in France?"
     print(f"\nQUERY: '{query2}'")
     results2 = await service.query("France forbidden", tenant_id="local-user")
-    
+
     if results2:
         print(f"✅ FOUND {len(results2)} relevant fragments:")
         for r in results2:
@@ -126,7 +126,7 @@ async def run_demo():
     query3 = "Show me failed audit logs for Marcel"
     print(f"\nQUERY: '{query3}'")
     results3 = await service.query("Marcel failed", tenant_id="local-user")
-    
+
     if results3:
         print(f"✅ FOUND {len(results3)} audit entries:")
         for r in results3:
@@ -137,7 +137,7 @@ async def run_demo():
     query4 = "Find confidential discussions about splitting the budget"
     print(f"\nQUERY: '{query4}'")
     results4 = await service.query("confidential split", tenant_id="local-user")
-    
+
     if results4:
         print(f"✅ FOUND {len(results4)} RESTRICTED items (Email Connector works):")
         for r in results4:

@@ -1,7 +1,9 @@
 import asyncio
+
 import httpx
 from nicegui import ui
 from utils.api_client import RAESuiteClient
+
 
 class SearchConsoleApp:
     def __init__(self, client: RAESuiteClient):
@@ -70,7 +72,7 @@ class SearchConsoleApp:
         if not self.results_container:
             return
         self.results_container.clear()
-        
+
         with self.results_container:
             if self.status == "Searching...":
                 with ui.column().classes('w-full items-center py-12'):
@@ -94,7 +96,7 @@ class SearchConsoleApp:
                             content = hit.get("content", hit.get("memory", {}).get("content", ""))
                             layer = hit.get("layer", hit.get("memory", {}).get("layer", "semantic"))
                             source = hit.get("source", hit.get("memory", {}).get("source", "unknown"))
-                            
+
                             card_details = f"**Layer:** `{layer}`\n**Source:** `{source}`\n**Score:** `{score:.4f}`\n\n**Content:**\n{content}"
                             with ui.card().classes('w-full p-6 shadow-sm border-l-4 border-sky-400 bg-slate-900 text-white cursor-pointer hover:bg-slate-800 focus:outline focus:outline-2 focus:outline-blue-500') \
                                  .props('tabindex=0 role="listitem" aria-label="Memory hit: click for details"') \
@@ -112,7 +114,7 @@ class SearchConsoleApp:
             # Left panel: Strategy selection
             with ui.card().classes('w-80 p-6 bg-slate-900 text-white border-r border-slate-800'):
                 ui.label('SEARCH ENGINES').classes('text-xs font-black text-slate-400 mb-4 tracking-widest')
-                
+
                 self.vec_chk = ui.checkbox('Vector Similarity', value=self.enable_vector, on_change=lambda e: setattr(self, 'enable_vector', e.value)).props('dark')
                 self.sem_chk = ui.checkbox('Semantic Nodes', value=self.enable_semantic, on_change=lambda e: setattr(self, 'enable_semantic', e.value)).props('dark')
                 self.graph_chk = ui.checkbox('Graph Traversal', value=self.enable_graph, on_change=lambda e: setattr(self, 'enable_graph', e.value)).props('dark')
@@ -121,7 +123,7 @@ class SearchConsoleApp:
 
                 ui.separator().classes('my-6 bg-slate-800')
                 ui.label('MATH MANIFOLD ARM').classes('text-xs font-black text-slate-400 mb-4 tracking-widest')
-                
+
                 self.mode_sel = ui.select({
                     "silicon_oracle": "Silicon Oracle (Default)",
                     "system_1_ib": "System 1: Implicit Behavior",
@@ -133,7 +135,7 @@ class SearchConsoleApp:
 
                 ui.separator().classes('my-6 bg-slate-800')
                 ui.label('PROJECT CONTEXT').classes('text-xs font-black text-slate-400 mb-4 tracking-widest')
-                
+
                 self.proj_in = ui.input(
                     label='Project Context',
                     value=self.project,
@@ -150,9 +152,9 @@ class SearchConsoleApp:
                         label='Ask RAE Memory Space...', 
                         placeholder='e.g. Find all refactoring failures in setup files'
                     ).classes('flex-grow text-lg text-white').props('dark')
-                    
+
                     query_input.on('change', lambda: setattr(self, 'query', query_input.value))
-                    
+
                     ui.button('SEARCH', 
                         on_click=self.execute_search
                     ).props('elevated color=sky size=lg rounded')

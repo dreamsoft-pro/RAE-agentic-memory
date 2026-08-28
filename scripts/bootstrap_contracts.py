@@ -1,11 +1,11 @@
-import sys
 import os
+import sys
 from pathlib import Path
-import subprocess
 
 # Path setup
 sys.path.append(os.path.abspath("./rae-core"))
 from rae_core.utils.contract_manager import ContractManager
+
 
 def verify_volumes():
     print("🛡️ Verifying Data Locator Contract...")

@@ -170,7 +170,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     created_at, last_accessed_at, expires_at,
                     project, session_id, memory_type, source, strength
                 FROM memories
-                WHERE id = $1 AND tenant_id = $2
+                WHERE id = $1::uuid AND tenant_id = $2::uuid
                 """,
                 memory_id,
                 tenant_id,
@@ -336,13 +336,14 @@ class PostgreSQLStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """List memories with pagination."""
         pool = await self._get_pool()
         filters = filters or {}
 
         conditions = [
-            "tenant_id = $1",
+            "tenant_id = $1::uuid",
         ]
         params: list[Any] = [tenant_id]
         param_idx = 2
@@ -350,6 +351,12 @@ class PostgreSQLStorage(IMemoryStorage):
         if agent_id:
             conditions.append(f"agent_id = ${param_idx}")
             params.append(agent_id)
+            param_idx += 1
+
+        if project or filters.get("project"):
+            proj_val = project or filters.get("project")
+            conditions.append(f"project = ${param_idx}")
+            params.append(proj_val)
             param_idx += 1
 
         if layer:

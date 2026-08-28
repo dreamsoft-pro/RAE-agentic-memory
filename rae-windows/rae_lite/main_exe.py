@@ -2,12 +2,12 @@
 Entry point for RAE-Lite Executable.
 Starts the FastAPI server and opens the browser.
 """
+import multiprocessing
 import os
 import sys
 import webbrowser
+
 import uvicorn
-import multiprocessing
-from pathlib import Path
 
 # Add project root to sys.path to ensure imports work in dev mode
 # In frozen mode (PyInstaller), sys.path is handled differently
@@ -21,9 +21,10 @@ else:
     sys.path.insert(0, os.path.join(base_dir, "..", "..", "rae-core"))
     sys.path.insert(0, os.path.join(base_dir, "..", "..", "rae-lite"))
 
+import socket
+
 from rae_lite.server_enhanced import app
 
-import socket
 
 def find_free_port(start_port=8000, max_attempts=100):
     """Find a free port starting from start_port."""
@@ -40,7 +41,7 @@ def find_free_port(start_port=8000, max_attempts=100):
 def main():
     # PyInstaller multiprocessing fix for Windows
     multiprocessing.freeze_support()
-    
+
     host = "127.0.0.1"
     try:
         port = find_free_port()
@@ -50,11 +51,11 @@ def main():
 
     print(f"🚀 RAE-Lite Starting on http://{host}:{port}")
     print("📂 Mode: OneDir (Portable)")
-    
+
     # Open browser after a slight delay or immediately
     # Note: simple open here, uvicorn blocks.
     webbrowser.open(f"http://{host}:{port}")
-    
+
     # Run Server
     # We pass 'app' directly. In some frozen configs, string import "rae_lite..." is safer
     # but direct object works if imports are resolved.

@@ -1,7 +1,8 @@
 import asyncio
 import io
 import os
-from nicegui import ui, events
+
+from nicegui import events, ui
 from utils.api_client import RAESuiteClient
 
 try:
@@ -41,7 +42,7 @@ class ProceduralWizard:
         self.instruction = ""
         ui.notify("Wizard is searching 400+ pages of regulations...")
         self.update_display()
-        
+
         response = await self.client.execute_agent(
             prompt=query, 
             project=self.project, 
@@ -82,7 +83,7 @@ class ProceduralWizard:
             with ui.column().classes('flex-grow'):
                 ui.label('Procedural Wizard').classes('text-3xl font-black text-slate-800 mb-2')
                 ui.label('Transform complex documents into actionable steps.').classes('text-slate-500 mb-8')
-                
+
                 with ui.row().classes('w-full items-center gap-4 mb-12 bg-white p-6 rounded-2xl shadow-sm border'):
                     query_input = ui.input(
                         label='What do you need to organize?', 

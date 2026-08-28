@@ -21,7 +21,7 @@ RUN python3.14 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install portal-specific dependencies
-RUN pip install --no-cache-dir nicegui httpx structlog pyyaml
+RUN pip install --no-cache-dir nicegui httpx structlog pyyaml pypdf python-docx openpyxl
 
 # STAGE 2: Final Runtime
 FROM ubuntu:22.04

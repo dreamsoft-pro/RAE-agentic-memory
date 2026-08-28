@@ -1,16 +1,16 @@
-import asyncio
-import pytest
 from uuid import uuid4
 
+import pytest
+
 from rae_core.governance.cache_serialization import (
+    CacheDecodeError,
     pack_cache_value,
     unpack_cache_value,
-    CacheDecodeError,
 )
 from rae_core.governance.secure_cache import SecureCacheEngine
 
-
 # 1. Serialization Tests
+
 
 def test_cache_serialization_roundtrip():
     doc = {"query": "test query", "confidence": 0.95, "nested": {"list": [1, 2, 3]}}
@@ -27,14 +27,18 @@ def test_cache_serialization_compression():
     assert unpacked == large_doc
     # Verification of compressed envelope format
     import msgpack
+
     envelope = msgpack.unpackb(packed, raw=False)
     assert envelope["c"] == "zstd"
-    assert envelope["n"] == len(msgpack.packb(large_doc, use_bin_type=True, strict_types=True))
+    assert envelope["n"] == len(
+        msgpack.packb(large_doc, use_bin_type=True, strict_types=True)
+    )
 
 
 def test_cache_serialization_size_limit():
     # Try unpacking an envelope with huge payload size
     import msgpack
+
     huge_envelope = {
         "v": 3,
         "c": "none",
@@ -47,6 +51,7 @@ def test_cache_serialization_size_limit():
 
 
 # 2. Redis Outage Fallback Mock Tests
+
 
 class MockBrokenRedis:
     async def get(self, key):
@@ -87,6 +92,7 @@ async def test_redis_outage_fallback():
 
 # 3. Secure Key Generation Tests
 
+
 def test_secure_key_generation():
     engine = SecureCacheEngine(inventory_generation=5)
     key = engine.generate_cache_key(
@@ -111,6 +117,7 @@ def test_secure_key_generation():
 
 
 # 4. Stampede Lock Tests
+
 
 class MockWorkingRedis:
     def __init__(self):

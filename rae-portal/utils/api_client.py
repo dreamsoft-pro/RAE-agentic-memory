@@ -67,21 +67,76 @@ class RAESuiteClient:
 
     async def ingest_text(self, text, project="default", source="portal_upload"):
         """Universal text ingestion into specific context."""
+        return await self.store_memory(content=text, project=project, source=source)
+
+    async def store_memory(
+        self, content: str, project="default", source="document_upload", tags=None, metadata=None, layer="semantic", importance=0.7
+    ):
+        """Stores structured memory chunk with provenance and metadata."""
         url = f"{self.api_url}/v2/memories/"
-        headers = self._get_headers()
+        headers = self._get_headers({"Content-Type": "application/json"})
         payload = {
-            "content": text,
+            "content": content,
             "project": project,
             "source": source,
-            "importance": 0.7,
-            "tags": ["portal_ingest"],
+            "importance": importance,
+            "tags": tags or ["document_knowledge"],
+            "layer": layer,
+            "metadata": metadata or {},
         }
         async with httpx.AsyncClient() as client:
             try:
-                r = await client.post(url, json=payload, headers=headers, timeout=60.0)
+                r = await client.post(url, json=payload, headers=headers, timeout=30.0)
                 return r.status_code in [200, 201]
             except Exception as e:
-                logger.error("ingestion_failed", error=str(e))
+                logger.error("store_memory_error", error=str(e))
+                return False
+
+    async def search_memories(self, query: str, project="default", k=5, layers=None):
+        """Semantic & hybrid memory search with project isolation."""
+        url = f"{self.api_url}/v2/memories/query"
+        headers = self._get_headers({"Content-Type": "application/json"})
+        payload = {
+            "query": query,
+            "project": project,
+            "k": k,
+            "layers": layers or ["semantic", "episodic"],
+        }
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.post(url, json=payload, headers=headers, timeout=20.0)
+                if r.status_code == 200:
+                    return r.json()
+                logger.error("search_memories_failed", status=r.status_code, text=r.text[:200])
+                return {"results": [], "total_count": 0}
+            except Exception as e:
+                logger.error("search_memories_error", error=str(e))
+                return {"results": [], "total_count": 0}
+
+    async def list_memories(self, project="default", limit=100, offset=0):
+        """Lists memories filtered by project."""
+        url = f"{self.api_url}/v2/memories/?project={project}&limit={limit}&offset={offset}"
+        headers = self._get_headers()
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.get(url, headers=headers, timeout=20.0)
+                if r.status_code == 200:
+                    return r.json()
+                return {"results": [], "total": 0}
+            except Exception as e:
+                logger.error("list_memories_error", error=str(e))
+                return {"results": [], "total": 0}
+
+    async def delete_memory(self, memory_id: str):
+        """Deletes a specific memory from RAE-Core."""
+        url = f"{self.api_url}/v2/memories/{memory_id}"
+        headers = self._get_headers()
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.delete(url, headers=headers, timeout=10.0)
+                return r.status_code in [200, 204]
+            except Exception as e:
+                logger.error("delete_memory_error", error=str(e))
                 return False
 
     async def get_compliance_report(

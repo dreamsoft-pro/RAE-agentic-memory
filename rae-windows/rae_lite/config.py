@@ -2,11 +2,11 @@
 RAE-Lite Configuration.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Optional
-import structlog
 
+import structlog
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = structlog.get_logger(__name__)
@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     # Server configuration
     server_host: str = "127.0.0.1"
     server_port: int = 8010
-    
+
     # Storage
     data_dir: Path = Path.home() / ".rae-lite"
-    
+
     # Memory engine
     enable_reflections: bool = True
     enable_auto_consolidation: bool = True
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     selected_profile: str = "A"  # A, B, C, D
     llama_path: Path = Path.home() / ".rae-lite" / "bin" / ("llama-cli.exe" if "win" in sys.platform else "llama-cli")
     model_path: Optional[Path] = None
-    
+
     # UI
     show_notifications: bool = True
     auto_start: bool = False
@@ -53,14 +53,14 @@ class Settings(BaseSettings):
         """Load settings from a YAML file."""
         if not yaml_path.exists():
             return
-        
+
         import yaml
         try:
             with open(yaml_path, "r") as f:
                 data = yaml.safe_load(f)
                 if not data:
                     return
-                
+
                 # Map YAML structure to settings
                 if "system" in data:
                     self.app_name = data["system"].get("app_name", self.app_name)
@@ -94,12 +94,12 @@ class Settings(BaseSettings):
         self.selected_profile = profile
         if model_path:
             self.model_path = Path(model_path)
-        
+
         profile_file = self.data_dir / "profile.json"
         data = {"profile": profile}
         if self.model_path:
             data["model_path"] = str(self.model_path)
-            
+
         profile_file.write_text(json.dumps(data))
 
 

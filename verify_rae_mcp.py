@@ -1,12 +1,13 @@
 import asyncio
-import aiohttp
 import json
-import sys
+
+import aiohttp
+
 
 async def main():
     # Local RAE Dev
     base_url = "http://localhost:8001"
-    
+
     # Check Health
     async with aiohttp.ClientSession() as session:
         async with session.get(f"{base_url}/health") as resp:
@@ -24,24 +25,24 @@ async def main():
         "importance": 0.9,
         "tags": ["verification", "mcp-test"]
     }
-    
+
     headers = {
         "Content-Type": "application/json",
         "X-Tenant-Id": "default-tenant"
     }
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.post(f"{base_url}/v1/memory/store", json=payload, headers=headers) as resp:
             print(f"Store Response: {resp.status}")
             print(await resp.text())
-            
+
     # Query Memory
     print("\n--- Querying Test Memory ---")
     query_payload = {
         "query_text": "Verification memory",
         "k": 1
     }
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.post(f"{base_url}/v1/memory/query", json=query_payload, headers=headers) as resp:
             print(f"Query Response: {resp.status}")

@@ -4,15 +4,15 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from rae_core.models.knowledge import (
+    AuthorityLevel,
+    KnowledgeClass,
+    KnowledgeSourceType,
+)
 from rae_core.types.branded import (
     ChecksumSha256Value,
     KnowledgeIdValue,
     TenantIdValue,
-)
-from rae_core.models.knowledge import (
-    KnowledgeClass,
-    AuthorityLevel,
-    KnowledgeSourceType,
 )
 
 

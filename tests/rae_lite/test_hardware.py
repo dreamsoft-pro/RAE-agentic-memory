@@ -1,9 +1,11 @@
+from unittest.mock import mock_open, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
 from rae_lite.hardware import HardwareDetector
 
+
 class TestHardwareDetector:
-    
+
     @pytest.fixture
     def detector(self):
         return HardwareDetector()
@@ -35,9 +37,9 @@ class TestHardwareDetector:
     def test_linux_ram_detection(self, detector):
         """Test RAM detection on Linux using /proc/meminfo mock."""
         detector.is_windows = False
-        
+
         mock_meminfo = "MemTotal:       16384000 kB\nMemFree:         8000000 kB"
-        
+
         with patch("builtins.open", mock_open(read_data=mock_meminfo)):
             ram = detector.detect_ram()
             # 16384000 kB / 1024 / 1024 = 15.625 GB
@@ -46,9 +48,9 @@ class TestHardwareDetector:
     def test_linux_cpu_detection(self, detector):
         """Test CPU detection on Linux using /proc/cpuinfo mock."""
         detector.is_windows = False
-        
+
         mock_cpuinfo = "processor : 0\nvendor_id : GenuineIntel\nmodel name : Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz\n"
-        
+
         with patch("builtins.open", mock_open(read_data=mock_cpuinfo)):
             info = detector.detect_cpu()
             assert "Intel" in info["name"]

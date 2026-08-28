@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 from abc import ABC, abstractmethod
 from datetime import datetime
-import hashlib
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,7 +15,6 @@ from rae_core.types.branded import (
     RequestIdValue,
     TenantIdValue,
 )
-
 
 TQueryParams = TypeVar("TQueryParams", bound=BaseModel)
 

@@ -23,10 +23,10 @@ from redis.asyncio import Redis as AsyncRedis
 from .repo_dependencies import get_graph_repository
 from .repositories.graph_repository import GraphRepository
 from .services.analytics import AnalyticsService
+from .services.audit_service import AuditService
 from .services.budget_service import BudgetService
 from .services.community_detection import CommunityDetectionService
 from .services.compliance_service import ComplianceService
-from .services.audit_service import AuditService
 from .services.consistency_service import ConsistencyService
 from .services.entity_resolution import EntityResolutionService
 from .services.graph_algorithms import GraphAlgorithmsService

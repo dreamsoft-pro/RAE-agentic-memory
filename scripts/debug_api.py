@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 url = "http://localhost:8001/v2/memories/"
 payload = {

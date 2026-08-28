@@ -1,8 +1,7 @@
 import asyncio
-import os
-import json
-import httpx
+
 import asyncpg
+import httpx
 from tqdm import tqdm
 
 # Database connection - using Node1 local connection
@@ -32,9 +31,9 @@ async def get_embedding(client, text):
 
 async def backfill():
     print(f"🚀 Starting Local Backfill on Node1 using model: {MODEL}")
-    
+
     conn = await asyncpg.connect(**DB_CONFIG)
-    
+
     # 1. Find memories without embeddings for 'default' model
     sql_find = """
         SELECT m.id, m.content, m.tenant_id
@@ -43,10 +42,10 @@ async def backfill():
         WHERE me.memory_id IS NULL
         LIMIT 5000
     """
-    
+
     records = await conn.fetch(sql_find)
     print(f"Found {len(records)} memories needing embeddings.")
-    
+
     if not records:
         print("Done! No memories to backfill.")
         await conn.close()
@@ -57,7 +56,7 @@ async def backfill():
             memory_id = row['id']
             content = row['content']
             tenant_id = row['tenant_id']
-            
+
             embedding = await get_embedding(client, content)
             if embedding:
                 # Save to memory_embeddings
@@ -65,10 +64,10 @@ async def backfill():
                     "INSERT INTO memory_embeddings (memory_id, model_name, embedding, tenant_id) VALUES ($1, $2, $3, $4)",
                     memory_id, 'default', embedding, tenant_id
                 )
-                
+
                 # Also update the legacy column in memories table if needed
                 # (Assuming the schema refactor is already done and we use memory_embeddings)
-                
+
     await conn.close()
     print("✅ Backfill completed.")
 

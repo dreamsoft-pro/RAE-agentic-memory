@@ -29,25 +29,25 @@ class PostgreSQLStorage(IMemoryStorage):
     async def store_memory(self, **kwargs: Any) -> UUID:
         import hashlib
         pool = await self._get_pool()
-        
+
         content = kwargs.get("content", "")
         tenant_id = kwargs.get("tenant_id")
-        
+
         # 1. Universal Fact ID (SHA-256)
         content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
-        
+
         # 2. Prepare Lineage Data
         instance_id = kwargs.get("metadata", {}).get("instance_id", "local-node")
         source = kwargs.get("source", "api")
-        
+
         new_metadata = kwargs.get("metadata", {})
         new_metadata["last_sync_instance"] = instance_id
-        
+
         expires_at = kwargs.get("expires_at")
         if not expires_at and kwargs.get("ttl"):
             from datetime import timedelta
             expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(seconds=int(kwargs["ttl"]))
-        
+
         async with pool.acquire() as conn:
             # 3. Federated UPSERT (Evidence Consolidation)
             sql = """
@@ -64,7 +64,7 @@ class PostgreSQLStorage(IMemoryStorage):
                                jsonb_build_object('witness_count', (COALESCE((memories.metadata->>'witness_count')::int, 1) + 1))
                 RETURNING id
             """
-            
+
             m_id = uuid4()
             row = await conn.fetchrow(
                 sql,
@@ -91,7 +91,7 @@ class PostgreSQLStorage(IMemoryStorage):
         if row is None:
             return None
         d = dict(row)
-        
+
         meta = d.get("metadata")
         while isinstance(meta, str):
             try:
@@ -102,7 +102,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     break
             except (json.JSONDecodeError, TypeError):
                 break
-        
+
         d["metadata"] = meta if isinstance(meta, dict) else {}
         return d
 
@@ -138,29 +138,29 @@ class PostgreSQLStorage(IMemoryStorage):
         pool = await self._get_pool()
         limit = kwargs.get("limit", 100)
         offset = kwargs.get("offset", 0)
-        
+
         where_parts = ["tenant_id = $1"]
         params = [tenant_id]
-        
+
         if kwargs.get("layer"):
             where_parts.append(f"layer = ${len(params) + 1}")
             params.append(kwargs["layer"])
-            
+
         if kwargs.get("agent_id"):
             where_parts.append(f"agent_id = ${len(params) + 1}")
             params.append(kwargs["agent_id"])
-            
+
         if kwargs.get("project"):
             where_parts.append(f"project = ${len(params) + 1}")
             params.append(kwargs["project"])
-            
+
         if kwargs.get("tags"):
             where_parts.append(f"tags && ${len(params) + 1}")
             params.append(kwargs["tags"])
-            
+
         where_clause = " AND ".join(where_parts)
         sql = f"SELECT * FROM memories WHERE {where_clause} ORDER BY created_at DESC LIMIT ${len(params) + 1} OFFSET ${len(params) + 2}"
-        
+
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, *params, limit, offset)
         return [self._row_to_dict(r) for r in rows if r]
@@ -176,7 +176,7 @@ class PostgreSQLStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         pool = await self._get_pool()
         raw_query = query.strip()
-        
+
         where_parts = ["tenant_id = $2", "agent_id = $3"]
         params = [raw_query, tenant_id, agent_id]
 
@@ -199,7 +199,7 @@ class PostgreSQLStorage(IMemoryStorage):
             word_idx = len(params) + 1
             word_conditions.append(f"content ILIKE ${word_idx}")
             params.append(f"%{w}%")
-        
+
         word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"
         where_clause = " AND ".join(where_parts)
 
@@ -257,7 +257,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     json.dumps(metadata or {})
                 )
             return True
-        except Exception as e:
+        except Exception:
             # We don't use logger here to keep adapter pure, but we could
             return False
 

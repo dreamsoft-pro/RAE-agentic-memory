@@ -1,12 +1,12 @@
 # File Watcher for RAE-Lite.
 # Monitors directories and triggers ingestion automatically.
 
-import time
 import logging
 from pathlib import Path
 from typing import Callable, List
-from watchdog.observers import Observer
+
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 logger = logging.getLogger(__name__)
 

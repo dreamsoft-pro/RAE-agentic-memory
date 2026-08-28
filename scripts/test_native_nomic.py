@@ -1,8 +1,9 @@
 
 import os
-import sys
-import numpy as np
 import time
+
+import numpy as np
+
 
 def test_nomic():
     try:
@@ -25,30 +26,30 @@ def test_nomic():
     try:
         print("🔄 Loading tokenizer...")
         tokenizer = Tokenizer.from_file(tokenizer_path)
-        
+
         print("🔄 Loading ONNX session (CPU)...")
         # Force CPU to avoid driver issues during test
         session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
-        
+
         print("🔍 Testing inference...")
         text = "search_document: RAE Agnostic Hive Mind test"
         encoded = tokenizer.encode(text)
-        
+
         # Prepare inputs including token_type_ids
         inputs = {
             "input_ids": np.array([encoded.ids], dtype=np.int64),
             "attention_mask": np.array([encoded.attention_mask], dtype=np.int64),
             "token_type_ids": np.array([encoded.type_ids], dtype=np.int64)
         }
-        
+
         start = time.time()
         outputs = session.run(None, inputs)
         duration = time.time() - start
-        
-        print(f"✨ SUCCESS!")
+
+        print("✨ SUCCESS!")
         print(f"📏 Vector dimension: {outputs[0].shape[-1]}")
         print(f"⏱️  Inference time: {duration:.4f}s")
-        
+
     except Exception as e:
         print(f"❌ Error during execution: {e}")
 

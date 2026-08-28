@@ -1,6 +1,8 @@
 import asyncio
+
 from nicegui import ui
 from utils.api_client import RAESuiteClient
+
 
 class MeshFederationApp:
     def __init__(self, client: RAESuiteClient):
@@ -90,7 +92,7 @@ class MeshFederationApp:
                     ui.label('GENERATE INVITE CODE (HOST)').classes('text-xs font-bold text-slate-400 mb-4')
                     host_url_input = ui.input(label='Host URL (our endpoint)', placeholder='http://my-node-url:8000').classes('w-full q-mb-md').props('dark outlined')
                     ui.button('Generate Invite', on_click=lambda: self.create_invite(host_url_input.value)).props('color=blue').classes('w-full')
-                    
+
                     # Display invite code if created
                     with ui.column().classes('w-full q-mt-md gap-1').bind_visibility_from(self, 'invite_code'):
                         ui.label('Share this invite code:').classes('text-xs text-slate-400')
@@ -114,7 +116,7 @@ class MeshFederationApp:
                     manual_name = ui.input(label='Peer Name').classes('w-full q-mb-xs').props('dark outlined')
                     manual_url = ui.input(label='Peer URL').classes('w-full q-mb-xs').props('dark outlined')
                     manual_token = ui.input(label='Auth Token', type='password').classes('w-full q-mb-xs').props('dark outlined')
-                    
+
                     # Choose Transport type
                     transport_select = ui.select(
                         options={
@@ -126,7 +128,7 @@ class MeshFederationApp:
                         value='http',
                         label='Transport Protocol'
                     ).classes('w-full q-mb-md').props('dark outlined')
-                    
+
                     ui.button('Save Peer Configuration', on_click=lambda: self.register_peer_manually(
                         manual_peer_id.value, manual_name.value, manual_url.value, manual_token.value, transport_select.value
                     )).props('color=teal').classes('w-full')
@@ -144,22 +146,22 @@ class MeshFederationApp:
                         for peer in self.peers:
                             pid = peer.get("peer_id")
                             status_info = self.peer_statuses.get(pid, {})
-                            
+
                             status = status_info.get("status", "offline")
                             latency = status_info.get("latency_ms", -1)
                             stats = status_info.get("sync_stats", {})
                             success_count = stats.get("success_count", 0)
                             failed_count = stats.get("failed_count", 0)
                             last_sync = stats.get("last_synced_at", "Never")
-                            
+
                             transport = peer.get("transport_type", "http").upper()
-                            
+
                             card_details = f"**Peer ID:** `{pid}`\n**Name:** `{peer.get('name')}`\n**Endpoint URL:** `{peer.get('url')}`\n**Transport:** `{transport}`\n**Status:** `{status.upper()}`\n**Latency:** `{latency} ms`"
-                            
+
                             with ui.row().classes('w-full items-center justify-between border-b border-slate-800 pb-3 text-sm cursor-pointer hover:bg-slate-800 focus:outline focus:outline-2 focus:outline-blue-500') \
                                  .props('tabindex=0 role="listitem" aria-label="Peer details: click for more info"') \
                                  .on('click', lambda p_title=f"Peer {pid}", p_det=card_details: self.on_inspect(p_title, p_det) if self.on_inspect else None):
-                                
+
                                 with ui.column().classes('gap-y-1'):
                                     with ui.row().classes('gap-2 items-center'):
                                         ui.badge(pid).props('color=blue')
@@ -170,12 +172,12 @@ class MeshFederationApp:
                                             ui.badge("OFFLINE").props('color=red')
                                     ui.label(peer.get("name", "Unnamed Peer")).classes('text-slate-200 font-medium')
                                     ui.label(peer.get("url")).classes('text-xs text-slate-400 font-mono')
-                                    
+
                                 with ui.row().classes('items-center gap-6'):
                                     with ui.column().classes('items-end'):
                                         ui.label(f'Success: {success_count} · Failed: {failed_count}').classes('text-xs font-bold text-slate-300')
                                         ui.label(f'Last Synced: {last_sync}').classes('text-[10px] text-slate-400')
-                                        
+
                                     with ui.row().classes('gap-2'):
                                         ui.button(
                                             'Sync Now', 

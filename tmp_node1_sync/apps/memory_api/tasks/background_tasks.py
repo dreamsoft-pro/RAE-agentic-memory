@@ -764,7 +764,7 @@ def run_bayesian_tuning_task(self, tenant_id: str = "default"):
             try:
                 service = TuningService(rae_service)
                 result = await service.run_tuning_cycle(tenant_id)
-                
+
                 if result.get("posterior"):
                     logger.info(
                         "bayesian_tuning_complete",

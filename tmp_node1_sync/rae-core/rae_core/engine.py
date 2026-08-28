@@ -234,7 +234,7 @@ class RAEEngine:
 
         memories: list[dict[str, Any]] = []
         memory_ids = [str(mid) for mid, _ in results]
-        
+
         graph_edges = []
         if hasattr(self.memory_storage, "get_edges_between"):
             graph_edges = await self.memory_storage.get_edges_between(memory_ids, tenant_id)
@@ -246,7 +246,7 @@ class RAEEngine:
                     math_score = math_controller.score_memory(memory=memory, query_similarity=score, weights=custom_weights)
                 else:
                     math_score = math_controller.score_memory(memory=memory, query_similarity=score)
-                
+
                 memory["search_score"] = score
                 memory["math_score"] = math_score
                 memories.append(memory)

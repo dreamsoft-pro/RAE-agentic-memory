@@ -1,21 +1,22 @@
 from datetime import datetime, timezone
 from uuid import uuid4
+
 import pytest
 from pydantic import ValidationError
-from rae_core.types.branded import (
-    make_knowledge_id,
-    make_checksum_sha256,
-    make_tenant_id,
-)
+
 from rae_core.models.knowledge import (
-    KnowledgeClass,
     AuthorityLevel,
+    KnowledgeClass,
     KnowledgeSourceType,
 )
 from rae_core.models.registry import (
     KnowledgeRegistryRecord,
     KnowledgeRevisionDraft,
-    KnowledgeRevisionRecord,
+)
+from rae_core.types.branded import (
+    make_checksum_sha256,
+    make_knowledge_id,
+    make_tenant_id,
 )
 
 
@@ -64,7 +65,9 @@ def test_revision_draft_valid():
 
 
 def test_revision_draft_invalid_dates():
-    with pytest.raises(ValidationError, match="valid_until musi być późniejsze niż valid_from"):
+    with pytest.raises(
+        ValidationError, match="valid_until musi być późniejsze niż valid_from"
+    ):
         KnowledgeRevisionDraft(
             registry_id=uuid4(),
             authority_level=AuthorityLevel.CANONICAL,
