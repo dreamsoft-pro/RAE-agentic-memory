@@ -503,6 +503,13 @@ class RAESuitePortal:
                 ui.badge().bind_text_from(self, "system_profile").props(
                     "outline color=blue-400"
                 ).classes("ml-2 text-[10px]")
+                ui.button(
+                    "🏢 PD Knowledge Hub",
+                    icon="open_in_new",
+                    on_click=lambda: ui.navigate.to("https://pd.dreamsoft.pro/", new_tab=True),
+                ).props("unelevated dense color=indigo-7 rounded text-xs").tooltip(
+                    "Otwórz Print & Display Corporate Knowledge Hub (https://pd.dreamsoft.pro/)"
+                )
 
             with ui.row().classes("items-center gap-6"):
                 with (
@@ -685,15 +692,22 @@ class RAESuitePortal:
                     ).classes(
                         "w-full"
                     )
-                    ui.button(
-                        "PD Knowledge Hub",
-                        icon="corporate_fare",
-                        on_click=lambda: self.set_page("pd_knowledge_hub"),
-                    ).props(
-                        f'flat align=left {"color=indigo-4" if self.current_page=="pd_knowledge_hub" else ""}'
-                    ).classes(
-                        "w-full"
-                    )
+                    with ui.row().classes("w-full items-center justify-between no-wrap gap-1"):
+                        ui.button(
+                            "PD Knowledge Hub",
+                            icon="corporate_fare",
+                            on_click=lambda: self.set_page("pd_knowledge_hub"),
+                        ).props(
+                            f'flat align=left {"color=indigo-4" if self.current_page=="pd_knowledge_hub" else ""}'
+                        ).classes(
+                            "flex-grow"
+                        )
+                        ui.button(
+                            icon="open_in_new",
+                            on_click=lambda: ui.navigate.to("https://pd.dreamsoft.pro/", new_tab=True),
+                        ).props("flat round dense size=sm color=indigo-4").tooltip(
+                            "Otwórz https://pd.dreamsoft.pro/ w nowej karcie"
+                        )
 
             ui.separator().classes("my-8")
             ui.label("TIER GUIDE").classes("text-[10px] font-black text-slate-400 mb-2")
@@ -796,6 +810,40 @@ class RAESuitePortal:
             cookie_banner.set_visibility(False)
 
 
+def _get_cookie_domain(request: Request):
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or ""
+    ).lower()
+    if "dreamsoft.pro" in host:
+        return ".dreamsoft.pro"
+    return None
+
+
+def _is_token_valid(token: str = None) -> bool:
+    if not token:
+        return False
+    try:
+        parts = token.split(".")
+        if len(parts) >= 2:
+            import base64
+            import json
+            import time
+
+            padded = parts[1] + "=" * ((4 - len(parts[1]) % 4) % 4)
+            payload = json.loads(
+                base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+            )
+            exp = payload.get("exp")
+            if exp and time.time() >= exp - 30:
+                return False
+            return True
+    except Exception:
+        return False
+    return True
+
+
 def _get_redirect_uri(request: Request) -> str:
     host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "rae.dreamsoft.pro"
     proto = request.headers.get("x-forwarded-proto") or ("https" if "dreamsoft.pro" in host else request.url.scheme)
@@ -808,7 +856,10 @@ def _get_redirect_uri(request: Request) -> str:
 def logout_endpoint(request: Request):
     host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "rae.dreamsoft.pro"
     proto = "https" if "dreamsoft.pro" in host else request.url.scheme
+    cookie_domain = _get_cookie_domain(request)
     res = RedirectResponse(f"{proto}://{host}/", status_code=307)
+    if cookie_domain:
+        res.delete_cookie("access_token", path="/", domain=cookie_domain)
     res.delete_cookie("access_token", path="/")
     return res
 
@@ -829,7 +880,7 @@ async def auth_middleware(request: Request, call_next):
         return await call_next(request)
 
     token = request.cookies.get("access_token")
-    if not token and path in ["/", "/evidence", "/pd"]:
+    if (not token or not _is_token_valid(token)) and path in ["/", "/evidence", "/pd"]:
         state = secrets.token_urlsafe(32)
         code_verifier = secrets.token_urlsafe(64)
         sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
@@ -838,6 +889,7 @@ async def auth_middleware(request: Request, call_next):
         )
 
         redirect_uri = _get_redirect_uri(request)
+        cookie_domain = _get_cookie_domain(request)
         auth_url = (
             f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
             f"?response_type=code"
@@ -849,11 +901,33 @@ async def auth_middleware(request: Request, call_next):
             f"&scope=openid+profile+email"
         )
         response = RedirectResponse(auth_url, status_code=307)
-        response.set_cookie("oauth_state", state, max_age=300, httponly=True)
         response.set_cookie(
-            "oauth_verifier", code_verifier, max_age=300, httponly=True
+            "oauth_state",
+            state,
+            max_age=300,
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            domain=cookie_domain,
         )
-        response.set_cookie("redirect_back", path, max_age=300, httponly=True)
+        response.set_cookie(
+            "oauth_verifier",
+            code_verifier,
+            max_age=300,
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            domain=cookie_domain,
+        )
+        response.set_cookie(
+            "redirect_back",
+            path,
+            max_age=300,
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            domain=cookie_domain,
+        )
         return response
 
     return await call_next(request)
@@ -899,6 +973,7 @@ async def oauth_callback(request: Request, code: str = None, state: str = None):
             if redirect_back not in {"/", "/evidence", "/pd"}:
                 redirect_back = "/"
 
+            cookie_domain = _get_cookie_domain(request)
             # Redirect user back to the application and save token in session cookie
             res = RedirectResponse(redirect_back, status_code=307)
 
@@ -907,10 +982,16 @@ async def oauth_callback(request: Request, code: str = None, state: str = None):
                 access_token,
                 httponly=True,
                 samesite="lax",
+                secure=True,
+                domain=cookie_domain,
                 path="/",
             )
 
             # Clean up temporary OAuth cookies
+            if cookie_domain:
+                res.delete_cookie("oauth_state", domain=cookie_domain)
+                res.delete_cookie("oauth_verifier", domain=cookie_domain)
+                res.delete_cookie("redirect_back", domain=cookie_domain)
             res.delete_cookie("oauth_state")
             res.delete_cookie("oauth_verifier")
             res.delete_cookie("redirect_back")
@@ -925,30 +1006,6 @@ def main_portal(request: Request):
     host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").lower()
     is_pd_domain = host.startswith("pd.") or "pd.dreamsoft.pro" in host
 
-    if ENABLE_KEYCLOAK_AUTH:
-        token = request.cookies.get("access_token")
-        if not token:
-            state = secrets.token_urlsafe(32)
-            code_verifier = secrets.token_urlsafe(64)
-            sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
-            code_challenge = (
-                base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
-            )
-
-            redirect_uri = _get_redirect_uri(request)
-            auth_url = (
-                f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
-                f"?response_type=code"
-                f"&client_id={KEYCLOAK_FRONTEND_CLIENT_ID}"
-                f"&redirect_uri={redirect_uri}"
-                f"&state={state}"
-                f"&code_challenge={code_challenge}"
-                f"&code_challenge_method=S256"
-                f"&scope=openid+profile+email"
-            )
-            ui.navigate.to(auth_url)
-            return
-
     portal = RAESuitePortal(request)
     if is_pd_domain:
         user_email = _extract_user_email(request)
@@ -960,30 +1017,6 @@ def main_portal(request: Request):
 
 @ui.page("/pd")
 def pd_standalone_portal(request: Request):
-    if ENABLE_KEYCLOAK_AUTH:
-        token = request.cookies.get("access_token")
-        if not token:
-            state = secrets.token_urlsafe(32)
-            code_verifier = secrets.token_urlsafe(64)
-            sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
-            code_challenge = (
-                base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
-            )
-
-            redirect_uri = _get_redirect_uri(request)
-            auth_url = (
-                f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
-                f"?response_type=code"
-                f"&client_id={KEYCLOAK_FRONTEND_CLIENT_ID}"
-                f"&redirect_uri={redirect_uri}"
-                f"&state={state}"
-                f"&code_challenge={code_challenge}"
-                f"&code_challenge_method=S256"
-                f"&scope=openid+profile+email"
-            )
-            ui.navigate.to(auth_url)
-            return
-
     portal = RAESuitePortal(request)
     user_email = _extract_user_email(request)
     pd_app = PDKnowledgeHubApp(portal.client, user_email=user_email)
@@ -992,29 +1025,6 @@ def pd_standalone_portal(request: Request):
 
 @ui.page("/evidence")
 def evidence_portal(request: Request):
-    if ENABLE_KEYCLOAK_AUTH:
-        token = request.cookies.get("access_token")
-        if not token:
-            state = secrets.token_urlsafe(32)
-            code_verifier = secrets.token_urlsafe(64)
-            sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
-            code_challenge = (
-                base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
-            )
-
-            redirect_uri = _get_redirect_uri(request)
-            auth_url = (
-                f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
-                f"?response_type=code"
-                f"&client_id={KEYCLOAK_FRONTEND_CLIENT_ID}"
-                f"&redirect_uri={redirect_uri}"
-                f"&state={state}"
-                f"&code_challenge={code_challenge}"
-                f"&code_challenge_method=S256"
-                f"&scope=openid+profile+email"
-            )
-            ui.navigate.to(auth_url)
-            return
 
     ui.add_head_html(r"""
     <script>
