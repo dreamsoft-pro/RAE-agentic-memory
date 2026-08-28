@@ -78,14 +78,29 @@ class Settings(BaseSettings):
     OAUTH_DOMAIN: str = ""
     OAUTH_AUDIENCE: str = ""
     TENANCY_ENABLED: bool = True
-    DEFAULT_TENANT_ALIAS: str = "default-tenant"
-    DEFAULT_TENANT_UUID: str = "00000000-0000-0000-0000-000000000000"
+    DEFAULT_TENANT_ALIAS: str = "dreamsoft"
+    DEFAULT_TENANT_UUID: str = "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582"
+    LEGACY_NIL_TENANT_UUID: str = "00000000-0000-0000-0000-000000000000"
+    TENANT_ALIASES: dict[str, str] = {
+        "dreamsoft": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "dreamsoft-enterprise": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "dreamsoft_factory": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "default": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "default-tenant": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "system": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "00000000-0000-0000-0000-000000000000": "07ebf29a-4eb9-5d67-a7f1-91fd1a72e582",
+        "printworks": "11111111-2222-3333-4444-555555555555",
+    }
     API_KEY: str = "secret"
 
     ENABLE_API_KEY_AUTH: bool = False
     ENABLE_JWT_AUTH: bool = False
     SECRET_KEY: str = "change-this-secret-key-in-production"
     RAE_PEER_ID: str = "rae-host"
+
+    # --- Mesh Synchronization Settings ---
+    ENABLE_MESH_AUTO_SYNC: bool = True
+    MESH_SYNC_INTERVAL_SECONDS: int = 60
 
     # --- Keycloak Integration ---
     ENABLE_KEYCLOAK_AUTH: bool = False

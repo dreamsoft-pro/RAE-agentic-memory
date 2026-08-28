@@ -22,32 +22,32 @@ class MissionControlApp:
 
         try:
             # 1. Fetch memories statistics
-            self.stats = await self.client.get_stats(project="default")
+            self.stats = (await self.client.get_stats(project="default")) or {}
         except Exception:
-            pass
+            self.stats = {"total_count": 0}
 
         try:
             # 2. Fetch compliance report
-            report_data = await self.client.get_compliance_report(project="default")
-            self.compliance_report = report_data.get("compliance_report", {})
+            report_data = (await self.client.get_compliance_report(project="default")) or {}
+            self.compliance_report = report_data.get("compliance_report") or {}
         except Exception:
-            pass
+            self.compliance_report = {}
 
         try:
             # 3. Fetch RLS status
-            rls_data = await self.client.get_rls_status()
-            self.rls_status = rls_data.get("rls_status", {})
+            rls_data = (await self.client.get_rls_status()) or {}
+            self.rls_status = rls_data.get("rls_status") or {}
         except Exception:
-            pass
+            self.rls_status = {}
 
         try:
             # 4. Fetch compliance audit trail logs
-            audit_trail_data = await self.client.get_compliance_audit_trail(
+            audit_trail_data = (await self.client.get_compliance_audit_trail(
                 project="default"
-            )
-            self.audit_trail = audit_trail_data.get("items", [])
+            )) or {}
+            self.audit_trail = audit_trail_data.get("items") or []
         except Exception:
-            pass
+            self.audit_trail = []
 
         # Trigger re-render of refreshable content
         self.render_content.refresh()
@@ -58,14 +58,17 @@ class MissionControlApp:
     @ui.refreshable
     def render_content(self):
         # Extract dynamic values with safe fallbacks
-        total_memories = self.stats.get("total_count", 0)
-        overall_score = self.compliance_report.get("overall_compliance_score", 0.0)
-        overall_status = self.compliance_report.get("overall_status", "Unknown").upper()
+        stats = self.stats or {}
+        total_memories = stats.get("total_count", 0) or 0
+        comp = self.compliance_report or {}
+        overall_score = comp.get("overall_compliance_score", 0.0) or 0.0
+        overall_status = (comp.get("overall_status") or "Unknown").upper()
 
-        active_policies = self.rls_status.get("active_policies", 0)
-        total_policies = self.rls_status.get("total_policies", 0)
-        rls_pct = self.rls_status.get("rls_enabled_percentage", 0.0)
-        tables_with_rls = self.rls_status.get("tables_with_rls", [])
+        rls = self.rls_status or {}
+        active_policies = rls.get("active_policies", 0) or 0
+        total_policies = rls.get("total_policies", 0) or 0
+        rls_pct = rls.get("rls_enabled_percentage", 0.0) or 0.0
+        tables_with_rls = rls.get("tables_with_rls") or []
 
         # Determine status colors
         status_color = (

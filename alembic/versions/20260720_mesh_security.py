@@ -5,9 +5,10 @@ Revises: 9ee276de27bb
 Create Date: 2026-07-20 07:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '20260720_mesh_security'

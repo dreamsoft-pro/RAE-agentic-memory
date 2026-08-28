@@ -1,4 +1,8 @@
-from qdrant_client import AsyncQdrantClient; import asyncio; 
+import asyncio
+
+from qdrant_client import AsyncQdrantClient
+
+
 async def main():
     client = AsyncQdrantClient(location=":memory:")
     print("METHODS:", [m for m in dir(client) if "search" in m.lower()])

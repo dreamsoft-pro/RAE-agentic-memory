@@ -4,15 +4,16 @@ API Contract Tests for V2 (RAE-Core)
 These tests ensure that the new V2 API endpoints maintain their contract.
 """
 
-from typing import Any, Dict, List
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict
+from unittest.mock import MagicMock
+
 import pytest
 
 try:
     from apps.memory_api.api.v2.memory import (
-        StoreMemoryResponseV2,
+        MemoryResult,
         QueryMemoryResponseV2,
-        MemoryResult
+        StoreMemoryResponseV2,
     )
     HAS_V2_MODELS = True
 except ImportError:
@@ -100,7 +101,7 @@ class TestMemoryQueryContractV2:
         mock_query_response = MagicMock()
         mock_query_response.results = [mock_result]
         mock_query_response.synthesized_context = "Summary"
-        
+
         mock_rae_service.query_memories.return_value = mock_query_response
 
         payload = {
@@ -125,7 +126,7 @@ class TestMemoryQueryContractV2:
             "results": list,
             "total_count": int,
         }
-        
+
         assert "results" in data
         assert "total_count" in data
         assert isinstance(data["results"], list)
@@ -176,7 +177,7 @@ class TestMemoryConsolidateContractV2:
     def test_consolidate_memories_response_schema(self, client_with_overrides, mock_rae_service):
         """Ensure consolidate endpoint returns correct schema"""
         mock_rae_service.consolidate_memories.return_value = {"processed": 10, "moved": 5}
-        
+
         response = client_with_overrides.post(
             "/v2/memories/consolidate?project=test-project",
             headers={"X-Tenant-Id": "test-tenant"}

@@ -4,9 +4,10 @@ Revision ID: 20260225_ghost
 Revises: 20260224_refl_v3
 Create Date: 2026-02-25 15:30:00.000000
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '20260225_ghost'
@@ -50,7 +51,7 @@ def upgrade():
         sa.Column('last_accessed_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column('accessed_count', sa.Integer(), server_default='0')
     )
-    
+
     # 2. Reflection Relationships (Full Schema)
     op.create_table(
         'reflection_relationships',

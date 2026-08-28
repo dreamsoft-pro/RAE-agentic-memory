@@ -45,7 +45,7 @@ async def _refresh_jwks() -> None:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(jwks_url)
             response.raise_for_status()
-            
+
             # Parse Cache-Control headers
             max_age = 86400  # default 24 hours
             cache_control = response.headers.get("Cache-Control", "")
@@ -57,19 +57,23 @@ async def _refresh_jwks() -> None:
                             max_age = int(part.split("=")[1])
                         except ValueError:
                             pass
-                            
+
             jwks = response.json()
             keys = jwks.get("keys", [])
-            
+
             new_cache = {}
             for key in keys:
                 if "kid" in key:
                     new_cache[key["kid"]] = key
-                    
+
             _jwks_cache = new_cache
             _jwks_expires_at = time.time() + max_age
             _jwks_last_refreshed = time.time()
-            logger.info("keycloak_jwks_refreshed", keys_count=len(_jwks_cache), expires_in=max_age)
+            logger.info(
+                "keycloak_jwks_refreshed",
+                keys_count=len(_jwks_cache),
+                expires_in=max_age,
+            )
     except Exception as e:
         logger.error("failed_to_refresh_jwks", error=str(e))
         raise JWTError(f"Failed to fetch JWKS from Keycloak: {str(e)}")
@@ -97,14 +101,16 @@ async def get_keycloak_jwk(kid: str) -> dict:
         if now - _jwks_last_refreshed < 30.0:
             if kid in _jwks_cache:
                 return _jwks_cache[kid]
-            raise JWTError(f"Public key for kid '{kid}' not found in Keycloak JWKS (recently refreshed)")
+            raise JWTError(
+                f"Public key for kid '{kid}' not found in Keycloak JWKS (recently refreshed)"
+            )
 
         # Refresh cache
         await _refresh_jwks()
-        
+
         if kid not in _jwks_cache:
             raise JWTError(f"Public key for kid '{kid}' not found in Keycloak JWKS")
-            
+
         return _jwks_cache[kid]
 
 
@@ -181,7 +187,8 @@ async def verify_token(
 
         # If Keycloak authentication is enabled
         if settings.ENABLE_KEYCLOAK_AUTH:
-            from jose import jwt, JWTError
+            from jose import JWTError, jwt
+
             try:
                 # 1. Retrieve the unverified header to get the key ID (kid)
                 headers = jwt.get_unverified_header(token)
@@ -195,28 +202,42 @@ async def verify_token(
                 # 2. Get the public key corresponding to the kid
                 key = await get_keycloak_jwk(kid)
 
-                # 3. Decode and verify the token signature
+                # 3. Decode and verify the token signature and issuer
                 expected_issuer = f"{settings.KEYCLOAK_URL.rstrip('/')}/realms/{settings.KEYCLOAK_REALM}"
-                allowed_audiences = [settings.KEYCLOAK_BACKEND_CLIENT_ID, settings.KEYCLOAK_FRONTEND_CLIENT_ID]
-
-                # 3. Decode and verify the token signature, issuer, and audience
                 decoded = jwt.decode(
                     token,
                     key,
                     algorithms=["RS256"],
-                    audience=allowed_audiences,
                     issuer=expected_issuer,
                     options={
-                        "verify_aud": True,
+                        "verify_aud": False,
                         "verify_iss": True,
                         "verify_signature": True,
-                    }
+                    },
                 )
+
+                # Validate audience or authorized party (azp)
+                aud = decoded.get("aud")
+                token_auds = [aud] if isinstance(aud, str) else (aud or [])
+                allowed_audiences = {
+                    settings.KEYCLOAK_BACKEND_CLIENT_ID,
+                    settings.KEYCLOAK_FRONTEND_CLIENT_ID,
+                }
+                azp = decoded.get("azp")
+                if not (
+                    allowed_audiences.intersection(set(token_auds))
+                    or azp in allowed_audiences
+                ):
+                    raise JWTError(
+                        f"Invalid audience or authorized party: aud={aud}, azp={azp}"
+                    )
 
                 if "sub" not in decoded:
                     raise JWTError("Keycloak token is missing 'sub' (subject) claim")
 
-                logger.info("keycloak_jwt_verification_succeeded", user_id=decoded["sub"])
+                logger.info(
+                    "keycloak_jwt_verification_succeeded", user_id=decoded["sub"]
+                )
                 return {
                     "authenticated": True,
                     "method": "keycloak",
@@ -304,7 +325,11 @@ async def verify_token(
             )
 
     # If all authentication methods are disabled, allow access but as unauthenticated
-    if not settings.ENABLE_API_KEY_AUTH and not settings.ENABLE_JWT_AUTH and not settings.ENABLE_KEYCLOAK_AUTH:
+    if (
+        not settings.ENABLE_API_KEY_AUTH
+        and not settings.ENABLE_JWT_AUTH
+        and not settings.ENABLE_KEYCLOAK_AUTH
+    ):
         return {"authenticated": False, "method": "none"}
 
     # No valid authentication method was provided (no API key, no Bearer token)
@@ -356,6 +381,7 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
         # If Keycloak is enabled, try that first
         if settings.ENABLE_KEYCLOAK_AUTH:
             from jose import jwt
+
             try:
                 claims = jwt.get_unverified_claims(token)
                 user_id_val = claims.get("sub")

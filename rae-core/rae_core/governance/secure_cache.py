@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import logging
 import random
 import time
+from collections import OrderedDict
+from threading import Lock
 from typing import Any
 
 from redis.asyncio import Redis
@@ -21,9 +22,6 @@ else
 end
 """
 
-
-from collections import OrderedDict
-from threading import Lock
 
 class SecureCacheEngine:
     """Multi-layer secure cache engine with process-local L1, Redis L2, and thundering herd protection."""
@@ -54,14 +52,16 @@ class SecureCacheEngine:
         tenant_hash = hashlib.sha256(tenant_id.encode("utf-8")).hexdigest()[:16]
         scope_str = ",".join(sorted(scope))
         scope_hash = hashlib.sha256(scope_str.encode("utf-8")).hexdigest()[:16]
-        query_hash = hashlib.sha256(query.lower().strip().encode("utf-8")).hexdigest()[:16]
-        
+        query_hash = hashlib.sha256(query.lower().strip().encode("utf-8")).hexdigest()[
+            :16
+        ]
+
         return f"rae:kg:v3:{tenant_hash}:{policy_version}:{self.inventory_generation}:{scope_hash}:{query_hash}"
 
     async def get(self, key: str) -> dict | None:
         """Get value from L1 or L2 cache."""
         now = time.time()
-        
+
         # 1. READ FROM L1 PROCESS CACHE
         with self._l1_lock:
             if key in self._l1_cache:
@@ -83,7 +83,7 @@ class SecureCacheEngine:
                 return None
 
             document = unpack_cache_value(raw_val)
-            
+
             # Store in L1 if it doesn't exceed the payload limit
             raw_len = len(raw_val)
             if raw_len <= self.l1_max_bytes:
@@ -92,17 +92,23 @@ class SecureCacheEngine:
                         self._l1_cache.pop(key, None)
                     if len(self._l1_cache) >= self.l1_max_items:
                         self._l1_cache.popitem(last=False)
-                    self._l1_cache[key] = (now + 30.0, document)  # Short L1 TTL of 30 seconds
+                    self._l1_cache[key] = (
+                        now + 30.0,
+                        document,
+                    )  # Short L1 TTL of 30 seconds
 
             return document
         except Exception as exc:
-            logger.warning("Redis cache read failed, falling back gracefully", extra={"error": str(exc)})
+            logger.warning(
+                "Redis cache read failed, falling back gracefully",
+                extra={"error": str(exc)},
+            )
             return None
 
     async def set(self, key: str, value: dict, ttl: int = 300) -> bool:
         """Set value in both L1 and L2 cache layers."""
         now = time.time()
-        
+
         # Write to L1 (process memory cache)
         with self._l1_lock:
             if key in self._l1_cache:
@@ -124,7 +130,10 @@ class SecureCacheEngine:
             await self.redis.setex(key, final_ttl, packed)
             return True
         except Exception as exc:
-            logger.warning("Redis cache write failed, falling back gracefully to L1", extra={"error": str(exc)})
+            logger.warning(
+                "Redis cache write failed, falling back gracefully to L1",
+                extra={"error": str(exc)},
+            )
             return True
 
     async def acquire_lock(self, lock_key: str, token: str, ttl_ms: int = 5000) -> bool:

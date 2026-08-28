@@ -1,10 +1,6 @@
-import asyncio
-import io
-import os
-from typing import Any
 import httpx
 import structlog
-from nicegui import events, ui
+from nicegui import ui
 
 try:
     from pypdf import PdfReader
@@ -44,10 +40,10 @@ class RaeLiteUI:
         try:
             async with httpx.AsyncClient() as client:
                 payload_v2 = {
-                    "prompt": query, 
-                    "project": self.project_select.value, 
+                    "prompt": query,
+                    "project": self.project_select.value,
                     "metadata": {
-                        "llm_model": self.model_select.value, 
+                        "llm_model": self.model_select.value,
                         "mode": "procedural"
                     }
                 }
@@ -56,7 +52,7 @@ class RaeLiteUI:
                 if response.status_code == 200:
                     data = response.json()
                     self.procedural_instruction = data.get("answer", "")
-                else: 
+                else:
                     ui.notify(f"Assistant error: {response.status_code}", type="negative")
                 self.status = "Idle"
                 self.update_results_display()
@@ -82,7 +78,7 @@ class RaeLiteUI:
         with ui.header().classes("items-center justify-between bg-blue-900 text-white p-4 shadow-lg"):
             with ui.row().classes("items-center gap-4"):
                 ui.label("SmallAI Oracle").classes("text-xl font-bold")
-                
+
                 # Models
                 models = {
                     "local_qwen_optimized": "Local: QWEN 3.5 9B",
@@ -91,7 +87,7 @@ class RaeLiteUI:
                     "local_phi": "Local: Phi-3"
                 }
                 self.model_select = ui.select(options=models, value="local_qwen_optimized", label="Model").classes("w-64").props('dark dense outlined color=white')
-                
+
                 # Data Source (RESTORED)
                 sources = {
                     "default": "Standard Knowledge",
@@ -99,7 +95,7 @@ class RaeLiteUI:
                     "screenwatcher_logs": "System Logs"
                 }
                 self.project_select = ui.select(options=sources, value="default", label="Source").classes("w-64").props('dark dense outlined color=white')
-                
+
             ui.button(icon='refresh', on_click=self.fetch_stats).props('flat color=white')
 
         with ui.column().classes("w-full max-w-5xl mx-auto p-12"):

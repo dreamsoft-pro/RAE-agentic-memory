@@ -75,7 +75,7 @@ class KnowledgeRecord(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_dates(self) -> "KnowledgeRecord":
+    def validate_dates(self) -> KnowledgeRecord:
         if (
             self.valid_from is not None
             and self.valid_until is not None

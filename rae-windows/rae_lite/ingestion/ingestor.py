@@ -2,13 +2,10 @@
 # Handles parsing of various file formats (PDF, DOCX, ODT, TXT, MD)
 # and converting them into RAE Memory Items.
 
-import os
-import time
 import logging
-import mimetypes
-from pathlib import Path
-from typing import Any, Generator, Dict, List, Optional
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, Generator
 
 # Optional imports with graceful fallback
 try:
@@ -38,7 +35,7 @@ class UniversalIngestor:
     SUPPORTED_EXTENSIONS = {
         ".pdf": "pdf",
         ".docx": "docx",
-        ".doc": "doc", 
+        ".doc": "doc",
         ".odt": "odt",
         ".txt": "text",
         ".md": "markdown",
@@ -53,7 +50,7 @@ class UniversalIngestor:
     def __init__(self, chunk_size: int = 1000, overlap: int = 100):
         self.chunk_size = chunk_size
         self.overlap = overlap
-        
+
         self._parsers_status = {
             "pdf": fitz is not None,
             "docx": docx is not None,

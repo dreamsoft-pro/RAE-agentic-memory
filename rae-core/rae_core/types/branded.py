@@ -5,7 +5,6 @@ from typing import Annotated, NewType, TypeAlias
 
 from pydantic import AfterValidator, BeforeValidator, StringConstraints
 
-
 BinaryPayload: TypeAlias = bytes | bytearray | memoryview
 
 

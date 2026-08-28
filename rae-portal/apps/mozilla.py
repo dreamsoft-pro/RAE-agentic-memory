@@ -1,9 +1,10 @@
 import asyncio
 import io
 import os
+
 try: import trafilatura
 except ImportError: trafilatura = None
-from nicegui import ui, events
+from nicegui import events, ui
 from utils.api_client import RAESuiteClient
 
 try:
@@ -41,7 +42,7 @@ class MozillaApp:
             if text:
                 success = await self.client.ingest_text(text, project=self.project, source=f"web:{self.web_url}")
                 if success:
-                    ui.notify(f"Web Evidence Captured", type="positive")
+                    ui.notify("Web Evidence Captured", type="positive")
                     self.web_url = ""
         except Exception as e:
             ui.notify(f"Scraping error: {e}", type="negative")
@@ -58,7 +59,7 @@ class MozillaApp:
         self.answer = ""
         ui.notify("Verifying against Ground Truth...")
         self.update_display()
-        
+
         response = await self.client.execute_agent(
             prompt=query, 
             project=self.project, 
@@ -91,10 +92,10 @@ class MozillaApp:
             # Left: Ingestion Controls
             with ui.card().classes('w-80 p-6 bg-slate-50'):
                 ui.label('CIVIC INGEST').classes('text-xs font-black text-slate-400 mb-4 tracking-widest')
-                
+
                 ui.label('Documents').classes('text-sm font-bold mb-2')
                 ui.upload(on_upload=self.handle_upload, label='Upload PDF/TXT', auto_upload=True).classes('w-full mb-6').props('flat bordered')
-                
+
                 ui.label('Web Sources').classes('text-sm font-bold mb-2')
                 ui.input(label='URL', placeholder='https://...').classes('w-full mb-2').bind_value(self, 'web_url')
                 ui.button('Scrape', icon='add_link', on_click=self.handle_web_ingest).props('elevated color=primary').classes('w-full')
@@ -103,7 +104,7 @@ class MozillaApp:
             with ui.column().classes('flex-grow'):
                 ui.label('Mozilla Civic Assistant').classes('text-3xl font-black text-slate-900 mb-2')
                 ui.label('Ethical AI and civic program verification.').classes('text-slate-500 mb-8')
-                
+
                 with ui.row().classes('w-full items-center gap-4 mb-12 bg-white p-6 rounded-2xl shadow-sm border'):
                     query_input = ui.input(
                         label='Enter audit query...', 

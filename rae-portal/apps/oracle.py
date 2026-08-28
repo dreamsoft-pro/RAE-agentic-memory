@@ -1,6 +1,6 @@
-import asyncio
 from nicegui import ui
 from utils.api_client import RAESuiteClient
+
 
 class OracleApp:
     def __init__(self, client: RAESuiteClient):
@@ -17,7 +17,7 @@ class OracleApp:
         self.answer = ""
         ui.notify(f"Oracle is analyzing {project} metrics...")
         self.update_display()
-        
+
         # Call RAE with ANALYTICAL mode
         response = await self.client.execute_agent(
             prompt=query, 
@@ -50,7 +50,7 @@ class OracleApp:
         with ui.column().classes('w-full max-w-5xl mx-auto p-8'):
             ui.label('Order Entry Oracle').classes('text-3xl font-black text-blue-900 mb-2')
             ui.label('Production metrics and industrial intelligence.').classes('text-slate-500 mb-8')
-            
+
             with ui.row().classes('w-full items-center gap-4 mb-12 bg-white p-6 rounded-2xl shadow-sm border'):
                 query_input = ui.input(
                     label='Ask about production or assets...', 

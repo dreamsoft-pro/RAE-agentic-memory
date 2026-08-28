@@ -22,6 +22,7 @@ def _canonical_json(value: Any) -> bytes:
 def _safe_round(val: Any) -> float:
     try:
         import math
+
         f_val = float(val)
         if math.isnan(f_val) or math.isinf(f_val):
             return 0.0
@@ -85,9 +86,7 @@ def calculate_content_hash(bundle: EvidenceBundle) -> ChecksumSha256:
         "resolution_status": bundle.resolution_status.value,
     }
 
-    return make_checksum_sha256(
-        hashlib.sha256(_canonical_json(payload)).hexdigest()
-    )
+    return make_checksum_sha256(hashlib.sha256(_canonical_json(payload)).hexdigest())
 
 
 def calculate_audit_hash(
@@ -103,6 +102,4 @@ def calculate_audit_hash(
         "content_hash": bundle.content_hash,
         "previous_audit_hash": previous_audit_hash,
     }
-    return make_checksum_sha256(
-        hashlib.sha256(_canonical_json(payload)).hexdigest()
-    )
+    return make_checksum_sha256(hashlib.sha256(_canonical_json(payload)).hexdigest())

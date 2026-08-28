@@ -1,7 +1,7 @@
-import subprocess
-import time
-import threading
 import logging
+import subprocess
+import threading
+import time
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,9 @@ class SSHTunnelManager:
             if self.running:
                 return
             self.running = True
-            self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+            self.monitor_thread = threading.Thread(
+                target=self._monitor_loop, daemon=True
+            )
             self.monitor_thread.start()
             logger.info("SSH Tunnel Monitor started.")
 
@@ -66,14 +68,16 @@ class SSHTunnelManager:
                 # Check if process is running
                 if self.process is None or self.process.poll() is not None:
                     if self.process is not None:
-                        logger.warning(f"SSH process exited with code {self.process.poll()}. Restarting...")
+                        logger.warning(
+                            f"SSH process exited with code {self.process.poll()}. Restarting..."
+                        )
                         self.process = None
 
                     # If we had a recent clash or failure, apply backoff
                     if retries > 0:
                         backoff = min(self.base_backoff * (2 ** (retries - 1)), 60.0)
                         logger.info(f"Retrying SSH tunnel in {backoff:.2f} seconds...")
-                        
+
                         # Wait in small increments so we can exit quickly if stop() is called
                         slept = 0.0
                         step = min(0.05, backoff)
@@ -115,17 +119,16 @@ class SSHTunnelManager:
         try:
             # We capture stderr to detect port clashes
             self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
             )
             # Wait a short moment to see if it immediately exits due to ExitOnForwardFailure
             time.sleep(0.1)
             poll = self.process.poll()
             if poll is not None:
                 _, stderr = self.process.communicate()
-                logger.error(f"SSH tunnel failed to start. Exit code: {poll}, Error: {stderr.strip()}")
+                logger.error(
+                    f"SSH tunnel failed to start. Exit code: {poll}, Error: {stderr.strip()}"
+                )
                 return False
             return True
         except Exception as e:

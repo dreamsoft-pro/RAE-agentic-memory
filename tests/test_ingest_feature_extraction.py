@@ -4,8 +4,10 @@ Verifies that machine metrics (Speed, Job ID) are captured during ingestion.
 """
 
 import pytest
-from rae_core.ingestion.segmenter import IngestSegmenter
+
 from rae_core.ingestion.interfaces import ContentSignature
+from rae_core.ingestion.segmenter import IngestSegmenter
+
 
 @pytest.mark.asyncio
 async def test_truejet_feature_extraction():
@@ -31,9 +33,9 @@ async def test_truejet_feature_extraction():
             }
         }
     }
-    
+
     segmenter = IngestSegmenter(config=config)
-    
+
     # Text simulating a machine log entry for TrueJet2
     text = (
         "[12:00] Machine Status: RUNNING\n"
@@ -42,21 +44,21 @@ async def test_truejet_feature_extraction():
         "Speed: 120.5m?(80.3m)/h\n"
         "Ink: 45ml"
     )
-    
+
     sig = ContentSignature(struct={"mode": "LINEAR_LOG_LIKE"}, dist={}, stab={})
     chunks, audit = await segmenter.segment(text, "POLICY_LOG_STREAM", sig)
-    
+
     assert len(chunks) == 1
     extracted = chunks[0].metadata.get("extracted_features", {})
-    
+
     print("\nExtracted Features:")
     print(extracted)
-    
+
     assert extracted.get("speed_m2h") == 120.5
     assert extracted.get("speed_mh") == 80.3
     assert extracted.get("width_mm") == 1600
     assert extracted.get("job_id") == "TX-998877-A"
-    
+
     assert "atomic_splitting_with_afe" in audit.action
 
 if __name__ == "__main__":

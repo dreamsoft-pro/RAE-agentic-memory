@@ -48,7 +48,7 @@ class RAETrayApp:
         """Toggle UI Observer state."""
         new_state = not self.service.enable_observer
         self.service.enable_observer = new_state
-        
+
         if new_state:
             # We need to ensure the loop is running or start it
             import asyncio

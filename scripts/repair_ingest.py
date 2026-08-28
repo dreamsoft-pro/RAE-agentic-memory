@@ -1,8 +1,8 @@
 # TIMESTAMP: 2026-02-23 14:55:00
-import httpx
 import os
 from pathlib import Path
-import time
+
+import httpx
 
 API_URL = 'http://localhost:8001/v2/memories/'
 HEADERS = {'X-API-Key': 'test-key', 'X-Tenant-Id': '00000000-0000-0000-0000-000000000000'}
@@ -15,22 +15,22 @@ def ingest_file(filename):
         if filename in files:
             target_path = os.path.join(root, filename)
             break
-    
+
     if not target_path:
         print("File " + filename + " not found!")
         return
 
     with open(target_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     chunks = [content[i:i+CHUNK_SIZE] for i in range(0, len(content), CHUNK_SIZE)]
     print("File " + filename + ": " + str(len(content)) + " chars, " + str(len(chunks)) + " chunks.")
-    
+
     for idx, chunk in enumerate(chunks):
         # Stable content without f-string newlines
         header = "FILE: " + filename + " (chunk " + str(idx) + ")"
         full_content = header + chr(10) + chr(10) + chunk
-        
+
         payload = {
             "content": full_content,
             "layer": "semantic",

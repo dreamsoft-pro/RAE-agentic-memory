@@ -1,7 +1,8 @@
 import json
-import requests
 import os
 from pathlib import Path
+
+import requests
 
 API_URL = "http://localhost:8001/v2/memories/"
 TENANT_ID = "53717286-fe94-4c8f-baf9-c4d2758eb672"
@@ -9,21 +10,21 @@ SOURCE_FILE = os.environ.get('RAE_SOURCE_FILE', str(Path(__file__).resolve().par
 
 def run_import():
     print("🚀 Starting Mirror Import with Advanced Tagging...")
-    
+
     with open(SOURCE_FILE, 'r') as f:
         for line in f:
             if not line.strip(): continue
             data = json.loads(line)
-            
+
             content = data.get("text", "")
             symbol_name = data.get("name", "unknown")
             kind = data.get("kind", "unknown")
-            
+
             # Budowanie tagów
             tags = ["dreamsoft", "angularjs", "nextjs", f"kind:{kind}"]
             if "Service" in symbol_name: tags.append("service")
             if "Ctrl" in symbol_name: tags.append("controller")
-            
+
             payload = {
                 "content": content,
                 "project": "dreamsoft_factory",
@@ -38,7 +39,7 @@ def run_import():
                     "migration_status": "pending_refactor"
                 }
             }
-            
+
             headers = {"X-Tenant-Id": TENANT_ID}
             try:
                 r = requests.post(API_URL, json=payload, headers=headers, timeout=5)

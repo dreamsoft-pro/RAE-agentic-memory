@@ -1,8 +1,7 @@
-import subprocess
 import logging
-import json
+import subprocess
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class LlamaCppAdapter:
             logger.error("Przekroczono limit czasu dla LLM.")
         except Exception as e:
             logger.error(f"Wyjątek podczas wywołania LLM: {e}")
-        
+
         return ""
 
     def normalize_query(self, query: str) -> str:

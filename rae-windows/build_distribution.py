@@ -2,10 +2,11 @@
 Build Script for RAE-Lite (OneDir Mode).
 Run this on the target OS (Windows) to generate the folder.
 """
-import PyInstaller.__main__
 import os
 import shutil
 from pathlib import Path
+
+import PyInstaller.__main__
 
 # Clean previous build
 if Path("dist").exists():
@@ -54,12 +55,12 @@ PyInstaller.__main__.run([
     '--noconfirm',                           # Overwrite output
     '--console',                             # Keep console for debug logs (remove for silent)
     # '--windowed',                          # Uncomment for production (hides console)
-    
+
     # Python Paths (Crucial for rae-core resolution)
     f'--paths={project_root}',
     f'--paths={project_root}/rae-core',
     f'--paths={project_root}/rae-lite',
-    
+
     # Data & Imports
     *[f'--add-data={src}{os.pathsep}{dest}' for src, dest in add_data],
     *[f'--hidden-import={mod}' for mod in hidden_imports],

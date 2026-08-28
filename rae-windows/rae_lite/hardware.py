@@ -1,8 +1,8 @@
-import subprocess
-import platform
 import logging
+import platform
 import re
-from typing import Dict, Any, Optional
+import subprocess
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class HardwareDetector:
     def detect_gpu(self) -> Dict[str, Any]:
         """Wykrywa obecność procesora graficznego NVIDIA i ilość VRAM."""
         info = {"has_nvidia": False, "name": "None", "vram_gb": 0.0}
-        
+
         # Próba przez nvidia-smi
         try:
             output = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"], text=True)
@@ -102,7 +102,7 @@ class HardwareDetector:
         # Priorytet dla GPU
         if gpu_info["has_nvidia"] and gpu_info["vram_gb"] >= 6.0:
             return "D"  # GPU Acceleration (7B+ GGUF)
-        
+
         if ram_gb >= 16.0:
             return "C"  # 3-7B GGUF on CPU
         elif ram_gb >= 8.0:

@@ -7,15 +7,15 @@ Serves static UI and provides API for ingestion and search.
 
 import os
 import shutil
-import yaml # Requires pyyaml
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import structlog
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+import yaml  # Requires pyyaml
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from rae_lite.service import RAELiteService
 
@@ -25,7 +25,7 @@ logger = structlog.get_logger(__name__)
 CONFIG_FILE = Path("config.yaml")
 config = {
     "storage": {"data_dir": "rae_lite_storage"},
-    "observer": {"enabled": False} 
+    "observer": {"enabled": False}
 }
 
 if CONFIG_FILE.exists():
@@ -98,7 +98,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
         except Exception as e:
             logger.error("upload_failed", error=str(e))
             raise HTTPException(status_code=500, detail=f"Failed to upload {file.filename}")
-    
+
     return {"status": "success", "files": uploaded_files, "message": "Ingestion started automatically."}
 
 @app.post("/api/search")

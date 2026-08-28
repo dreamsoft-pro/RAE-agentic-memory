@@ -1,5 +1,5 @@
-from rae_core.models.evidence import ActionRecord, OutcomeRecord
-from rae_core.models.failure import FailureLearningRecord
+from rae_core.models.evidence import ActionRecord
+
 
 class MemoryEvidenceStore:
     """
