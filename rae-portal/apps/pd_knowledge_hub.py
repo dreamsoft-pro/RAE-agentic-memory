@@ -849,6 +849,14 @@ class PDKnowledgeHubApp:
                         ).props("outline text-color=slate-800 dark:text-color=white")
 
                         ui.button(
+                            "🌐 RAE Suite Portal",
+                            icon="open_in_new",
+                            on_click=lambda: ui.navigate.to("https://rae.dreamsoft.pro/", new_tab=True),
+                        ).props("outline dense color=blue-7 size=sm rounded").tooltip(
+                            "Przejdź do RAE Suite Portal (https://rae.dreamsoft.pro/)"
+                        )
+
+                        ui.button(
                             icon="dark_mode",
                             on_click=self.toggle_theme,
                         ).props(
