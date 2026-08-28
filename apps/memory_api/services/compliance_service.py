@@ -288,7 +288,7 @@ class ComplianceService:
                     if hasattr(overall_status, "value")
                     else str(overall_status)
                 ),
-                [i.description for i in issues],
+                [str(g) for g in critical_gaps] if critical_gaps else [r.title for r in active_risks],
             )
 
         return report
