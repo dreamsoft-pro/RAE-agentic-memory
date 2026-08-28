@@ -233,14 +233,23 @@ class MeshService:
             )
 
             nonce = payload.get("nonce")
-            if nonce not in self._active_invites:
-                raise ValueError("Invalid or expired invite (nonce not found)")
+            if not nonce:
+                raise ValueError("Missing nonce in invite")
 
-            stored = self._active_invites[nonce]
-            if time.time() > stored["expires"]:
-                if nonce in self._active_invites:
+            # In multi-replica Kubernetes environments, check in-memory store if present,
+            # or rely on cryptographic HMAC-SHA256 signature verification with SECRET_KEY.
+            if nonce in self._active_invites:
+                stored = self._active_invites[nonce]
+                if time.time() > stored["expires"]:
                     del self._active_invites[nonce]
-                raise ValueError("Invite expired")
+                    raise ValueError("Invite expired")
+                # Consume invite to prevent replay
+                del self._active_invites[nonce]
+            else:
+                jti_key = f"invite:{nonce}"
+                if jti_key in self._used_jtis:
+                    raise ValueError("Invite has already been used")
+                self._used_jtis[jti_key] = payload["exp"]
 
             return payload
 
