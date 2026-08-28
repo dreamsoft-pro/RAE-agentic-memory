@@ -1,11 +1,11 @@
 # TIMESTAMP: 2026-02-23 13:20:00
-import subprocess
-import os
-from pathlib import Path
 import json
-import time
+import os
 import re
+import subprocess
+import time
 import urllib.request
+from pathlib import Path
 
 OUT_DIR = os.environ.get('RAE_OUT_DIR', str(Path(__file__).resolve().parent.parent / 'OUT_DIR_default'))
 API_URL = 'http://localhost:8001/v2/memories/'
@@ -36,12 +36,12 @@ def decompose_file(filename):
 
         arch_prompt = f"Break down this large AngularJS file into logical React sub-modules (hooks, utils, components). Return ONLY a JSON map of filename -> instruction. Module: {filename}. Snippet:\n{full_source[:100000]}"
         plan_json = ask_gemini_mega(arch_prompt)
-        
+
         plan = json.loads(re.search(r'\{.*\}', plan_json, re.DOTALL).group(0))
         folder = filename.replace('.js', '').replace('.html', '')
         base_path = os.path.join(OUT_DIR, folder)
         if not os.path.exists(base_path): os.makedirs(base_path)
-        
+
         for subfile, desc in plan.items():
             log_msg(f"  -> Building {subfile}...")
             # For implementation, we provide 100k context window
@@ -52,7 +52,7 @@ def decompose_file(filename):
                     if match: code = match.group(1).strip()
                 with open(os.path.join(base_path, subfile), 'w') as f: f.write(code)
                 log_msg(f"  ✅ {subfile} saved.")
-        
+
         log_msg(f"🚀 {filename} SUCCESS.")
     except Exception as e:
         log_msg(f"💥 Failed {filename}: {e}")

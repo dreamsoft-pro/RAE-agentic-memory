@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import zipfile
 import os
-from pathlib import Path
+import zipfile
 
 # Lista plików i katalogów do spakowania (Skrypty + Kotwice + Core Logic)
 FILES_TO_PACK = [

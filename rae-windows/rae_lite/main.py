@@ -6,7 +6,6 @@ Starts local HTTP server and system tray app.
 
 import sys
 import threading
-import time
 
 import structlog
 import uvicorn
@@ -75,20 +74,20 @@ def main():
 
     # Ensure data directory exists
     settings.ensure_data_dir()
-    
+
     # 1. Hardware-Aware Adaptation
     settings.load_profile()
-    
+
     # If no profile was saved yet, run detection and UI
     profile_file = settings.data_dir / "profile.json"
     if not profile_file.exists():
         from rae_lite.hardware import HardwareDetector
         from rae_lite.ui.profile_selector import select_profile
-        
+
         logger.info("first_run_detected_performing_hardware_probe")
         detector = HardwareDetector()
         hw_info = detector.detect_all()
-        
+
         selected = select_profile(hw_info)
         if selected:
             settings.save_profile(selected)
@@ -105,7 +104,7 @@ def main():
     from rae_lite.service import RAELiteService
     # Use data_dir from settings (might be changed by yaml load)
     service = RAELiteService(storage_path=str(settings.data_dir))
-    
+
     # Start service components
     import asyncio
     loop = asyncio.new_event_loop()

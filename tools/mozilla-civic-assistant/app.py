@@ -1,7 +1,6 @@
 import asyncio
 import io
 import os
-from typing import List, Dict, Any
 
 import trafilatura
 from nicegui import events, ui
@@ -70,12 +69,12 @@ class MozillaCivicApp:
 
     async def handle_web_ingest(self):
         if not self.web_url: return
-        ui.notify(f"Scraping Official Source...")
+        ui.notify("Scraping Official Source...")
         try:
             dl = await asyncio.to_thread(trafilatura.fetch_url, self.web_url)
             text = await asyncio.to_thread(trafilatura.extract, dl) if dl else None
             if text and await self.client.ingest_v5(text, source=f"web:{self.web_url}"):
-                ui.notify(f"Web Evidence Captured", type="positive")
+                ui.notify("Web Evidence Captured", type="positive")
                 self.web_url = ""
                 await asyncio.sleep(2)
                 await self.refresh_stats()
@@ -97,12 +96,12 @@ class MozillaCivicApp:
         self.results = []
         self.audit_status = None
         self.update_results()
-        
+
         response = await self.client.civic_query(query)
         self.current_instruction = response.get("instruction", "")
         self.results = response.get("results", [])
         self.audit_status = response.get("audit", {})
-        
+
         # Detection of "No Data" or "Insufficient" states
         text_lower = self.current_instruction.lower()
         if not self.results or "error" in text_lower or "no information" in text_lower or "not found" in text_lower:
@@ -129,7 +128,7 @@ class MozillaCivicApp:
                 bg_color = 'bg-emerald-50 border-emerald-500'
                 icon = 'verified_user'
                 label = 'VERIFIED BY AUDITOR'
-                
+
                 if status == 'insufficient':
                     bg_color = 'bg-amber-50 border-amber-500'
                     icon = 'warning'
@@ -148,7 +147,7 @@ class MozillaCivicApp:
 
                     with ui.column().classes('p-6'):
                         ui.markdown(self.current_instruction).classes('text-lg leading-relaxed text-slate-800')
-                        
+
                         if self.audit_status.get('reason'):
                             with ui.row().classes('mt-6 p-3 bg-white/80 rounded border border-dashed items-start gap-2'):
                                 ui.icon('psychology', size='xs', color='slate-500')
@@ -175,7 +174,7 @@ class MozillaCivicApp:
                 with ui.column().classes('gap-0'):
                     ui.label('Mozilla Civic Assistant').classes('text-2xl font-black tracking-tight')
                     ui.label('RAE Reflective Audit Node v4.2').classes('text-xs text-blue-400 font-mono')
-            
+
             with ui.row().classes('items-center gap-6'):
                 with ui.row().classes('items-center gap-2 bg-slate-800 px-4 py-2 rounded-full border border-slate-700'):
                     ui.badge('', color='emerald').props('dot')
@@ -184,17 +183,17 @@ class MozillaCivicApp:
 
         with ui.left_drawer(value=True).classes('bg-white border-r p-8 shadow-inner'):
             ui.label('SYSTEM INGEST').classes('text-xs font-black text-slate-400 mb-6 tracking-widest')
-            
+
             ui.label('1. Official Documents').classes('text-sm font-bold mb-2')
             ui.upload(on_upload=self.handle_upload, label='Upload Evidence', auto_upload=True).classes('w-full mb-8').props('flat bordered')
-            
+
             ui.label('2. Web Intelligence').classes('text-sm font-bold mb-2')
             with ui.row().classes('w-full items-center gap-2 mb-8'):
                 ui.input(label='Source URL', placeholder='https://mozillafoundation.org/...').classes('flex-grow').bind_value(self, 'web_url')
                 ui.button(icon='add_link', on_click=self.handle_web_ingest).props('elevated round color=primary')
-            
+
             ui.separator().classes('my-8')
-            
+
             ui.label('MEMORY MANIFOLD').classes('text-xs font-black text-slate-400 mb-4 tracking-widest')
             with ui.column().classes('gap-3 p-4 bg-slate-50 rounded-xl border'):
                 for key, icon in [('sensory', 'visibility'), ('episodic', 'history'), ('semantic', 'account_tree'), ('reflective', 'auto_awesome')]:
@@ -203,7 +202,7 @@ class MozillaCivicApp:
                             ui.icon(icon, size='xs', color='slate-400')
                             ui.label(key.title()).classes('text-xs text-slate-600')
                         ui.label().bind_text_from(self, 'stats', backward=lambda s, k=key: str(s.get(k, 0))).classes('font-mono font-bold text-blue-600')
-            
+
             ui.button('SYNTHESIZE KNOWLEDGE', on_click=self.run_forced_reflection, icon='bolt').props('elevated color=accent').classes('w-full mt-8 py-4 font-black')
 
         with ui.column().classes('w-full max-w-6xl mx-auto p-12'):

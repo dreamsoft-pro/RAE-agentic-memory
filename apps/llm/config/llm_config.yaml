@@ -1,76 +1,82 @@
-# LLM Orchestrator Configuration - QUANTUM STACK v2.1
+# LLM Orchestrator Configuration - HYBRID LOCAL GPU + OPENROUTER
 default_strategy: single
 
 models:
-  - id: local_qwen_optimized
+  - id: local_bielik
     provider: ollama
-    model_name: qwen3.5:9b-optimized
+    model_name: SpeakLeash/bielik-11b-v3.0-instruct:Q5_K_M
     enabled: true
-    roles: [general, industrial, analytics]
+    roles: [general, polish_language, legal_audit, reflection]
+    cost_weight: 0.0
 
   - id: local_qwen
     provider: ollama
     model_name: qwen3.5:9b
     enabled: true
-    roles: [general]
+    roles: [general, fast, analytics, coding]
+    cost_weight: 0.0
 
-  - id: local_phi
+  - id: local_deepseek_r1
     provider: ollama
-    model_name: phi3
+    model_name: deepseek-r1:8b
     enabled: true
-    roles: [fast]
+    roles: [reasoning, evaluator, legal_audit]
+    cost_weight: 0.0
 
-  - id: premium_openai
-    provider: openai
-    model_name: gpt-4o-mini
+  - id: local_gemma4
+    provider: ollama
+    model_name: gemma4:12b
     enabled: true
-    roles: [evaluator, advanced_reasoning]
+    roles: [analytics, general]
+    cost_weight: 0.0
 
   - id: openrouter_gemini_flash
     provider: openrouter
-    model_name: google/gemini-2.5-flash
+    model_name: google/gemini-3.7-flash
     enabled: true
-    roles: [general, fast]
+    roles: [general, fast, web_grounding]
+    cost_weight: 0.00015
 
-  - id: openrouter_qwen_coder
+  - id: openrouter_claude_sonnet
     provider: openrouter
-    model_name: qwen/qwen-2.5-coder-32b-instruct
+    model_name: anthropic/claude-3.5-sonnet
     enabled: true
-    roles: [code_generation, analytics]
+    roles: [architecture, code_generation, complex_planning]
+    cost_weight: 0.003
 
   - id: openrouter_deepseek_r1
     provider: openrouter
     model_name: deepseek/deepseek-r1
     enabled: true
-    roles: [evaluator, advanced_reasoning]
-
-  - id: local_deepseek_coder
-    provider: ollama
-    model_name: deepseek-coder:1.3b
-    enabled: true
-    roles: [general, reflection, coding, low_cost]
-    cost_weight: 0.0
-
-  - id: delegated_gpu
-    provider: delegated
-    model_name: deepseek-coder:33b
-    enabled: true
-    roles: [heavy_compute, high_quality, coding]
-    cost_weight: 0.0
+    roles: [evaluator, advanced_reasoning, deep_audit]
+    cost_weight: 0.0006
 
 strategies:
   default:
     mode: single
-    primary: local_qwen_optimized
+    primary: local_bielik
+    fallback: local_qwen
 
-  industrial:
+  fast_local:
     mode: single
-    primary: local_qwen_optimized
+    primary: local_qwen
+    fallback: local_bielik
+
+  legal_audit:
+    mode: single
+    primary: local_bielik
+    fallback: local_deepseek_r1
+
+  reasoning:
+    mode: single
+    primary: local_deepseek_r1
+    fallback: openrouter_deepseek_r1
 
   council_l2:
     mode: consensus
-    models: [local_qwen_optimized, openrouter_gemini_flash, openrouter_qwen_coder]
+    models: [local_bielik, local_qwen, openrouter_gemini_flash]
 
   council_l3:
     mode: consensus
-    models: [openrouter_deepseek_r1, openrouter_qwen_coder]
+    models: [local_deepseek_r1, openrouter_deepseek_r1, openrouter_claude_sonnet]
+

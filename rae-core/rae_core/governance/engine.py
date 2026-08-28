@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
 from uuid import uuid4
 
+from rae_core.governance.adapter_broker import AdapterBroker
 from rae_core.governance.context import Clock, ResolutionContext, SystemClock
+from rae_core.governance.hashing import calculate_audit_hash, calculate_content_hash
+from rae_core.interfaces.adapter import RetrievalContext
 from rae_core.models.evidence import (
     ConflictSeverity,
     ConflictType,
@@ -14,10 +16,6 @@ from rae_core.models.evidence import (
     KnowledgeConflict,
     ResolutionStatus,
 )
-from rae_core.models.knowledge import AuthorityLevel, KnowledgeSourceType
-from rae_core.governance.adapter_broker import AdapterBroker
-from rae_core.interfaces.adapter import RetrievalContext
-from rae_core.governance.hashing import calculate_audit_hash, calculate_content_hash
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +102,9 @@ class DefaultKnowledgeResolutionEngine(KnowledgeResolutionEngine):
                     scope_match=scope_match,
                     checksum=candidate.checksum,
                     observed_at=candidate.observed_at,
-                    content_excerpt=candidate.content[:200] if candidate.content else None,
+                    content_excerpt=(
+                        candidate.content[:200] if candidate.content else None
+                    ),
                     metadata=candidate.metadata,
                 )
             )
@@ -117,7 +117,11 @@ class DefaultKnowledgeResolutionEngine(KnowledgeResolutionEngine):
         # Group items by source reference or knowledge id
         by_key: dict[str, list[EvidenceItem]] = {}
         for item in evidence_items:
-            key = item.knowledge_id if (item.knowledge_id is not None and item.knowledge_id.strip() != "") else item.source_ref
+            key = (
+                item.knowledge_id
+                if (item.knowledge_id is not None and item.knowledge_id.strip() != "")
+                else item.source_ref
+            )
             by_key.setdefault(key, []).append(item)
 
         for key, items in by_key.items():
@@ -162,7 +166,11 @@ class DefaultKnowledgeResolutionEngine(KnowledgeResolutionEngine):
             resolution_status = ResolutionStatus.RESOLVED_WITH_WARNING
 
         # 4. CONSTRUCT EVIDENCE BUNDLE
-        avg_relevance = sum(item.relevance for item in resolved_evidence) / len(resolved_evidence) if resolved_evidence else 1.0
+        avg_relevance = (
+            sum(item.relevance for item in resolved_evidence) / len(resolved_evidence)
+            if resolved_evidence
+            else 1.0
+        )
         confidence = round(avg_relevance, 6)
 
         bundle = EvidenceBundle(
@@ -180,6 +188,8 @@ class DefaultKnowledgeResolutionEngine(KnowledgeResolutionEngine):
 
         # 5. GENERATE HASHES
         bundle.content_hash = calculate_content_hash(bundle)
-        bundle.audit_hash = calculate_audit_hash(bundle, previous_audit_hash=previous_audit_hash)
+        bundle.audit_hash = calculate_audit_hash(
+            bundle, previous_audit_hash=previous_audit_hash
+        )
 
         return bundle

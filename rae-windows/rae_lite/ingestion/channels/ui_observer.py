@@ -4,11 +4,10 @@ Uses Microsoft UI Automation to scrape content from active windows (LLM chats).
 
 Note: This module only works on Windows.
 """
-import time
+import hashlib
 import logging
 import os
-import hashlib
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Graceful import for non-Windows dev environments
 try:
@@ -32,7 +31,7 @@ class UIObserver:
         self.enabled = False
         self.last_content_hashes: Dict[str, str] = {}
         self.targets = target_keywords or ["ChatGPT", "Claude", "Gemini", "DeepSeek"]
-        
+
         if not auto:
             logger.warning("UIObserver disabled: 'uiautomation' lib not found or non-Windows OS.")
 
@@ -61,7 +60,7 @@ class UIObserver:
                 return None
 
             title = window.Name
-            
+
             # 1. Detection Strategy (Fast title check)
             matched_target = next((t for t in self.targets if t in title), None)
             if not matched_target:
@@ -75,7 +74,7 @@ class UIObserver:
             # Find the main document/content area.
             # Browsers often expose content via 'Document' control type or specific AutomationIDs.
             content = self._extract_browser_content(window)
-            
+
             if not content or len(content) < 50: # Ignore tiny snippets
                 return None
 
@@ -120,7 +119,7 @@ class UIObserver:
             # Note: Getting full text can be slow for huge pages.
             # Optimized approach: Get Name (often contains text for accessibility)
             return doc.Name
-        
+
         # Strategy B: Fallback - Get visible text from children (limited depth)
         # This is expensive, use sparingly.
         # For MVP, we stick to Document control or return empty.

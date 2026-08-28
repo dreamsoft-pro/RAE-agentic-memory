@@ -49,21 +49,22 @@ async def get_and_verify_tenant_id(
 
     This ensures all API routes receive a validated UUID for tenant_id.
     """
-    tenant_id_str = x_tenant_id or query_tenant_id
+    tenant_id_str = (x_tenant_id or query_tenant_id or "").strip()
 
     if not tenant_id_str:
         # Fallback to default tenant for simplified agent tool access
         tenant_uuid = UUID(settings.DEFAULT_TENANT_UUID)
+    elif tenant_id_str.lower() in settings.TENANT_ALIASES:
+        tenant_uuid = UUID(settings.TENANT_ALIASES[tenant_id_str.lower()])
+    elif tenant_id_str in settings.TENANT_ALIASES:
+        tenant_uuid = UUID(settings.TENANT_ALIASES[tenant_id_str])
     else:
         try:
-            if tenant_id_str == settings.DEFAULT_TENANT_ALIAS:
-                tenant_uuid = UUID(settings.DEFAULT_TENANT_UUID)
-            else:
-                tenant_uuid = UUID(tenant_id_str)
+            tenant_uuid = UUID(tenant_id_str)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid tenant ID format: '{tenant_id_str}'. Must be a valid UUID or '{settings.DEFAULT_TENANT_ALIAS}'.",
+                detail=f"Invalid tenant ID format: '{tenant_id_str}'. Must be a valid UUID or registered alias ({', '.join(settings.TENANT_ALIASES.keys())}).",
             )
 
     # Store the validated UUID version of tenant_id in request.state for convenience
@@ -209,7 +210,10 @@ async def get_keycloak_claims(request: Request) -> dict:
             token = auth_header.split(" ")[1]
             try:
                 from fastapi.security import HTTPAuthorizationCredentials
-                credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+                credentials = HTTPAuthorizationCredentials(
+                    scheme="Bearer", credentials=token
+                )
                 user = await auth.verify_token(credentials=credentials)
                 request.state.user = user
                 return user.get("claims", {})
@@ -224,6 +228,7 @@ async def verify_linearizable_mutation(request: Request) -> None:
     Verifies that the database pool and Redis connection are online and healthy before mutations are allowed.
     """
     import os
+
     if request.method in ("POST", "PUT", "DELETE"):
         # 1. Verify PostgreSQL health
         pool = getattr(request.app.state, "pool", None)
@@ -247,7 +252,11 @@ async def verify_linearizable_mutation(request: Request) -> None:
         # 2. Verify Redis health
         redis_mode = os.getenv("RAE_REDIS_MODE", "standard")
         db_mode = os.getenv("RAE_DB_MODE", "standard")
-        if settings.RAE_PROFILE != "lite" and redis_mode != "ignore" and db_mode != "ignore":
+        if (
+            settings.RAE_PROFILE != "lite"
+            and redis_mode != "ignore"
+            and db_mode != "ignore"
+        ):
             redis_client = getattr(request.app.state, "redis_client", None)
             if not redis_client:
                 raise HTTPException(

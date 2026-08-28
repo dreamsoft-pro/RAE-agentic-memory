@@ -1,12 +1,14 @@
 import asyncio
-import asyncpg
 import os
+
+import asyncpg
+
 
 async def audit():
     # Use environment variables if possible, or fallback to 'postgres' for docker
     db_host = os.getenv("POSTGRES_HOST", "postgres")
     conn = await asyncpg.connect(f"postgresql://rae:rae_password@{db_host}:5432/rae")
-    
+
     # 1. Exact content duplicates
     print("--- Exact Content Duplicates ---")
     rows = await conn.fetch("""
@@ -19,7 +21,7 @@ async def audit():
     """)
     for row in rows:
         print(f"Count: {row['count']} | Content: {row['content'][:100]}...")
-        
+
     # 2. Metadata quality
     print("\n--- Metadata Quality ---")
     rows = await conn.fetch("""

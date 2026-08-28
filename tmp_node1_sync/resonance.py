@@ -6,22 +6,23 @@ This allows RAE-Lite to achieve 'quasi-reasoning' without an LLM by
 analyzing the connectivity and centrality of retrieved memory manifolds.
 """
 
+from typing import Any, Dict, List
+
 import numpy as np
-from typing import Dict, List, Any, Optional
-from rae_core.math.structure import MemoryScoreResult
+
 
 class SemanticResonanceEngine:
     """
     Orchestrates contextual reinforcement using memory graph topology.
     Uses 'Resonance Waves' to spread query energy across the memory manifold.
     """
-    
+
     def __init__(self, resonance_factor: float = 0.3):
         self.resonance_factor = resonance_factor
 
     def compute_resonance(
-        self, 
-        initial_results: List[Dict[str, Any]], 
+        self,
+        initial_results: List[Dict[str, Any]],
         graph_edges: List[Tuple[str, str, float]]
     ) -> List[Dict[str, Any]]:
         """
@@ -48,7 +49,7 @@ class SemanticResonanceEngine:
         for r in initial_results:
             original_score = r.get('math_score') or r.get('search_score', 0.0)
             boost = resonance_boosts.get(r['id'], 0.0)
-            
+
             # Non-linear combining (soft saturation)
             r['math_score'] = float(original_score + (1.0 - original_score) * np.tanh(boost))
             r['resonance_metadata'] = {

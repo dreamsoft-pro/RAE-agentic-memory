@@ -7,8 +7,7 @@ import sys
 import time
 
 import httpx
-import sys
-import os
+
 print("DEBUG: sys.path is:", sys.path, file=sys.stderr)
 if 'apps' in sys.modules:
     print("DEBUG: apps is already in sys.modules:", sys.modules['apps'], file=sys.stderr)
@@ -33,6 +32,7 @@ from apps.mission_control import MissionControlApp
 from apps.mozilla import MozillaApp
 from apps.openclaw_escalation import OpenClawEscalationApp
 from apps.oracle import OracleApp
+from apps.pd_knowledge_hub import PDKnowledgeHubApp
 from apps.phoenix_repair import PhoenixRepairApp
 from apps.rae_crl import RaeCrlApp
 from apps.search_console import SearchConsoleApp
@@ -60,6 +60,30 @@ except ImportError:
 client = RAESuiteClient()
 
 
+def _extract_user_email(request: Request) -> str:
+    token = request.cookies.get("access_token")
+    if not token:
+        return "user@printdisplay.pl"
+    try:
+        parts = token.split(".")
+        if len(parts) >= 2:
+            import base64
+            import json
+
+            padded = parts[1] + "=" * ((4 - len(parts[1]) % 4) % 4)
+            payload = json.loads(
+                base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+            )
+            return (
+                payload.get("email")
+                or payload.get("preferred_username")
+                or "user@printdisplay.pl"
+            )
+    except Exception:
+        pass
+    return "user@printdisplay.pl"
+
+
 class RAESuitePortal:
     def __init__(self, request: Request):
         self.current_page = "mission_control"
@@ -68,6 +92,7 @@ class RAESuitePortal:
         # Instantiate a context-specific client using the session's access token
         token = request.cookies.get("access_token") if ENABLE_KEYCLOAK_AUTH else None
         self.client = RAESuiteClient(token=token)
+        self.user_email = _extract_user_email(request)
 
         # Instantiate apps dynamically inside session to avoid memory leaks / deleted client exceptions
         self.oracle_app = OracleApp(self.client)
@@ -83,6 +108,7 @@ class RAESuitePortal:
         self.rae_crl_app = RaeCrlApp(self.client)
         self.mesh_federation_app = MeshFederationApp(self.client)
         self.central_auditor_app = CentralAuditorApp(self.client)
+        self.pd_knowledge_hub_app = PDKnowledgeHubApp(self.client, user_email=self.user_email)
 
         # State variables for Faza 2
         self.connection_status = "Offline"
@@ -123,19 +149,17 @@ class RAESuitePortal:
         base_url = self.client.api_url
         ws_url = (
             base_url.replace("http://", "ws://").replace("https://", "wss://")
-            + "/v2/bridge/interact"
+            + "/v2/dashboard/ws"
         )
 
         attempt = 1
         while True:
             try:
                 self.connection_status = f"Reconnecting · attempt {attempt}"
-                ui.update()
 
                 async with websockets.connect(ws_url, open_timeout=5.0) as ws:
                     self.connection_status = "Socket live · Synced"
                     attempt = 1
-                    ui.update()
 
                     while True:
                         t_start = time.time()
@@ -147,7 +171,6 @@ class RAESuitePortal:
                             f"Socket live · Synced · {self.connection_latency}ms"
                         )
                         self.freshness_time = "Live"
-                        ui.update()
 
                         # Wait for a message or sleep
                         try:
@@ -160,7 +183,6 @@ class RAESuitePortal:
                 self.connection_status = "Offline · cached view"
                 self.connection_latency = 0
                 self.freshness_time = "Updated 2s ago"
-                ui.update()
                 await asyncio.sleep(5.0)
                 attempt += 1
 
@@ -663,6 +685,15 @@ class RAESuitePortal:
                     ).classes(
                         "w-full"
                     )
+                    ui.button(
+                        "PD Knowledge Hub",
+                        icon="corporate_fare",
+                        on_click=lambda: self.set_page("pd_knowledge_hub"),
+                    ).props(
+                        f'flat align=left {"color=indigo-4" if self.current_page=="pd_knowledge_hub" else ""}'
+                    ).classes(
+                        "w-full"
+                    )
 
             ui.separator().classes("my-8")
             ui.label("TIER GUIDE").classes("text-[10px] font-black text-slate-400 mb-2")
@@ -729,6 +760,8 @@ class RAESuitePortal:
                 self.wizard_app.render(self.model_select)
             elif self.current_page == "mozilla":
                 self.mozilla_app.render(self.model_select)
+            elif self.current_page == "pd_knowledge_hub":
+                self.pd_knowledge_hub_app.render(standalone=False)
 
         self.content_router = content_router
         content_router()
@@ -763,25 +796,84 @@ class RAESuitePortal:
             cookie_banner.set_visibility(False)
 
 
-@app.get("/callback", name="auth_callback")
-async def auth_callback(
-    request: Request, code: str = None, state: str = None, error: str = None
-):
-    if error:
-        return f"Authentication failed: {error}"
+def _get_redirect_uri(request: Request) -> str:
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "rae.dreamsoft.pro"
+    proto = request.headers.get("x-forwarded-proto") or ("https" if "dreamsoft.pro" in host else request.url.scheme)
+    if "dreamsoft.pro" in host:
+        proto = "https"
+    return f"{proto}://{host}/callback"
 
-    # Verify state
-    stored_state = request.cookies.get("oauth_state")
-    if not stored_state or state != stored_state:
-        return "Invalid OAuth state. Potential CSRF attempt."
 
-    # Retrieve and validate code verifier
+@app.get("/logout")
+def logout_endpoint(request: Request):
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "rae.dreamsoft.pro"
+    proto = "https" if "dreamsoft.pro" in host else request.url.scheme
+    res = RedirectResponse(f"{proto}://{host}/", status_code=307)
+    res.delete_cookie("access_token", path="/")
+    return res
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    path = request.url.path
+    if (
+        not ENABLE_KEYCLOAK_AUTH
+        or path.startswith("/callback")
+        or path.startswith("/logout")
+        or path.startswith("/_nicegui")
+        or path.startswith("/socket.io")
+        or path.startswith("/static")
+        or path.startswith("/favicon")
+        or path.startswith("/health")
+    ):
+        return await call_next(request)
+
+    token = request.cookies.get("access_token")
+    if not token and path in ["/", "/evidence", "/pd"]:
+        state = secrets.token_urlsafe(32)
+        code_verifier = secrets.token_urlsafe(64)
+        sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
+        code_challenge = (
+            base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
+        )
+
+        redirect_uri = _get_redirect_uri(request)
+        auth_url = (
+            f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
+            f"?response_type=code"
+            f"&client_id={KEYCLOAK_FRONTEND_CLIENT_ID}"
+            f"&redirect_uri={redirect_uri}"
+            f"&state={state}"
+            f"&code_challenge={code_challenge}"
+            f"&code_challenge_method=S256"
+            f"&scope=openid+profile+email"
+        )
+        response = RedirectResponse(auth_url, status_code=307)
+        response.set_cookie("oauth_state", state, max_age=300, httponly=True)
+        response.set_cookie(
+            "oauth_verifier", code_verifier, max_age=300, httponly=True
+        )
+        response.set_cookie("redirect_back", path, max_age=300, httponly=True)
+        return response
+
+    return await call_next(request)
+
+
+@app.get("/callback")
+async def oauth_callback(request: Request, code: str = None, state: str = None):
+    if not code:
+        return "Authorization code missing."
+
+    cookie_state = request.cookies.get("oauth_state")
+    if not cookie_state or cookie_state != state:
+        return "Invalid OAuth state. Potential CSRF detected."
+
     code_verifier = request.cookies.get("oauth_verifier")
     if not code_verifier or len(code_verifier) < 43 or len(code_verifier) > 128:
         return "Invalid code verifier. Access denied."
 
     # Exchange authorization code for token
-    redirect_uri = str(request.url_for("auth_callback"))
+    redirect_uri = _get_redirect_uri(request)
     token_url = f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token"
 
     data = {
@@ -804,20 +896,18 @@ async def auth_callback(
 
             # Determine where to redirect back and validate it to prevent open redirect vulnerabilities
             redirect_back = request.cookies.get("redirect_back", "/")
-            if redirect_back not in {"/", "/evidence"}:
+            if redirect_back not in {"/", "/evidence", "/pd"}:
                 redirect_back = "/"
 
             # Redirect user back to the application and save token in session cookie
-            res = RedirectResponse(redirect_back)
+            res = RedirectResponse(redirect_back, status_code=307)
 
-            # Set cookie securely: lax samesite, httponly, secure if HTTPS is used
-            is_secure = request.url.scheme == "https"
             res.set_cookie(
                 "access_token",
                 access_token,
                 httponly=True,
-                secure=is_secure,
                 samesite="lax",
+                path="/",
             )
 
             # Clean up temporary OAuth cookies
@@ -832,6 +922,9 @@ async def auth_callback(
 
 @ui.page("/")
 def main_portal(request: Request):
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").lower()
+    is_pd_domain = host.startswith("pd.") or "pd.dreamsoft.pro" in host
+
     if ENABLE_KEYCLOAK_AUTH:
         token = request.cookies.get("access_token")
         if not token:
@@ -842,7 +935,7 @@ def main_portal(request: Request):
                 base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
             )
 
-            redirect_uri = str(request.url_for("auth_callback"))
+            redirect_uri = _get_redirect_uri(request)
             auth_url = (
                 f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
                 f"?response_type=code"
@@ -853,16 +946,48 @@ def main_portal(request: Request):
                 f"&code_challenge_method=S256"
                 f"&scope=openid+profile+email"
             )
-            response = RedirectResponse(auth_url)
-            response.set_cookie("oauth_state", state, max_age=300, httponly=True)
-            response.set_cookie(
-                "oauth_verifier", code_verifier, max_age=300, httponly=True
-            )
-            response.set_cookie("redirect_back", "/", max_age=300, httponly=True)
-            return response
+            ui.navigate.to(auth_url)
+            return
 
     portal = RAESuitePortal(request)
-    portal.render(request)
+    if is_pd_domain:
+        user_email = _extract_user_email(request)
+        pd_app = PDKnowledgeHubApp(portal.client, user_email=user_email)
+        pd_app.render(standalone=True)
+    else:
+        portal.render(request)
+
+
+@ui.page("/pd")
+def pd_standalone_portal(request: Request):
+    if ENABLE_KEYCLOAK_AUTH:
+        token = request.cookies.get("access_token")
+        if not token:
+            state = secrets.token_urlsafe(32)
+            code_verifier = secrets.token_urlsafe(64)
+            sha256_hash = hashlib.sha256(code_verifier.encode("ascii")).digest()
+            code_challenge = (
+                base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
+            )
+
+            redirect_uri = _get_redirect_uri(request)
+            auth_url = (
+                f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
+                f"?response_type=code"
+                f"&client_id={KEYCLOAK_FRONTEND_CLIENT_ID}"
+                f"&redirect_uri={redirect_uri}"
+                f"&state={state}"
+                f"&code_challenge={code_challenge}"
+                f"&code_challenge_method=S256"
+                f"&scope=openid+profile+email"
+            )
+            ui.navigate.to(auth_url)
+            return
+
+    portal = RAESuitePortal(request)
+    user_email = _extract_user_email(request)
+    pd_app = PDKnowledgeHubApp(portal.client, user_email=user_email)
+    pd_app.render(standalone=True)
 
 
 @ui.page("/evidence")
@@ -877,7 +1002,7 @@ def evidence_portal(request: Request):
                 base64.urlsafe_b64encode(sha256_hash).decode("ascii").replace("=", "")
             )
 
-            redirect_uri = str(request.url_for("auth_callback"))
+            redirect_uri = _get_redirect_uri(request)
             auth_url = (
                 f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
                 f"?response_type=code"
@@ -888,15 +1013,8 @@ def evidence_portal(request: Request):
                 f"&code_challenge_method=S256"
                 f"&scope=openid+profile+email"
             )
-            response = RedirectResponse(auth_url)
-            response.set_cookie("oauth_state", state, max_age=300, httponly=True)
-            response.set_cookie(
-                "oauth_verifier", code_verifier, max_age=300, httponly=True
-            )
-            response.set_cookie(
-                "redirect_back", "/evidence", max_age=300, httponly=True
-            )
-            return response
+            ui.navigate.to(auth_url)
+            return
 
     ui.add_head_html(r"""
     <script>

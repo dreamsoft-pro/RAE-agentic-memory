@@ -1,7 +1,9 @@
-import json
+from typing import Optional
+
 import httpx
-from typing import Any, Dict, List, Optional
-from .base import ModelAdapter, TaskComplexity, TaskRisk, ModelType, AgentContext, AgentResult
+
+from .base import AgentContext, AgentResult, ModelAdapter, ModelType
+
 
 class OllamaAdapter(ModelAdapter):
     def __init__(self, model_type: ModelType, working_dir: str):
@@ -14,7 +16,7 @@ class OllamaAdapter(ModelAdapter):
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        
+
         payload = {
             "model": "qwen2.5-coder:14b",
             "messages": messages,

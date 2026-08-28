@@ -4,8 +4,10 @@ Verifies that logical atoms (log entries, steps) stay together under size pressu
 """
 
 import pytest
-from rae_core.ingestion.segmenter import IngestSegmenter
+
 from rae_core.ingestion.interfaces import ContentSignature
+from rae_core.ingestion.segmenter import IngestSegmenter
+
 
 @pytest.mark.asyncio
 async def test_atomic_log_segmentation_stays_together():
@@ -19,9 +21,9 @@ async def test_atomic_log_segmentation_stays_together():
             }
         }
     }
-    
+
     segmenter = IngestSegmenter(config=config)
-    
+
     # Text with a multi-line entry that is much bigger than target_chunk_size (20)
     text = (
         "[10:00] Entry 1\n"
@@ -30,18 +32,18 @@ async def test_atomic_log_segmentation_stays_together():
         "This whole block belongs to [10:05].\n"
         "[10:10] Entry 3"
     )
-    
+
     sig = ContentSignature(struct={"mode": "LINEAR_LOG_LIKE"}, dist={}, stab={})
     chunks, _ = await segmenter.segment(text, "POLICY_LOG_STREAM", sig)
-    
+
     # Validation
     # We expect Entry 2 to be in its own chunk, and NOT split, 
     # even though it's much larger than 20 chars.
     entry_2_chunk = next(c for c in chunks if "Entry 2" in c.content)
-    
+
     print(f"\nChunk containing Entry 2 (Size {len(entry_2_chunk.content)}):")
     print(entry_2_chunk.content)
-    
+
     assert "belongs to [10:05]" in entry_2_chunk.content
     assert "[10:10]" not in entry_2_chunk.content # Entry 3 is in the NEXT chunk
     assert len(chunks) == 3
@@ -58,16 +60,16 @@ async def test_procedural_steps_stay_atomic():
         }
     }
     segmenter = IngestSegmenter(config=config)
-    
+
     text = (
         "Step 1: Open the valve slowly.\n"
         "Step 2: Check pressure gauge.\n"
         "Step 3: Log the result."
     )
-    
+
     sig = ContentSignature(struct={"mode": "LIST_PROCEDURE_LIKE"}, dist={}, stab={})
     chunks, _ = await segmenter.segment(text, "POLICY_PROCEDURE_DOC", sig)
-    
+
     # Each step should be its own chunk because each step > 10 chars
     # and we don't split atoms.
     assert len(chunks) == 3

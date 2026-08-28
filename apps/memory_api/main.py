@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -21,6 +22,7 @@ import structlog
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -59,6 +61,7 @@ from apps.memory_api.routes import (
     token_savings,
     tuning,
 )
+from apps.memory_api.security.auth import verify_token
 from apps.memory_api.security.dependencies import verify_linearizable_mutation
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService
@@ -125,11 +128,12 @@ async def lifespan(app: FastAPI):
                             "creating_default_tenant", id=str(default_tenant_id)
                         )
                         await conn.execute(
-                            "INSERT INTO tenants (id, name, tier, config) VALUES ($1, $2, $3, $4)",
+                            "INSERT INTO tenants (id, name, company_name, tier, config) VALUES ($1, $2, $3, $4, $5)",
                             str(default_tenant_id),
-                            "Default Tenant",
+                            "Dreamsoft Enterprise",
+                            "Dreamsoft",
                             "enterprise",
-                            "{}",
+                            '{"alias": "dreamsoft"}',
                         )
 
                     # Ensure default roles exist regardless of whether tenant was just created
@@ -182,11 +186,66 @@ async def lifespan(app: FastAPI):
 
     logger.info("RAE-Core service initialized", profile=settings.RAE_PROFILE)
 
+    # 3. Setup Mesh Auto-Sync Daemon if enabled
+    mesh_sync_task = None
+    if settings.ENABLE_MESH_AUTO_SYNC and getattr(app.state, "pool", None) is not None:
+        from apps.memory_api.services.mesh_service import MeshService
+
+        async def _mesh_sync_loop():
+            logger.info(
+                "mesh_sync_daemon_started",
+                interval=settings.MESH_SYNC_INTERVAL_SECONDS,
+            )
+            while True:
+                try:
+                    await asyncio.sleep(settings.MESH_SYNC_INTERVAL_SECONDS)
+                    mesh_svc = getattr(app.state, "mesh_service", None)
+                    if not mesh_svc:
+                        mesh_svc = MeshService(
+                            pool=app.state.pool,
+                            redis_client=getattr(app.state, "redis_client", None),
+                            secret_key=settings.SECRET_KEY,
+                        )
+                        app.state.mesh_service = mesh_svc
+
+                    peers = await mesh_svc.list_peers()
+                    for peer in peers:
+                        if peer.status == "active":
+                            try:
+                                synced = await mesh_svc.push_memories_to_peer(
+                                    peer.peer_id
+                                )
+                                if synced > 0:
+                                    logger.info(
+                                        "mesh_auto_synced",
+                                        peer_id=peer.peer_id,
+                                        count=synced,
+                                    )
+                            except Exception as peer_e:
+                                logger.debug(
+                                    "mesh_auto_sync_peer_error",
+                                    peer_id=peer.peer_id,
+                                    error=str(peer_e),
+                                )
+                except asyncio.CancelledError:
+                    break
+                except Exception as loop_e:
+                    logger.error("mesh_sync_loop_error", error=str(loop_e))
+
+        mesh_sync_task = asyncio.create_task(_mesh_sync_loop())
+
     # Force rebuild
     yield
 
     # Shutdown
     logger.info("Shutting down RAE Memory API...")
+    if mesh_sync_task:
+        mesh_sync_task.cancel()
+        try:
+            await mesh_sync_task
+        except asyncio.CancelledError:
+            pass
+
     if hasattr(app.state, "pool") and app.state.pool:
         await app.state.pool.close()
 
@@ -196,10 +255,29 @@ app = FastAPI(
     title="RAE Memory API",
     description="Reflective Agentic Engine - Memory Control Plane API",
     version="3.6.1",
-    docs_url="/docs",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     dependencies=[Depends(verify_linearizable_mutation)],
     lifespan=lifespan,
 )
+
+
+@app.get("/docs", include_in_schema=False)
+async def get_documentation(auth: dict = Depends(verify_token)):
+    """Secured Swagger UI Documentation (Requires Keycloak JWT or X-API-Key)."""
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json", title="RAE Memory API - Docs"
+    )
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def get_openapi_schema(auth: dict = Depends(verify_token)):
+    """Secured OpenAPI Schema (Requires Keycloak JWT or X-API-Key)."""
+    return JSONResponse(
+        get_openapi(title="RAE Memory API", version="3.6.1", routes=app.routes)
+    )
+
 
 # --- Middlewares ---
 
@@ -245,7 +323,8 @@ from rae_core.exceptions.base import (
 async def rae_exception_handler(request: Request, exc: RAEError):
     """Handle domain-specific RAE errors and log them to memory."""
     logger = structlog.get_logger("apps.memory_api.errors")
-    logger.error("rae_domain_error", type=type(exc).__name__, message=exc.message)
+    err_msg = getattr(exc, "message", str(exc))
+    logger.error("rae_domain_error", type=type(exc).__name__, message=err_msg)
 
     # SYSTEM 93.5: Autonomous Error Logging
     # We try to record the incident in RAE for Kaizen analysis
@@ -254,10 +333,13 @@ async def rae_exception_handler(request: Request, exc: RAEError):
         await service.engine.store_memory(
             tenant_id=request.headers.get("X-Tenant-Id", "system"),
             agent_id="oracle_error_monitor",
-            content=f"INCIDENT: {type(exc).__name__} - {exc.message}",
+            content=f"INCIDENT: {type(exc).__name__} - {err_msg}",
             layer="reflective",
             tags=["incident", "error_audit", type(exc).__name__.lower()],
-            metadata={"error_type": type(exc).__name__, "path": request.url.path},
+            metadata={
+                "error_type": type(exc).__name__,
+                "path": request.url.path,
+            },
         )
     except Exception:
         pass  # Prevent infinite loop if RAE is down
@@ -276,7 +358,7 @@ async def rae_exception_handler(request: Request, exc: RAEError):
             "error": {
                 "code": str(status_code),
                 "type": type(exc).__name__,
-                "message": exc.message,
+                "message": err_msg,
             }
         },
     )

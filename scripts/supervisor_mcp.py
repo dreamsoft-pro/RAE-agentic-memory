@@ -1,9 +1,9 @@
-import time
-import os
-from pathlib import Path
-import subprocess
-import urllib.request
 import json
+import os
+import subprocess
+import time
+import urllib.request
+from pathlib import Path
 
 # Configuration
 API_URL = 'http://localhost:8001/v2/memories/'
@@ -46,7 +46,7 @@ while True:
     time.sleep(120)
     current_count = get_file_count()
     is_alive = check_factory_alive()
-    
+
     if current_count > last_count:
         log_to_rae(f"Progress: {current_count} files (+{current_count - last_count})", ["progress"])
         stalls = 0

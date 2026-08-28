@@ -1,11 +1,12 @@
-import requests
-import yaml
 import os
+
+import yaml
+
 
 def create_benchmark_set(name, source_texts):
     memories = []
     queries = []
-    
+
     for i, (title, text) in enumerate(source_texts.items()):
         # Split text into chunks of ~500 chars
         chunks = [text[i:i+500] for i in range(0, len(text), 500)]
@@ -21,7 +22,7 @@ def create_benchmark_set(name, source_texts):
                     "layer": "semantic"
                 }
             })
-            
+
             # Create a query for every 5th chunk
             if j % 5 == 0:
                 queries.append({
@@ -36,7 +37,7 @@ def create_benchmark_set(name, source_texts):
         "memories": memories,
         "queries": queries
     }
-    
+
     output_path = f"benchmarking/sets/{name}.yaml"
     with open(output_path, 'w') as f:
         yaml.dump(benchmark_set, f)

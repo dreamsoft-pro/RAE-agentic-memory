@@ -5,9 +5,10 @@ Revises: 20260211_oracle_dedup
 Create Date: 2026-02-24 08:30:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '20260224_refl_v3'

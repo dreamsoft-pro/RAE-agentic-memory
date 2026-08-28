@@ -1,19 +1,18 @@
-import base64
-import hashlib
-import json
-import secrets
-import socket
 import asyncio
+import base64
+import json
 import logging
+import secrets
 from typing import Any, Dict, List, Optional
+
 import httpx
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 logger = logging.getLogger(__name__)
 
 
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 
 def _derive_relay_key(secret_key: str) -> bytes:
@@ -22,7 +21,7 @@ def _derive_relay_key(secret_key: str) -> bytes:
         algorithm=hashes.SHA256(),
         length=32,
         salt=b"rae-mesh-relay-salt-98213",
-        info=b"rae-mesh-relay"
+        info=b"rae-mesh-relay",
     )
     return hkdf.derive(secret_key.encode("utf-8"))
 
@@ -56,7 +55,9 @@ class MatrixRelay:
     Relay client using Matrix CS-API (pure REST HTTP) wrapped in AES-256-GCM.
     """
 
-    def __init__(self, homeserver_url: str, access_token: str, room_id: str, secret_key: str):
+    def __init__(
+        self, homeserver_url: str, access_token: str, room_id: str, secret_key: str
+    ):
         self.homeserver_url = homeserver_url.rstrip("/")
         self.access_token = access_token
         self.room_id = room_id
@@ -68,12 +69,8 @@ class MatrixRelay:
         encrypted_text = encrypt_payload(payload, self.secret_key)
         headers = {"Authorization": f"Bearer {self.access_token}"}
         url = f"{self.homeserver_url}/_matrix/client/v3/rooms/{self.room_id}/send/m.room.message"
-        body = {
-            "msgtype": "m.text",
-            "body": encrypted_text,
-            "rae_encrypted": True
-        }
-        
+        body = {"msgtype": "m.text", "body": encrypted_text, "rae_encrypted": True}
+
         async with httpx.AsyncClient() as client:
             try:
                 resp = await client.post(url, json=body, headers=headers, timeout=10.0)
@@ -98,14 +95,16 @@ class MatrixRelay:
         decrypted_payloads = []
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get(url, headers=headers, params=params, timeout=15.0)
+                resp = await client.get(
+                    url, headers=headers, params=params, timeout=15.0
+                )
                 if resp.status_code != 200:
                     logger.error(f"Matrix sync failed: {resp.text}")
                     return []
-                
+
                 data = resp.json()
                 self.next_batch = data.get("next_batch")
-                
+
                 rooms = data.get("rooms", {}).get("join", {})
                 if self.room_id in rooms:
                     events = rooms[self.room_id].get("timeline", {}).get("events", [])
@@ -118,10 +117,12 @@ class MatrixRelay:
                                     decrypted = decrypt_payload(body, self.secret_key)
                                     decrypted_payloads.append(decrypted)
                                 except Exception as dec_err:
-                                    logger.warning(f"Failed to decrypt Matrix message: {dec_err}")
+                                    logger.warning(
+                                        f"Failed to decrypt Matrix message: {dec_err}"
+                                    )
             except Exception as e:
                 logger.error(f"Matrix sync error: {e}")
-                
+
         return decrypted_payloads
 
 
@@ -140,20 +141,22 @@ class NATSRelay:
         """Connect to NATS and publish the encrypted payload."""
         encrypted_text = encrypt_payload(payload, self.secret_key)
         payload_bytes = encrypted_text.encode("utf-8")
-        
+
         # NATS Protocol message: PUB <subject> <reply-to (optional)> <size>\r\n<payload>\r\n
         pub_cmd = f"PUB {self.subject} {len(payload_bytes)}\r\n".encode("utf-8")
         msg = pub_cmd + payload_bytes + b"\r\n"
-        
+
         try:
-            reader, writer = await asyncio.open_connection(self.nats_host, self.nats_port)
+            reader, writer = await asyncio.open_connection(
+                self.nats_host, self.nats_port
+            )
             # Read first line (INFO block)
             await reader.readline()
-            
+
             # Send payload
             writer.write(msg)
             await writer.drain()
-            
+
             writer.close()
             await writer.wait_closed()
             return True
@@ -165,37 +168,39 @@ class NATSRelay:
         """Connect, subscribe, wait for a message, decrypt and return it."""
         sid = "1"
         sub_cmd = f"SUB {self.subject} {sid}\r\n".encode("utf-8")
-        
+
         try:
-            reader, writer = await asyncio.open_connection(self.nats_host, self.nats_port)
+            reader, writer = await asyncio.open_connection(
+                self.nats_host, self.nats_port
+            )
             # Read INFO block
             await reader.readline()
-            
+
             # Subscribe
             writer.write(sub_cmd)
             await writer.drain()
-            
+
             # Wait for data: NATS MSG subject sid size\r\npayload\r\n
             try:
                 line = await asyncio.wait_for(reader.readline(), timeout=timeout)
                 if line.startswith(b"MSG"):
                     parts = line.split(b" ")
                     size = int(parts[-1].strip())
-                    
+
                     data = await reader.readexactly(size)
                     await reader.readline()  # consume trailing \r\n
-                    
+
                     writer.close()
                     await writer.wait_closed()
-                    
+
                     decrypted = decrypt_payload(data.decode("utf-8"), self.secret_key)
                     return decrypted
             except asyncio.TimeoutError:
                 pass
-                
+
             writer.close()
             await writer.wait_closed()
         except Exception as e:
             logger.error(f"NATS consumer socket error: {e}")
-            
+
         return None

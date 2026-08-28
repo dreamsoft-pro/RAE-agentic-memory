@@ -4,16 +4,20 @@ RAE Silicon Oracle Suite - Full Math-Only Verification
 """
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import asyncio
 import os
-import yaml
 from uuid import uuid4
-from rae_adapters.sqlite import SQLiteStorage, SQLiteGraphStore, SQLiteVectorStore
+
+import yaml
+
+from benchmarking.nine_five_benchmarks.runner import NineFiveBenchmarkRunner
+from rae_adapters.sqlite import SQLiteGraphStore, SQLiteStorage, SQLiteVectorStore
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
-from benchmarking.nine_five_benchmarks.runner import NineFiveBenchmarkRunner
+
 
 class HeuristicEmbedder(IEmbeddingProvider):
     def get_dimension(self) -> int: return 384
@@ -40,38 +44,38 @@ async def main():
     print("############################################################")
     print("  RAE SILICON ORACLE - FULL MATH SUITE (NO LLM)")
     print("############################################################\n")
-    
+
     project_root = Path(__file__).parent.parent.parent
     sets_dir = project_root / "benchmarking" / "sets"
     quality_sets = ["academic_lite.yaml", "academic_extended.yaml", "industrial_small.yaml", "industrial_large.yaml"]
-    
+
     db_path = f"oracle_suite_{uuid4().hex[:8]}.db"
     storage = SQLiteStorage(db_path)
     graph = SQLiteGraphStore(db_path)
     vector = SQLiteVectorStore(db_path)
     embedder = HeuristicEmbedder()
     engine = RAEEngine(storage, vector, embedder)
-    
+
     # 1. Quality Benchmarks
     print("--- 1. QUALITY BENCHMARKS ---")
     for s in quality_sets:
         success_rate = await run_set(engine, sets_dir / s)
         print(f"Set: {s:25} | Success Rate: {success_rate:.2%}")
-    
+
     # 2. Research 9/5 Suite (Direct Integration)
     print("\n--- 2. RESEARCH 9/5 SUITE (MATH-3) ---")
     runner = NineFiveBenchmarkRunner(engine=engine, verbose=False)
     # Using small params for speed but covering all benchmarks
 
     results = await runner.run_all(
-        lect_cycles=100, 
+        lect_cycles=100,
         mmit_operations=100,
         grdt_queries=10,
         rst_insights=10,
         mpeb_iterations=100,
         orb_samples=5
     )
-    
+
     summary = results.summary
     for metric, value in summary.items():
         print(f"{metric:25}: {value}")

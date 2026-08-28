@@ -1,8 +1,8 @@
-import httpx
 import os
-import re
-from pathlib import Path
 import time
+from pathlib import Path
+
+import httpx
 
 # v4.1 - Perfect Ingest (Stable Encoding)
 API_URL = 'http://localhost:8001/v2/memories/'
@@ -18,7 +18,7 @@ def chunk_text(text, size):
 def ingest_all():
     print("🚀 Starting Perfect Ingest v4.1...")
     all_files = []
-    
+
     if not os.path.exists(FRONTEND_ROOT):
         print("❌ ERROR: Path not found!")
         return
@@ -29,24 +29,24 @@ def ingest_all():
             if file.endswith((".js", ".html")):
                 if not any(b in file.lower() for b in BANNED_FILES):
                     all_files.append(os.path.join(root, file))
-    
+
     print("📦 Found " + str(len(all_files)) + " custom source files.")
-    
+
     total_chunks = 0
     for f_idx, f_path in enumerate(all_files):
         try:
             with open(f_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             s_name = os.path.basename(f_path)
             f_type = "template" if f_path.endswith(".html") else "logic"
             chunks = chunk_text(content, CHUNK_SIZE)
-            
+
             for c_idx, chunk_content in enumerate(chunks):
                 # Avoid f-string newlines for stable scp
                 header = "FILE: " + s_name + " (chunk " + str(c_idx) + "/" + str(len(chunks)) + ")"
                 augmented_content = header + chr(10) + chr(10) + chunk_content
-                
+
                 payload = {
                     "content": augmented_content,
                     "layer": "semantic",
@@ -59,7 +59,7 @@ def ingest_all():
                         "type": f_type
                     }
                 }
-                
+
                 for retry in range(3):
                     try:
                         r = httpx.post(API_URL, json=payload, headers=HEADERS, timeout=30.0)
@@ -68,13 +68,13 @@ def ingest_all():
                             break
                     except:
                         time.sleep(1)
-            
+
             if (f_idx + 1) % 10 == 0:
                 print("  -> Processed " + str(f_idx + 1) + "/" + str(len(all_files)) + " files...")
-                
+
         except Exception as e:
             print("  ❌ Error: " + str(e))
-            
+
     print("✅ Finished. Ingested " + str(total_chunks) + " chunks.")
 
 if __name__ == '__main__':

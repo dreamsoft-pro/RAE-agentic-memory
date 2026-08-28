@@ -1,13 +1,13 @@
 # TIMESTAMP: 2026-02-23 15:20:00
-import urllib.request
 import json
 import os
-import time
 import re
+import time
+import urllib.request
 from pathlib import Path
 
 # v76 - Direct File Slicer (Bypassing DB Integrity Issues)
-BASE_API = "http://localhost:8001/v2/memories" 
+BASE_API = "http://localhost:8001/v2/memories"
 OUT_DIR = os.environ.get('RAE_OUT_DIR', str(Path(__file__).resolve().parent.parent / 'OUT_DIR_default'))
 FRONTEND_ROOT = os.environ.get('RAE_FRONTEND_ROOT', str(Path(__file__).resolve().parent.parent / 'FRONTEND_ROOT_default'))
 CHUNK_SIZE = 3000
@@ -49,7 +49,7 @@ def process_file_directly(filename):
 
     with open(f_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     chunks = [content[i:i+CHUNK_SIZE] for i in range(0, len(content), CHUNK_SIZE)]
     log_msg(f"  -> {len(chunks)} chunks created from disk.")
 
@@ -57,10 +57,10 @@ def process_file_directly(filename):
         target_file = os.path.join(base_path, f"chunk_{i:03d}.tsx")
         if os.path.exists(target_file) and os.path.getsize(target_file) > 100:
             continue
-            
+
         log_msg(f"  -> Modernizing chunk {i}/{len(chunks)}...")
         code = ask_saas(f"Modernize this piece to Next.js/TS. OUTPUT ONLY CODE.\nSOURCE:\n{chunk}")
-        
+
         if len(code) > 50:
             if '```' in code:
                 try: code = re.search(r'```(?:tsx|ts|js)?\n(.*?)\n```', code, re.DOTALL).group(1).strip()
@@ -69,7 +69,7 @@ def process_file_directly(filename):
             log_msg(f"    ✅ Chunk {i} saved.")
         else:
             log_msg(f"    ❌ Chunk {i} FAILED.")
-        
+
         time.sleep(10)
 
 if __name__ == '__main__':

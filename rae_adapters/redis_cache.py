@@ -1,6 +1,9 @@
 import os
-from rae_core.interfaces.cache import ICacheProvider
+
 from redis.asyncio import Redis
+
+from rae_core.interfaces.cache import ICacheProvider
+
 
 class RedisAdapter(ICacheProvider):
     def __init__(self, url: str = None, redis_client=None):

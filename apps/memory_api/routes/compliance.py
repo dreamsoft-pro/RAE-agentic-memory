@@ -1,5 +1,4 @@
 import structlog
-
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from apps.memory_api.dependencies import get_audit_service, get_compliance_service

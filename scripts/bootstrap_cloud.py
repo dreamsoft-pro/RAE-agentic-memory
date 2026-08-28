@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import os
-from pathlib import Path
+
 
 def bootstrap():
     print('🚀 BOOTSTRAP: Inicjalizacja kontekstu Cloud...')
-    
+
     # Kluczowe fakty infrastrukturalne
     print('\n--- KRYTYCZNE INFORMACJE (ALWAYS ON) ---')
     print('📍 Laptop MySQL Port: 3307')
@@ -25,7 +25,7 @@ def bootstrap():
             for line in lines[:35]:
                 print(line.strip())
         print('--------------------------------------------------------\n')
-    
+
     # Strategia Oracle V2.0
     oracle_plan = '/home/grzegorz-lesniowski/cloud/docs/modernization/STRATEGIC_ORACLE_PLAN_V2.md'
     if os.path.exists(oracle_plan):
@@ -33,7 +33,7 @@ def bootstrap():
         with open(oracle_plan, 'r') as f:
             print(f.read())
         print('--------------------------------------------------------\n')
-    
+
     # Mission Briefing Feniks
     mission_path = '/home/grzegorz-lesniowski/cloud/docs/modernization/MISSION_BRIEFING_FENIKS.md'
     if os.path.exists(mission_path):
@@ -49,7 +49,7 @@ def bootstrap():
         with open(next_goals, 'r') as f:
             print(f.read())
         print('--------------------------------------------------------\n')
-    
+
     print('✅ KONTEKST ZAŁADOWANY. Gotowy do pracy nad Modernizacją Dreamsoft.')
 
 if __name__ == "__main__":

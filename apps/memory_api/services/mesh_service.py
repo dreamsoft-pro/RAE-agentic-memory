@@ -4,18 +4,18 @@ import base64
 import hashlib
 import json
 import secrets
-import time
 import threading
-from datetime import datetime, timedelta, timezone
+import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import jwt
 import structlog
-from pydantic import BaseModel
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from pydantic import BaseModel
 
 logger = structlog.get_logger(__name__)
 
@@ -40,6 +40,7 @@ class MeshInvite(BaseModel):
 
 from uuid import UUID, uuid4
 
+
 def parse_uuid(val: Any) -> UUID:
     if isinstance(val, UUID):
         return val
@@ -49,6 +50,7 @@ def parse_uuid(val: Any) -> UUID:
         except ValueError:
             pass
     return uuid4()
+
 
 def parse_datetime(val: Any) -> Optional[datetime]:
     if isinstance(val, datetime):
@@ -67,16 +69,23 @@ class MeshService:
     Stores trusted peers and active invite codes.
     """
 
-    def __init__(self, pool: Any = None, redis_client: Any = None, secret_key: str = "mesh-secret-change-me"):
+    def __init__(
+        self,
+        pool: Any = None,
+        redis_client: Any = None,
+        secret_key: str = "mesh-secret-change-me",
+    ):
         self.pool = pool
         self.redis_client = redis_client
         self.secret_key = secret_key
         # In-memory fallback storage for peers and active invites
         self._peers: Dict[str, PeerInfo] = {}
-        self._fallback_pubkeys: Dict[str, str] = {}
+        self._fallback_pubkeys: Dict[str, Optional[str]] = {}
         self._active_invites: Dict[str, dict] = {}
         self._used_jtis: Dict[str, float] = {}
-        self._key_cache: Dict[str, tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]] = {}
+        self._key_cache: Dict[
+            str, tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]
+        ] = {}
         self._lock = threading.RLock()
 
     def _get_encryption_key(self) -> bytes:
@@ -85,12 +94,9 @@ class MeshService:
 
     def encrypt_auth_data(self, token: str, public_key: Optional[str]) -> str:
         """Encrypts token and public_key using AES-GCM with a key derived from SECRET_KEY."""
-        data = {
-            "token": token,
-            "public_key": public_key
-        }
+        data = {"token": token, "public_key": public_key}
         json_data = json.dumps(data)
-        
+
         key = self._get_encryption_key()
         aesgcm = AESGCM(key)
         nonce = secrets.token_bytes(12)
@@ -111,7 +117,9 @@ class MeshService:
         data = json.loads(decrypted_json)
         return data.get("token", ""), data.get("public_key")
 
-    def derive_key_pair(self, peer_id: str) -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
+    def derive_key_pair(
+        self, peer_id: str
+    ) -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
         """Derive an Ed25519 key pair deterministically from SECRET_KEY using HKDF, a salt, and caching."""
         with self._lock:
             if peer_id in self._key_cache:
@@ -120,7 +128,7 @@ class MeshService:
                 algorithm=hashes.SHA512(),
                 length=32,
                 salt=b"rae-mesh-key-derivation-salt",
-                info=peer_id.encode("utf-8")
+                info=peer_id.encode("utf-8"),
             )
             seed = hkdf.derive(self.secret_key.encode("utf-8"))
             private_key = ed25519.Ed25519PrivateKey.from_private_bytes(seed)
@@ -132,28 +140,29 @@ class MeshService:
         """Generate a challenge and host public key, signed by host's private key."""
         nonce = secrets.token_hex(16)
         timestamp = int(time.time())
-        challenge = {
-            "nonce": nonce,
-            "timestamp": timestamp
-        }
+        challenge = {"nonce": nonce, "timestamp": timestamp}
         private_key, public_key = self.derive_key_pair(my_peer_id)
         challenge_bytes = json.dumps(challenge, sort_keys=True).encode("utf-8")
         signature = private_key.sign(challenge_bytes)
-        
+
         return {
             "challenge": challenge,
             "host_public_key": public_key.public_bytes_raw().hex(),
-            "challenge_signature": signature.hex()
+            "challenge_signature": signature.hex(),
         }
 
-    def verify_challenge_signature(self, public_key_hex: str, challenge: dict[str, Any], signature_hex: str) -> None:
+    def verify_challenge_signature(
+        self, public_key_hex: str, challenge: dict[str, Any], signature_hex: str
+    ) -> None:
         """Verify that the challenge has a valid signature and is fresh (within 5 minutes)."""
         timestamp = challenge.get("timestamp", 0)
         if abs(time.time() - timestamp) > 300:
             raise ValueError("Challenge has expired or is in the future")
-            
+
         try:
-            pub_key = ed25519.Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_key_hex))
+            pub_key = ed25519.Ed25519PublicKey.from_public_bytes(
+                bytes.fromhex(public_key_hex)
+            )
             challenge_bytes = json.dumps(challenge, sort_keys=True).encode("utf-8")
             pub_key.verify(bytes.fromhex(signature_hex), challenge_bytes)
         except Exception as e:
@@ -187,7 +196,7 @@ class MeshService:
             payload,
             self.secret_key,
             algorithm="HS256",
-            headers={"typ": "mesh-invite-v1"}
+            headers={"typ": "mesh-invite-v1"},
         )
 
         # Store for validation (nonce check)
@@ -220,7 +229,7 @@ class MeshService:
                 options={
                     "require": ["exp", "iat", "aud", "iss"],
                     "verify_signature": True,
-                }
+                },
             )
 
             nonce = payload.get("nonce")
@@ -239,19 +248,19 @@ class MeshService:
             raise ValueError(f"Invalid token: {e}")
 
     async def register_peer(
-        self, 
-        peer_id: str, 
-        name: str, 
-        url: str, 
-        token: str, 
-        public_key: Optional[str] = None, 
+        self,
+        peer_id: str,
+        name: str,
+        url: str,
+        token: str,
+        public_key: Optional[str] = None,
         consent_grant_id: Optional[str] = None,
         status: str = "active",
-        transport_type: str = "http"
+        transport_type: str = "http",
     ) -> None:
         """Register a trusted peer after successful handshake."""
         encrypted_token = self.encrypt_auth_data(token, public_key)
-        
+
         if self.pool is not None:
             try:
                 await self.pool.execute(
@@ -274,10 +283,12 @@ class MeshService:
                     url,
                     encrypted_token,
                     consent_grant_id,
-                    status
+                    status,
                 )
             except Exception as e:
-                logger.error("failed_to_register_peer_in_db", error=str(e), peer_id=peer_id)
+                logger.error(
+                    "failed_to_register_peer_in_db", error=str(e), peer_id=peer_id
+                )
                 raise
         else:
             self._peers[peer_id] = PeerInfo(
@@ -288,7 +299,7 @@ class MeshService:
                 created_at=time.time(),
                 status=status,
                 consent_grant_id=consent_grant_id,
-                transport_type=transport_type
+                transport_type=transport_type,
             )
             self._fallback_pubkeys[peer_id] = public_key
 
@@ -303,19 +314,21 @@ class MeshService:
                     FROM mesh_peers
                     WHERE peer_id = $1
                     """,
-                    peer_id
+                    peer_id,
                 )
                 if not row:
                     return None
-                
+
                 encrypted_token = row["encrypted_auth_token"]
                 token = ""
                 if encrypted_token:
                     try:
                         token, _ = self.decrypt_auth_data(encrypted_token)
                     except Exception as e:
-                        logger.error("token_decryption_failed", error=str(e), peer_id=peer_id)
-                
+                        logger.error(
+                            "token_decryption_failed", error=str(e), peer_id=peer_id
+                        )
+
                 return PeerInfo(
                     peer_id=row["peer_id"],
                     name=row["name"],
@@ -324,10 +337,12 @@ class MeshService:
                     created_at=row["created_at"].timestamp(),
                     status=row["status"],
                     consent_grant_id=row["consent_grant_id"],
-                    transport_type=row.get("transport_type", "http")
+                    transport_type=row.get("transport_type", "http"),
                 )
             except Exception as e:
-                logger.error("failed_to_get_peer_from_db", error=str(e), peer_id=peer_id)
+                logger.error(
+                    "failed_to_get_peer_from_db", error=str(e), peer_id=peer_id
+                )
                 return None
         else:
             return self._peers.get(peer_id)
@@ -337,7 +352,7 @@ class MeshService:
             try:
                 val = await self.pool.fetchval(
                     "SELECT encrypted_auth_token FROM mesh_peers WHERE peer_id = $1",
-                    peer_id
+                    peer_id,
                 )
                 if val:
                     _, public_key = self.decrypt_auth_data(val)
@@ -351,12 +366,10 @@ class MeshService:
     async def list_peers(self) -> List[PeerInfo]:
         if self.pool is not None:
             try:
-                rows = await self.pool.fetch(
-                    """
+                rows = await self.pool.fetch("""
                     SELECT peer_id, name, transport_type, endpoint_url, encrypted_auth_token, consent_grant_id, status, created_at
                     FROM mesh_peers
-                    """
-                )
+                    """)
                 peers = []
                 for row in rows:
                     encrypted_token = row["encrypted_auth_token"]
@@ -375,7 +388,7 @@ class MeshService:
                             created_at=row["created_at"].timestamp(),
                             status=row["status"],
                             consent_grant_id=row["consent_grant_id"],
-                            transport_type=row.get("transport_type", "http")
+                            transport_type=row.get("transport_type", "http"),
                         )
                     )
                 return peers
@@ -389,11 +402,12 @@ class MeshService:
         if self.pool is not None:
             try:
                 await self.pool.execute(
-                    "DELETE FROM mesh_peers WHERE peer_id = $1",
-                    peer_id
+                    "DELETE FROM mesh_peers WHERE peer_id = $1", peer_id
                 )
             except Exception as e:
-                logger.error("failed_to_revoke_peer_in_db", error=str(e), peer_id=peer_id)
+                logger.error(
+                    "failed_to_revoke_peer_in_db", error=str(e), peer_id=peer_id
+                )
                 raise
         else:
             if peer_id in self._peers:
@@ -402,10 +416,13 @@ class MeshService:
                     del self._fallback_pubkeys[peer_id]
         logger.info("mesh_peer_revoked", peer_id=peer_id)
 
-    async def save_sync_log(self, peer_id: str, memory_id: str, content_hash: str, status: str) -> None:
+    async def save_sync_log(
+        self, peer_id: str, memory_id: str, content_hash: str, status: str
+    ) -> None:
         if self.pool is not None:
             try:
                 from uuid import UUID
+
                 await self.pool.execute(
                     """
                     INSERT INTO mesh_sync_log (peer_id, memory_id, content_hash, status, synced_at)
@@ -416,12 +433,19 @@ class MeshService:
                     peer_id,
                     UUID(memory_id) if isinstance(memory_id, str) else memory_id,
                     content_hash,
-                    status
+                    status,
                 )
             except Exception as e:
-                logger.error("failed_to_save_sync_log", error=str(e), peer_id=peer_id, memory_id=str(memory_id))
+                logger.error(
+                    "failed_to_save_sync_log",
+                    error=str(e),
+                    peer_id=peer_id,
+                    memory_id=str(memory_id),
+                )
 
-    def generate_consent_token(self, sender_id: str, receiver_id: str, consent_grant_id: str) -> str:
+    def generate_consent_token(
+        self, sender_id: str, receiver_id: str, consent_grant_id: str
+    ) -> str:
         """Generate a short-lived (<= 5 minutes) consent token containing a jti claim."""
         now = int(time.time())
         payload = {
@@ -435,7 +459,9 @@ class MeshService:
         }
         return jwt.encode(payload, self.secret_key, algorithm="HS256")
 
-    async def verify_consent_token(self, token: str, expected_sender: str, expected_receiver: str) -> dict[str, Any]:
+    async def verify_consent_token(
+        self, token: str, expected_sender: str, expected_receiver: str
+    ) -> dict[str, Any]:
         """Verify the consent token is active, valid, has TTL <= 5 minutes, and prevents replay attacks using jti."""
         try:
             payload = jwt.decode(
@@ -446,48 +472,56 @@ class MeshService:
                 options={
                     "require": ["exp", "iat", "aud", "iss"],
                     "verify_signature": True,
-                }
+                },
             )
             if payload.get("typ") != "mesh-consent-v1":
                 raise ValueError("Invalid consent token typ")
-                
+
             iat = payload.get("iat", 0)
             exp = payload.get("exp", 0)
             if time.time() > exp:
                 raise ValueError("Consent token has expired")
             if exp - iat > 300:
                 raise ValueError("Consent token TTL exceeds 5 minutes limit")
-                
+
             # Timing attack prevention using compare_digest
             if not secrets.compare_digest(payload.get("iss", ""), expected_sender):
                 raise ValueError("Consent token issuer does not match sender")
             if not secrets.compare_digest(payload.get("aud", ""), expected_receiver):
                 raise ValueError("Consent token audience does not match receiver")
-                
+
             jti = payload.get("jti")
             if not jti:
                 raise ValueError("Consent token is missing jti claim")
-                
+
             # Track used nonces to prevent replay attacks
             jti_key = f"rae:mesh:jti:{jti}"
             if self.redis_client is not None:
                 is_new = await self.redis_client.set(jti_key, "1", ex=300, nx=True)
                 if not is_new:
-                    raise ValueError("Replay attack detected: token has already been used")
+                    raise ValueError(
+                        "Replay attack detected: token has already been used"
+                    )
             else:
                 with self._lock:
                     now = time.time()
                     # Clean up expired JTIs
-                    self._used_jtis = {k: v for k, v in self._used_jtis.items() if v > now}
+                    self._used_jtis = {
+                        k: v for k, v in self._used_jtis.items() if v > now
+                    }
                     if jti in self._used_jtis:
-                        raise ValueError("Replay attack detected: token has already been used")
+                        raise ValueError(
+                            "Replay attack detected: token has already been used"
+                        )
                     self._used_jtis[jti] = float(exp)
-                
+
             return payload
         except jwt.PyJWTError as e:
             raise ValueError(f"Invalid consent token: {e}")
 
-    async def prepare_sync_payload(self, peer_id: str, memories: List[Dict[str, Any]], sender_id: str = "rae-host") -> Dict[str, Any]:
+    async def prepare_sync_payload(
+        self, peer_id: str, memories: List[Dict[str, Any]], sender_id: str = "rae-host"
+    ) -> Dict[str, Any]:
         """
         Filter memories by classification before transmission.
         Embeds a short-lived consent token if a valid ConsentGrant exists.
@@ -495,45 +529,49 @@ class MeshService:
         peer = await self.get_peer(peer_id)
         if not peer:
             raise ValueError(f"Peer {peer_id} is not registered")
-            
+
         consent_grant_id = peer.consent_grant_id
         filtered_memories = []
-        
+
         for m in memories:
             info_class = str(m.get("info_class", "")).lower()
             if info_class == "restricted":
                 if consent_grant_id:
                     filtered_memories.append(m)
                 else:
-                    logger.debug("filtering_restricted_memory_no_consent", memory_id=m.get("id"))
+                    logger.debug(
+                        "filtering_restricted_memory_no_consent", memory_id=m.get("id")
+                    )
             else:
                 filtered_memories.append(m)
-                
+
         consent_token = None
         if consent_grant_id and filtered_memories:
             consent_token = self.generate_consent_token(
                 sender_id=sender_id,
                 receiver_id=peer_id,
-                consent_grant_id=consent_grant_id
+                consent_grant_id=consent_grant_id,
             )
-            
+
         return {
             "sender_id": sender_id,
             "receiver_id": peer_id,
             "consent_token": consent_token,
-            "memories": filtered_memories
+            "memories": filtered_memories,
         }
 
     async def push_memories_to_peer(self, peer_id: str) -> int:
         """Package unsynced memories, compute SHA-256 hashes, sign data, and send payloads to the peer sync endpoint."""
-        import httpx
-        from apps.memory_api.config import settings
         from urllib.parse import urlparse
-        
+
+        import httpx
+
+        from apps.memory_api.config import settings
+
         peer = await self.get_peer(peer_id)
         if not peer:
             raise ValueError(f"Peer {peer_id} is not registered")
-            
+
         memories = []
         if self.pool is not None:
             try:
@@ -546,9 +584,13 @@ class MeshService:
                         JOIN memories m ON l.memory_id = m.id
                         WHERE l.peer_id = $1 AND l.status = 'success'
                         """,
-                        peer_id
+                        peer_id,
                     )
-                    watermark = watermark_row["max_created"] if watermark_row and watermark_row["max_created"] else datetime.fromtimestamp(0, tz=timezone.utc)
+                    watermark = (
+                        watermark_row["max_created"]
+                        if watermark_row and watermark_row["max_created"]
+                        else datetime.fromtimestamp(0, tz=timezone.utc)
+                    )
 
                     rows = await conn.fetch(
                         """
@@ -561,59 +603,94 @@ class MeshService:
                         ORDER BY created_at ASC
                         """,
                         watermark,
-                        peer_id
+                        peer_id,
                     )
-                    
+
                     for row in rows:
-                        memories.append({
-                            "id": str(parse_uuid(row["id"])),
-                            "content": row["content"],
-                            "layer": row["layer"],
-                            "tenant_id": row["tenant_id"],
-                            "agent_id": row["agent_id"],
-                            "tags": list(row["tags"]) if row["tags"] else [],
-                            "metadata": json.loads(row["metadata"]) if isinstance(row["metadata"], str) else (row["metadata"] or {}),
-                            "importance": float(row["importance"]) if row["importance"] is not None else 0.5,
-                            "created_at": parse_datetime(row["created_at"]).isoformat() if parse_datetime(row["created_at"]) else None,
-                            "last_accessed_at": parse_datetime(row["last_accessed_at"]).isoformat() if parse_datetime(row["last_accessed_at"]) else None,
-                            "expires_at": parse_datetime(row["expires_at"]).isoformat() if parse_datetime(row["expires_at"]) else None,
-                            "project": row["project"],
-                            "session_id": row["session_id"],
-                            "memory_type": row["memory_type"],
-                            "source": row["source"],
-                            "info_class": row["info_class"] if "info_class" in row else "internal"
-                        })
+                        dt_created = parse_datetime(row["created_at"])
+                        dt_accessed = parse_datetime(row["last_accessed_at"])
+                        dt_expires = parse_datetime(row["expires_at"])
+                        memories.append(
+                            {
+                                "id": str(parse_uuid(row["id"])),
+                                "content": row["content"],
+                                "layer": row["layer"],
+                                "tenant_id": row["tenant_id"],
+                                "agent_id": row["agent_id"],
+                                "tags": (list(row["tags"]) if row["tags"] else []),
+                                "metadata": (
+                                    json.loads(row["metadata"])
+                                    if isinstance(row["metadata"], str)
+                                    else (row["metadata"] or {})
+                                ),
+                                "importance": (
+                                    float(row["importance"])
+                                    if row["importance"] is not None
+                                    else 0.5
+                                ),
+                                "created_at": (
+                                    dt_created.isoformat()
+                                    if dt_created is not None
+                                    else None
+                                ),
+                                "last_accessed_at": (
+                                    dt_accessed.isoformat()
+                                    if dt_accessed is not None
+                                    else None
+                                ),
+                                "expires_at": (
+                                    dt_expires.isoformat()
+                                    if dt_expires is not None
+                                    else None
+                                ),
+                                "project": row["project"],
+                                "session_id": row["session_id"],
+                                "memory_type": row["memory_type"],
+                                "source": row["source"],
+                                "info_class": (
+                                    row["info_class"]
+                                    if "info_class" in row
+                                    else "internal"
+                                ),
+                            }
+                        )
             except Exception as e:
-                logger.error("failed_to_fetch_unsynced_memories", error=str(e), peer_id=peer_id)
+                logger.error(
+                    "failed_to_fetch_unsynced_memories",
+                    error=str(e),
+                    peer_id=peer_id,
+                )
                 return 0
         else:
             # Fallback (in-memory) mode
             return 0
-            
+
         if not memories:
             return 0
-            
+
         # Filter memories using prepare_sync_payload
-        payload = await self.prepare_sync_payload(peer_id, memories, sender_id=settings.RAE_PEER_ID)
-        
+        payload = await self.prepare_sync_payload(
+            peer_id, memories, sender_id=settings.RAE_PEER_ID
+        )
+
         if not payload.get("memories"):
             return 0
-            
+
         # Compute SHA-256 hashes of memories
         memories_bytes = json.dumps(payload["memories"], sort_keys=True).encode("utf-8")
         payload_hash = hashlib.sha256(memories_bytes).hexdigest()
-        
+
         # Sign the hash using Ed25519 sender private key
         private_key, _ = self.derive_key_pair(settings.RAE_PEER_ID)
         signature = private_key.sign(memories_bytes).hex()
-        
+
         payload["payload_hash"] = payload_hash
         payload["signature"] = signature
-        
+
         # Determine transport routing
         success = False
         transport = peer.transport_type.lower() if peer.transport_type else "http"
-        
+
         # 1. Tor Hidden Services (starts with .onion or transport == tor)
         if transport == "tor" or ".onion" in peer.url:
             proxy = "socks5h://127.0.0.1:9050"
@@ -623,38 +700,45 @@ class MeshService:
                         f"{peer.url}/v2/mesh/sync/receive",
                         json=payload,
                         headers={"Authorization": f"Bearer {peer.token}"},
-                        timeout=30.0
+                        timeout=30.0,
                     )
-                    if resp.status_code == 200 and resp.json().get("status") == "accepted":
+                    if (
+                        resp.status_code == 200
+                        and resp.json().get("status") == "accepted"
+                    ):
                         success = True
                 except Exception as e:
                     logger.error("tor_sync_failed", error=str(e), url=peer.url)
-                    
+
         # 2. Relay Broker (nats or matrix)
         elif transport in ("nats", "matrix", "relay"):
-            from apps.memory_api.services.relay_broker import MatrixRelay, NATSRelay
+            from apps.memory_api.services.relay_broker import (
+                MatrixRelay,
+                NATSRelay,
+            )
+
             if "matrix" in peer.url or transport == "matrix":
                 # Matrix relay
-                relay = MatrixRelay(
+                matrix_relay = MatrixRelay(
                     homeserver_url=peer.url,
                     access_token=peer.token,
                     room_id="default-room",
-                    secret_key=self.secret_key
+                    secret_key=self.secret_key,
                 )
-                success = await relay.publish(payload)
+                success = await matrix_relay.publish(payload)
             else:
                 # NATS relay
                 parsed_url = urlparse(peer.url)
                 host = parsed_url.hostname or "127.0.0.1"
                 port = parsed_url.port or 4222
-                relay = NATSRelay(
+                nats_relay = NATSRelay(
                     nats_host=host,
                     nats_port=port,
                     subject="rae.mesh.sync",
-                    secret_key=self.secret_key
+                    secret_key=self.secret_key,
                 )
-                success = await relay.publish(payload)
-                
+                success = await nats_relay.publish(payload)
+
         # 3. Direct/Tailscale/VPN
         else:
             async with httpx.AsyncClient() as client:
@@ -663,22 +747,27 @@ class MeshService:
                         f"{peer.url}/v2/mesh/sync/receive",
                         json=payload,
                         headers={"Authorization": f"Bearer {peer.token}"},
-                        timeout=30.0
+                        timeout=30.0,
                     )
-                    if resp.status_code == 200 and resp.json().get("status") == "accepted":
+                    if (
+                        resp.status_code == 200
+                        and resp.json().get("status") == "accepted"
+                    ):
                         success = True
                 except Exception as e:
                     logger.error("direct_sync_failed", error=str(e), url=peer.url)
-                    
+
         if success:
             # Mark successfully synced in database
             for m in payload["memories"]:
                 await self.save_sync_log(
                     peer_id=peer_id,
                     memory_id=m["id"],
-                    content_hash=hashlib.sha256(m["content"].encode('utf-8')).hexdigest(),
-                    status="success"
+                    content_hash=hashlib.sha256(
+                        m["content"].encode("utf-8")
+                    ).hexdigest(),
+                    status="success",
                 )
             return len(payload["memories"])
-            
+
         return 0

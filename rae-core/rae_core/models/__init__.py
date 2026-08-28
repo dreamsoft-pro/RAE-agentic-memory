@@ -8,9 +8,28 @@ This module exports all Pydantic models used across RAE-core:
 - Sync models: SyncChange, SyncOperation, SyncState, SyncConflict
 """
 
+from .evidence import (
+    ConflictSeverity,
+    ConflictType,
+    EvidenceBundle,
+    EvidenceItem,
+    KnowledgeConflict,
+    ResolutionStatus,
+)
 from .graph import EdgeType, GraphEdge, GraphNode, GraphPath, NodeType, Subgraph
+from .knowledge import (
+    AuthorityLevel,
+    KnowledgeClass,
+    KnowledgeRecord,
+    KnowledgeSourceType,
+)
 from .memory import MemoryItem, MemoryLayer, MemoryStats, MemoryType, ScoredMemoryItem
 from .reflection import Reflection, ReflectionPolicy, ReflectionPriority, ReflectionType
+from .registry import (
+    KnowledgeRegistryRecord,
+    KnowledgeRevisionDraft,
+    KnowledgeRevisionRecord,
+)
 from .search import (
     ScoringWeights,
     SearchQuery,
@@ -19,16 +38,6 @@ from .search import (
     SearchStrategy,
 )
 from .sync import SyncChange, SyncConflict, SyncOperation, SyncState
-from .knowledge import KnowledgeRecord, KnowledgeClass, AuthorityLevel, KnowledgeSourceType
-from .registry import KnowledgeRegistryRecord, KnowledgeRevisionDraft, KnowledgeRevisionRecord
-from .evidence import (
-    EvidenceItem,
-    EvidenceBundle,
-    KnowledgeConflict,
-    ConflictType,
-    ConflictSeverity,
-    ResolutionStatus,
-)
 
 __all__ = [
     # Memory models

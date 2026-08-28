@@ -910,7 +910,7 @@ class SQLiteStorage(IMemoryStorage):
         if not node_ids:
             return []
 
-        # We assume the table knowledge_graph_edges exists in the same DB 
+        # We assume the table knowledge_graph_edges exists in the same DB
         # or was attached. For RAE-Lite simplicity, we check if it exists.
         try:
             async with aiosqlite.connect(self.db_path) as db:

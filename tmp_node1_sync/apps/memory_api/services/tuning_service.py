@@ -4,10 +4,12 @@ RAE Tuning Service - Phase 4 Self-improvement.
 Orchestrates the Bayesian update cycle for tenant scoring weights.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
+
 import structlog
-from rae_core.math.tuning import BayesianPolicyTuner
+
 from apps.memory_api.services.rae_core_service import RAECoreService
+from rae_core.math.tuning import BayesianPolicyTuner
 
 logger = structlog.get_logger(__name__)
 
@@ -29,7 +31,7 @@ class TuningService:
             LIMIT 50
         """
         feedback_rows = await self.rae_service.db.fetch(sql, tenant_id)
-        
+
         if not feedback_rows:
             logger.info("tuning_skipped_no_feedback", tenant_id=tenant_id)
             return None
@@ -52,7 +54,7 @@ class TuningService:
             weights = row['weights_snapshot']
             if isinstance(weights, str):
                 weights = json.loads(weights)
-            
+
             feedback_loop.append({
                 "score": row['score'],
                 "weights": weights
@@ -60,7 +62,7 @@ class TuningService:
 
         # 4. Compute Bayes Posterior
         result = self.tuner.compute_posterior(current_weights, feedback_loop)
-        
+
         logger.info(
             "tuning_cycle_complete",
             tenant_id=tenant_id,
@@ -86,5 +88,5 @@ class TuningService:
                 return result.new_weights
             except Exception as e:
                 logger.error("tuning_persistence_failed", error=str(e))
-        
+
         return None

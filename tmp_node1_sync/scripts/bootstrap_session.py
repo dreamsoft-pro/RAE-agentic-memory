@@ -12,11 +12,12 @@ Usage:
     python scripts/bootstrap_session.py
 """
 
-import sys
 import json
-import requests
 import os
-from typing import Dict, Any
+import sys
+from typing import Any, Dict
+
+import requests
 
 # Configuration
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
@@ -46,7 +47,7 @@ def check_service(name: str, url: str) -> Dict[str, Any]:
                     return {"status": "OK", "details": response.json(), "url": fallback_url, "note": "Fallback to localhost"}
             except Exception:
                 pass # Fallback also failed
-        
+
         return {"status": "OFFLINE", "error": str(e), "url": url}
 
 def get_latest_context() -> str:
@@ -80,10 +81,10 @@ def check_gemini_config(rae_url: str):
 
 def main():
     print("🔌 RAE-First Session Bootstrap Initiated...")
-    
+
     # 1. Infrastructure Check
     rae_status = check_service("RAE-Core", RAE_API_URL)
-    
+
     # Fix URL for further checks if fallback occurred
     if "url" in rae_status:
         # Update global var effectively for this run
@@ -91,9 +92,9 @@ def main():
         check_gemini_config(active_url)
 
     mcp_status = check_service("MCP-Server", MCP_URL)
-    
+
     infra_ok = rae_status["status"] == "OK" # MCP is optional but recommended
-    
+
     status_report = {
         "infrastructure": {
             "rae_api": rae_status,
@@ -102,14 +103,14 @@ def main():
         "rae_first_mode": "ACTIVE",
         "ready_to_work": infra_ok
     }
-    
+
     print(json.dumps(status_report, indent=2))
-    
+
     if not infra_ok:
         print("\n❌ CRITICAL: RAE-Core is OFFLINE. Cannot proceed with RAE-First workflow.")
         print("Action: Run 'docker compose up -d' immediately.")
         sys.exit(1)
-        
+
     print("\n✅ System Online. You are connected to the Hive Mind.")
     print("REMINDER: Do not guess. Use 'search_memory' or 'web_fetch' tools via MCP.")
 

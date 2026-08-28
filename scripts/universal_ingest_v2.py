@@ -1,6 +1,7 @@
-import httpx
 import os
 from pathlib import Path
+
+import httpx
 
 # Connect to RAE API on port 8001 (host access)
 API_URL = 'http://localhost:8001/v2/memories/'
@@ -11,7 +12,7 @@ FRONTEND_ROOT = os.environ.get('RAE_FRONTEND_ROOT', str(Path(__file__).resolve()
 def ingest_html():
     print(f"🚀 Starting Universal HTML Ingest for Phase 2 from {FRONTEND_ROOT}...")
     html_files = []
-    
+
     if not os.path.exists(FRONTEND_ROOT):
         print(f"❌ ERROR: {FRONTEND_ROOT} not found on host!")
         return
@@ -20,15 +21,15 @@ def ingest_html():
         for file in files:
             if file.endswith(".html") and 'node_modules' not in root:
                 html_files.append(os.path.join(root, file))
-    
+
     print(f"📦 Found {len(html_files)} templates.")
-    
+
     count = 0
     for f_path in html_files:
         try:
             with open(f_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             s_name = os.path.basename(f_path)
             payload = {
                 "content": content,
@@ -47,7 +48,7 @@ def ingest_html():
                 print(f"  -> Ingested {count}/{len(html_files)}...")
         except Exception as e:
             print(f"  ❌ Error ingesting {f_path}: {e}")
-            
+
     print(f"✅ Finished. Ingested {count} templates to RAE.")
 
 if __name__ == '__main__':

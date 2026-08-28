@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from enum import StrEnum
-from typing import Any, Optional, List
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field

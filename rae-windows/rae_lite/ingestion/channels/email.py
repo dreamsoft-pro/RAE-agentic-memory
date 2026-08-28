@@ -9,12 +9,11 @@ Handles ingestion of emails from:
 Crucially, marks content as RESTRICTED (ISO 27000) for safe Idea Extraction.
 """
 
-import email
 import logging
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, Generator
 
 from rae_core.types.enums import InformationClass
 
@@ -24,7 +23,7 @@ class EmailConnector:
     """
     Standardizes email ingestion.
     """
-    
+
     def parse_eml(self, file_path: Path) -> Dict[str, Any] | None:
         """
         Parse a raw .eml file into a RAE-compatible structure.
@@ -47,7 +46,7 @@ class EmailConnector:
                 "source_type": "email",
                 "source_path": str(file_path)
             }
-            
+
             return {
                 "content": content,
                 "metadata": metadata,

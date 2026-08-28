@@ -11,7 +11,7 @@ This module provides FastAPI routes for dashboard operations including:
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -27,19 +27,10 @@ from fastapi import (
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.dashboard_models import (
     ActivityLog,
-    ComplianceArea,
     ComponentHealth,
     DashboardEventType,
-    GetAuditTrailRequest,
-    GetAuditTrailResponse,
-    GetComplianceMetricsRequest,
-    GetComplianceMetricsResponse,
-    GetComplianceReportRequest,
-    GetComplianceReportResponse,
     GetDashboardMetricsRequest,
     GetDashboardMetricsResponse,
-    GetRiskRegisterRequest,
-    GetRiskRegisterResponse,
     GetSystemHealthRequest,
     GetSystemHealthResponse,
     GetVisualizationRequest,
@@ -50,7 +41,6 @@ from apps.memory_api.models.dashboard_models import (
     MetricPeriod,
     QualityTrend,
     ReflectionTreeNode,
-    RiskLevel,
     SemanticGraph,
     SemanticGraphEdge,
     SemanticGraphNode,

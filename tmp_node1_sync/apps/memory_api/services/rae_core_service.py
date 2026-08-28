@@ -639,10 +639,10 @@ class RAECoreService:
             config_raw = await self.db.fetchval(sql, tenant_id)
             if not config_raw:
                 return None
-            
+
             import json
             config = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
-            
+
             if config and "math_weights" in config:
                 from rae_core.math.structure import ScoringWeights
                 w = config["math_weights"]
@@ -669,7 +669,7 @@ class RAECoreService:
         """
         # 2. Execute Engine search
         weights = await self.tuning_service.get_current_weights(str(tenant_id))
-        
+
         results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),

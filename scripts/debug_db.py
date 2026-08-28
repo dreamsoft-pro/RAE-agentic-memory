@@ -1,7 +1,8 @@
-import os
 import asyncio
+import os
+
 import asyncpg
-import json
+
 
 async def check():
     url = os.getenv("DATABASE_URL", "postgresql://rae:rae_password@postgres/rae")

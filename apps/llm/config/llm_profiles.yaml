@@ -1,25 +1,37 @@
-# LLM Profiles Configuration - REPAIRED FOR CPU ONLY
+# LLM Profiles Configuration - HYBRID LOCAL GPU + OPENROUTER
 llm_profiles:
-  # Fast, cheap models for bulk operations
+  # Fast, free local models for bulk operations & reflections
   cheap_bulk:
     candidates:
-      - qwen2.5:3b
-      - llama3:8b
+      - qwen3.5:9b
+      - SpeakLeash/bielik-11b-v3.0-instruct:Q5_K_M
     max_cost_per_1k: 0.0
-    description: "Local models for bulk processing"
+    description: "Fast local models on GPU for high-throughput zero-cost processing"
 
-  # Default profile
+  # Default profile - Prefer Polish / General Local GPU
   default:
     candidates:
-      - qwen2.5:3b
-      - llama3:8b
+      - SpeakLeash/bielik-11b-v3.0-instruct:Q5_K_M
+      - qwen3.5:9b
+      - deepseek-r1:8b
     max_cost_per_1k: 0.0
-    description: "Default profile using local Ollama"
+    description: "Default profile using local Ollama (Node 1 Lumina & Laptop)"
 
-  # Laptop profile - CPU Optimized
-  laptop:
+  # Reasoning & Legal Audit Profile
+  reasoning_legal:
     candidates:
-      - phi3:latest
-      - deepseek-coder:1.3b
-    max_cost_per_1k: 0.0
-    description: "Resource-efficient profile for laptop usage"
+      - deepseek-r1:8b
+      - SpeakLeash/bielik-11b-v3.0-instruct:Q5_K_M
+      - deepseek/deepseek-r1
+    max_cost_per_1k: 0.005
+    description: "Reasoning and contract analysis tier"
+
+  # Cloud High-Performance Fallback Profile
+  cloud_high_tier:
+    candidates:
+      - google/gemini-3.7-flash
+      - anthropic/claude-3.5-sonnet
+      - deepseek/deepseek-r1
+    max_cost_per_1k: 0.015
+    description: "OpenRouter cloud tier for complex multi-step reasoning"
+

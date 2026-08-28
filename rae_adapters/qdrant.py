@@ -3,9 +3,10 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-import structlog
 from typing import Any, cast
 from uuid import UUID
+
+import structlog
 
 try:
     from qdrant_client import AsyncQdrantClient, QdrantClient
@@ -118,12 +119,12 @@ class QdrantVectorStore(IVectorStore):
         if self._initialized:
             return
 
-        from qdrant_client.models import VectorParams, SparseVectorParams
-        
+        from qdrant_client.models import SparseVectorParams, VectorParams
+
         try:
             collection_info = await self.client.get_collection(self.collection_name)
             vectors_config = collection_info.config.params.vectors
-            
+
             # SYSTEM 96.2: Dynamic Vector Space Provisioning
             needs_update = False
             if isinstance(vectors_config, dict):
@@ -132,7 +133,7 @@ class QdrantVectorStore(IVectorStore):
             else:
                 # Upgrading from single vector to multi-vector
                 needs_update = True
-                
+
             if needs_update:
                 try:
                     await self.client.update_collection(
@@ -343,7 +344,6 @@ class QdrantVectorStore(IVectorStore):
         query_filter = {"must": must_conditions} if must_conditions else None
 
         try:
-            from qdrant_client.models import NamedVector
 
             # Handle Dynamic Vector Names (Agnostic Multi-Vector)
             target_vector_name = kwargs.get("vector_name", self.vector_name)
@@ -357,7 +357,7 @@ class QdrantVectorStore(IVectorStore):
                 limit=limit,
                 score_threshold=score_threshold,
             )
-            
+
             try:
                 # Most robust way: just try to await it
                 results = await result_or_coro
