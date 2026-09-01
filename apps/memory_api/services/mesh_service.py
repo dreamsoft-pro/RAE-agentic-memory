@@ -698,7 +698,7 @@ class MeshService:
             return 0
 
         # Compute SHA-256 hashes of memories
-        memories_bytes = json.dumps(payload["memories"], sort_keys=True).encode("utf-8")
+        memories_bytes = json.dumps(payload["memories"], sort_keys=True, default=str).encode("utf-8")
         payload_hash = hashlib.sha256(memories_bytes).hexdigest()
 
         # Sign the hash using Ed25519 sender private key
@@ -707,6 +707,9 @@ class MeshService:
 
         payload["payload_hash"] = payload_hash
         payload["signature"] = signature
+
+        # Ensure all UUID and datetime objects in payload are standard JSON types
+        payload = json.loads(json.dumps(payload, default=str))
 
         # Determine transport routing
         success = False
@@ -762,14 +765,35 @@ class MeshService:
 
         # 3. Direct/Tailscale/VPN
         else:
+            headers = {"Authorization": f"Bearer {peer.token}"}
+            body_to_send = None
+            try:
+                import zstandard as zstd
+                raw_json = json.dumps(payload, default=str).encode("utf-8")
+                cctx = zstd.ZstdCompressor(level=3)
+                body_to_send = cctx.compress(raw_json)
+                headers["Content-Encoding"] = "zstd"
+                headers["X-Mesh-Compression"] = "zstd"
+                headers["Content-Type"] = "application/json"
+            except Exception:
+                body_to_send = None
+
             async with httpx.AsyncClient() as client:
                 try:
-                    resp = await client.post(
-                        f"{peer.url}/v2/mesh/sync/receive",
-                        json=payload,
-                        headers={"Authorization": f"Bearer {peer.token}"},
-                        timeout=30.0,
-                    )
+                    if body_to_send is not None:
+                        resp = await client.post(
+                            f"{peer.url}/v2/mesh/sync/receive",
+                            content=body_to_send,
+                            headers=headers,
+                            timeout=30.0,
+                        )
+                    else:
+                        resp = await client.post(
+                            f"{peer.url}/v2/mesh/sync/receive",
+                            json=payload,
+                            headers=headers,
+                            timeout=30.0,
+                        )
                     if (
                         resp.status_code == 200
                         and resp.json().get("status") == "accepted"
