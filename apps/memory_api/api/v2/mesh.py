@@ -345,6 +345,17 @@ async def receive_sync_data(
     if len(body_bytes) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="Payload Too Large")
 
+    # Decompress zstandard if compressed
+    encoding = (request.headers.get("content-encoding") or "").lower()
+    compression = (request.headers.get("x-mesh-compression") or "").lower()
+    if encoding == "zstd" or compression == "zstd":
+        try:
+            import zstandard as zstd
+            dctx = zstd.ZstdDecompressor()
+            body_bytes = dctx.decompress(body_bytes)
+        except Exception as e:
+            logger.warning("zstd_decompression_failed", error=str(e))
+
     import json
 
     try:
@@ -632,15 +643,38 @@ async def receive_sync_data(
                             info_class,
                         )
                         m_id = memory_uuid
-
-                # Store vector in Qdrant if rae_core_service is available and not operational layer
+            else:
+                # Lite / In-Memory storage fallback on compute nodes
                 rae_service = getattr(request.app.state, "rae_core_service", None)
-                if (
-                    rae_service
-                    and rae_service.qdrant_client
-                    and "operational" not in tags
-                    and m_id
-                ):
+                if rae_service and hasattr(rae_service, "storage"):
+                    try:
+                        from rae_core.models.memory import MemoryEntry
+                        memory_uuid = parse_uuid(memory_id)
+                        entry = MemoryEntry(
+                            id=memory_uuid,
+                            content=sanitized_content,
+                            layer=m.get("layer", "episodic"),
+                            tenant_id=m.get("tenant_id", "default"),
+                            agent_id=m.get("agent_id", "default"),
+                            tags=m.get("tags") or [],
+                            metadata=m.get("metadata") or {},
+                            importance=m.get("importance", 0.5),
+                            content_hash=content_hash,
+                            info_class=m.get("info_class", "internal")
+                        )
+                        await rae_service.storage.save(entry)
+                        m_id = memory_uuid
+                    except Exception as stor_err:
+                        logger.warning("in_memory_sync_save_failed", error=str(stor_err))
+
+            # Store vector in Qdrant if rae_core_service is available and not operational layer
+            rae_service = getattr(request.app.state, "rae_core_service", None)
+            if (
+                rae_service
+                and rae_service.qdrant_client
+                and "operational" not in tags
+                and m_id
+            ):
                     try:
                         if hasattr(
                             rae_service.embedding_provider, "generate_all_embeddings"
@@ -753,8 +787,9 @@ async def trigger_peer_sync(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error("manual_sync_failed", peer_id=peer_id, error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        logger.error("manual_sync_failed", peer_id=peer_id, error=str(e), traceback=traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"{str(e)} -> {traceback.format_exc()}")
     finally:
         if locked and service.redis_client is not None:
             await service.redis_client.delete(lock_key)
